@@ -80,13 +80,16 @@ function merge(a, b) {
 }
 
 export const STYLES = [...RAW, ...EXTRA_STYLES].map((s) => merge(D, s));
+// Captions round (16 Nov): the template gallery's 30+ more styles, after the first 20 and Lane C's extras.
+for (const s of K_STYLES) if (!STYLES.some((x) => x.id === s.id)) STYLES.push(merge(D, s));
 export const STYLE_IDS = STYLES.map((s) => s.id);
 const BY_ID = Object.fromEntries(STYLES.map((s) => [s.id, s]));
 export const DEFAULT_STYLE_ID = 'word-box';
 
 export const ANIMS = ['none', 'highlight-box', 'highlight-color', 'highlight-scale', 'highlight-glow', 'karaoke', 'pop',
-  'one-word', 'typewriter', 'bounce', 'fade', 'slide', 'marker'];
-export const BG_TYPES = ['none', 'box', 'pill', 'word', 'marker', 'bar', 'card'];
+  'one-word', 'typewriter', 'bounce', 'fade', 'slide', 'marker', 'rise', 'wave', 'shake', 'zoom', 'glitch', 'underline', 'stamp',
+  'outline-fill', 'rainbow'];
+export const BG_TYPES = ['none', 'box', 'pill', 'word', 'marker', 'bar', 'card', 'tape', 'bubble', 'gradient', 'outline'];
 export const CASES = ['none', 'upper', 'lower', 'title'];
 
 /** project.captions.style (id string or {id, ...overrides}) -> full style object. Unknown id -> default. */
@@ -152,3 +155,7 @@ const FONT_OK = (f) => FONT_FAMILIES.includes(f);
 export function isColor(v) {
   return typeof v === 'string' && /^(#[0-9a-f]{3,8}|rgba?\([\d.,\s%]+\)|hsla?\([\d.,\s%deg]+\))$/i.test(v.trim());
 }
+
+// Captions round: template data + gallery categories (kept at the end of the file, away from the other lanes' lines).
+import { K_STYLES } from './styles-k.js';
+export { CATEGORIES, catOf, keywordsOf } from './styles-k.js';

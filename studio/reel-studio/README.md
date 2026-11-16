@@ -38,8 +38,14 @@ are for features coming in the next update, so you can leave them unticked for n
   **🎵 Add music** · **🎨 Suggest style** · **💥 Auto effects**. Every one of them is a single step you can undo
   with **⌘Z**.
 * **Captions:** the **💬 Captions** tab on the right shows the transcript. Click a word to jump there, double-click it
-  to correct it, and choose a caption style in the **Style** tab. Pick *Fast* or *Accurate* and the language
-  (Auto, English, Arabic, Hindi, Urdu) at the top of the panel.
+  to correct it. **⚙ Settings** (top of the panel): *Fast* or *Accurate*, the language (Auto, English, Arabic, Hindi,
+  Urdu), **Music & sound tags** (*Hide* — the default —, *Show ♪ icon*, *Keep as text*; captions also go quiet while
+  only music plays) and **Words to spell right** (your brand, product, country and visa words; Whisper hears them
+  first and near-misses are corrected). **🎨 Word style / Line style** under a selected word changes its text, size,
+  colour, font, weight, highlight, emoji, animation and position (a dot marks it; **Reset to style** undoes it); drag a
+  caption on the video to move that line (Shift-drag moves them all). **Script** shows the whole transcript as
+  paragraphs — edit it there and the captions follow — with **Copy**, **TXT**, **SRT**, **VTT** (and bilingual) saved
+  into the company's exports folder. **Style** has the template gallery: 60 templates, search, categories, ★ favourites.
 * **Left panel:** **Music** and **SFX** (press ▶ to listen, drag a row onto the timeline or press **+**),
   **Templates** (recipes for the open company: **Use** sets the style for this reel, **Make reel** cuts one now),
   **Stickers** (Planet Careers also gets flags, maps and country stickers for 33 countries), **Text**.
@@ -167,4 +173,5 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
 * `tools/` — `int-media.cjs` + `int-check.cjs` (end-to-end), `check-r1.cjs`, `check-models.cjs [--real]`,
   `r2-check.cjs`, `r3-check.cjs`, `c-media.cjs` + `c-fetch-models.cjs` + `c-check.cjs` (content / Create tab),
   `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
+  `r2-check.cjs`, `k-check.cjs` + `k-editor.cjs` (captions round), `r3-check.cjs`, `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
 * The app name lives in `app/core/config.js` `APP_NAME` (and `appName` in `engine/main.go`, the launcher's file name).
