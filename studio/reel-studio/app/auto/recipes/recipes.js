@@ -243,9 +243,19 @@ export function countryRecipes() {
 
 export const RECIPES = [...BASE_RECIPES, ...countryRecipes()];
 export const recipeById = id => RECIPES.find(r => r.id === id) || null;
-/** recipes for a workspace: its own first, then generic, then the rest */
+/** a workspace's industry tags: its own `industries` (from its brand kit) plus anything its industry text names */
+const industryText = (ws = {}) => (String(ws.industry || '') + ' ' + (ws.industries || []).join(' ')).toLowerCase();
+const rankFor = (workspace = {}) => {
+  const slug = workspace.id || workspace.brandRef || '', ind = industryText(workspace), fav = workspace.favRecipes || [];
+  return r => (fav.includes(r.id) ? -1 : r.workspaces.includes(slug) ? 0 : r.industries.some(i => ind.includes(i)) ? 1 : r.workspaces.includes('*') ? 2 : 3);
+};
+/** recipes for a workspace: its favourites, its own, its industries', then generic, then the rest */
 export function recipesFor(workspace = {}) {
-  const slug = workspace.id || workspace.brandRef || '', ind = String(workspace.industry || '').toLowerCase();
-  const rank = r => (r.workspaces.includes(slug) ? 0 : r.industries.some(i => ind.includes(i)) ? 1 : r.workspaces.includes('*') ? 2 : 3);
+  const rank = rankFor(workspace);
   return RECIPES.slice().sort((a, b) => rank(a) - rank(b));
+}
+/** only the recipes that belong to a workspace (its own, its industries', and the generic ones) — the Templates tab */
+export function recipesOnlyFor(workspace = {}) {
+  const rank = rankFor(workspace);
+  return recipesFor(workspace).filter(r => rank(r) <= 2);
 }

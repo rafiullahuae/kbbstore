@@ -13,7 +13,11 @@ import { registerModule } from '../core/modules.js';
 import { findMedia, projectDuration, itemEnd } from '../core/project.js';
 import './layers.js';
 import { preloadImages, loadKitFonts } from './layers.js';
-import { recipeById, recipesFor, RECIPES } from './recipes/recipes.js';
+import { recipeById, recipesFor, recipesOnlyFor, RECIPES } from './recipes/recipes.js';
+import { captionStyleFor } from './recipes/caption-styles.js';
+import { registerPrepare } from '../core/render.js';
+import { setStyle as setCaptionStyle } from '../captions/commands.js';
+import { styleForWorkspace } from '../captions/styles.js';
 import { resolveRecipe } from './recipes/engine.js';
 import { rankTracks, fitTrack, wantFor } from './lib/music.js';
 import { planEffects } from './lib/effects.js';
@@ -151,8 +155,23 @@ export async function autoReel(ctx, { mediaId, recipeId, length = 30, music = tr
   const speech = (a.audio?.speech || []).flatMap(([s0, s1]) => plan.segments.map(s => [Math.max(s0, s.in), Math.min(s1, s.out), s]).filter(([x, y]) => y > x).map(([x, y, s]) => [s.t0 + x - s.in, s.t0 + y - s.in]));
   const cmd = autoReelCommand(ctx.project, { mediaId, plan, reframe: crop, music: mus ? { ...mus, srcBase: mus.track.source === 'user' ? 'library/music/user/' : 'library/music/' } : null, speechTimeline: speech, effects: ev, kit, recipe,
     endCardText: R.endCard ? { title: R.endCard.title || kit.fullName, sub: R.endCard.sub, cta: R.endCard.cta, contact: R.endCard.contact, payments } : null, sfxLib: lib.sfx });
-  ctx.history.apply(ctx.project.recipe === recipe.id ? cmd : ops.batch('Auto reel', [cmd, ops.setProject({ recipe: recipe.id }, 'Recipe')]));
-  return { plan, recipe: recipe.id, music: mus?.track.id || null, effects: ev, reframed: !!crop };
+  // the recipe's caption style (mapped to the captions module's ids) in the company's colours, re-flowed for the cut
+  const style = captionStyleCommand(ctx, recipe, lang || ctx.project.captions?.lang);
+  ctx.history.apply(ops.batch('Auto reel', [cmd, ctx.project.recipe === recipe.id ? null : ops.setProject({ recipe: recipe.id }, 'Recipe'), style]));
+  return { plan, recipe: recipe.id, music: mus?.track.id || null, effects: ev, reframed: !!crop, captionStyle: style ? captionStyleFor(recipe, (lang || ctx.project.captions?.lang) === 'ar' ? 'ar' : 'en') : null };
+}
+/** setStyle command for a recipe's caption style (null when there are no captions yet) */
+export function captionStyleCommand(ctx, recipe, lang) {
+  if (!ctx.project.captions?.words?.length || !recipe) return null;
+  const id = captionStyleFor(recipe, lang === 'ar' ? 'ar' : 'en');
+  const ws = ctx.workspace || {};
+  return setCaptionStyle(styleForWorkspace({ ...ws, captions: { ...(ws.captions || {}), style: id } }), true, ctx.project.canvas);
+}
+/** apply a recipe: remember it on the project and dress the captions in its style — ONE undo step */
+export function useRecipe(ctx, recipeId) {
+  const recipe = recipeById(recipeId); if (!recipe) throw new Error('No such recipe');
+  ctx.history.apply(ops.batch('Recipe · ' + recipe.name, [ops.setProject({ recipe: recipe.id }, 'Recipe'), captionStyleCommand(ctx, recipe, ctx.project.captions?.lang)]));
+  return recipe;
 }
 const remapWords = (words, segs) => { const out = []; for (const s of segs) for (const w of words) if (w.t0 >= s.in - 0.02 && w.t1 <= s.out + 0.02) out.push({ ...w, t0: s.t0 + w.t0 - s.in, t1: s.t0 + w.t1 - s.in }); return out; };
 const firstVideo = p => { for (const tr of p.tracks) if (tr.kind === 'video') for (const it of tr.items) if (it.media) return it.media; return p.media.find(m => m.kind === 'video')?.id; };
@@ -184,9 +203,17 @@ export async function applyEffects(ctx, { recipeId } = {}) {
   const recipe = recipeById(recipeId || ctx.project.recipe) || recipesFor(ctx.workspace)[0];
   const kit = await brandKit(ctx), lib = await library(ctx), p = ctx.project;
   const vt = p.tracks.find(t => t.kind === 'video'), clips = vt.items.slice().sort((a, b) => a.t0 - b.t0);
-  const cuts = clips.slice(1).map(c => c.t0), dur = projectDuration(p);
-  const ev = planEffects({ duration: dur, cuts, words: p.captions?.words || [], recipe, canvas: p.canvas });
-  ctx.history.apply(ops.batch('Auto effects', effectsCommands(p, ev, { kitI: kitForItems(kit), sfxLib: lib.sfx })));
+  // an end card already on the timeline (Auto reel) ends the reel: no logo outro on top of it, no cut into it
+  const endItem = p.tracks.flatMap(t => t.items).find(i => i.type === 'auto.endcard');
+  const endCard = endItem ? { t0: endItem.t0, dur: itemEnd(endItem) - endItem.t0 } : null;
+  const cuts = clips.slice(1).map(c => c.t0).concat(endCard ? [endCard.t0] : []), dur = projectDuration(p);
+  const ev = planEffects({ duration: dur, cuts, words: p.captions?.words || [], recipe, canvas: p.canvas, endCard });
+  // a second press REPLACES the earlier automatic effects (never the owner's own items, never the end card or music)
+  const FX = new Set(['auto.transition', 'auto.pricetag', 'auto.logo', 'sticker']);
+  const old = p.tracks.flatMap(t => t.items.filter(i => i.auto === 'auto' && (FX.has(i.type) || t.kind === 'sfx')).map(i => i.id));
+  const punch = clips.map(c => { const d = (c.out - c.in) / (c.speed || 1), mine = ev.punches.filter(x => x.t0 >= c.t0 && x.t0 < c.t0 + d).map(x => ({ type: 'auto.punch', t0: x.t0, dur: x.dur, amount: x.amount }));
+    const keep = (c.fx || []).filter(f => f.type !== 'auto.punch'); return (c.fx || []).some(f => f.type === 'auto.punch') || mine.length ? { id: c.id, props: { fx: [...keep, ...mine] } } : null; }).filter(Boolean);
+  ctx.history.apply(ops.batch('Auto effects', [old.length ? ops.removeItems(old) : null, punch.length ? ops.setItems(punch, 'Punch-ins') : null, ...effectsCommands(p, ev, { kitI: kitForItems(kit), sfxLib: lib.sfx })]));
   return ev;
 }
 
@@ -238,9 +265,22 @@ registerModule({
     root.replaceChildren(el('div', { textContent: 'Looking…' }));
     const s = await suggest(ctx, firstVideo(ctx.project));
     root.replaceChildren(el('div', { style: css }, ...s.map(x => el('div', { style: 'border:1px solid #8884;border-radius:8px;padding:8px' }, el('b', { textContent: x.name }), el('div', { textContent: x.reasons.join(' · ') || 'a good general fit' }),
-      btn('Use this recipe', () => { ctx.history.apply(ops.setProject({ recipe: x.id }, 'Recipe')); ctx.toast?.(`Recipe: ${x.name}`); })))));
+      btn('Use this recipe', () => { useRecipe(ctx, x.id); ctx.toast?.(`Recipe: ${x.name}`); })))));
   },
 });
 registerModule({ id: 'auto-effects', label: 'Auto effects', icon: '💥', run: async (ctx) => { const ev = await applyEffects(ctx); return `Effects: ${ev.transitions.length} transitions, ${ev.punches.length} punch-ins, ${ev.stickers.length} emoji`; } });
 
-export { RECIPES, recipesFor, recipeById };
+// before the export (and when a project opens): decode the end card's badges and load the brand kit's fonts, so the
+// synchronous layers draw a reloaded project exactly like the one that was saved
+registerPrepare('auto', async (project) => {
+  const imgs = [];
+  for (const tr of project.tracks) for (const it of tr.items) if (it.type === 'auto.endcard') imgs.push(...(it.style?.payments || []));
+  await preloadImages(imgs);
+  const ref = project.brand || project.workspace;
+  if (ref && /^[a-z0-9-]{1,40}$/.test(ref) && project.tracks.some(t => t.items.some(i => /^auto\./.test(i.type)))) {
+    if (!fontsLoaded.has(ref)) { fontsLoaded.add(ref); try { const kit = await getJSON(null, `brands/${ref}/kit.json`); await loadKitFonts(kit, `brands/${ref}/`); } catch {} }
+  }
+});
+const fontsLoaded = new Set();
+
+export { RECIPES, recipesFor, recipesOnlyFor, recipeById, captionStyleFor };
