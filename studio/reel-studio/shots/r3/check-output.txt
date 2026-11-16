@@ -1,0 +1,46 @@
+PASS  VAD finds every sentence, edges within ±80 ms  — 20/20 segments, worst edge 26 ms
+PASS  fillers: "Um," hard, "like," soft  — so(soft) Um,(hard) like(soft) like,(soft) so(soft) well(soft) so(soft)
+PASS  Arabic fillers recognised
+PASS  silence cuts: one per pause ≥ 0.45 s (short pauses kept)  — 19 cuts, expected 19
+PASS  silence removal: every cut edge within ±80 ms of the true pause (minus the 0.12 s kept), total within ±0.6 s  — removed 14.46 s, expected 14.53 s of 79.8 s; worst edge 26 ms
+PASS  no word is cut by silence removal
+PASS  scene cuts at 6 / 12 / 18 s (±0.25 s), none inside moving shots  — [5.9,11.9,17.9]
+PASS  auto-reframe 16:9→9:16 follows the moving subject smoothly  — crop x 73 → 365 px, 8 keyframes, crop 202.5×360
+PASS  beat grid glow-up: tempo ±2% and beats on the grid  — detected 112.04 bpm vs 112, 100% of beats within 70 ms
+PASS  beat grid night-routine: tempo ±2% and beats on the grid  — detected 82.76 bpm vs 83, 81% of beats within 70 ms
+PASS  beat grid desert-rose: tempo ±2% and beats on the grid  — detected 102.11 bpm vs 102, 100% of beats within 70 ms
+PASS  beat grid clear-path: tempo ±2% and beats on the grid  — detected 107.97 bpm vs 108, 100% of beats within 70 ms
+PASS  auto reel 15 s: length ±0.5 s, whole sentences, hook first, CTA last  — 15.00 s = 4 sentences + end card 2.49 s; hook “Have you ever wondered why your skin loo”
+PASS  auto reel 15 s (cuts on beats): length ±0.5 s, whole sentences, hook first, CTA last  — 15.00 s = 4 sentences + end card 2.14 s; hook “Have you ever wondered why your skin loo”; 3/4 cuts on beats
+PASS  auto reel 30 s: length ±0.5 s, whole sentences, hook first, CTA last  — 30.00 s = 8 sentences + end card 3.04 s; hook “Have you ever wondered why your skin loo”
+PASS  auto reel 30 s (cuts on beats): length ±0.5 s, whole sentences, hook first, CTA last  — 30.00 s = 8 sentences + end card 2.14 s; hook “Have you ever wondered why your skin loo”; 7/8 cuts on beats
+PASS  auto reel 60 s: length ±0.5 s, whole sentences, hook first, CTA last  — 60.00 s = 18 sentences + end card 3.03 s; hook “Have you ever wondered why your skin loo”
+PASS  auto reel 60 s (cuts on beats): length ±0.5 s, whole sentences, hook first, CTA last  — 60.00 s = 18 sentences + end card 2.14 s; hook “Have you ever wondered why your skin loo”; 16/18 cuts on beats
+PASS  auto reel without end card still lands within ±0.5 s  — 29.75 s
+PASS  music fit: every track × 15/30/60 s ends on its written ending, within one bar of the length
+PASS  ducking keys dip under speech and recover, times increasing  — [[0,1,"linear"],[0.88,1,"linear"],[1,0.3,"linear"],[5,0.3,"linear"],[5.4,1,"linear"],[7.88,1,"linear"],[8,0.3,"linear"],[9,0.3,"linear"],[9.4,1,"linear"]]
+PASS  music pick follows the recipe mood  — desert-rose — mood: arabic-oud, mid energy, long enough without looping
+PASS  suggest "unboxing" → kbb-unboxing first  — kbb-unboxing (30.043: heard: unbox, parcel, box, haul, arrived; a kbb recipe) | kbb-grwm (5.674: heard: look; a kbb recipe) | pc-success-story (5.103: heard: finally, arrived)
+PASS  suggest "cooking" → cooking-recipe first  — cooking-recipe (57.16: heard: cook, add, stir, minutes, salt) | kbb-routine-steps (4.174: heard: then) | kbb-flash-sale (3.497: heard: today)
+PASS  suggest "study visa Germany" → pc-study-visa-steps / pc-spotlight-de first  — pc-study-visa-steps (41.572: heard: study, visa, student, university, admission; a planet-careers recipe) | pc-spotlight-de (23.882: heard: study, germany, berlin, german, blocked; a planet-careers recipe) | pc-appointment-cta (9.171: heard: book, appointment; a planet-careers recipe)
+PASS  suggest "Arabic study visa Canada" → pc-study-visa-steps / pc-spotlight-ca first  — pc-spotlight-ca (13.849: heard: كندا, تورنتو; a planet-careers recipe) | pc-study-visa-steps (12.955: heard: تاشيره, خطوات, موعد; a planet-careers recipe) | pc-appointment-cta (4.606: heard: موعد; a planet-careers recipe)
+PASS  suggest "Arabic flash sale" → kbb-flash-sale first  — kbb-flash-sale (9.849: heard: عرض, خصم; a kbb recipe) | kbb-before-after (1.5: a kbb recipe) | kbb-gift-with-purchase (1.5: a kbb recipe)
+PASS  recipes ≥ 30, every one has structure / caption style / music / end card  — 31 base + 33 country spotlights
+PASS  auto effects: transitions on every cut, SFX on them, punch-ins, price tag  — flash,glitch,zoom; 1 punch-ins; tag SALE
+PASS  every library track at -14 LUFS ±0.5 and true peak ≤ -1 dBTP  — I -14.38…-13.93 LUFS, TP max -1.64 dBTP
+PASS  [kbb] worker analysis in the page: scene cuts + speech  — cuts [5.833,11.833,17.833], 7 speech segments, 3620 ms
+PASS  [kbb] remove silences = one undo step  — review 8 items, removed 4.5 s → 7 clips; undo restores: true
+PASS  [kbb] auto reel 15 s in the editor model (±0.5 s) with music, effects, end card  — 15 s, 3 segments, music flash-sale-fever, reframed true, items {"video":3,"overlay":7,"text":0,"caption":0,"music":2,"sfx":5}
+PASS  [kbb] UI never blocked > 50 ms (workers; PLAN quality bar)  — longest frame gap 22 ms; long tasks: 
+PASS  [kbb] MediaPipe face detector loads and runs offline  — ran (no face)
+PASS  [kbb] no console errors, no request leaves 127.0.0.1
+PASS  [kbb] suggest returns 3 recipes from the clip (same unboxing talk in both companies)  — kbb-unboxing, kbb-texture-demo, kbb-routine-steps
+PASS  [planet-careers] worker analysis in the page: scene cuts + speech  — cuts [5.833,11.833,17.833], 7 speech segments, 4480 ms
+PASS  [planet-careers] remove silences = one undo step  — review 8 items, removed 4.5 s → 7 clips; undo restores: true
+PASS  [planet-careers] auto reel 15 s in the editor model (±0.5 s) with music, effects, end card  — 15 s, 3 segments, music dream-big, reframed true, items {"video":3,"overlay":5,"text":0,"caption":0,"music":2,"sfx":3}
+PASS  [planet-careers] UI never blocked > 50 ms (workers; PLAN quality bar)  — longest frame gap 27 ms; long tasks: 
+PASS  [planet-careers] MediaPipe face detector loads and runs offline  — ran (no face)
+PASS  [planet-careers] no console errors, no request leaves 127.0.0.1
+PASS  [planet-careers] suggest returns 3 recipes from the clip (same unboxing talk in both companies)  — kbb-unboxing, kbb-texture-demo, kbb-routine-steps
+
+44/44 passed

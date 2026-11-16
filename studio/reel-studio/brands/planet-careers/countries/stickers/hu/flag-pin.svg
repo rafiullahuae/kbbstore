@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 260" width="200" height="260"><defs><clipPath id="p"><circle cx="100" cy="96" r="72"/></clipPath><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity=".3"/></filter></defs><path filter="url(#s)" d="M100 252C100 252 12 160 12 96a88 88 0 0 1 176 0c0 64-88 156-88 156Z" fill="#ffffff"/><g clip-path="url(#p)"><svg x="4" y="24" width="192" height="144" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice">
+  <g fill-rule="evenodd">
+    <path fill="#fff" d="M640 480H0V0h640z"/>
+    <path fill="#388d00" d="M640 480H0V320h640z"/>
+    <path fill="#d43516" d="M640 160.1H0V.1h640z"/>
+  </g>
+</svg></g><circle cx="100" cy="96" r="72" fill="none" stroke="#0b2545" stroke-opacity=".15" stroke-width="2"/></svg>

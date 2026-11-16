@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kbb-studio/brand-kit.schema.json",
+  "title": "KBB Studio brand kit (one per company / workspace)",
+  "description": "brands/<slug>/kit.json. A workspace (workspaces/<slug>/workspace.json, core/project.js) is seeded from a kit through brandRef = <slug>. Paths are relative to the kit folder. Every field is editable in the app; a new company is created by filling this same schema.",
+  "type": "object",
+  "required": ["v", "id", "name", "colors", "fonts", "logos"],
+  "properties": {
+    "v": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9-]{1,40}$", "description": "slug = folder name = workspace id" },
+    "name": { "type": "string", "description": "short name shown in the switcher" },
+    "fullName": { "type": "string" },
+    "industry": { "type": "string", "description": "free text; recipes match their `industries` tags against it" },
+    "industries": { "type": "array", "items": { "type": "string" }, "description": "recipe tags this company sees first: beauty, retail, immigration, education, consultancy, generic …" },
+    "colors": {
+      "type": "object",
+      "required": ["primary", "secondary", "accent", "text", "bg"],
+      "properties": {
+        "primary": { "$ref": "#/$defs/hex" }, "secondary": { "$ref": "#/$defs/hex" }, "accent": { "$ref": "#/$defs/hex" },
+        "text": { "$ref": "#/$defs/hex" }, "bg": { "$ref": "#/$defs/hex" }, "soft": { "$ref": "#/$defs/hex" }, "ink": { "$ref": "#/$defs/hex" }
+      }
+    },
+    "gradient": { "type": "array", "items": { "$ref": "#/$defs/hex" }, "minItems": 2 },
+    "fonts": {
+      "type": "object",
+      "required": ["heading", "body"],
+      "properties": { "heading": { "$ref": "#/$defs/font" }, "body": { "$ref": "#/$defs/font" }, "arabic": { "$ref": "#/$defs/font" }, "script": { "$ref": "#/$defs/font" } }
+    },
+    "logos": {
+      "type": "object",
+      "required": ["mark"],
+      "properties": {
+        "mark": { "type": "string", "description": "square-ish symbol, SVG" },
+        "full": { "type": "string", "description": "mark + wordmark, SVG" },
+        "light": { "type": "string", "description": "version for dark backgrounds" },
+        "markPaths": { "type": "object", "description": "the mark as vector paths so the renderer can draw it without loading an image: {viewBox:[w,h], paths:[{d, fill}]}" }
+      }
+    },
+    "intro": { "$ref": "#/$defs/sting" },
+    "outro": { "$ref": "#/$defs/sting" },
+    "endCard": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" }, "sub": { "type": "string" },
+        "cta": { "type": "array", "items": { "type": "string" } }, "ctaAr": { "type": "array", "items": { "type": "string" } },
+        "payments": { "type": "array", "items": { "type": "string" }, "description": "badge files shown on the end card" },
+        "style": { "enum": ["clean", "gradient", "photo-blur"] }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "properties": { "website": { "type": "string" }, "phone": { "type": "string" }, "whatsapp": { "type": "string" }, "email": { "type": "string" }, "instagram": { "type": "string" }, "tiktok": { "type": "string" }, "address": { "type": "string" } }
+    },
+    "contactLine": { "type": "string", "description": "one line printed on end cards / lower thirds" },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "captionStyle": { "type": "string" }, "captionStyleAr": { "type": "string" }, "musicMoods": { "type": "array", "items": { "type": "string" } },
+        "favRecipes": { "type": "array", "items": { "type": "string" } }, "aspect": { "enum": ["9:16", "1:1", "4:5", "16:9"] }
+      }
+    },
+    "motif": { "type": "string", "description": "decorative motif the effects may use: lotus, eu-stars, …" },
+    "packs": { "type": "object", "description": "optional content packs, e.g. countries: 'countries/countries.json'" },
+    "notes": { "type": "string" }
+  },
+  "$defs": {
+    "hex": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$" },
+    "font": {
+      "type": "object",
+      "required": ["family"],
+      "properties": {
+        "family": { "type": "string" }, "fallback": { "type": "string" },
+        "files": { "type": "array", "items": { "type": "object", "required": ["file"], "properties": { "file": { "type": "string" }, "weight": { "type": ["string", "number"] }, "style": { "type": "string" }, "unicodeRange": { "type": "string" } } } }
+      }
+    },
+    "sting": {
+      "type": "object",
+      "properties": { "style": { "enum": ["reveal", "pop", "slide", "orbit", "bloom", "none"] }, "dur": { "type": "number" }, "sfx": { "type": "string" }, "bg": { "type": "string" }, "file": { "type": "string", "description": "optional video sting instead of the animated logo" } }
+    }
+  }
+}

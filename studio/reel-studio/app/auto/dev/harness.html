@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KBB Studio · automation harness</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; font: 13px system-ui, sans-serif; background: #15151a; color: #eee; display: grid; grid-template-columns: 360px 1fr; gap: 12px; padding: 12px; }
+  canvas { background: #000; max-height: 92vh; width: auto; border-radius: 8px; }
+  #panel { background: #1f1f26; border-radius: 8px; padding: 12px; overflow: auto; max-height: 92vh; }
+  pre { white-space: pre-wrap; font-size: 11px; }
+</style>
+</head>
+<body>
+<div id="panel"><b>Automation harness</b><div id="drawer"></div><pre id="log"></pre></div>
+<canvas id="cv" width="540" height="960"></canvas>
+<script type="module">
+// Dev-only page for tools/r3-check.cjs: builds a project around a test clip using R1's core and drives app/auto.
+import { createProject, uid, createItem, fitBox } from '../../core/project.js';
+import { History } from '../../core/history.js';
+import { MediaStore } from '../../core/media.js';
+import { renderFrame } from '../../core/render.js';
+import { getModule } from '../../core/modules.js';
+import * as auto from '../index.js';
+
+const q = new URLSearchParams(location.search);
+let project = createProject({ name: 'harness', workspace: q.get('ws') || 'kbb', aspect: '9:16' });
+const history = new History(() => project);
+const media = new MediaStore({ getProject: () => project, engine: null });
+const log = (...a) => { document.getElementById('log').textContent += a.join(' ') + '\n'; };
+const ctx = {
+  get project() { return project; }, history, media, engine: { available: false }, ops: null,
+  workspace: { id: q.get('ws') || 'kbb', brandRef: q.get('ws') || 'kbb', name: q.get('ws') === 'planet-careers' ? 'Planet Careers' : 'KBB', industry: q.get('ws') === 'planet-careers' ? 'Immigration & study-visa consultancy' : 'Beauty' },
+  progress: (l) => { if (l) window.__phase = l; }, toast: (t) => log('toast:', t), seek: () => {}, playhead: () => 0, selection: () => [], openPanel: () => {},
+};
+window.H = { ctx, auto, history, getModule, get project() { return project; }, set project(p) { project = p; } };
+
+/** add a clip (src served by the test server) as the only video item */
+window.H.load = async (src, info, words = []) => {
+  const m = { id: uid('m'), kind: 'video', name: src.split('/').pop(), src, dur: info.dur, w: info.w, h: info.h, fps: 30, hasAudio: true, size: 0 };
+  project.media.push(m);
+  const vt = project.tracks.find(t => t.kind === 'video');
+  vt.items.push(createItem('clip', { media: m.id, t0: 0, in: 0, out: info.dur, ...fitBox(project.canvas, info.w, info.h, 'cover') }));
+  project.captions.words = words;
+  return m.id;
+};
+/** draw the project at t onto the visible canvas (same call the export makes) */
+window.H.draw = async (t) => {
+  const cv = document.getElementById('cv'), c = cv.getContext('2d');
+  const els = new Map();
+  const source = (item, st) => { const m = project.media.find(x => x.id === item.media); if (!m || m.kind !== 'video') return null; return els.get(m.id) || null; };
+  for (const m of project.media) if (m.kind === 'video') { const el = media.element(m.id); el.muted = true; if (el.readyState < 2) await new Promise(r => el.addEventListener('loadeddata', r, { once: true })); }
+  // seek the clip active at t
+  const vt = project.tracks.find(x => x.kind === 'video'); const it = vt.items.find(i => t >= i.t0 && t < i.t0 + (i.out - i.in));
+  if (it) { const el = media.element(it.media); await new Promise(r => { el.addEventListener('seeked', r, { once: true }); el.currentTime = it.in + (t - it.t0); }); els.set(it.media, el); }
+  renderFrame(c, project, t, { scale: cv.width / project.canvas.w, preview: true, source });
+};
+window.H.ready = true;
+log('ready');
+</script>
+</body>
+</html>
