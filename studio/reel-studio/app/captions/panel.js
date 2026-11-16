@@ -1,20 +1,29 @@
 // Caption editor panel. The editor mounts it with mountCaptionPanel(el, ctx) (ctx = EditorContext,
 // core/modules.js). It never mutates the project: every edit is a command through ctx.history.
 //
+// Header: Auto captions (model, language), "Music & sound tags" (Hide / Show ♪ icon / Keep as text) and the
+// company's vocabulary (words Whisper should spell right).
 // Transcript tab: click a word -> playhead jumps there; double-click -> edit in place (Enter keeps,
 // Esc cancels, empty deletes); split / merge / delete / add / nudge; find & replace; shift all;
-// fillers and low-confidence words are highlighted; emoji suggestions per line.
-// Style tab: live tiles of every style (company default first) + every field of the current style.
+// fillers and low-confidence words are highlighted; emoji suggestions per line; per-word and per-line style
+// overrides ("Word style" / "Line style", shown with a dot) and "Reset to style"; words the cleaner removed.
+// Script tab: script-view.js. Style tab: the template gallery (gallery.js) + every field of the current style.
 
-import { STYLES, resolveStyle, diffStyle, styleForWorkspace, stylesForWorkspace, ANIMS, BG_TYPES, CASES } from './styles.js';
+import { resolveStyle, diffStyle, styleForWorkspace, ANIMS, BG_TYPES, CASES } from './styles.js';
 import { FONT_FAMILIES, ARABIC_FONTS, loadCaptionFonts } from './fonts.js';
 import { isFiller, isRtlText, lineText } from './model.js';
 import { suggestEmoji } from './emoji.js';
-import { drawCaptions } from './render.js';
 import * as C from './commands.js';
 import { LANGS } from './stt.js';
 import { SPEECH_MODELS } from './models.js';
 import { autoCaptions } from './auto.js';
+import { TAG_MODES, DEFAULT_TAG_MODE, TAG_ICON } from './nonspeech.js';
+import { vocabFor } from './vocab.js';
+import { alignEdit } from './script.js';
+import { mountGallery } from './gallery.js';
+import { mountScript } from './script-view.js';
+import { dragPrefs } from './drag.js';
+import { wsDir } from '../core/config.js';
 
 const h = (tag, attrs = {}, ...kids) => {
   const el = document.createElement(tag);
@@ -29,16 +38,13 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 const fmt = (t) => { const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s.toFixed(1).padStart(4, '0')}`; };
 
-const SAMPLE_EN = 'Glow up with this serum'.split(' ');
-const SAMPLE_AR = 'بشرة نضرة مع هذا السيروم'.split(' ');
-const SAMPLE_PRO = 'Study in Germany this March'.split(' ');
-
 export function mountCaptionPanel(el, ctx) {
   const P = () => ctx.project;
   const cap = () => P().captions || { words: [], lines: [] };
   const apply = (cmd) => { ctx.history.apply(cmd); return cmd; };
   let sel = -1;                     // selected word index
   let tab = 'transcript';
+  let ovMode = null;                // null | 'word' | 'line': the override editor under the selection bar
   let running = null;               // AbortController while transcribing
   const offs = [];
 
@@ -70,8 +76,35 @@ export function mountCaptionPanel(el, ctx) {
     } finally { running = null; progress.hidden = true; goBtn.disabled = false; }
   }
 
+  // Music & sound tags (per project, undoable)
+  const tagSel = h('select', { class: 'rs-cap-in', title: 'What captions do with [Music], ♪, (applause)…', 'data-k': 'soundTags' },
+    TAG_MODES.map((m) => h('option', { value: m.id }, m.label)));
+  tagSel.onchange = () => apply(C.setSoundTags(tagSel.value));
+  // Vocabulary: the company's words (workspace.captions.vocab), saved into workspace.json
+  const vocabTa = h('textarea', { class: 'rs-cap-in rs-cap-vocab', rows: 3, placeholder: 'One per line or comma-separated: brand, product, country, visa words…' });
+  const vocabCount = h('span', { class: 'rs-cap-muted' });
+  const vocabBox = h('details', { class: 'rs-cap-vocabbox' },
+    h('summary', {}, 'Words to spell right ', vocabCount),
+    vocabTa,
+    h('div', { class: 'rs-cap-row' }, h('button', { class: 'rs-cap-btn', onclick: saveVocab }, 'Save for this company'),
+      h('span', { class: 'rs-cap-muted' }, 'Whisper is told these words before it listens, and near-misses are corrected after.')));
+  function renderVocab() {
+    const ws = ctx.workspace;
+    vocabTa.value = Array.isArray(ws?.captions?.vocab) ? ws.captions.vocab.join('\n') : (ws?.captions?.vocab || '');
+    vocabCount.textContent = `(${vocabFor(ws).length})`;
+  }
+  async function saveVocab() {
+    const ws = ctx.workspace; if (!ws) { ctx.toast?.('Pick a company first', 'warn'); return; }
+    ws.captions = { ...(ws.captions || {}), vocab: vocabTa.value.split(/[\n,]/).map((s) => s.trim()).filter(Boolean) };
+    ws.modified = new Date().toISOString();
+    try { if (ctx.engine && (ctx.engine.available ?? true) && ws.id) await ctx.engine.writeFile(`${wsDir(ws.id)}/workspace.json`, ws); ctx.toast?.('Vocabulary saved', 'ok'); }
+    catch (e) { ctx.toast?.('Could not save: ' + e.message, 'warn'); }
+    renderVocab();
+  }
+
   const tabs = h('div', { class: 'rs-cap-tabs', role: 'tablist' },
     h('button', { role: 'tab', 'data-tab': 'transcript', onclick: () => show('transcript') }, 'Transcript'),
+    h('button', { role: 'tab', 'data-tab': 'script', onclick: () => show('script') }, 'Script'),
     h('button', { role: 'tab', 'data-tab': 'style', onclick: () => show('style') }, 'Style'));
 
   // ---------------------------------------------------------------- transcript tab
@@ -89,20 +122,23 @@ export function mountCaptionPanel(el, ctx) {
       h('button', { class: 'rs-cap-btn', title: 'Earlier', onclick: () => apply(C.shiftAll(-Math.abs(+shiftIn.value || 0))) }, '◀'),
       shiftIn,
       h('button', { class: 'rs-cap-btn', title: 'Later', onclick: () => apply(C.shiftAll(Math.abs(+shiftIn.value || 0))) }, '▶'),
-      h('span', { class: 'rs-cap-legend' }, h('b', { class: 'filler' }, 'filler'), ' ', h('b', { class: 'lowconf' }, 'check'))));
+      h('span', { class: 'rs-cap-legend' }, h('b', { class: 'filler' }, 'filler'), ' ', h('b', { class: 'lowconf' }, 'check'), ' ', h('b', { class: 'ovdot' }, 'styled'))));
 
   const selBar = h('div', { class: 'rs-cap-sel', hidden: true });
+  const ovBox = h('div', { class: 'rs-cap-ov', hidden: true });
+  const droppedBox = h('details', { class: 'rs-cap-dropped', hidden: true });
   const list = h('div', { class: 'rs-cap-list', role: 'list' });
-  const transcriptPane = h('div', { class: 'rs-cap-pane', 'data-pane': 'transcript' }, tools, selBar, list);
+  const transcriptPane = h('div', { class: 'rs-cap-pane', 'data-pane': 'transcript' }, tools, selBar, ovBox, list, droppedBox);
 
   function lineOfWord(i) { return cap().lines.find((L) => L.wordIdx[0] <= i && i <= L.wordIdx[1]); }
+  const lineHasOv = (c, L) => !!L.ov || c.words.slice(L.wordIdx[0], L.wordIdx[1] + 1).some((w) => w.ov);
 
   // The bar keeps its place and size while words exist, selected or not: if it appeared above the transcript on the
   // first click of a double-click, the words would move down and the second click would land on the bar instead.
   function renderSelBar() {
     const c = cap(), w0 = c.words[sel];
     selBar.hidden = !c.words.length;
-    if (!c.words.length) return;
+    if (!c.words.length) { ovBox.hidden = true; return; }
     const w = w0 || { w: '', t0: 0, t1: 0 };
     const L = w0 ? lineOfWord(sel) : null;
     selBar.classList.toggle('idle', !w0);
@@ -119,8 +155,65 @@ export function mountCaptionPanel(el, ctx) {
         h('button', { class: 'rs-cap-btn danger', title: 'Delete word', disabled: !w0, onclick: () => { apply(C.deleteWords(sel)); sel = Math.min(sel, cap().words.length - 1); } }, 'Delete')),
       h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Line'),
         h('button', { class: 'rs-cap-btn', disabled: !L, onclick: () => apply(C.nudgeLine(L.id, -0.1)) }, '−0.1 s'),
-        h('button', { class: 'rs-cap-btn', disabled: !L, onclick: () => apply(C.nudgeLine(L.id, 0.1)) }, '+0.1 s')));
+        h('button', { class: 'rs-cap-btn', disabled: !L, onclick: () => apply(C.nudgeLine(L.id, 0.1)) }, '+0.1 s'),
+        h('button', { class: 'rs-cap-btn' + (ovMode === 'word' ? ' on' : ''), 'data-ov': 'word', disabled: !w0, onclick: () => { ovMode = ovMode === 'word' ? null : 'word'; renderSelBar(); } }, '🎨 Word style'),
+        h('button', { class: 'rs-cap-btn' + (ovMode === 'line' ? ' on' : ''), 'data-ov': 'line', disabled: !L, onclick: () => { ovMode = ovMode === 'line' ? null : 'line'; renderSelBar(); } }, '🎨 Line style')));
+    renderOv(w0, L);
   }
+
+  // ---- per-word / per-line overrides (on top of the global style)
+  function renderOv(w0, L) {
+    if (!ovMode || (ovMode === 'word' && !w0) || (ovMode === 'line' && !L)) { ovBox.hidden = true; ovBox.replaceChildren(); return; }
+    ovBox.hidden = false;
+    const st = resolveStyle(cap().style);
+    const isWord = ovMode === 'word';
+    const ov = (isWord ? w0.ov : L.ov) || {};
+    const id = isWord ? 'w' + sel : L.id;
+    const set = (patch, field) => apply(isWord ? C.setWordOverride(sel, patch, 'captions.ov:' + id + ':' + field) : C.setLineOverride(L.id, patch, 'captions.ov:' + id + ':' + field));
+    const num = (v, d) => (v == null ? d : v);
+    const range = (min, max, step, v, on) => { const i = h('input', { type: 'range', min, max, step, value: v }); i.oninput = () => on(+i.value); return i; };
+    const color = (v, on) => { const i = h('input', { type: 'color', value: toHex(v) }); i.oninput = () => on(i.value); return i; };
+    const select = (opts, v, on) => { const s = h('select', { class: 'rs-cap-in' }, opts.map((o) => h('option', { value: o[0] }, o[1]))); s.value = v; s.onchange = () => on(s.value); return s; };
+    const textIn = h('input', { class: 'rs-cap-in', dir: 'auto', 'data-f': 'text', value: isWord ? w0.w : lineText(cap(), L) });
+    textIn.onchange = () => {
+      const v = textIn.value.replace(/\s+/g, ' ').trim();
+      if (isWord) apply(C.editWord(sel, v));
+      else { const c = cap(); apply(C.replaceSpan(L.wordIdx[0], L.wordIdx[1], alignEdit(c.words.slice(L.wordIdx[0], L.wordIdx[1] + 1), v), 'Edit line')); }
+    };
+    const fonts = [['', 'Style font'], ...FONT_FAMILIES.map((f) => [f, f])];
+    const rows = [
+      field('Text', textIn),
+      field('Size', h('span', { class: 'rs-cap-pair' }, range(20, 220, 1, num(ov.size, st.size), (v) => set({ size: v }, 'size')),
+        h('button', { class: 'rs-cap-btn ghost', title: 'Back to the style size', onclick: () => set({ size: null }, 'size0') }, '↺'))),
+      field('Colour', h('span', { class: 'rs-cap-pair' }, color(ov.color || st.color, (v) => set({ color: v }, 'color')),
+        h('button', { class: 'rs-cap-btn ghost', onclick: () => set({ color: null }, 'color0') }, '↺'))),
+      field('Font', select(fonts, ov.font || '', (v) => set({ font: v || null }, 'font'))),
+      field('Weight', select([['', 'Style'], ...[300, 400, 500, 600, 700, 800, 900].map((x) => [String(x), String(x)])], ov.weight ? String(ov.weight) : '', (v) => set({ weight: v ? +v : null }, 'weight'))),
+    ];
+    if (isWord) {
+      const hl = h('input', { type: 'checkbox', checked: !!ov.hl, 'data-f': 'hl' });
+      const hlc = color(ov.hl || st.accent || '#ffd400', (v) => set({ hl: v }, 'hl'));
+      hl.onchange = () => set({ hl: hl.checked ? hlc.value : null }, 'hlon');
+      const emo = h('input', { class: 'rs-cap-in', 'data-f': 'emoji', value: ov.emoji || '', size: 4, placeholder: '✨' });
+      emo.onchange = () => set({ emoji: emo.value.trim().slice(0, 8) || null }, 'emoji');
+      const sugg = suggestEmoji([w0.w], 4);
+      rows.push(field('Highlight', h('span', { class: 'rs-cap-pair' }, hl, hlc)),
+        field('Emoji', h('span', { class: 'rs-cap-pair' }, emo, sugg.map((e) => h('button', { class: 'rs-cap-chip', onclick: () => set({ emoji: e }, 'emoji') }, e)))));
+    } else {
+      rows.push(
+        field('Spoken word', color(ov.active || st.active || st.color, (v) => set({ active: v, ...(st.activeBg ? { activeBg: v } : {}) }, 'active'))),
+        field('Animation', select([['', 'Style'], ...ANIMS.map((a) => [a, a])], ov.anim || '', (v) => set({ anim: v || null }, 'anim'))),
+        field('Position', h('span', { class: 'rs-cap-pair' },
+          range(0, 1, 0.01, num(ov.pos?.x, st.pos.x ?? 0.5), (v) => set({ pos: { ...(L.ov?.pos || { y: st.pos.y }), x: v } }, 'posx')),
+          range(0, 1, 0.01, num(ov.pos?.y, st.pos.y), (v) => set({ pos: { x: st.pos.x ?? 0.5, ...(L.ov?.pos || {}), y: v } }, 'posy')))),
+        h('div', { class: 'rs-cap-muted' }, 'Tip: drag the caption on the video to move this line (Shift-drag moves all lines).'));
+    }
+    ovBox.replaceChildren(
+      h('div', { class: 'rs-cap-formhead' }, h('b', {}, isWord ? `Word “${w0.w}”` : 'This line'),
+        h('button', { class: 'rs-cap-btn ghost', 'data-x': 'reset', title: 'Remove this line’s own style (and its words’)', onclick: () => apply(isWord ? C.setWordOverride(sel, { color: null, size: null, font: null, weight: null, hl: null, emoji: null }) : C.resetOverrides(L.id)) }, 'Reset to style')),
+      ...rows);
+  }
+  function field(label, input) { return h('label', { class: 'rs-cap-field' }, h('span', {}, label), input); }
 
   function addAfter(i) {
     apply(C.insertWords(i, '…'));
@@ -128,34 +221,48 @@ export function mountCaptionPanel(el, ctx) {
     edit(sel);
   }
 
+  function renderDropped() {
+    const d = cap().dropped || [];
+    droppedBox.hidden = !d.length;
+    if (!d.length) return;
+    const why = { outro: 'outro in silence/music', loop: 'repeated', silent: 'in silence', prompt: 'prompt echo' };
+    droppedBox.replaceChildren(h('summary', {}, `Removed by the cleaner (${d.length})`),
+      ...d.map((x, k) => h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, fmt(x.t0)), h('span', { dir: 'auto' }, x.w),
+        h('span', { class: 'rs-cap-muted' }, `· ${why[x.why] || x.why}`), h('button', { class: 'rs-cap-btn ghost', onclick: () => apply(C.restoreDropped(k)) }, 'Put back'))));
+  }
+
   function renderList() {
     const c = cap();
+    tagSel.value = c.soundTags || DEFAULT_TAG_MODE;
     list.replaceChildren();
     if (!c.words.length) {
       list.append(h('div', { class: 'rs-cap-empty' }, 'No captions yet. Press ', h('b', {}, 'Auto captions'), ' — or add a first word: ',
         h('button', { class: 'rs-cap-btn', onclick: () => { apply(C.insertWords(-1, '…')); sel = 0; renderList(); edit(0); } }, '+ Word')));
-      renderSelBar(); return;
+      renderSelBar(); renderDropped(); return;
     }
     const frag = document.createDocumentFragment();
     for (const L of c.lines) {
       const words = [];
       for (let i = L.wordIdx[0]; i <= L.wordIdx[1]; i++) {
         const w = c.words[i];
-        words.push(h('span', { class: 'rs-cap-w' + (isFiller(w.w) ? ' filler' : '') + ((w.conf ?? 1) < 0.6 ? ' lowconf' : '') + (i === sel ? ' sel' : ''),
-          'data-i': i, title: `${w.t0.toFixed(2)}–${w.t1.toFixed(2)} s` }, w.w), ' ');
+        words.push(h('span', { class: 'rs-cap-w' + (isFiller(w.w) ? ' filler' : '') + ((w.conf ?? 1) < 0.6 ? ' lowconf' : '') + (i === sel ? ' sel' : '') + (w.ov ? ' ov' : '') + (w.tag ? ' tag' : ''),
+          'data-i': i, title: `${w.t0.toFixed(2)}–${w.t1.toFixed(2)} s${w.tag ? ' · sound tag (' + (c.soundTags || DEFAULT_TAG_MODE) + ')' : ''}` }, w.tag && (c.soundTags || DEFAULT_TAG_MODE) === 'icon' ? (TAG_ICON[w.tag] || '♪') + ' ' + w.w : w.w), ' ');
       }
       const words2 = c.words.slice(L.wordIdx[0], L.wordIdx[1] + 1).map((w) => w.w);
       const emo = suggestEmoji(words2, 3);
-      const row = h('div', { class: 'rs-cap-line', role: 'listitem', 'data-line': L.id },
-        h('button', { class: 'rs-cap-time', title: 'Go to this line', onclick: () => ctx.seek?.(L.t0) }, fmt(L.t0)),
+      const styled = lineHasOv(c, L);
+      const row = h('div', { class: 'rs-cap-line' + (styled ? ' has-ov' : ''), role: 'listitem', 'data-line': L.id },
+        h('button', { class: 'rs-cap-time', title: styled ? 'Go to this line · this line has its own style' : 'Go to this line', onclick: () => ctx.seek?.(L.t0) }, fmt(L.t0), styled ? h('i', { class: 'rs-cap-dot', 'aria-label': 'styled' }) : null),
         h('div', { class: 'rs-cap-text', dir: isRtlText(lineText(c, L)) ? 'rtl' : 'ltr' }, words),
         h('div', { class: 'rs-cap-emoji' },
           L.emoji ? h('button', { class: 'rs-cap-chip on', title: 'Remove emoji', onclick: () => apply(C.setLineEmoji(L.id, null)) }, L.emoji, ' ×') : null,
-          emo.filter((e) => e !== L.emoji).map((e) => h('button', { class: 'rs-cap-chip', title: 'Add emoji to this line', onclick: () => apply(C.setLineEmoji(L.id, e)) }, e))));
+          emo.filter((e) => e !== L.emoji).map((e) => h('button', { class: 'rs-cap-chip', title: 'Add emoji to this line', onclick: () => apply(C.setLineEmoji(L.id, e)) }, e)),
+          styled ? h('button', { class: 'rs-cap-chip', 'data-x': 'reset-line', title: 'Reset this line to the style', onclick: () => apply(C.resetOverrides(L.id)) }, '↺ style') : null));
       frag.append(row);
     }
     list.append(frag);
     renderSelBar();
+    renderDropped();
     markNow(ctx.playhead?.() ?? 0);
   }
 
@@ -199,73 +306,25 @@ export function mountCaptionPanel(el, ctx) {
     nowEl?.classList.remove('now'); nowEl = el2; nowEl?.classList.add('now');
   }
 
-  // ---------------------------------------------------------------- style tab
-  const tilesEl = h('div', { class: 'rs-cap-tiles' });
+  // ---------------------------------------------------------------- script tab
+  const scriptPane = h('div', { class: 'rs-cap-pane', 'data-pane': 'script', hidden: true });
+  let script = null;
+
+  // ---------------------------------------------------------------- style tab (gallery + fields)
+  const galleryEl = h('div', { class: 'rs-cap-gallery' });
   const form = h('div', { class: 'rs-cap-form' });
-  const stylePane = h('div', { class: 'rs-cap-pane', 'data-pane': 'style', hidden: true }, tilesEl, form);
-  let tiles = [];
+  const stylePane = h('div', { class: 'rs-cap-pane', 'data-pane': 'style', hidden: true }, galleryEl, form);
+  const currentSpec = () => P().captions?.style || styleForWorkspace(ctx.workspace);
+  const gallery = mountGallery(galleryEl, ctx, {
+    currentId: () => resolveStyle(currentSpec()).id,
+    onPick: (spec) => apply(C.setStyle(spec, true)),
+    sampleWords() {
+      const c = cap();
+      const L = c.lines.find((x) => x.wordIdx[1] - x.wordIdx[0] >= 3 && !c.words[x.wordIdx[0]].tag) || c.lines[0];
+      return L ? c.words.slice(L.wordIdx[0], Math.min(L.wordIdx[1], L.wordIdx[0] + 7) + 1).map((w) => w.w) : null;
+    },
+  });
 
-  function sampleProject(spec, words) {
-    const st = resolveStyle(spec);
-    const src = words || (st.id === 'arabic-first' ? SAMPLE_AR : st.group === 'Pro' ? SAMPLE_PRO : SAMPLE_EN);
-    const mk = (arr, t0 = 0.25) => arr.map((w, i) => ({ w, t0: t0 + i * 0.32, t1: t0 + i * 0.32 + 0.3, conf: 1 }));
-    const ws = mk(src);
-    const lines = st.anim === 'one-word' ? ws.map((w, i) => ({ id: 's' + i, t0: w.t0, t1: w.t1 + 0.02, wordIdx: [i, i] }))
-      : [{ id: 's', t0: 0, t1: 99, wordIdx: [0, ws.length - 1] }];
-    const captions = { style: spec, words: ws, lines };
-    if (st.bilingual) { const a = mk(SAMPLE_AR); captions.alt = { words: a, lines: [{ id: 'a', t0: 0, t1: 99, wordIdx: [0, a.length - 1] }] }; }
-    return { canvas: { w: 1080, h: 1920 }, captions, dur: ws[ws.length - 1].t1 + 0.8 };
-  }
-
-  function sampleWords() {
-    const c = cap();
-    const L = c.lines.find((x) => x.wordIdx[1] - x.wordIdx[0] >= 3) || c.lines[0];
-    return L ? c.words.slice(L.wordIdx[0], Math.min(L.wordIdx[1], L.wordIdx[0] + 7) + 1).map((w) => w.w) : null;
-  }
-
-  function currentSpec() { return P().captions?.style || styleForWorkspace(ctx.workspace); }
-
-  function renderTiles() {
-    const wsDefault = styleForWorkspace(ctx.workspace);
-    const cur = resolveStyle(currentSpec()).id;
-    const words = sampleWords();
-    tiles = stylesForWorkspace(ctx.workspace).map((s) => {
-      const spec = s.id === wsDefault.id ? wsDefault : { id: s.id };
-      const cv = h('canvas', { width: 216, height: 384 });
-      const tile = h('button', { class: 'rs-cap-tile' + (s.id === cur ? ' on' : ''), 'data-style': s.id, title: s.name,
-        onclick: () => { apply(C.setStyle(spec, true)); } },
-        cv, h('span', {}, s.name), s.id === wsDefault.id && ctx.workspace ? h('em', {}, 'Company default') : null);
-      // the project's own words where they suit the style (Arabic words on Arabic styles and vice versa)
-      const wantsRtl = s.id === 'arabic-first';
-      const fits = words && (s.bilingual ? !isRtlText(words.join(' ')) : isRtlText(words.join(' ')) === wantsRtl);
-      // thumbnails are ~100 px wide: draw the text 1.7x so the look reads; the click applies the real size
-      const big = { ...(typeof spec === 'string' ? { id: spec } : spec), size: Math.round(s.size * 1.7), rowChars: Math.max(8, Math.round(s.rowChars / 1.7)), outline: { ...s.outline, w: s.outline.w * 1.4 } };
-      return { s, spec, cv, tile, proj: sampleProject(big, fits ? words.slice(0, 5) : null) };
-    });
-    tilesEl.replaceChildren(...tiles.map((x) => x.tile));
-    drawTiles(1.2);
-  }
-
-  function drawTiles(t) {
-    for (const x of tiles) {
-      const c2 = x.cv.getContext('2d');
-      c2.setTransform(216 / 1080, 0, 0, 384 / 1920, 0, 0);
-      tileBackdrop(c2);
-      drawCaptions(c2, null, t % x.proj.dur, x.proj);
-    }
-  }
-
-  // one animation loop, only while the Style tab is on screen; ~15 fps is plenty for thumbnails
-  let raf = 0, last = 0;
-  const loop = (now) => {
-    raf = 0;
-    if (tab !== 'style' || !el.isConnected || document.hidden) return;
-    if (now - last > 66) { last = now; drawTiles(now / 1000); }
-    raf = requestAnimationFrame(loop);
-  };
-  const startLoop = () => { if (!raf) raf = requestAnimationFrame(loop); };
-
-  function field(label, input) { return h('label', { class: 'rs-cap-field' }, h('span', {}, label), input); }
   function renderForm() {
     const spec = currentSpec(), st = resolveStyle(spec);
     const set = (patch, relayout = false) => {
@@ -275,6 +334,9 @@ export function mountCaptionPanel(el, ctx) {
     const sel2 = (opts, v, on) => { const s = h('select', { class: 'rs-cap-in' }, opts.map((o) => h('option', { value: o }, o))); s.value = v; s.onchange = () => on(s.value); return s; };
     const color = (v, on) => { const i = h('input', { type: 'color', value: toHex(v) }); i.oninput = () => on(i.value); return i; };
     const range = (min, max, step, v, on, relayout) => { const i = h('input', { type: 'range', min, max, step, value: v }); i.oninput = () => on(+i.value); if (relayout) i.onchange = () => apply(C.relayout()); return i; };
+    const anyOv = cap().lines.some((L) => L.ov) || cap().words.some((w) => w.ov);
+    const scope = h('select', { class: 'rs-cap-in', 'data-k': 'dragScope' }, h('option', { value: 'line' }, 'This line'), h('option', { value: 'all' }, 'All lines'));
+    scope.value = dragPrefs.scope; scope.onchange = () => { dragPrefs.scope = scope.value; };
     form.replaceChildren(
       h('div', { class: 'rs-cap-formhead' }, h('b', {}, st.name),
         h('button', { class: 'rs-cap-btn ghost', onclick: () => apply(C.setStyle({ id: st.id }, true)) }, 'Reset'),
@@ -290,10 +352,13 @@ export function mountCaptionPanel(el, ctx) {
       field('Shadow', h('span', { class: 'rs-cap-pair' }, range(0, 40, 1, st.shadow.blur, (v) => set({ shadow: { ...st.shadow, blur: v, y: Math.round(v / 4) } })), color(st.shadow.color, (v) => set({ shadow: { ...st.shadow, color: v } })))),
       field('Background', h('span', { class: 'rs-cap-pair' }, sel2(BG_TYPES, st.bg.type, (v) => set({ bg: { ...st.bg, type: v } })), color(st.bg.color, (v) => set({ bg: { ...st.bg, color: v } })))),
       field('Bg opacity', range(0, 1, 0.05, st.bg.opacity, (v) => set({ bg: { ...st.bg, opacity: v } }))),
-      field('Position', range(0, 1, 0.01, st.pos.y, (v) => set({ pos: { y: v } }))),
+      field('Position', range(0, 1, 0.01, st.pos.y, (v) => set({ pos: { ...st.pos, y: v } }))),
+      field('Left / right', range(0, 1, 0.01, st.pos.x ?? 0.5, (v) => set({ pos: { ...st.pos, x: v } }))),
       field('Animation', sel2(ANIMS, st.anim, (v) => set({ anim: v }, v === 'one-word' || st.anim === 'one-word'))),
       field('Line length', range(8, 44, 1, st.rowChars, (v) => set({ rowChars: v }), true)),
       field('Rows', sel2(['1', '2'], String(st.maxRows), (v) => set({ maxRows: +v }, true))),
+      field('Drag moves', scope),
+      anyOv ? h('button', { class: 'rs-cap-btn', 'data-x': 'reset-all', onclick: () => apply(C.resetOverrides()) }, '↺ Reset every line to the style') : null,
     );
   }
 
@@ -301,11 +366,16 @@ export function mountCaptionPanel(el, ctx) {
   function show(t) {
     tab = t;
     for (const b of tabs.children) b.setAttribute('aria-selected', String(b.dataset.tab === t));
-    transcriptPane.hidden = t !== 'transcript'; stylePane.hidden = t !== 'style';
-    if (t === 'style') { renderTiles(); renderForm(); startLoop(); }
+    transcriptPane.hidden = t !== 'transcript'; stylePane.hidden = t !== 'style'; scriptPane.hidden = t !== 'script';
+    if (t === 'style') { gallery.render(); renderForm(); gallery.start(); } else gallery.stop();
+    if (t === 'script') { if (!script) script = mountScript(scriptPane, ctx, apply); else script.render(); }
+    if (t === 'transcript') renderList();
   }
 
-  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, modelSel, langSel), progress), tabs, transcriptPane, stylePane);
+  el.append(h('div', { class: 'rs-cap-head' },
+    h('div', { class: 'rs-cap-row' }, goBtn, modelSel, langSel), progress,
+    h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel), vocabBox),
+  tabs, transcriptPane, scriptPane, stylePane);
 
   let queued = false;
   const refresh = () => {
@@ -313,24 +383,28 @@ export function mountCaptionPanel(el, ctx) {
     requestAnimationFrame(() => {
       queued = false;
       if (sel >= cap().words.length) sel = cap().words.length - 1;
-      if (tab === 'transcript') renderList(); else { renderForm(); for (const x of tiles) x.tile.classList.toggle('on', x.s.id === resolveStyle(currentSpec()).id); }
+      tagSel.value = cap().soundTags || DEFAULT_TAG_MODE;
+      if (tab === 'transcript') renderList();
+      else if (tab === 'script') { if (!scriptPane.contains(document.activeElement)) script?.render(); }
+      else { renderForm(); gallery.mark(resolveStyle(currentSpec()).id); }
     });
   };
   if (ctx.bus) {
     offs.push(ctx.bus.on('project:change', refresh), ctx.bus.on('project:load', () => { sel = -1; refresh(); }),
       ctx.bus.on('playhead', (e) => tab === 'transcript' && markNow(e.t)),
-      ctx.bus.on('workspace', () => tab === 'style' && renderTiles()));
+      ctx.bus.on('workspace', () => { renderVocab(); if (tab === 'style') gallery.render(); }));
   }
   modelSel.onchange = langSel.onchange = () => saveMeta();
   function saveMeta() { if (ctx.ops?.setProject) ctx.history.apply(ctx.ops.setProject({ meta: { ...(P().meta || {}), captions: { model: modelSel.value, lang: langSel.value } } }, 'Caption settings')); }
 
-  loadCaptionFonts().then(() => tab === 'style' && drawTiles(1.2));
+  loadCaptionFonts().then(() => tab === 'style' && gallery.draw(1.2, true));
+  renderVocab();
   show('transcript');
-  renderList();
   return {
-    show, refresh, runAuto, edit,
+    show, refresh, runAuto, edit, gallery, get script() { return script; },
     select(i) { sel = i; renderList(); },
-    destroy() { offs.forEach((f) => f()); cancelAnimationFrame(raf); el.replaceChildren(); el.classList.remove('rs-cap'); },
+    overrides(mode) { ovMode = mode; renderSelBar(); },
+    destroy() { offs.forEach((f) => f()); gallery.destroy(); el.replaceChildren(); el.classList.remove('rs-cap'); },
   };
 }
 
@@ -339,10 +413,4 @@ function toHex(c) {
   if (/^#[0-9a-f]{3}$/i.test(c)) return '#' + [...c.slice(1)].map((x) => x + x).join('');
   const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c || '');
   return m ? '#' + [m[1], m[2], m[3]].map((x) => (+x).toString(16).padStart(2, '0')).join('') : '#000000';
-}
-
-function tileBackdrop(c) {
-  const g = c.createLinearGradient(0, 0, 1080, 1920);
-  g.addColorStop(0, '#e9b9a0'); g.addColorStop(0.5, '#8e5a6c'); g.addColorStop(1, '#1f1a2e');
-  c.fillStyle = g; c.fillRect(0, 0, 1080, 1920);
 }

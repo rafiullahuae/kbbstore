@@ -9,18 +9,27 @@
 //   commands (editWord, deleteWords, insertWords, splitLine, mergeWithNext, retimeWord, nudgeWord,
 //     nudgeLine, shiftAll, findReplace, setStyle, relayout, setLineEmoji, setAlt, setCaptions)
 //   Transcriber                                    raw speech-to-text (words with times)
+//   captureWords(transcriber, pcm16k, opts)        the capture pipeline (VAD windows, second listen, vocabulary
+//                                                  prompt, sound tags / hallucinations, spelling, speakers)
+//   script: paragraphs, toTXT, toSRT, toVTT, alignEdit, parseSubtitles   the full script + exports
+//   nonspeech / vocab                              tag + hallucination detection, company vocabulary
 
 import { registerModule } from '../core/modules.js';
 import { registerLayer } from '../core/render.js';
 import { drawCaptions } from './render.js';
 import { mountCaptionPanel } from './panel.js';
-import { autoCaptions } from './auto.js';
+import { autoCaptions, captureWords } from './auto.js';
+import './drag.js';                                   // drag a caption line on the canvas (core canvas grab)
 import { loadCaptionFonts } from './fonts.js';
 
 export * as commands from './commands.js';
 export { STYLES, resolveStyle, styleForWorkspace, diffStyle } from './styles.js';
 export { Transcriber } from './stt.js';
 export { buildLines } from './model.js';
+export * as script from './script.js';
+export * as nonspeech from './nonspeech.js';
+export * as vocab from './vocab.js';
+export { captureWords };
 export { drawCaptions, mountCaptionPanel, autoCaptions, loadCaptionFonts };
 
 registerLayer('caption', drawCaptions);
