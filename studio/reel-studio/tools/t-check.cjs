@@ -17,6 +17,7 @@ const { execFileSync } = require('child_process');
 const { chromium } = require('playwright');
 const server = require('./r2-serve.cjs');
 const H = require('./studio-harness.cjs');
+const { startClaudeMock } = require('./d-claude-mock.cjs');
 
 const ROOT = H.ROOT, OUT = path.join(ROOT, 'tools/out/t'), SHOTS = path.join(ROOT, 'shots/t');
 fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(SHOTS, { recursive: true });
@@ -259,7 +260,10 @@ async function part2(browser) {
   const STUDIO = H.makeStudio();
   // the models this check uses, linked into the throwaway studio (the engine checks their sizes: they are the real files)
   for (const org of ['Xenova', 'onnx-community']) fs.symlinkSync(path.join(ROOT, 'models', org), path.join(STUDIO, 'models', org));
-  const e = await H.startEngine(STUDIO);
+  // Connect Claude goes to a local stand-in of the Messages API (tools/d-claude-mock.cjs), never to api.anthropic.com
+  const KEY = 'sk-ant-test-' + 'x'.repeat(32);
+  const mock = await startClaudeMock({ key: KEY });
+  const e = await H.startEngine(STUDIO, ['--test-claude-base', mock.url]);
   const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
   const page = await context.newPage();
   page.setDefaultTimeout(0);
@@ -334,6 +338,17 @@ async function part2(browser) {
   check('editor: English ad clip captioned by Whisper (real capture pipeline)', en.lang === 'en' && en.n > 20, `${en.n} words: ${en.text.slice(0, 120)}…`);
   await ev(() => kbbEditor.seek(2.2));
   await shot('t-editor-original');
+
+  // "Best quality (Claude)" with NO key saved: falls back to the offline engine silently, nothing sent anywhere
+  const fb = await ev(async () => {
+    const S = await import('/app/captions/translate/service.js'); const ctx = kbbEditor.context();
+    const n = kbbEditor.history.undoStack.length;
+    const r = await S.translateCaptions(ctx, 'ar', 'replace', { engineId: 'claude', check: false });
+    const out = { engine: r.result.engine, lang: kbbEditor.project.captions.lang, steps: kbbEditor.history.undoStack.length - n };
+    kbbEditor.history.undo();
+    return out;
+  });
+  check('Claude not connected: "Best quality (Claude)" falls back to the offline engine silently (no request made)', fb.engine === 'mt-m2m100' && fb.lang === 'ar' && fb.steps === 1 && mock.log.length === 0, JSON.stringify(fb));
 
   // EN -> AR, replace, ONE click
   const ar = await translateUI('ar', 'replace');
@@ -415,6 +430,27 @@ async function part2(browser) {
   check('editor: ↺ Restore original — English captions, no bilingual line, no translated track (translations kept for later)', rs.lang === 'en' && !rs.alt && !rs.trackItems.length && rs.json === ar.before.json
     && await ev(() => Object.keys(kbbEditor.project.captions.tr.langs).length === 3));
 
+  // ---------------- Best quality (Claude) through Connect Claude (mock Messages API)
+  await ev(async (key) => (await import('/app/settings/claude.js')).claudeSave({ key }), KEY);
+  await page.click('.rs-cap-tabs button[data-tab="transcript"]'); await page.click('[data-x="open-translate"]');
+  await page.waitForSelector('.rs-tr [data-x="claude"]:not([disabled])', { timeout: 15000 });
+  await page.selectOption('.rs-tr select[data-k="tgt"]', 'ar'); await page.selectOption('.rs-tr select[data-k="mode"]', 'replace');
+  const cb = await state();
+  await page.click('.rs-tr [data-x="claude"]');
+  await page.waitForSelector('.modal-back .btn.primary');                     // the once-per-session question (what is sent)
+  await shot('t-editor-claude-ask');
+  await page.click('.modal-back .btn.primary');
+  await page.waitForFunction((n) => kbbEditor.history.undoStack.length > n && !document.querySelector('.rs-tr .rs-cap-progress:not([hidden])'), cb.steps);
+  const ca = await state();
+  const req = mock.log.find((x) => x.url === '/v1/messages' && /Translate from/.test(x.body?.messages?.[0]?.content || ''));
+  const sent = req?.body?.messages?.[0]?.content || '';
+  check('Best quality (Claude): one click → asked once → the engine sends ONLY the caption sentences + glossary words to the (mock) Messages API with the saved key; captions replaced, one undo step',
+    !!req && req.headers['x-api-key'] === KEY && ca.lang === 'ar' && /^\[ar\] /.test(ca.text) && ca.steps === cb.steps + 1 && sent.length < 6000 && !/data:|blob:|\.mp4|\.wav/.test(sent),
+    `${mock.log.length} request(s), ${sent.length} chars sent; captions: ${ca.text.slice(0, 80)}`);
+  check('Best quality (Claude): timings re-split onto the original lines like the offline engines', await timingsOk());
+  await ev(() => kbbEditor.history.undo());
+  check('Best quality (Claude): undo restores the original', (await state()).json === ar.before.json);
+
   // ---------------- Arabic clip: AR -> EN
   await ev(() => kbbEditor.goHome());
   await page.waitForSelector('.home', { timeout: 30000 });
@@ -432,7 +468,7 @@ async function part2(browser) {
   const real = errors.filter((x) => !/No available adapters|AudioContext was not allowed/.test(x));
   check('editor: no console errors', real.length === 0, real.slice(0, 3).join(' | '));
   check('editor: no network outside the local engine', outside.length === 0, outside.slice(0, 3).join(' '));
-  await context.close(); await H.stopEngine(e);
+  await context.close(); await H.stopEngine(e); mock.close();
   fs.rmSync(STUDIO, { recursive: true, force: true });
 }
 

@@ -54,8 +54,10 @@ export function mountTranslate(el, ctx, apply) {
   tgtSel.value = prefs.tgt; modeSel.value = prefs.mode;
   const status = h('div', { class: 'rs-tr-status rs-cap-muted' });
   const goBtn = h('button', { class: 'rs-cap-btn primary', 'data-x': 'translate', onclick: () => run() }, '🌐 Translate');
-  const cl = claudeStatus(ctx);
-  const claudeBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'claude', disabled: !cl.connected, title: cl.note, onclick: () => run('claude') }, '✨ Best quality (Claude)');
+  const claudeBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'claude', disabled: true, title: CLAUDE_NOTE, onclick: () => run('claude') }, '✨ Best quality (Claude)');
+  const claudeNote = h('div', { class: 'rs-cap-muted rs-tr-claude', 'data-k': 'claude-note' }, '✨ ' + CLAUDE_NOTE);
+  const refreshClaude = () => claudeStatus(ctx).then((cl) => { claudeBtn.disabled = !cl.connected || !!running; claudeBtn.title = cl.note; claudeNote.hidden = cl.connected; }, () => {});
+  refreshClaude();
   const restoreBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'restore', onclick: restore }, '↺ Restore original');
   const getBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'get', hidden: true, onclick: getLang }, '⬇ Get this language');
   const bar = h('div', { class: 'rs-cap-bar' }, h('i'));
@@ -87,7 +89,7 @@ export function mountTranslate(el, ctx, apply) {
       h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'From'), srcSel, h('span', {}, '→'), tgtSel),
       h('div', { class: 'rs-cap-row' }, modeSel, goBtn),
       h('div', { class: 'rs-cap-row' }, getBtn, restoreBtn, claudeBtn),
-      cl.connected ? null : h('div', { class: 'rs-cap-muted rs-tr-claude', 'data-k': 'claude-note' }, '✨ ' + cl.note),
+      claudeNote,
       status, progress, glossBox),
     langChips, reviewHead, review, exports);
 
@@ -285,7 +287,7 @@ export function mountTranslate(el, ctx, apply) {
     } catch (e) { ctx.toast?.('Export failed: ' + e.message, 'error'); return null; }
   }
 
-  function render() { renderSrc(); renderLangs(); renderReview(); renderStatus(); }
+  function render() { renderSrc(); renderLangs(); renderReview(); renderStatus(); refreshClaude(); }
   srcSel.onchange = tgtSel.onchange = () => renderStatus();
   modeSel.onchange = () => { prefs.mode = modeSel.value; };
   renderSrc(); renderGlossary();

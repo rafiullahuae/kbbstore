@@ -7,7 +7,7 @@ import { Translator } from './client.js';
 import { ENGINES, engineCovers } from './engines.js';
 import { translateTrack, translateBatch, assess, sentencesOf, layout } from './pipeline.js';
 import { translateWithClaude } from './claude.js';
-import { glossaryFor } from './glossary.js';
+import { glossaryFor, westernDigits } from './glossary.js';
 import { sourceLangOf, LANG, langName } from './langs.js';
 import { applyTranslation, editSentence, sourceOf } from './commands.js';
 import { requestFor } from './engines.js';
@@ -108,7 +108,15 @@ export async function translateCaptions(ctx, tgt, mode = 'replace', opts = {}) {
   const src = opts.src || sourceLangOf({ ...source, lang: source.lang || cap.lang });
   if (src === tgt) throw new Error(`The captions are already in ${langName(tgt)}.`);
   const onProgress = opts.onProgress || (() => {});
-  if (opts.engineId === 'claude') return translateCaptionsClaude(ctx, source, src, tgt, mode, opts);
+  if (opts.engineId === 'claude') {
+    // no key, "Not now", or a failed call: fall back to the offline engine without fuss (a short note says why)
+    try { return await translateCaptionsClaude(ctx, source, src, tgt, mode, opts); }
+    catch (e) {
+      if (e.name === 'AbortError') throw e;
+      if (!e.notConnected) ctx.toast?.(e.denied ? 'Claude not used — translating offline.' : 'Claude did not answer (' + e.message + ') — translating offline.', 'warn');
+      opts = { ...opts, engineId: undefined };
+    }
+  }
   let plan = await planFor(ctx, src, tgt);
   const engineId = opts.engineId || (plan.needInstall && opts.install !== false ? plan.best : plan.eng);
   if (!engineId) throw new Error(`No translation model for ${langName(src)} → ${langName(tgt)} yet — press “Get this language”.`);
@@ -137,13 +145,13 @@ export async function translateCaptions(ctx, tgt, mode = 'replace', opts = {}) {
 }
 
 /** "Best quality (Claude)": the same sentences, glossary, checks and re-split, translated through Connect Claude
- *  (claude.js — a hook until Connect Claude exists; it refuses while not connected and makes no request). */
+ *  (claude.js -> app/settings/claude.js claudeRun; the engine makes the call). Throws when Claude cannot be used. */
 async function translateCaptionsClaude(ctx, source, src, tgt, mode, opts) {
   const glossary = glossaryFor(ctx.workspace);
   const sents = sentencesOf({ ...source, lang: src });
   opts.onProgress?.(0.1, 'Asking Claude…');
   const outs = await translateWithClaude(ctx, { src, tgt, sentences: sents.map((s) => s.text), glossary });
-  sents.forEach((s, i) => Object.assign(s, { out: String(outs[i] || '').trim(), attempt: 'claude' }, assess(s.text, String(outs[i] || ''), tgt, glossary, null)));
+  sents.forEach((s, i) => { const out = westernDigits(String(outs[i] || '')).replace(/\s+/g, ' ').trim(); Object.assign(s, { out, attempt: 'claude' }, assess(s.text, out, tgt, glossary, null)); });
   const result = { lang: tgt, src, engine: 'claude', back: null, ...layout(source, sents), sents: sents.map(({ text, out, idx, chunks, flags, score, bt, attempt }) => ({ text, out, idx, chunks, flags, score, bt, attempt })) };
   const cmd = applyTranslation(result, mode);
   ctx.history.apply(mode === 'track' && ctx.ops ? ctx.ops.batch(`Translate captions → ${tgt.toUpperCase()} (second track)`, [cmd, ...trackItemCmds(ctx, tgt)]) : cmd);
