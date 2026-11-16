@@ -7,15 +7,16 @@ import { addSound } from './commands.js';
 import { heat } from './lib/pacing.js';
 
 const CSS = `
-.vx { display: grid; gap: 8px; padding: 10px 10px 24px; font-size: 13px; }
+.vx { display: grid; gap: 8px; padding: 10px 10px 24px; font-size: 13px; min-width: 0; overflow-x: hidden; }
+.vx details, .vx .vx-body { min-width: 0; }
 .vx details { border: 1px solid var(--line2); border-radius: 10px; background: var(--panel2); }
 .vx summary { cursor: pointer; padding: 9px 11px; font-weight: 700; list-style: none; display: flex; gap: 8px; align-items: center; }
 .vx summary::-webkit-details-marker { display: none; }
-.vx summary small { margin-left: auto; color: var(--muted); font-weight: 500; }
+.vx summary small { margin-left: auto; color: var(--muted); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vx .vx-body { display: grid; gap: 8px; padding: 0 11px 11px; }
 .vx .vx-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.vx .vx-row > select, .vx .vx-row > input { flex: 1; min-width: 70px; }
-.vx button.vx-b { border: 1px solid var(--line2); background: var(--panel3); border-radius: 8px; padding: 6px 10px; font-weight: 600; font-size: 12px; }
+.vx .vx-row > select, .vx .vx-row > input { flex: 1 1 0; min-width: 64px; }
+.vx button.vx-b { border: 1px solid var(--line2); background: var(--panel3); border-radius: 8px; padding: 6px 10px; font-weight: 600; font-size: 12px; white-space: normal; text-align: center; }
 .vx button.vx-b.pri { background: var(--ws); border-color: var(--ws); color: #fff; }
 .vx button.vx-b:hover { filter: brightness(1.12); }
 .vx .vx-out { color: var(--muted); font-size: 12px; white-space: pre-wrap; }
@@ -60,7 +61,7 @@ export function mountPanel(root, ctx, V) {
   box.appendChild(section('🪝', 'Hook builder', '0–2 s', true,
     h('div.vx-row', lang, btn('✨ Write 10 hooks', () => { seed = 0; showLines(); }), btn('🔄 Others', () => { seed++; showLines(); })),
     hookList,
-    h('div.vx-row', btn('Use this hook', (b) => busy(b, hookOut, async () => { if (!lines.length) showLines(); const r = await V.buildHook(ctx, { line: chosen }); hookOut.replaceChildren(h('b', `“${r.line.text}”`), ` — 0–2 s, punch-in + sound hit${r.check?.issues.length ? `\nFirst frame: ${r.check.issues.join(', ')}${r.check.fix ? (r.check.fix.trimTo ? ` → trimmed to ${r.check.fix.trimTo.toFixed(1)} s` : ' → colour lifted') : ''}` : '\nFirst frame: clear'}`); }), true),
+    h('div.vx-row', btn('Use this hook', (b) => busy(b, hookOut, async () => { if (!lines.length) showLines(); const r = await V.buildHook(ctx, { line: chosen }); hookOut.replaceChildren(h('b', h('bdi', `“${r.line.text}”`)), ` — 0–2 s, punch-in + sound hit${r.check?.issues.length ? `\nFirst frame: ${r.check.issues.join(', ')}${r.check.fix ? (r.check.fix.trimTo ? ` → trimmed to ${r.check.fix.trimTo.toFixed(1)} s` : r.check.fix.cover ? ` → the clear frame at ${(+r.check.fix.cover.until).toFixed(1)} s shown over it` : ' → colour lifted') : ''}` : '\nFirst frame: clear'}`); }), true),
       btn('🧪 First-frame check', (b) => busy(b, hookOut, async () => { const r = await V.firstFrameCheck(ctx); hookOut.textContent = r.issues.length ? `First frame: ${r.issues.join(', ')} (luma ${r.stats.luma}, sharpness ${r.stats.sharp}). Best opening at ${r.best.t.toFixed(1)} s.` : `First frame is clear (luma ${r.stats.luma}, saturation ${r.stats.sat}).`; }))),
     hookOut,
     h('div.vx-row', btn('⏩ Flash-forward opener', (b) => busy(b, ffOut, async () => { const r = await V.flashForward(ctx); ffOut.textContent = `The best moment (${r.from.toFixed(1)}–${r.to.toFixed(1)} s) now plays first, then “wait for it”.`; }))), ffOut));

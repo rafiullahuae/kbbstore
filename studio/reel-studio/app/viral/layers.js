@@ -128,7 +128,7 @@ registerLayer('viral.cta', (ctx, item, t, project, env) => {
   const tx = rtl ? w - h * 0.95 : h * 0.95, maxW = w - h * 1.25;
   ctx.textAlign = rtl ? 'right' : 'left'; ctx.direction = rtl ? 'rtl' : 'ltr'; ctx.textBaseline = 'middle';
   ctx.fillStyle = c.ink || '#14141a';
-  let tpx = h * 0.27; ctx.font = font(st, 900, tpx, title); while (ctx.measureText(title).width > maxW && tpx > h * 0.12) { tpx *= 0.92; ctx.font = font(st, 900, tpx, title); }
+  let tpx = h * 0.31; ctx.font = font(st, 900, tpx, title); while (ctx.measureText(title).width > maxW && tpx > h * 0.12) { tpx *= 0.92; ctx.font = font(st, 900, tpx, title); }
   const kw = String(st.keyword || '');
   if (kw && title.includes(kw)) { // the keyword sits on a chip
     const pre = title.slice(0, title.indexOf(kw)), pw = ctx.measureText(pre).width, kwW = ctx.measureText(kw).width, y0 = sub ? h * 0.37 : h / 2;
@@ -137,7 +137,7 @@ registerLayer('viral.cta', (ctx, item, t, project, env) => {
     ctx.fillStyle = c.ink || '#14141a';
   }
   ctx.fillText(title, tx, sub ? h * 0.37 : h / 2, maxW);
-  if (sub) { ctx.globalAlpha *= 0.75; ctx.font = font(st, 600, h * 0.17, sub); ctx.fillText(sub, tx, h * 0.68, maxW); }
+  if (sub) { ctx.globalAlpha *= 0.75; ctx.font = font(st, 600, h * 0.19, sub); ctx.fillText(sub, tx, h * 0.68, maxW); }
   ctx.restore();
   // a bouncing arrow towards the app's buttons (comment / share / save live on the right rail)
   if (['comment', 'share', 'save', 'dm'].includes(st.kind) && lt > 0.4) {
@@ -163,7 +163,7 @@ registerLayer('viral.progress', (ctx, item, t, project, env) => {
   if (cur < 0) return;
   const since = lt - ch[cur].t0, pop = back(since / 0.3);
   const label = `${st.label || 'STEP'} ${cur + 1}/${ch.length}`, title = ch[cur].title || '';
-  const y = bh + 18 * u, px = 34 * u;
+  const y = bh + 18 * u, px = 44 * u;
   ctx.save(); ctx.translate(0, y);
   ctx.font = font(st, 900, px, label); const lw = ctx.measureText(label).width + px;
   ctx.save(); ctx.translate(lw / 2, px * 0.7); ctx.scale(pop, pop); ctx.translate(-lw / 2, -px * 0.7);
@@ -172,7 +172,7 @@ registerLayer('viral.progress', (ctx, item, t, project, env) => {
   ctx.restore();
   if (title) {
     ctx.globalAlpha *= clamp(since / 0.35);
-    const tpx = 40 * u; ctx.font = font(st, 800, tpx, title); ctx.textBaseline = 'middle'; ctx.textAlign = isAr(title) ? 'right' : 'left'; ctx.direction = isAr(title) ? 'rtl' : 'ltr';
+    const tpx = 46 * u; ctx.font = font(st, 800, tpx, title); ctx.textBaseline = 'middle'; ctx.textAlign = isAr(title) ? 'right' : 'left'; ctx.direction = isAr(title) ? 'rtl' : 'ltr';
     const tw = Math.min(w - lw - px, ctx.measureText(title).width + tpx * 0.8), x0 = lw + px * 0.4;
     ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.beginPath(); roundRect(ctx, x0, 0, tw, px * 1.4, px * 0.5); ctx.fill();
     ctx.fillStyle = c.text || '#ffffff'; ctx.fillText(title, isAr(title) ? x0 + tw - tpx * 0.4 : x0 + tpx * 0.4, px * 0.72, tw - tpx * 0.8);

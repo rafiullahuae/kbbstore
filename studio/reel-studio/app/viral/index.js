@@ -10,7 +10,7 @@
 //   V.safeCheck(ctx, platform) · V.autoNudge(ctx, platform) · V.loopEnding(ctx) · V.addCta(ctx, {kind}) · V.chapters(ctx)
 //   V.variations(ctx) · V.claimCheck(ctx) · V.fixClaims(ctx, findings)
 import { registerModule, registerTimelineStrip, registerExportCheck } from '../core/modules.js';
-import { registerPrepare, renderFrame, activeItems, drawItem } from '../core/render.js';
+import { registerPrepare, renderFrame, activeItems, drawItem, boxAt } from '../core/render.js';
 import { ops } from '../core/history.js';
 import { MediaStore } from '../core/media.js';
 import { exportMp4 } from '../core/export.js';
@@ -136,9 +136,12 @@ export async function firstFrameCheck(ctx) {
   // the best opening frame before the first word (cutting into a word is never a fix)
   const usable = samples.filter((s) => s.t <= Math.max(0, firstWord - 0.05));
   const best = usable.reduce((a, b) => (scoreOf(b) > scoreOf(a) + 1e-9 && !issuesOf(b).some((x) => x === 'black') ? b : a), first);
+  // ...or, when it runs under the first words, the first clear frame shown over it (the sound stays as it is)
+  const later = samples.filter((s) => s.t > best.t && !issuesOf(s).includes('black') && !issuesOf(s).includes('dark')).sort((a, b) => scoreOf(b) - scoreOf(a) || a.t - b.t)[0];
   let fix = null;
   if (issues.length) {
-    if (best.t > 0 && issuesOf(best).length < issues.length) fix = { trimTo: best.t };
+    if (best.t > 0 && issuesOf(best).length < issues.length && !issuesOf(best).includes('black')) fix = { trimTo: best.t };
+    else if ((issues.includes('black') || issues.includes('blurry')) && later) fix = { cover: later.t };
     else if (issues.includes('dark') || issues.includes('dull')) fix = { vivid: Math.min(2, projectDuration(p)) };
   }
   return { stats: first, issues, best: { t: best.t, score: r3(scoreOf(best)), issues: issuesOf(best) }, fix, samples: samples.length };
@@ -149,6 +152,7 @@ export async function buildHook(ctx, { line, punch = true, sound = true, fixFram
   line = line || lines.slice().sort((a, b) => b.score - a.score)[0];
   const [kit, a, check] = await Promise.all([kitOf(ctx), analysis(ctx).catch(() => null), fixFrame ? firstFrameCheck(ctx) : null]);
   const snd = sound ? await soundById(ctx, HIT[industryOf(ctx.workspace)]) : null;
+  if (check?.fix?.cover != null) check.fix.cover = { until: check.fix.cover, still: await saveStill(ctx, await renderStill(ctx, ctx.project, check.fix.cover, { filter: (tr) => tr.kind === 'video' }), 'first-good-frame') };
   apply(ctx, 'Hook · ' + line.text, (p) => {
     if (check?.fix) E.editFirstFrame(p, check.fix);
     E.editHookText(p, { line, kit, punch, face: faceAt(p, a, 0.3), sound: snd });
@@ -374,7 +378,9 @@ export function safeCheck(ctx, platform = currentPlatform(ctx)) {
     if (tr.hidden || tr.kind === 'video' || tr.kind === 'music' || tr.kind === 'sfx') continue;
     for (const it of tr.items) {
       if (!CHECKED.has(it.type) || it.media) continue;
-      const d = it.out - it.in, box = union([0.35, d / 2, d - 0.25].map((x) => drawnBox(p, tr, it, it.t0 + Math.max(0, Math.min(d - 0.02, x)))));
+      const d = it.out - it.in, ts = [0.35, d / 2, d - 0.25].map((x) => it.t0 + Math.max(0, Math.min(d - 0.02, x)));
+      // what is drawn; for a sticker its whole box too (a glyph sits a little inside it, and he will move the box)
+      const box = union([...ts.map((t) => drawnBox(p, tr, it, t)), ...(it.type === 'sticker' ? ts.map((t) => boxAt(it, t)) : [])]);
       if (!box) continue;
       const h = hits(box, rects); if (h.length) out.push({ kind: 'item', id: it.id, name: it.name || it.type, box, zones: h.map((r) => `${PLATFORMS[r.platform]?.name || ''}: ${r.what}`) });
     }
@@ -427,7 +433,12 @@ export const CTA_KINDS = {
 };
 export async function addCta(ctx, { kind, lang, keyword, title, sub, dur = 3.2 } = {}) {
   const p = ctx.project, kit = await kitOf(ctx), ind = industryOf(ctx.workspace), L = lang || langOf(ctx);
-  kind = kind || (ind === 'visa' ? 'comment' : 'link');
+  // what he already says on camera wins: "comment GLOW", "DM us", "WhatsApp", "link in bio", "save this", "call us"
+  const said = (p.captions?.words || []).map((w) => w.w).join(' ');
+  const cm = /\b(?:comment|type)\s+["“']?([A-Za-z0-9]{2,15})/i.exec(said) || /(?:اكتب|اكتبي)\s+["“']?([\u0600-\u06FFA-Za-z0-9]{2,15})/.exec(said);
+  const heard = cm ? 'comment' : /\b(dm|direct message|message us)\b|راسلنا/i.test(said) ? 'dm' : /whats\s?app|واتساب/i.test(said) ? 'whatsapp' : /link in (my |the )?bio|الرابط/i.test(said) ? 'link' : /\bsave (this|it)\b|احفظ/i.test(said) ? 'save' : /\bcall (us|now)\b|اتصل/i.test(said) ? 'call' : null;
+  kind = kind || heard || (ind === 'visa' ? 'comment' : 'link');
+  if (!keyword && cm && kind === 'comment') keyword = cm[1].toUpperCase();
   keyword = keyword || (ind === 'visa' ? (L === 'ar' ? 'فيزا' : 'VISA') : ind === 'beauty' ? (L === 'ar' ? 'جلو' : 'GLOW') : (L === 'ar' ? 'نعم' : 'YES'));
   const K = CTA_KINDS[kind] || CTA_KINDS.link;
   const contact = ctx.workspace?.contact || kit.contactLine || '';
@@ -436,7 +447,9 @@ export async function addCta(ctx, { kind, lang, keyword, title, sub, dur = 3.2 }
   const T = projectDuration(p), end = p.tracks.flatMap((t) => t.items).find((i) => i.type === 'auto.endcard');
   const stop = end ? end.t0 : T, t0 = Math.max(0, stop - dur);
   const sound = await soundById(ctx, 'hook-ding');
-  apply(ctx, 'CTA · ' + title, (q) => E.editCta(q, { kind, title, sub, keyword: kind === 'comment' || kind === 'dm' ? keyword : '', lang: L, kit, t0: r3(t0), dur: r3(stop - t0), sound }));
+  const tops = captionBoxes(p).filter((b) => b.t >= t0 - 0.5 && b.t <= stop + 0.5).map((b) => b.box.y);
+  const above = tops.length ? Math.min(...tops) : null;
+  apply(ctx, 'CTA · ' + title, (q) => E.editCta(q, { kind, title, sub, keyword: kind === 'comment' || kind === 'dm' ? keyword : '', lang: L, kit, t0: r3(t0), dur: r3(stop - t0), sound, above }));
   return { kind, title, sub, t0: r3(t0), dur: r3(stop - t0) };
 }
 

@@ -74,9 +74,15 @@ export function editHookText(p, o) {
   p.meta.viral = { ...(p.meta.viral || {}), hook: { text: o.line.text, kind: o.line.kind || null } };
 }
 
-/** first-frame fix: trim the lead-in to `trimTo` (s), or lift the colour of the first `vivid` seconds */
-export function editFirstFrame(p, { trimTo = 0, vivid = 0 } = {}) {
+/** first-frame fix: trim the lead-in to `trimTo` (s); or, when the black/blur runs under the first words, show the first
+ *  good frame (`cover` = {still, until}) over it so the sound is untouched; or lift the colour of the first `vivid` s */
+export function editFirstFrame(p, { trimTo = 0, vivid = 0, cover = null } = {}) {
   if (trimTo > 0.02) cutRanges(p, [{ a: 0, b: trimTo }], { fade: 0.012 });
+  if (cover?.still) {
+    removeViral(p, ['first-frame']);
+    if (!p.media.some((m) => m.id === cover.still.id)) p.media.push(cover.still);
+    trackOf(p, 'overlay').items.push(createItem('clip', { media: cover.still.id, t0: 0, in: 0, out: r3(cover.until), x: 0, y: 0, w: p.canvas.w, h: p.canvas.h, viral: 'first-frame', name: 'First good frame' }));
+  }
   const first = clipAt(p, 0);
   if (vivid > 0 && first) { first.fx = (first.fx || []).filter((f) => f.viral !== 'first-frame'); pushFx(first, { type: 'viral.vivid', t0: 0, dur: vivid, b: 1.3, c: 1.18, s: 1.4, viral: 'first-frame' }); }
 }
@@ -136,7 +142,7 @@ export function editVideoHook(p, hookId, env) {
     case 'before-after': {
       const st = env.stills?.last; if (!st) throw new Error('before/after needs a frame from the end');
       if (!p.media.some((m) => m.id === st.id)) p.media.push(st);
-      top().items.push(createItem('clip', { media: st.id, t0: 0, in: 0, out: 0.6, x: 0, y: 0, w: c.w, h: c.h, viral: 'vhook', name: 'After (flash)' }));
+      trackOf(p, 'overlay').items.push(createItem('clip', { media: st.id, t0: 0, in: 0, out: 0.6, x: 0, y: 0, w: c.w, h: c.h, viral: 'vhook', name: 'After (flash)' }));   // under the labels
       const lb = (text, t0, dur, accent) => trackOf(p, 'text').items.push(createItem('viral.hook', { t0, in: 0, out: dur, ...hookBox(c, true), viral: 'vhook', name: 'Label ' + text,
         style: { text, accent, colors: colorsOf(env.kit), ...fontsOf(env.kit), anim: 'slam', size: Math.round(c.w * 0.1) } }));
       lb(env.lang === 'ar' ? 'بعد ✨' : 'AFTER ✨', 0, 0.6, env.lang === 'ar' ? 'بعد' : 'AFTER'); lb(env.lang === 'ar' ? 'قبل' : 'BEFORE', 0.62, 1.1, '');
@@ -286,8 +292,10 @@ export function editLoop(p, { still, d = 0.7 }) {
 export function editCta(p, s) {
   removeViral(p, ['cta']);
   const c = p.canvas, v = isVertical(c);
-  const w = Math.round(c.w * (v ? 0.72 : 0.6)), h = Math.round(w * (v ? 0.22 : 0.2));
-  const x = Math.round(v ? c.w * 0.07 : (c.w - w) / 2), y = Math.round(v ? c.h * 0.6 : c.h * 0.66);
+  const w = Math.round(c.w * (v ? 0.72 : 0.6)), h = Math.round(w * (v ? 0.25 : 0.2));
+  // above the captions when they would meet (s.above = the top of the highest caption cue in its time), else the lower middle
+  const x = Math.round(v ? c.w * 0.07 : (c.w - w) / 2), dflt = Math.round(v ? c.h * 0.6 : c.h * 0.66);
+  const y = s.above != null && s.above < dflt + h + 24 ? Math.max(Math.round(c.h * (v ? 0.14 : 0.1)), Math.round(s.above - h - 36)) : dflt;
   trackOf(p, 'overlay', { top: true, name: 'Hooks' }).items.push(createItem('viral.cta', { t0: r3(s.t0), in: 0, out: r3(s.dur), x, y, w, h, viral: 'cta', name: 'CTA · ' + s.kind,
     style: { kind: s.kind, title: s.title, sub: s.sub || '', keyword: s.keyword || '', lang: s.lang, colors: colorsOf(s.kit), ...fontsOf(s.kit) } }));
   if (s.sound) addSound(p, s.sound, s.t0 + 0.12, { feat: 'cta', volume: 0.6 });
