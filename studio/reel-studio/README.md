@@ -51,6 +51,21 @@ are for features coming in the next update, so you can leave them unticked for n
   **Stickers** (Planet Careers also gets flags, maps and country stickers for 33 countries), **Text**.
 * **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 30 or 60 fps; also 1:1, 4:5 or 16:9 if you tick them).
 
+* **⏱ Sync (word-perfect captions):** after **Auto captions** every word is moved to the exact moment it is said
+  (a speech model finds each word in the sound, then its start snaps to where the voice begins it) — one undo step,
+  automatic. The tab has **Sync words to the voice** (run it again any time), **Caption timing** (all captions ± ms),
+  **Show words early** (a few ms of lead), and **Word timing**: the sound around the playhead with every word on it —
+  drag a word, or its edges. Captions keep their timing through trims, splits, speed changes, silence removal and
+  re-ordering (a word whose part of the recording is cut waits off the timeline and comes back if you undo or extend).
+* **🎞 Cutaways (show something while talking):** mark a range — **I** and **O** keys, drag on the **🎞 Cutaways** strip
+  under the ruler, or click a word then Shift-click another in the tab — and choose **Image or video**, **New slide**,
+  **Product**, **Country** or **Occupation**. Only the picture changes: the voice, music and captions stay as they are
+  (a video cutaway's own sound is muted unless you raise **Its own sound**). Fit: **Fill** (slow push-in), **Fit + blur**,
+  **Bubble** (you in a round corner bubble), **Split**; transitions in/out. A slide has a theme, headline, bullet points,
+  price, offer, icon, logo, background and a text animation. Cutaways follow the clip under them through every edit and
+  go with it on a ripple delete. **✨ Suggest from what I say** proposes cutaways where you name a product, a price, a
+  country or a job — tick the ones you want.
+
 ### Make it go viral (the 🔥 Viral tab)
 
 One press each, and **⌘Z** takes any of them back in one step. Pressing one again replaces what it made before.
@@ -192,7 +207,7 @@ Sonnet 5.5 (Opus 5.5 and Haiku 5.5 can be picked).
 
 Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift+Delete ripple delete ·
 ⌘Z / ⇧⌘Z undo/redo · ⌘C ⌘V ⌘D copy/paste/duplicate · ⌘G / ⇧⌘G group/ungroup · M marker ·
-← → one frame · + − timeline zoom · ⌘E export · ? all shortcuts.
+← → one frame · + − timeline zoom · I / O mark a cutaway range · ⌘E export · ? all shortcuts.
 
 ## If something goes wrong
 

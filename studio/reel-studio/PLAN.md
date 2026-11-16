@@ -389,6 +389,22 @@ original sync time frame etc."*
 * Measured, not asserted: on clips with KNOWN word times (synthetic speech with exact timings, plus
   real speech aligned by hand), target median |error| ≤ 30 ms and 95th percentile ≤ 80 ms for word
   starts, in EN, AR and UR; report before/after vs Whisper-only.
+* **Built (Lane S, 16 Nov) — `app/sync/`.** Forced alignment with `NewComer00/wav2vec2-xlsr-multilingual-56-ONNX`
+  (voidful's XLSR-56, Apache-2.0; 4-bit, 248 MB, manifest id `word-sync`, required) in a worker: one CTC model for EN, AR,
+  UR (Urdu letters folded onto the Arabic/Persian alphabet) and HI; banded by Whisper's pauses (each stretch cut at the
+  quietest moment), Viterbi over the known words, then every start/end snapped to the voice's onset/offset (5 ms
+  envelope + band flux, ±120 ms) with words kept monotonic. Runs by itself after Auto captions (one undo step "Sync
+  words to the voice"); without the model it snaps only. Every word carries `src:[media, s0, s1, clip]`; a
+  `core/history.js` follow-up hook (new, additive: `registerHistoryHook`) re-places words from their media time after
+  any clip edit, in the same undo step; words whose recording is cut wait in `captions.offcut`. Per-project nudge and
+  lead (`meta.sync`) apply in the caption layer, so preview and export move together. ⏱ Sync tab: re-sync, model
+  download, nudge, lead, per-word drag on a waveform. Measured (tools/s-check.cjs, synthetic speech with known word
+  times): EN flite — Whisper-only median 219 / p95 616 ms → synced 2.7 / 32 ms; EN words run together 157/615 → 4.3/45;
+  EN second voice 244/614 → 4.8/66; in the editor from an MP4/AAC (decode + container + timeline clock) 2.9 / 32 ms,
+  signed bias −1.8 ms. AR and UR: the per-word MMS test voices are unreadable to Whisper, so only the aligner on the
+  true transcript is measurable: AR median 5 ms but p95 874 ms, UR 4.6 / 346 ms — **the p95 target is not met for
+  AR/UR** (a few words per clip land on a neighbour); real AR/UR speech with hand-aligned times is still owed.
+  Sync follows trim, move, speed, split + re-order, ripple delete, silence removal and caption edits with 0–0.4 ms error.
 
 ## Cutaways: show something while talking — queued 16 Nov (same next lane as word-perfect sync)
 
@@ -410,3 +426,13 @@ export."*
   using the b-roll matcher, as editable proposals.
 * Measured: preview = export frame diff < 6/255; audio waveform of the export identical to without the
   cutaway; captions' times unchanged; cutaway edges within one frame of the marks.
+* **Built (Lane S, 16 Nov) — `app/cutaways/`.** Item type `cutaway` on the overlay track with `link {m, s0, s1, c}` to
+  the talking clip's media time; the same history hook re-places it after trims, splits, ripples, speed changes and
+  re-ordering and removes it with a ripple delete of its range. Mark with I / O (new generic `registerKey` in
+  core/modules.js), a drag on the 🎞 Cutaways timeline strip, or caption words in the tab. Image, video (muted unless
+  "Its own sound" is raised), product / country / occupation, or a slide (themes, headline, bullets, price, offer, icon,
+  logo, product shot, brand/solid/photo background, fade/rise/pop/typewriter). Fits: fill (Ken Burns), fit + blur,
+  speaker bubble, split; in/out dissolve, slide, zoom, whip, wipe, flash. ✨ Auto cutaways: proposals from spoken
+  products, prices, countries, jobs and his tagged clips (content's keyword matcher), ticked before one undo step.
+  Measured: edges on the frame grid (export Δ 0.1 outside / picture inside); exported sound PCM sha256 identical with
+  and without four cutaways; captions byte-identical; preview vs export 1.7–3.7/255.
