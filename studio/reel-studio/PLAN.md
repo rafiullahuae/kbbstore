@@ -378,3 +378,24 @@ original sync time frame etc."*
 * Measured, not asserted: on clips with KNOWN word times (synthetic speech with exact timings, plus
   real speech aligned by hand), target median |error| ≤ 30 ms and 95th percentile ≤ 80 ms for word
   starts, in EN, AR and UR; report before/after vs Whisper-only.
+
+## Cutaways: show something while talking — queued 16 Nov (same next lane as word-perfect sync)
+
+The owner: *"option if i need to cut the video only, and place some media images or another video in place
+of, but the voice and captions remain same. like to show something in the video while talking. i should be
+able to mark it start end and create a separate slide which will sync in the video while preview and then
+export."*
+
+* Mark In / Out on the timeline (I and O keys, or drag a range on the ruler; or select caption words and
+  "Mark these words") → **Replace picture** with: an image, another video (its own sound muted by default,
+  optional mix), a product/country/occupation asset, or a **new slide** made in a slide designer (title,
+  bullet points, price/offer, logo, background from brand kit, icons, animated text presets, themes).
+* The original voice, music and captions stay exactly where they are; only the picture changes for that
+  range. Cutaways live on the overlay track as linked items: they follow ripple edits, trims, tightening and
+  reel re-ordering of the clip underneath; ripple-delete of the range removes them together.
+* Fit options: fill (Ken Burns), fit with blurred background, picture-in-picture (speaker in a corner
+  bubble), split screen; transitions in/out from the Look transitions; per-cutaway duration handles.
+* "Auto cutaways": suggest ranges from spoken keywords (product names, prices, countries, occupations)
+  using the b-roll matcher, as editable proposals.
+* Measured: preview = export frame diff < 6/255; audio waveform of the export identical to without the
+  cutaway; captions' times unchanged; cutaway edges within one frame of the marks.
