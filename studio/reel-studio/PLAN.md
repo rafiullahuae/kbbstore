@@ -342,3 +342,19 @@ template, the preview should play upon mouse hover, so i can be sure before impo
   real estate), face- and caption-safe, beat-reactive, brand-coloured, with matching intro/outro,
   transitions, text and SFX; auto-suggested. Plus hover-to-play previews on every gallery (templates,
   formats, themes, looks, transitions, music/SFX).
+
+## Working mode and the Configure page — the owner, 16 Nov
+
+*"why you waited for me? ... i need you to work all the time on this project. don't stop. i didn't checked
+the previous versions, so the next i need the complete studio version including all the phases and
+functions, also along with it, give me clear list which u need from me, and i need one configure page
+where i need to enter the logins, apis etc."*
+
+* Work continues without waiting for him between rounds; decisions he hasn't made take the recommended
+  option and are listed in the hand-over.
+* The next zip he receives is the COMPLETE studio (rounds 1–3: editor, captions + translation, automation,
+  viral, look & sound, content, themes + hover previews, Work Abroad + Photos, Brief → Designs with offline
+  AI visuals, Configure page) with one "What I need from you" list.
+* **Configure page** (⚙ in the top bar and on home): companies & brand kits, Connect Claude, photo sources
+  (Pexels/Unsplash), models, folders, social handles/contact lines, language defaults, about/version — all
+  keys stored privately by the engine, tested with a Test button, never written into projects or exports.
