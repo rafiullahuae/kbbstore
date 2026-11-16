@@ -5,11 +5,13 @@
 export const APP_NAME = 'KBB Studio';
 export const APP_VERSION = '0.1.0';
 
-/** Workspaces the studio seeds on first run (the owner, 16 Nov). brandRef = folder under brands/ (R3's kits). */
+/** Workspaces the studio seeds on first run (the owner, 16 Nov). brandRef = folder under brands/ (R3's kits): the kit's
+ *  colours, fonts, logo, industries, caption style and favourite recipes WIN (app/editor/kits.js); the values here are
+ *  only the fallback for a copy of the studio without its brands/ folder. */
 export const SEED_WORKSPACES = [
   {
     name: 'KBB', fullName: 'K-Beauty Bliss', industry: 'Beauty / K-beauty retail', brandRef: 'kbb',
-    colors: { primary: '#e8508b', secondary: '#2b1a24', accent: '#f6c1d4', text: '#ffffff', bg: '#000000' },
+    colors: { primary: '#C6395F', secondary: '#2A2228', accent: '#BE8E2E', text: '#ffffff', bg: '#000000' },
     contact: 'kbeautybliss.com',
   },
   {
