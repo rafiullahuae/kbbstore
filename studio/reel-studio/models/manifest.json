@@ -441,6 +441,7 @@
      "sha256": "fcf939032d4091cf232d6a2e751e172d0409e0c926db6283526151cf50ceb577"
     }
    ],
+   "group": "Speech",
    "licence": "Apache-2.0"
   },
   {
