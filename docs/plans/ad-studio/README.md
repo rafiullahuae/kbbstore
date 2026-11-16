@@ -14,7 +14,36 @@ node tools/nd-shots.cjs [out.jpg] [set] [ids-regex] # National Day contact sheet
 node tools/editing-shots.cjs          # shots/editing/*-{1280,390}.png: multi-select, group in Layers, Background panel, colour control
 node tools/check-companies.cjs        # companies, Planet Careers, country picker, KBB 0-diff (tools/kbb-baseline.json); writes shots/companies.png
 node tools/pc-shots.cjs [ids-regex]   # shots/planet-careers-{1..6}.jpg: every Planet Careers template in post / square / story
+node tools/check-occupations.cjs      # Work Abroad: 44 templates, occupation picker sweep, honest copy, photo slot + cut-out; shots/work-abroad-picker.png
+node tools/wa-shots.cjs [ids-regex]   # shots/work-abroad-{1..5}.jpg: every Work Abroad template in post / square / story
 ```
+
+## Work Abroad (16 Nov 2026) -- image-first hiring ads
+
+The owner: *"not just for study abroad, i need work abroad also, for different occupations, and i don't want generic
+text ad. i want to focus more on the images, specially the pictures of the workers, employees in specific uniform."*
+
+**44 templates** (Planet Careers set, category *Work abroad*; any company on that set gets them in its own kit), 11
+layout families in `src/templates-wa.js`: We're hiring (worker hero + landmark + tools + badges) · Job card · Split ·
+Poster · Collage (duo / trio of occupations) · Uniform & tools (call-outs) · Team · Staff pass · Journey (home → abroad) ·
+How to apply · Urgent hiring (open roles list). Each in 4:5, 1:1, 9:16.
+
+* **The worker is the hero.** Every design has a worker photo slot that ships with a placeholder figure in that
+  occupation's uniform (faceless flat illustration, drawn for KBB Studio -- real photos cannot be bundled). Select it →
+  **Put a photo here…**: his photo fills the slot (cover, the head kept) and stays a slot. **✂ Cut out the person**
+  removes the background offline with MediaPipe's selfie segmenter (Apache-2.0, the model KBB Studio's Look tab uses),
+  shipped as **`ad-studio-cutout.js` -- keep it in the same folder as `ad-studio.html`**; it loads only on the first
+  cut-out, so the studio stays ~2.3 MB. One Ctrl+Z brings the background back.
+* **Occupation picker** (top bar, beside Country): 100 occupations in 10 sectors from
+  `studio/reel-studio/library/occupations/occupations.json` (the same list as KBB Studio). One click swaps the worker
+  figure (a photo he put in stays), the job title in English and Arabic ("Welders", "Work in Poland as a welder",
+  "مطلوب لحّام"), the three tool icons and names, and the accent colours; his other edits stay; Ctrl+Z undoes it. The
+  Country picker works alongside it. Edit → Add also places any occupation's worker (as a photo slot) or any tool icon.
+* **Honest by construction:** salary, visa type, contract, start date, openings are `‹edit›` boxes; every design carries
+  "Requirements and terms confirmed at consultation."; no number, promise or "guaranteed" anywhere (check-occupations
+  fails on a digit, currency, % or "guarantee" outside an ‹edit› box).
+
+Contact sheets: `shots/work-abroad-1.jpg` … `-5.jpg`, `shots/work-abroad-picker.png`.
 
 ## Companies (16 Nov 2026)
 

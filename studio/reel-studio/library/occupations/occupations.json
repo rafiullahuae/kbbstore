@@ -1527,7 +1527,7 @@
     "en": "AC Technician",
     "ar": "فني تكييف وتبريد"
    },
-   "inSentence": "an ac technician",
+   "inSentence": "an AC technician",
    "plural": {
     "en": "AC Technicians",
     "ar": "فني تكييف وتبريد"
@@ -1607,7 +1607,7 @@
     "people": true
    },
    "setting": "a rooftop air-conditioning unit",
-   "prompt": "Professional photograph of {person} working as an ac technician in a rooftop air-conditioning unit, wearing branded work shirt or coverall, cap, gloves, tool bag, with cooling, pressure gauge, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
+   "prompt": "Professional photograph of {person} working as an AC technician in a rooftop air-conditioning unit, wearing branded work shirt or coverall, cap, gloves, tool bag, with cooling, pressure gauge, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
    "countries": [
     "pl",
     "cz",
@@ -6839,7 +6839,7 @@
     "en": "English Teacher",
     "ar": "معلّم لغة إنجليزية"
    },
-   "inSentence": "an english teacher",
+   "inSentence": "an English teacher",
    "plural": {
     "en": "English Teachers",
     "ar": "معلّم لغة إنجليزية"
@@ -6912,7 +6912,7 @@
     "people": true
    },
    "setting": "a language classroom",
-   "prompt": "Professional photograph of {person} working as an english teacher in a language classroom, wearing smart casual, with books, early learning, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
+   "prompt": "Professional photograph of {person} working as an English teacher in a language classroom, wearing smart casual, with books, early learning, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
    "countries": [
     "ae",
     "kr",
@@ -9337,7 +9337,7 @@
     "en": "CNC Operator",
     "ar": "مشغّل CNC"
    },
-   "inSentence": "a cnc operator",
+   "inSentence": "a CNC operator",
    "plural": {
     "en": "CNC Operators",
     "ar": "مشغّل CNC"
@@ -9409,7 +9409,7 @@
     "people": true
    },
    "setting": "a CNC milling machine",
-   "prompt": "Professional photograph of {person} working as a cnc operator in a CNC milling machine, wearing coverall, safety glasses, with machinery, face shield, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
+   "prompt": "Professional photograph of {person} working as a CNC operator in a CNC milling machine, wearing coverall, safety glasses, with machinery, face shield, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
    "countries": [
     "pl",
     "cz",
@@ -9623,7 +9623,7 @@
     "en": "IT Specialist",
     "ar": "أخصائي تقنية معلومات"
    },
-   "inSentence": "an it specialist",
+   "inSentence": "an IT specialist",
    "plural": {
     "en": "IT Specialists",
     "ar": "أخصائي تقنية معلومات"
@@ -9696,7 +9696,7 @@
     "people": true
    },
    "setting": "a modern office with screens",
-   "prompt": "Professional photograph of {person} working as an it specialist in a modern office with screens, wearing business casual, ID lanyard, with laptop, code, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
+   "prompt": "Professional photograph of {person} working as an IT specialist in a modern office with screens, wearing business casual, ID lanyard, with laptop, code, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
    "countries": [
     "de",
     "nl",
@@ -10286,7 +10286,7 @@
     "en": "HR Officer",
     "ar": "موظف موارد بشرية"
    },
-   "inSentence": "an hr officer",
+   "inSentence": "an HR officer",
    "plural": {
     "en": "HR Officers",
     "ar": "موظف موارد بشرية"
@@ -10357,7 +10357,7 @@
     "people": true
    },
    "setting": "a meeting room",
-   "prompt": "Professional photograph of {person} working as an hr officer in a meeting room, wearing business attire, with team, id & access, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
+   "prompt": "Professional photograph of {person} working as an HR officer in a meeting room, wearing business attire, with team, id & access, {region} {framing}, natural light, realistic, sharp focus, friendly and confident, no text, no logos, no watermark",
    "countries": [
     "de",
     "nl",

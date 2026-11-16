@@ -203,7 +203,8 @@ O('architect', 'office', 'office', 'Architect', 'مهندس معماري', ('#1C
 
 
 def article(o):
-    return ('an ' if o['an'] else 'a ') + o['en'].split(' / ')[0].lower()
+    keep = {'IT', 'AC', 'CNC', 'HR', 'English'}          # an IT specialist, an English teacher
+    return ('an ' if o['an'] else 'a ') + ' '.join(w if w in keep else w.lower() for w in o['en'].split(' / ')[0].split())
 
 
 def prompt(o):

@@ -14,7 +14,7 @@
   // ── built-in art (flags, country outlines, landmark silhouettes, company marks): constant SVG markup made at
   //    build time, packed gzip + base64 (≈140 KB instead of 370), unpacked once at start. An element names a piece
   //    by id ("flag:gb"); nothing stored or imported is ever used as markup. ──
-  var ART = Object.create(null), artMemo = Object.create(null), ARTID = /^(flag|map|lm|mark):[a-z0-9-]{2,24}$/;
+  var ART = Object.create(null), artMemo = Object.create(null), ARTID = /^(flag|map|lm|mark|fig|oi):[a-z0-9-]{2,24}$/;
   function loadArt() {
     try {
       if (!D.art || !window.DecompressionStream) return Promise.resolve();
@@ -26,7 +26,7 @@
   function artSrc(id, c) {
     var k = id + '|' + (c || ''); if (artMemo[k]) return artMemo[k];
     var svg = ART[id]; if (!svg) return '';
-    if (c && /^#[0-9a-fA-F]{6}/.test(c) && /^(map|lm):/.test(id)) svg = svg.split('#0b2545').join(c.slice(0, 7));
+    if (c && /^#[0-9a-fA-F]{6}/.test(c) && /^(map|lm|oi):/.test(id)) svg = svg.split('#0b2545').join(c.slice(0, 7));
     return (artMemo[k] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))));
   }
   // the product pictures, once: one class per product (the data lives in D, not twice)
@@ -145,6 +145,12 @@
     if (e.t === 'art') { if (typeof e.art !== 'string' || !ARTID.test(e.art)) return null; o.art = e.art; }
     if (['c1', 'c2', 'c3', 'ca'].indexOf(e.cy) >= 0) o.cy = e.cy;                 // takes the country's flag colour
     if (typeof e.cyk === 'string' && /^[nda]{1,3}$/.test(e.cyk)) o.cyk = e.cyk;     // holds the country's name
+    // Work Abroad: wk = a worker photo slot; ock = holds the occupation's words (o title, r Arabic, l "a welder", p / q plural,
+    // 0-2 tool names); oti = shows the occupation's tool icon n; oy = takes the occupation's colour
+    if (e.wk === true) o.wk = true;
+    if (typeof e.ock === 'string' && /^[orlpq012]{1,8}$/.test(e.ock)) o.ock = e.ock;
+    if (e.t === 'art' && (e.oti === 0 || e.oti === 1 || e.oti === 2)) o.oti = e.oti;
+    if (['u', 't', 'p', 'a'].indexOf(e.oy) >= 0) o.oy = e.oy;
     return o;
   }
   function prodOk(p) { return has(D.prods, p) || (/^u_[A-Za-z0-9][A-Za-z0-9_-]{5,63}$/.test(p) && has(images, p.slice(2))); }
@@ -158,6 +164,7 @@
     var d = { v: 1, id: typeof raw.id === 'string' && IMGID.test(raw.id) ? raw.id : uid('d'), name: str(raw.name, 60) || 'Untitled design', tpl: typeof raw.tpl === 'string' && /^[a-z0-9-]{1,40}$/.test(raw.tpl) ? raw.tpl : '', els: [], geo: {}, sets: {} };
     if (typeof raw.co === 'string' && /^[a-z0-9-]{1,40}$/.test(raw.co)) d.co = raw.co;
     if (typeof raw.cty === 'string' && KT.CTRY[raw.cty]) d.cty = raw.cty;
+    if (typeof raw.occ === 'string' && has(KT.OCC, raw.occ)) d.occ = raw.occ;
     var seen = {};
     raw.els.slice(0, 120).forEach(function (e) { var c = cleanEl(e, imgs); if (c && !seen[c.id]) { seen[c.id] = 1; d.els.push(c); } });
     if (!d.els.some(function (e) { return e.t === 'prods'; })) d.els.push({ id: 'prods', t: 'prods', name: 'Products' });
@@ -374,13 +381,14 @@
   }
   function contrast(hex) { var n = parseInt(hex.slice(1, 7), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 160 ? '#111111' : '#FFFFFF'; }
   // c = the company it is made for (default: the one open), cty = the country (country templates only)
-  function fromTemplate(t, c, cty) {
+  function fromTemplate(t, c, cty, occ) {
     c = c || co;
     var kit = t.co === 'pc', C = kit ? KT.CTRY[cty] || KT.CTRY[t.cty] || null : null;
+    var OC = kit && t.occ ? (has(KT.OCC, occ) ? KT.OCC[occ] : KT.OCC[t.occ]) : null;     // Work Abroad: the occupation
     var P = kit ? KT.kitPal(c.colors, fontKey(c.fonts.heading, 'afacad'), fontKey(c.fonts.body, 'afacad')) : c.id === 'kbb' ? brandPal(t.P) : brandPal(t.P);
     var d = { v: 1, id: uid('d'), name: t.name, tpl: t.id, els: [], geo: {}, sets: {}, anim: { in: 'fade', idle: 'none', sec: 3, len: 10 } };
     FMTS.forEach(function (f, fi) {
-      var r = KT.FAM[t.fam](f, t.T, P, t.O, C);
+      var r = KT.FAM[t.fam](f, t.T, P, t.O, C, OC);
       if (fi === 0) { d.bg = r.bg; d.els = r.els.map(function (e) { var x = Object.assign({}, e); delete x.g; return x; }); }
       d.geo[f] = {};
       r.els.forEach(function (e, i) {
@@ -391,7 +399,7 @@
       var n = r.slots.length;
       d.sets[f] = [0, 1, 2].map(function (s) { return r.slots.map(function (sl, j) { return itemFromSlot(sl, t.pp[(s * n + j) % t.pp.length]); }); });
     });
-    if (kit) { if (C) d.cty = C.code; d.els.forEach(function (e) { KT.tokens(e, C, c); }); }
+    if (kit) { if (C) d.cty = C.code; if (OC) d.occ = OC.id; d.els.forEach(function (e) { if (OC) KT.occTokens(e, OC); KT.tokens(e, C, c); }); }
     if (c.id !== 'kbb') {
       // another company: its name in the logo spot, its contact line, no pay badges unless its kit has them
       d.els.forEach(function (e) {
@@ -532,6 +540,7 @@
   // a flag, landmark or photo cropped to its shape: fills its box (cover), round / arch / rounded corners or a clip
   function crop(im, e, g) {
     var q = im.style, k = e.sh || 'rect'; q.objectFit = 'cover';
+    if (e.wk) q.objectPosition = '50% 18%';            // a worker photo keeps the head and the uniform when the slot crops it
     if (k === 'circle' || k === 'ellipse') q.borderRadius = '50%';
     else if (k === 'arch') q.borderRadius = (g.w / 2) + 'cqw ' + (g.w / 2) + 'cqw ' + (e.rad || 0) + 'cqw ' + (e.rad || 0) + 'cqw';
     else if (k === 'rect' || k === 'pill') q.borderRadius = k === 'pill' ? '999px' : (e.rad || 0) + 'cqw';
@@ -997,6 +1006,7 @@
     $('p-al').querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String((g.al || e.al || 'c') === b.dataset.v)); });
     $('del').disabled = e.t === 'prods'; $('dup').disabled = e.t === 'prods';
     $('ph-row').hidden = !e.ph;
+    $('ph-cut').hidden = !(e.wk && e.t === 'img');
     $('eres').disabled = !doc.tpl || !tplById[doc.tpl];
   }
   function propVal(n, p) {
@@ -1101,7 +1111,12 @@
   $('add-img').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
     readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) { var w = r.aspect >= 1 ? 40 : 40 * r.aspect; addEl({ t: 'img', name: r.name, img: r.id }, r2(w), r2(w / r.aspect)); }).catch(pictureError); };
   // flags, country outlines and landmark silhouettes (and the company marks) -- by name from the built-in list
-  function artName(id) { var m = /^(flag|map|lm|mark):(.+)$/.exec(id) || [], c = KT.CTRY[m[2]]; if (m[1] === 'lm') { var l = KT.CTRY_LIST.filter(function (x) { return x.lm === m[2]; })[0]; return 'Landmark · ' + (l ? l.lmName : m[2]); } return (m[1] === 'flag' ? 'Flag · ' : m[1] === 'map' ? 'Outline · ' : 'Mark · ') + (c ? c.name : m[2]); }
+  function occName(id) { return has(KT.OCC, id) ? KT.OCC[id].t[0] : id; }
+  function toolName(id) { var n = ''; KT.OCCS.some(function (o) { return o.tools.some(function (t) { if (t[0] === id) { n = t[1]; return true; } }); }); return n || id; }
+  function artName(id) {
+    if (id.indexOf('fig:') === 0) return 'Worker · ' + occName(id.slice(4));
+    if (id.indexOf('oi:') === 0) return 'Tool · ' + toolName(id.slice(3));
+    var m = /^(flag|map|lm|mark):(.+)$/.exec(id) || [], c = KT.CTRY[m[2]]; if (m[1] === 'lm') { var l = KT.CTRY_LIST.filter(function (x) { return x.lm === m[2]; })[0]; return 'Landmark · ' + (l ? l.lmName : m[2]); } return (m[1] === 'flag' ? 'Flag · ' : m[1] === 'map' ? 'Outline · ' : 'Mark · ') + (c ? c.name : m[2]); }
   function artOptions(sel, first) {
     if (first) { var o0 = mk('option', null, first); o0.value = ''; sel.appendChild(o0); }
     [['flag', 'Flags'], ['map', 'Country outlines'], ['lm', 'Landmarks']].forEach(function (g) {
@@ -1109,11 +1124,20 @@
       KT.CTRY_LIST.forEach(function (c) { var id = g[0] + ':' + (g[0] === 'lm' ? c.lm : c.code), o = mk('option', null, artName(id).split(' · ')[1]); o.value = id; og.appendChild(o); });
       sel.appendChild(og);
     });
+    // Work Abroad: a worker in each occupation's uniform (a photo slot) and the occupations' tool icons
+    var ow = document.createElement('optgroup'); ow.label = 'Workers (photo slots)';
+    KT.OCCS.forEach(function (o) { var x = mk('option', null, o.t[0]); x.value = 'fig:' + o.id; ow.appendChild(x); });
+    sel.appendChild(ow);
+    var ot = document.createElement('optgroup'), seenT = {}; ot.label = 'Tool icons';
+    KT.OCCS.forEach(function (o) { o.tools.forEach(function (t) { if (seenT[t[0]]) return; seenT[t[0]] = 1; var x = mk('option', null, t[1]); x.value = 'oi:' + t[0]; ot.appendChild(x); }); });
+    sel.appendChild(ot);
   }
   artOptions($('add-art'), 'Add a flag, outline or landmark…'); artOptions($('p-art'));
   $('add-art').onchange = function (ev) {
     var id = ev.target.value; ev.target.value = ''; if (!ARTID.test(id)) return;
     var fl = id.indexOf('flag:') === 0;
+    if (id.indexOf('fig:') === 0) { addEl({ t: 'art', name: 'Worker photo (tap → Put a photo here)', art: id, wk: true, ph: true }, 36, 45); return; }
+    if (id.indexOf('oi:') === 0) { addEl({ t: 'art', name: artName(id), art: id, col: co.colors.primary }, 14, 14); return; }
     addEl({ t: 'art', name: artName(id), art: id, col: fl ? undefined : co.colors.primary, sh: fl ? 'rect' : undefined, rad: fl ? 1 : undefined }, fl ? 24 : 36, fl ? 18 : 36);
   };
 
@@ -1560,7 +1584,7 @@
   })();
   function useTemplate(t, cty) {
     stopPlay();
-    act(function () { var d = fromTemplate(t, co, cty || (doc && doc.tpl === t.id && doc.cty) || ''); d.id = doc.id; d.name = t.name; doc = d; st.grp = null; setSel([]); st.set = 0; });
+    act(function () { var d = fromTemplate(t, co, cty || (doc && doc.tpl === t.id && doc.cty) || '', (doc && doc.tpl === t.id && doc.occ) || ''); d.id = doc.id; d.name = t.name; doc = d; st.grp = null; setSel([]); st.set = 0; });
     $('pname').value = doc.name; filterThumbs(); setStatus(t.name + ' applied — Ctrl+Z to go back', 'ok');
   }
 
@@ -1583,7 +1607,35 @@
   }
   function setCountry(code) { if (!doc.cty || !KT.CTRY[code] || code === doc.cty) return; var from = KT.CTRY[doc.cty].name; act(function () { swapCountry(code); }); setStatus(from + ' → ' + KT.CTRY[code].name + ' — Ctrl+Z to go back', 'ok'); }
   (function () { var s = $('cty'); KT.CTRY_LIST.forEach(function (k) { var x = mk('option', null, k.name); x.value = k.code; s.appendChild(x); }); s.onchange = function () { setCountry(this.value); }; })();
-  function ctyBar() { var on = !!(doc && doc.cty); $('ctyw').hidden = !on; if (on) setV($('cty'), doc.cty); }
+  function ctyBar() { var on = !!(doc && doc.cty); $('ctyw').hidden = !on; if (on) setV($('cty'), doc.cty); occBar(); }
+
+  // ── occupation picker (Work Abroad): one click swaps the worker figure (a photo the owner put in stays), the
+  //    occupation's name in English and Arabic ("Welders", "a welder", "لحّام"), the tool icons and names and the accent
+  //    colours -- everything else he edited stays; one Ctrl+Z undoes it ──
+  function swapOccupation(id) {
+    var A = KT.OCC[doc.occ], B = KT.OCC[id]; if (!A || !B || A === B) return;
+    var pairs = { l: [A.l, B.l], p: [A.pl[0], B.pl[0]], q: [A.pl[1], B.pl[1]], o: [A.t[0], B.t[0]], r: [A.t[1], B.t[1]],
+      0: [A.tools[0][1], B.tools[0][1]], 1: [A.tools[1][1], B.tools[1][1]], 2: [A.tools[2][1], B.tools[2][1]] };
+    doc.els.forEach(function (e) {
+      if (e.t === 'art' && e.art === 'fig:' + A.id) e.art = 'fig:' + B.id;
+      if (e.t === 'art' && e.oti != null) e.art = 'oi:' + B.tools[e.oti][0];
+      if (e.oy) { var c = B.c[{ u: 0, t: 1, p: 2, a: 3 }[e.oy]], k = e.t === 'shape' ? (e.fill2 ? 'fill2' : 'fill') : e.t === 'btn' ? 'fill' : 'col', old = e[k]; if (c) e[k] = c + (old && old.length === 9 ? old.slice(7) : ''); }
+      if (typeof e.txt === 'string' && e.ock) {
+        var t = e.txt;
+        'lpqor012'.split('').forEach(function (k) { if (e.ock.indexOf(k) >= 0 && pairs[k][0]) t = t.split(pairs[k][0]).join(pairs[k][1]); });
+        e.txt = t.slice(0, 200);
+      }
+    });
+    doc.occ = B.id;
+  }
+  function setOccupation(id) { if (!doc.occ || !has(KT.OCC, id) || id === doc.occ) return; var from = KT.OCC[doc.occ].t[0]; act(function () { swapOccupation(id); }); setStatus(from + ' → ' + KT.OCC[id].t[0] + ' — Ctrl+Z to go back', 'ok'); }
+  (function () {
+    var s = $('occ'), by = {};
+    KT.OCCS.forEach(function (o) { (by[o.s] = by[o.s] || []).push(o); });
+    KT.OSECT.forEach(function (q) { if (!by[q[0]]) return; var g = document.createElement('optgroup'); g.label = q[1]; by[q[0]].forEach(function (o) { var x = mk('option', null, o.t[0]); x.value = o.id; g.appendChild(x); }); s.appendChild(g); });
+    s.onchange = function () { setOccupation(this.value); };
+  })();
+  function occBar() { var on = !!(doc && doc.occ); $('occw').hidden = !on; if (on) setV($('occ'), doc.occ); }
 
   // ── tabs ──
   function showTab(k) {
@@ -1885,10 +1937,49 @@
   $('co-in').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return; closeCo();
     if (f.size > 200e6) { setStatus('That file is too large', 'warn'); return; }
     f.text().then(importCompany).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); }); };
+  // ✂ Cut out (worker photos): the person stays, the background goes -- MediaPipe's selfie segmenter (Apache-2.0, the
+  // same model KBB Studio's Look tab uses), run in this browser, offline. Its runtime and model (≈4 MB) live in
+  // ad-studio-cutout.js NEXT TO this file and load only on the first cut-out, so the studio itself stays light.
+  var cutP = null;
+  function cutoutLib() {
+    if (window.KBB_CUTOUT) return Promise.resolve(window.KBB_CUTOUT);
+    return cutP || (cutP = new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = new URL('ad-studio-cutout.js', location.href).href;
+      s.onload = function () { window.KBB_CUTOUT ? res(window.KBB_CUTOUT) : rej(new Error('cut-out file is damaged')); };
+      s.onerror = function () { cutP = null; rej(new Error('Cut-out needs the file ad-studio-cutout.js next to this one (it comes in the same folder)')); };
+      document.head.appendChild(s);
+    }));
+  }
+  function cutOutPhoto(e) {
+    if (!e || e.t !== 'img' || !images[e.img]) return Promise.resolve();
+    setStatus('Cutting out the person… (the first time takes a few seconds)');
+    return Promise.all([cutoutLib(), loadImg(images[e.img].src)]).then(function (r) {
+      var img = r[1], k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)), cv = mk('canvas');
+      cv.width = Math.max(1, Math.round(img.naturalWidth * k)); cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      return r[0].cut(cv).then(function () {
+        return new Promise(function (res) { cv.toBlob(res, 'image/png'); }).then(function (blob) {
+          var name = (images[e.img].name || 'Photo') + ' (cut out)';
+          return Store.putImage(blob, { name: name, aspect: +(cv.width / cv.height).toFixed(4), kind: 'img' }).then(function (q) {
+            registerImage({ id: q.id, src: q.src, name: name, aspect: +(cv.width / cv.height).toFixed(4), kind: 'img' });
+            act(function () { var i = doc.els.indexOf(e); if (i >= 0) { e.img = q.id; e.name = 'Worker photo (cut out)'; delete e.bw; } });
+            setStatus('Cut out — Ctrl+Z brings the background back', 'ok');
+          });
+        });
+      });
+    }).catch(function (x) { setStatus('Not cut out: ' + ((x && x.message) || 'try again'), 'warn'); });
+  }
+  $('ph-cut').onclick = function () { cutOutPhoto(selEl()); };
   // a photo slot (success stories, testimonials, the team): pick a picture and it takes the slot's place and shape
   $('ph-file').onchange = function () { var f = this.files && this.files[0]; this.value = ''; var e = selEl(); if (!f || !e || !e.ph) return;
     readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) {
-      act(function () { var i = doc.els.indexOf(e); if (i < 0) return; var o = { id: e.id, t: 'img', name: 'Photo', img: r.id, sh: e.sh === 'arch' || e.sh === 'rect' || e.sh === 'pill' ? e.sh : 'circle', rad: e.rad, bw: e.bw, bc: e.bc, bs: e.bs, shd: e.shd }; if (e.gp) o.gp = e.gp; doc.els[i] = cleanEl(o, images); });
+      act(function () {
+        var i = doc.els.indexOf(e); if (i < 0) return;
+        var o = { id: e.id, t: 'img', name: 'Photo', img: r.id, sh: e.sh === 'arch' || e.sh === 'rect' || e.sh === 'pill' ? e.sh : 'circle', rad: e.rad, bw: e.bw, bc: e.bc, bs: e.bs, shd: e.shd };
+        // a worker slot: the photo fills the slot's box (cover, the head kept), and stays a slot -- replace it again, or cut it out
+        if (e.wk) Object.assign(o, { name: 'Worker photo', sh: e.sh === 'arch' || e.sh === 'rect' || e.sh === 'pill' || e.sh === 'circle' ? e.sh : 'rect', rad: e.rad || 0, wk: true, ph: true });
+        if (e.gp) o.gp = e.gp; doc.els[i] = cleanEl(o, images);
+      });
       setStatus('Photo placed — drag the picture to move it', 'ok');
     }).catch(pictureError); };
 
@@ -1920,6 +2011,6 @@
   // test hooks (read-only views + the same actions the buttons run)
   window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
     get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id, cty) { useTemplate(tplById[id], cty); },
-    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty) { return fromTemplate(tplById[id], co, cty); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
+    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function () { return cutOutPhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
     selKeys: selKeys, setSel: function (k) { setSel(k); afterSel(); }, itemBox: itemBox, aabb: aabb, docColours: function () { return docColours(doc); } };
 })();
