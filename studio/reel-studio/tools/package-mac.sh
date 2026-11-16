@@ -16,7 +16,7 @@ chmod +x "dist/$NAME/Start $NAME.command"
 cp engine/kbbstudio-mac-arm64 engine/kbbstudio-mac-amd64 "dist/$NAME/engine/"
 chmod +x "dist/$NAME/engine/"kbbstudio-mac-*
 cp -R app vendor brands "dist/$NAME/"
-rm -rf "dist/$NAME/app/captions/dev" "dist/$NAME/app/auto/dev"
+rm -rf "dist/$NAME/app/captions/dev" "dist/$NAME/app/auto/dev" "dist/$NAME/app/captions/translate/dev" "dist/$NAME/app/sync/dev"
 cp -R library/. "dist/$NAME/library/"
 rm -f "dist/$NAME/library/music/user/library.json"
 cp models/manifest.json "dist/$NAME/models/"
