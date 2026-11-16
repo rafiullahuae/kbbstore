@@ -387,6 +387,47 @@
    "group": "Image AI",
    "licence": "CreativeML Open RAIL++-M (use restrictions apply)",
    "licenceUrl": "https://huggingface.co/spaces/CompVis/stable-diffusion-license"
+  },
+  {
+   "id": "word-sync",
+   "repo": "NewComer00/wav2vec2-xlsr-multilingual-56-ONNX",
+   "purpose": "Captions (word-perfect sync): finds the exact moment each caption word is said, in English, Arabic, Urdu and Hindi",
+   "owner": "captions",
+   "required": true,
+   "size": 247727397,
+   "files": [
+    {
+     "path": "config.json",
+     "size": 2280,
+     "gitBlobSha1": "c3cec9ea0f830f167de117fa8cf2a8c0cf7bbbcc"
+    },
+    {
+     "path": "preprocessor_config.json",
+     "size": 214,
+     "gitBlobSha1": "73caa151574001d3d495fae897e1d38968249712"
+    },
+    {
+     "path": "vocab.json",
+     "size": 146914,
+     "gitBlobSha1": "ac09b9671a4e4055f2bfda1de58aa4b09a12d63c"
+    },
+    {
+     "path": "tokenizer_config.json",
+     "size": 1132,
+     "gitBlobSha1": "68f9ede621da71df84784e9958159127491e17b7"
+    },
+    {
+     "path": "special_tokens_map.json",
+     "size": 96,
+     "gitBlobSha1": "1c2a0360e58a815a5084fdc610415d9dd8d81381"
+    },
+    {
+     "path": "onnx/model_q4.onnx",
+     "size": 247576761,
+     "sha256": "fcf939032d4091cf232d6a2e751e172d0409e0c926db6283526151cf50ceb577"
+    }
+   ],
+   "licence": "Apache-2.0"
   }
  ]
 }
