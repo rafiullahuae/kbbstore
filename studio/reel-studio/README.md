@@ -78,10 +78,23 @@ One press each, and **⌘Z** takes any of them back in one step. Pressing one ag
 | `library/music/` | the starter music (27 tracks, made for the studio, free to use) |
 | `library/music/user/` | **your own music** — see below |
 | `library/sfx/` | sound effects (28, free to use) |
+| `library/people/<occupation>/` | worker photos you saved from the 📷 Photos tab, each with a `.json` beside it (photographer, licence, source link) |
+| `library/occupations/` | the 100 occupations (English / Arabic, uniforms, tools, search words) the Photos tab and the Ad Studio use |
+| `settings/` | your Pexels / Unsplash keys (only the engine reads this; never put it in a shared folder) |
 | `brands/` | the brand kits: colours, fonts, logos, end cards (KBB, Planet Careers, and any company you add) |
 | `models/` | the speech models, downloaded once by the setup |
 
 `<company>` is `kbb`, `planet-careers`, or the short name of a company you added.
+
+### Worker photos (the 📷 Photos tab)
+
+For Work Abroad reels and ads: real photos of plumbers, nurses, drivers, chefs … from **Pexels** and **Unsplash** (free
+for commercial use). Once: get your free keys (pexels.com/api and unsplash.com/developers → the *Access Key*), open
+**📷 Photos → ⚙ Photo sources**, paste each, **Save**, **Test**. Then pick an occupation (or type), choose
+**Pexels / Unsplash**, shape and region, **Search**. The studio asks before it goes online (*Allow once* or *for this
+session*). **⬇ Save** puts the photo in `library/people/<occupation>/` with the photographer and licence; under
+**Saved photos**, **+ Add to reel** puts it at the playhead and **⬇ For Ad Studio** saves a copy to use with
+*Put a photo here…*. Keep the credit shown under each photo when you can.
 
 ## 6. Adding your own music
 
