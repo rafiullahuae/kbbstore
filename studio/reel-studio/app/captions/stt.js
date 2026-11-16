@@ -44,7 +44,7 @@ export class Transcriber {
     if (this.loaded && this.loaded.sig === sig) return this.loaded;
     this.dispose();
     this._spawn();
-    const dtype = dtypesFor(device, f16);
+    const dtype = dtypesFor(device);
     const threads = Math.max(1, Math.min(8, (navigator.hardwareConcurrency || 4)));
     let r;
     try {
@@ -63,13 +63,13 @@ export class Transcriber {
    * opts: { model, lang:'auto'|'en'|'ar'|'hi'|'ur', task:'transcribe'|'translate', onProgress, signal, offset }
    */
   async transcribe(audio, opts = {}) {
-    const { model = 'small', task = 'transcribe', onProgress = () => {}, signal, offset = 0 } = opts;
+    const { model = 'small', task = 'transcribe', onProgress = () => {}, signal, offset = 0, device = 'auto' } = opts;
     let lang = opts.lang && opts.lang !== 'auto' ? opts.lang : null;
     const onAbort = () => this.cancel();
     signal?.addEventListener('abort', onAbort);
     try {
       this.onProgress = (p) => onProgress({ ...p, phase: 'load' });
-      const info = await this.load(model);
+      const info = await this.load(model, { prefer: device });
       this.repaired = 0;
       const t0 = performance.now();
       const dur = audio.length / SR;

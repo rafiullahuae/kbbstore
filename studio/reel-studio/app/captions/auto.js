@@ -2,7 +2,7 @@
 // undo step. Uses the engine's permission gate for the first model download.
 
 import { Transcriber } from './stt.js';
-import { ensureModel, dtypesFor, pickDevice, DEFAULT_MODEL, SPEECH_MODELS } from './models.js';
+import { ensureModel, DEFAULT_MODEL, SPEECH_MODELS } from './models.js';
 import { buildLines } from './model.js';
 import { setCaptions } from './commands.js';
 import { styleForWorkspace } from './styles.js';
@@ -52,20 +52,18 @@ export async function autoCaptions(ctx, opts = {}) {
   const report = (label, f) => { ctx.progress?.(label, f); opts.onProgress?.(label, f); };
   const audio = await timelineSpeech(project, ctx.media);
   if (!audio) { ctx.toast?.('No clip with sound on the timeline yet.', 'warn'); return 'No speech to caption'; }
-  const { device, f16 } = await pickDevice();
   try {
-    await ensureModel(ctx.engine, model, dtypesFor(device, f16), (p) => report(`Downloading ${SPEECH_MODELS[model].label}`, p.loaded / p.total));
+    // the same installer (and the same models/ folder) as the first-run Setup screen
+    await ensureModel(ctx.engine, model, (p) => report(`Downloading ${SPEECH_MODELS[model].label}`, p.loaded / p.total), ctx.bus);
   } catch (e) {
     if (e.denied) { ctx.toast?.('Captions need the speech model once. Nothing was downloaded.', 'warn'); return 'Not allowed'; }
-    // WebGPU files missing and not allowed/available: the WASM set may already be there
-    if (device === 'webgpu') await ensureModel(ctx.engine, model, dtypesFor('wasm'), () => {});
-    else throw e;
+    throw e;
   }
   report('Listening…', 0);
   let r;
   try {
     r = await transcriber().transcribe(audio, {
-      model, lang, signal: opts.signal,
+      model, lang, signal: opts.signal, device: opts.device || project.meta?.captions?.device,
       onProgress: (p) => p.phase === 'transcribe' ? report('Writing captions…', p.done / p.total) : report('Loading speech model…', p.total ? p.loaded / p.total : null),
     });
   } finally { report('', null); }
@@ -79,11 +77,15 @@ export async function autoCaptions(ctx, opts = {}) {
 /** setCaptions + make sure one caption item spans them, as a single undo step. */
 export function captionsWithItem(project, cap, ops) {
   const cmds = [setCaptions(cap, project.canvas)];
-  const end = cap.words.length ? cap.words[cap.words.length - 1].t1 + 1 : 1;
+  // the caption item never makes the reel longer than its pictures and sound (the export length is the last item's end)
+  let content = 0;
+  for (const tr of project.tracks) if (tr.kind !== 'caption') for (const it of tr.items) content = Math.max(content, it.t0 + itemDur(it));
+  const last = cap.words.length ? cap.words[cap.words.length - 1].t1 + 1 : 1;
+  const end = content > 0 ? Math.min(last, content) : last;
   const track = tracksOfKind(project, 'caption')[0];
   if (track && ops) {
     const existing = track.items.find((i) => i.type === 'caption');
-    if (existing) cmds.push(ops.setItem(existing.id, { t0: 0, in: 0, out: Math.max(end, existing.out) }, 'Captions'));
+    if (existing) cmds.push(ops.setItem(existing.id, { t0: 0, in: 0, out: end }, 'Captions'));
     else cmds.push(ops.addItems([{ trackId: track.id, item: createItem('caption', { t0: 0, in: 0, out: end, x: 0, y: 0, w: project.canvas.w, h: project.canvas.h, name: 'Captions' }) }], 'Captions'));
   }
   return ops ? ops.batch('Auto captions', cmds) : cmds[0];
