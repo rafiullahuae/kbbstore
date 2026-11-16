@@ -123,9 +123,11 @@ func main() {
 			if s.testBase != "" && strings.HasPrefix(req.URL.String(), s.testBase) {
 				return nil
 			}
-			if req.URL.Scheme != "https" || !redirectOK(req.URL.Hostname()) {
+			if req.URL.Scheme != "https" || req.URL.Port() != "" || !redirectOK(req.URL.Hostname()) {
+				log.Printf("download: redirect to %s refused (not on the allowlist)", req.URL.Hostname())
 				return fmt.Errorf("redirect to %s refused (not on the allowlist)", req.URL.Hostname())
 			}
+			log.Printf("download: redirect to %s", req.URL.Hostname())
 			return nil
 		},
 	}
@@ -164,10 +166,17 @@ func main() {
 }
 
 // redirectOK: Hugging Face hands file downloads to its own CDNs (cdn-lfs.huggingface.co, cas-bridge.xethub.hf.co and,
-// since 2026, <region>.aws.cdn.hf.co). A request must START at an allowlisted host; its redirects may only go to
-// those hosts or to subdomains of HF's own hf.co / huggingface.co.
+// since 2026, <region>.aws.cdn.hf.co such as us.aws.cdn.hf.co). A request must START at an allowlisted host; its
+// redirects may only go to those hosts or to subdomains of HF's own hf.co / huggingface.co, by DNS name (never an
+// IP literal) and on the default https port.
 func redirectOK(host string) bool {
-	return netHosts[host] || strings.HasSuffix(host, ".hf.co") || strings.HasSuffix(host, ".huggingface.co")
+	if netHosts[host] {
+		return true
+	}
+	if net.ParseIP(host) != nil || strings.ContainsAny(host, ":@") {
+		return false
+	}
+	return strings.HasSuffix(host, ".hf.co") || strings.HasSuffix(host, ".huggingface.co")
 }
 
 func (s *server) stop() { s.stopOnce.Do(func() { close(s.shutdown) }) }
