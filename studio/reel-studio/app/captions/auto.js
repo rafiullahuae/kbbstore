@@ -7,6 +7,8 @@ import { buildLines } from './model.js';
 import { setCaptions } from './commands.js';
 import { styleForWorkspace } from './styles.js';
 import { createItem, itemDur, findMedia, tracksOfKind } from '../core/project.js';
+import { cleanNonSpeech, DEFAULT_TAG_MODE } from './nonspeech.js';
+import { vocabFor, promptFor, correctTerms } from './vocab.js';
 
 const SR = 16000;
 let shared = null;
@@ -62,16 +64,43 @@ export async function autoCaptions(ctx, opts = {}) {
   report('Listening…', 0);
   let r;
   try {
-    r = await transcriber().transcribe(audio, {
-      model, lang, signal: opts.signal, device: opts.device || project.meta?.captions?.device,
-      onProgress: (p) => p.phase === 'transcribe' ? report('Writing captions…', p.done / p.total) : report('Loading speech model…', p.total ? p.loaded / p.total : null),
+    r = await captureWords(transcriber(), audio, {
+      model, lang, signal: opts.signal, device: opts.device || project.meta?.captions?.device, workspace: ctx.workspace,
+      onProgress: (p) => p.phase === 'transcribe' ? report('Writing captions…', p.done / p.total) : p.phase === 'post' ? report('Tidying the script…', null) : report('Loading speech model…', p.total ? p.loaded / p.total : null),
     });
   } finally { report('', null); }
   const style = project.captions?.style || styleForWorkspace(ctx.workspace);
-  const cap = { style, lang: r.lang, words: r.words, lines: buildLines(r.words, style, project.canvas) };
+  const cap = { style, lang: r.lang, words: r.words, lines: buildLines(r.words, style, project.canvas),
+    soundTags: project.captions?.soundTags || DEFAULT_TAG_MODE, music: r.music, dropped: r.dropped, speakers: r.speakers };
+  if (project.captions?.alt) cap.alt = project.captions.alt;
   ctx.history.apply(captionsWithItem(project, cap, ctx.ops));
-  ctx.toast?.(`${r.words.length} words captioned (${r.lang}).`, 'ok');
+  const extra = [r.dropped.length ? `${r.dropped.length} invented words removed` : '', r.fixes.length ? `${r.fixes.length} names spelled right` : '',
+    r.speakers > 1 ? `${r.speakers} speakers` : ''].filter(Boolean).join(', ');
+  ctx.toast?.(`${r.words.length} words captioned (${r.lang})${extra ? ' · ' + extra : ''}.`, 'ok');
   return `${r.words.length} words`;
+}
+
+/**
+ * Speech -> clean caption words, the whole capture pipeline (also what the checks drive):
+ *   transcribe (VAD-gated, pause-aligned windows, second listen, vocabulary prompt)
+ *   -> sound tags marked, hallucinations dropped, music-only stretches found (nonspeech.js)
+ *   -> near-miss spellings of the company's terms corrected (vocab.js)
+ *   -> speaker turns (best effort, worker).
+ * opts: Transcriber.transcribe opts + { workspace, vocab (overrides the workspace's), speakers (default true) }.
+ * Returns { words, lang, music, dropped, fixes, speakers, raw (the transcriber's result) }.
+ */
+export async function captureWords(tr, audio, opts = {}) {
+  const vocab = opts.vocab || vocabFor(opts.workspace);
+  const prompt = opts.prompt ?? (vocab.length ? { en: promptFor(vocab, 'en'), ar: promptFor(vocab, 'ar') } : null);
+  const raw = await tr.transcribe(audio, { ...opts, prompt });
+  opts.onProgress?.({ phase: 'post' });
+  const ns = cleanNonSpeech(raw.words, raw.analysis, { prompt: raw.prompt });
+  const fx = correctTerms(ns.words, vocab, { lang: raw.lang });
+  let words = fx.words, speakers = 1;
+  if (opts.speakers !== false && words.length >= 6) {
+    try { const sp = await tr.speakers(audio, words); words = sp.words; speakers = sp.n; } catch { /* best effort */ }
+  }
+  return { words, lang: raw.lang, music: ns.music, dropped: ns.dropped, fixes: fx.fixes, speakers, raw };
 }
 
 /** setCaptions + make sure one caption item spans them, as a single undo step. */
