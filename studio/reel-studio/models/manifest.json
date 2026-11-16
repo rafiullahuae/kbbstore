@@ -56,7 +56,9 @@
      "size": 233421212,
      "sha256": "333bf5560a548e89b03abab5c4d33a7057129b08782707cebcbdf25b63588915"
     }
-   ]
+   ],
+   "group": "Speech",
+   "licence": "MIT"
   },
   {
    "id": "whisper-base",
@@ -111,7 +113,9 @@
      "size": 123738327,
      "sha256": "fc1902ce2e42c69b2346d8e2a98898c60c01da1e6a64ae90f41d22350ac7db13"
     }
-   ]
+   ],
+   "group": "Speech",
+   "licence": "MIT"
   },
   {
    "id": "brief-llm",
@@ -146,7 +150,9 @@
      "size": 483003582,
      "sha256": "b11c1dd99efd57e6c6e5bc4443a019931a5fbd5dd500d48644d8225f5ce0b2cb"
     }
-   ]
+   ],
+   "group": "Writing",
+   "licence": "Apache-2.0"
   },
   {
    "id": "image-understanding",
@@ -201,7 +207,9 @@
      "size": 64393474,
      "sha256": "be7a2f33e65f8d65538024772fda4d1c5a7752d60a7159aadf53f9f4798b90fa"
     }
-   ]
+   ],
+   "group": "Video understanding",
+   "licence": "MIT"
   },
   {
    "id": "media-tagger",
@@ -241,7 +249,9 @@
      "size": 64504507,
      "sha256": "73baab855d406190da9faa498cfedf65f15cf309f4cc7385b7b032e6d08e5c3a"
     }
-   ]
+   ],
+   "group": "B-roll tagging",
+   "licence": "MIT"
   },
   {
    "id": "copy-llm",
@@ -276,7 +286,9 @@
      "size": 1221878940,
      "sha256": "19dec9f63488016185ba997d5e4492b5ac5b4f7ef1abb45243a91de958838dcd"
     }
-   ]
+   ],
+   "group": "Writing",
+   "licence": "Apache-2.0"
   },
   {
    "id": "copy-llm-lite",
@@ -311,7 +323,9 @@
      "size": 512096557,
      "sha256": "41834041ab1b29eff9fc592f1a29a1844133aea35832ea9fa91682be13016100"
     }
-   ]
+   ],
+   "group": "Writing",
+   "licence": "Apache-2.0"
   },
   {
    "id": "upscaler",

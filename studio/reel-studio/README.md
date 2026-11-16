@@ -119,6 +119,32 @@ move word by word; Arabic and Urdu read right to left, Urdu in Nastaliq (Noto Na
 **✨ Best quality (Claude)** will use your Claude key once *Connect Claude* arrives (with Brief → Designs); until then it is
 switched off and nothing goes online.
 
+### Themes & hover previews (the ✨ Themes tab)
+
+A theme dresses the whole reel in one click: moving elements over the picture (petals, flags, planes, sparkles,
+confetti …), a short intro, an outro, a transition on every cut, a title in the theme's style and matching sounds.
+There are 58: 33 countries, Europe, travel & study, work abroad, beauty (KBB), luxury, offers, seasonal (Ramadan,
+Eid, New Year …), business, food, fitness and real estate.
+
+1. **✨ Themes** (right column). The top row shows the **3 themes suggested for this reel**, picked from what is said
+   in it and the company (a German study-visa video gets Germany and Europe; a KBB serum video gets petals).
+   **Search** and the group buttons find the rest.
+2. **Hover a tile** to see the theme moving; move away and it stops. **🎞 Preview on my clip** shows it on frames of
+   your own video instead of the built-in sample. **Click** the tile to put it on the reel.
+3. Before or after picking: **Intensity** (*Subtle*, *Normal*, *Bold*), **Colours** (*Theme* or your **Brand kit**),
+   **🥁 Pulse on the beat** (add music first), **🙂 Keep off faces & captions**, and ticks for the intro, outro,
+   transitions, title and sounds.
+4. Once a theme is on, **Elements** lists each moving part: switch it off, or change its density, speed or colour.
+   **🥁 Re-sync beats** after changing the music; **✕ Remove theme** takes it all off.
+
+Good to know: picking another theme replaces the first; your own text, stickers and transitions are never touched.
+The theme follows the reel: trim it, remove silences or move clips and it still runs to the very end, with the outro
+on the last moment. Every step undoes with **⌘Z**.
+
+**Hover previews everywhere.** The same hover-to-preview works on **Templates**, **Look** tiles and transitions,
+**Create** formats, and **Music** and **SFX** (a few seconds play; sound stays off until you press **🔊**). Only one
+preview plays at a time, and the keyboard works too: move to a tile with **Tab** and it plays.
+
 ## 5. Where your things are
 
 | Folder inside KBB Studio | What is in it |
