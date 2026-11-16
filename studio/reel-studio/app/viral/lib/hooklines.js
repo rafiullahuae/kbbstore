@@ -69,10 +69,10 @@ export function hookLines({ words = [], workspace = null, lang = 'auto', seed = 
   const n = t.num && t.num < 1000 ? t.num : (ind === 'visa' ? 3 : 7);
   const topic = ind === 'visa' ? (en ? `studying in ${country}` : `الدراسة في ${country}`) : ind === 'beauty' ? prod : kw;
   const T = en ? {
-    curiosity: [`I tried ${ind === 'beauty' ? 'this ' + prod : topic} so you don't have to`, `This changed everything about ${topic}`, `The ${topic} secret nobody shares`],
+    curiosity: [ind === 'visa' ? `What studying in ${country} really takes` : `I tried ${ind === 'beauty' ? 'this ' + prod : topic} so you don't have to`, `This changed everything about ${topic}`, `The ${topic} secret nobody shares`],
     number: [`${n} things I wish I knew about ${topic}`, `${n} seconds that will change your ${ind === 'beauty' ? 'routine' : 'plans'}`, `${n} mistakes with ${topic}`],
     pov: [`POV: you finally found the right ${ind === 'beauty' ? prod : ind === 'visa' ? 'consultant' : kw}`, `POV: ${ind === 'visa' ? `your ${country} visa just got approved` : 'your skin after 7 days'}`],
-    mistake: [`Stop making this ${topic} mistake`, `You're doing ${topic} wrong`],
+    mistake: ind === 'visa' ? [`The ${country} visa mistake everyone makes`, `Stop making this visa mistake`] : ind === 'beauty' ? [`Stop making this ${prod} mistake`, `You're using your ${prod} wrong`] : [`Stop making this ${kw} mistake`, `You're doing ${kw} wrong`],
     question: [`Want ${ind === 'visa' ? `to study in ${country}` : ind === 'beauty' ? 'glass skin' : `better ${kw}`}?`, `Why does nobody talk about ${topic}?`],
     result: [ind === 'visa' ? `Approved in weeks — here's how` : ind === 'beauty' ? `Brighter skin in ${n} days — here's how` : `Here's the result first`, `Watch the result first`],
     myth: [`Myth: ${ind === 'visa' ? 'you need to be rich to study abroad' : ind === 'beauty' ? 'expensive means better' : `${kw} is hard`}`, `The biggest ${topic} myth`],
