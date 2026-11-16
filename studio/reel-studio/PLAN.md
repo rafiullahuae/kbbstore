@@ -213,3 +213,52 @@ The downloader is built not to fail: disk-space check first, resumable `.part` f
 retries and restarts, automatic retries with backoff, size + checksum verification with re-fetch, atomic
 rename, 2–3 files in parallel with progress/speed/time left, pause/resume, plain-English messages, and the
 app never loads a model that is not complete. After setup the studio needs no internet.
+
+## Round 2 — "the life-saving editor" — decided 16 Nov
+
+The owner: *"go with all these, but must be super functional and to get output results. also include more
+natural hooks in terms videos, sound etc. to grab attention of the viewer ... i need this studio a super
+life saving editor/creator for all my ads, videos, edits etc stuff. plan it well."* All 27 items from the
+viral-reels list are in, plus a natural-hooks library. Every feature must produce a finished, exportable
+result in one click and stay editable; each is undoable; each has a check that renders/exports a real
+output and measures it.
+
+**Ownership (three lanes, separate folders; the editor gains panels only through the module registry —
+any unavoidable edit to app/editor or app/core is kept minimal and listed in the lane's report):**
+
+* **Lane V — Viral engine** (`app/viral/`): 1 hook builder (10 hook lines from transcript/brief, animated
+  hook text, punch-in + sound hit, first-frame check, flash-forward "wait for it" opener); **natural hooks
+  library** — video hooks (pattern interrupts: snap zoom, freeze-frame + record scratch, whip-in, reveal
+  mask, "POV:" / "Nobody tells you…" text hooks, question hooks, number hooks, before-after flash, object
+  toss transition, face-close-up open) and sound hooks (riser, hit, swoosh, bass drop, notification ding,
+  camera shutter, record scratch, crowd "ooh", ASMR taps/pours/sprays for beauty textures, ambient
+  airport/plane-boarding for travel, page flip, stamp thud for "visa approved"), all synthesised offline
+  and tagged by mood/industry; 2 retention pacing score + dead-zone fixes; 3 jump-cut tightening
+  (breaths/gaps < 0.3 s); 4 smart zooms on stressed words + face-in-upper-third reframe; 7 safe-zone check
+  per platform (IG Reels, TikTok, YT Shorts, Snapchat) with auto-nudge; 8 loop endings; 9 CTA builder
+  (comment-keyword, link in bio, save/share, DM, call/WhatsApp) animated per brand; 18 auto chapters /
+  step counters / progress bar; 23 A/B variations (3 hooks/openers); 26 claim-safety for Planet Careers
+  ("guaranteed visa", "100% approval" → compliant wording) and for beauty ("cures", medical claims).
+* **Lane L — Look & sound** (`app/look/`, `app/audio/`): 10 pro audio — offline voice cleanup (noise
+  suppression model, e.g. RNNoise/DeepFilterNet-class WASM), levelling, de-ess, EQ presets, platform
+  loudness targets, SFX on cuts, beat-synced cuts, riser before reveal; 12 transitions (whip, match-cut,
+  zoom-through, object-cover, flash, glitch, slide, spin, luma fade) + speed ramps with easing; 13 colour
+  looks (LUT/shader presets, auto white-balance/exposure, shot matching); 14 light skin/face touch-up
+  (WebGL, face-landmark guided, subtle); 15 background removal for people (offline segmentation) with
+  flag/landmark/brand backgrounds; 16 text-animation presets (typewriter, kinetic stack, highlight sweep,
+  price slam, countdown, checklist ticks), branded per company; 17 Arabic-first motion presets.
+* **Lane C — Content & growth** (`app/content/`, plus caption looks inside `app/captions/styles-extra.js`
+  only): 5 viral caption looks (active-word colour, 1–3 words at mid-third, keyword/emoji pops,
+  face/product-avoiding placement); 6 auto b-roll from his own library (auto-tagging of media on import —
+  offline image tagger, optional model — plus keyword/catalogue match, KBB product shots, Planet Careers
+  country assets); 11 proven formats as ready timelines (before/after split & wipe, "3 products for…",
+  GRWM, texture close-up, dupe-or-worth-it; visa-approved reaction, documents in 30 s, myth vs fact,
+  country A vs B, cost breakdown, testimonial, day-in-the-life); 19 series kits (opener, episode number,
+  look); 20 cover/thumbnail maker (best frame, title, grid-readability check, 3:4 grid cover); 21 caption,
+  keywords, hashtags and comment prompts (offline local language model; EN/AR); 22 one edit → 9:16/4:5/
+  1:1/16:9 re-laid out (not just cropped); 24 long video → 8–12 shorts (webinar/consultation), each with
+  hook + captions + CTA; 25 teleprompter + record from the Mac camera/mic in the studio + best-take
+  picker; 27 trending-sound cue sheet (beat markers kept so his IG sound lines up).
+
+Then **Round 3 — Brief → Designs** (local image model, artwork, icons, colour schemes) and **Connect
+Claude** (optional), as already planned.
