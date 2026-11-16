@@ -1,0 +1,41 @@
+PASS 12 viral caption looks (v-pop, v-box, v-stack, v-clean, v-glow, v-luxe, v-bounce, v-marker, v-one, v-karaoke, v-arabic, v-pill) in a style list of 32
+PASS every viral look shows 1–3 words per cue, centred in the middle third (9:16), and names its brand-colour field
+PASS 12 proven formats (KBB before-after, 3-products, grwm, texture, dupe; PC visa-approved, documents-30, myth-fact, country-ab, cost, testimonial, day-in-life), each 10–30 s with slot guides and timing
+PASS manifest: media-tagger Xenova/clip-vit-base-patch32 (156 MB, required), copy-llm onnx-community/Qwen2.5-1.5B-Instruct (1229 MB), copy-llm-lite onnx-community/Qwen2.5-0.5B-Instruct (519 MB)
+PASS planner: 15.2-min webinar, 160 sentences, 11 topics → 10 shorts of 25.4–29.6 s, all starting on a script sentence, covering 10 of 10 topics
+PASS home shows the Create card (Record · Webinar → shorts · Start from a format)
+PASS look "v-pop": 41 cues, every one 1–3 words, spoken word in the brand colour #C6395F
+PASS measured on drawn pixels: 0 of 41 cues touch the face, 0 leave the platform safe area (moved off the face in 1 of 1 placements)
+PASS keyword pops: emoji:new, product:Biodance Caviar PDRN serum, price:AED 99, emoji:skin, price:30% OFF — none on the face or over the captions
+PASS the whole look is ONE undo step (undo → "word-box", redo → "v-pop")
+PASS with nothing in the way every cue centre sits in the middle third (0.50)
+PASS image tagger (CLIP, offline) on IMG_2041.jpg → lotion 0.492, serum 0.17, lipstick 0.153 in 6.3 s
+PASS b-roll: 4 shots in 1 dead spots, every one on a matching word: 4.745s “Biodance”→bdserum.webp (product); 11.256s “glowing”→marymay.webp (product); 15.04s “serum”→IMG_2041.jpg (mine); 19.409s “sunscreen,”→sunscreen-on-the-beach.mp4 (mine)
+PASS KBB reel exported: 31.20 s, h264+opus
+PASS the exported frame at 16.0 s shows the b-roll photo, not the talking shot (luma 226 vs 106)
+PASS cover PNGs on disk: Evening-routine-cover-9x16.png 1080×1920, Evening-routine-grid-3x4.png 1080×1440 in 6.6 s (best of 3 frames, score 0.591)
+PASS title "My 2-step evening glow routine": contrast 18.58:1 (9:16) / 18.58:1 (3:4), keyword 4.67:1, 17.7 px tall at 1/6 grid scale, plate solid
+PASS the 9:16 cover's title (y 1171–1603) sits inside the grid's centre 3:4 crop (240–1680)
+PASS post copy by the local model copy-llm-lite (wasm) in 133.0 s: EN [model: keywords+hashtags+comments] 5 hashtags #Koreanskincare #Sunscreen #Cream #KBeautyBliss #CaviarPDRN · AR [model: none, rules] 5 hashtags #KBeautyBliss #العناية_بالبشرة #منتجات_كورية #دبي #روتين_البشرة
+PASS rule-based writer (no model): EN #KBeautyBliss #CaviarPDRN #KoreanSkincare #DubaiSkincare #SkincareRoutine · AR #KBeautyBliss #العناية_بالبشرة #منتجات_كورية #دبي #روتين_البشرة
+PASS post copy saved to workspaces/kbb/exports/Evening-routine-post.txt
+PASS series: "Skin Tip #1" opener (4 items, badge "Skin Tip #1"), look v-pop, next episode #2 saved in workspaces/kbb/series.json
+PASS one edit → 4 shapes exported in 50.0 s: 9:16 540×960, 4:5 540×676, 1:1 540×540, 16:9 960×540 (ffprobe sizes and durations match)
+PASS captions inside the platform safe area in every shape (measured on drawn pixels: 9:16 41 cues/41 lines, 0 out; 4:5 34 cues/34 lines, 0 out; 1:1 32 cues/32 lines, 0 out; 16:9 24 cues/24 lines, 0 out); text, pops and b-roll cards inside title-safe
+PASS face-aware reframe: a 16:9 talk's speaker (at 72 % across the source) lands at 50 % across the 9:16 frame
+PASS trending sound measured: 128 BPM (true 128), first beat 0.249 s (true 0.25)
+PASS every cut snapped onto a beat (5.874, 13.374, 21.812 s; off-grid 0.0005 s), 3 beat markers, reel 31.19 s
+PASS cue sheet Evening-routine-cues.csv (3 rows) + Evening-routine-cues.txt + guide Evening-routine-guide-128bpm.wav: accented clicks on every cut (0.89, 0.89, 0.89)
+PASS format "Documents in 30 s": 8 slots with guides on a 28.0 s timeline; 2 filled by hand, 0 from the bin, still empty: Admission letter, Bank statement, Health insurance, Language certificate, Photos & forms, Outro
+PASS format exported: 28.02 s; the passport slot shows the photo (mean RGB 132,144,157), an empty slot its brand card (31,101,96)
+PASS before/after wipe in the export: before full (L/R luma 103/103), mid-wipe after on the left only (237/103), after full (237/237)
+PASS webinar 15.2 min → 10 shorts (11 topics, 160 sentences) of 31.9–47.9 s in 0.1 s, every one starting on a sentence ("So,", "So,", "So,", "So,", "So,", "So,", "So,", "So,", "So,", "So,")
+PASS the browser and the Node planner agree on the shorts
+PASS 10 shorts exported in 130.3 s: 720×1280 with sound, 32.0, 32.3, 43.0, 47.9, 46.1, 32.4, 32.9, 41.2, 46.5, 44.7 s
+PASS short 1 is a finished reel: hook "What do you need to know about study abroad?", 72 caption words in v-pop, CTA "Book your free consultation"
+PASS 2 takes recorded from the camera + mic and saved in the project (mmwjdae4a088a58-take-01.mp4 1216×2160 3.7 s vp9+opus; mmwjdam6h09kas2-take-02.mp4 1216×2160 6.8 s vp9+opus)
+PASS best take picked: Take 1 — 3.8 s · score 39 · low energy · look at the lens / 6.9 s · score 39 · low energy · look at the lens
+PASS "Use this take" put it on the timeline
+PASS no console errors
+PASS no request left 127.0.0.1
+40/40 passed

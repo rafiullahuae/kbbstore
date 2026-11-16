@@ -32,6 +32,8 @@
 //                          (e.g. a heat map); draw() fills `el` (width px wide, t * pps = x) on every timeline render.
 //   registerExportCheck({ id, run(project, ctx) -> [{ level:'warn'|'error', text, fix?(), fixLabel? }] })   problems the
 //                          Export dialog lists before exporting (with a Fix button when fix() is given).
+//   tab may also be a plain string label, e.g. tab: '✨ Create'.
+//   home: (el, home) => { ... }   a card on the home screen; home = { workspace, open(project, files?), rerender() }
 //
 // Modules are loaded by the editor from app/captions/index.js and app/auto/index.js when those files exist; each
 // file imports registerModule and registers itself. Until a slot is registered the editor shows
@@ -70,4 +72,4 @@ export async function runExportChecks(project, ctx) {
 }
 
 /** module entry files the editor tries to import at start (missing files are fine) */
-export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js'];
+export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js'];

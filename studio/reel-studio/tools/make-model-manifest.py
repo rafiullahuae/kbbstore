@@ -19,6 +19,17 @@ SPEC = [
      ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"]),
     ("image-understanding", "onnx-community/Florence-2-base-ft", "Looking: describes what is in your video to suggest a recipe (next update)", "auto", False,
      ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/vision_encoder_fp16.onnx", "onnx/encoder_model_fp16.onnx", "onnx/embed_tokens_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"]),
+    # Lane C (round 2, app/content). The tagger is REQUIRED: auto-tagging on import is what lets b-roll match your
+    # photos and clips by what is in them (CLIP zero-shot against the studio's own tag list; MIT, int8, 156 MB).
+    # Post copy runs a local instruct model: Qwen2.5-1.5B (Apache-2.0) 4-bit/fp16 on the Mac GPU (WebGPU), and
+    # Qwen2.5-0.5B (Apache-2.0) int8 on the CPU (WASM) when there is no WebGPU. Both optional: a rule-based writer
+    # covers the post copy when neither is installed.
+    ("media-tagger", "Xenova/clip-vit-base-patch32", "B-roll: tags your photos and clips on import (what is in them) so b-roll matches your words", "content", True,
+     ["config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/vision_model_quantized.onnx", "onnx/text_model_quantized.onnx"]),
+    ("copy-llm", "onnx-community/Qwen2.5-1.5B-Instruct", "Writing: Instagram/TikTok captions, keywords, hashtags and comment prompts in English and Arabic, offline on the Mac's GPU", "content", False,
+     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"]),
+    ("copy-llm-lite", "onnx-community/Qwen2.5-0.5B-Instruct", "Writing (no-GPU fallback): the same post copy on the CPU when the browser has no WebGPU", "content", False,
+     ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_quantized.onnx"]),
     ("upscaler", "Xenova/swin2SR-classical-sr-x2-64", "Pictures: sharpens and enlarges small photos 2x (next update)", "auto", False,
      ["config.json", "preprocessor_config.json", "onnx/model_fp16.onnx"]),
 ]

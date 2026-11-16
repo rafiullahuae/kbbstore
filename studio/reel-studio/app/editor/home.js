@@ -8,6 +8,7 @@ import { state as ws, workspaceSwitcher, companyDialog, wsBadge } from './worksp
 import { loadRecipes } from './bin.js';
 import { stopStudio } from './editor.js';
 import { openSetup } from './setup.js';
+import { listModules } from '../core/modules.js';
 
 export async function renderHome(root, { onOpen, onDropFiles }) {
   clear(root);
@@ -51,7 +52,13 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
           h('div.row', h('span.lbl', 'Shape'), seg(Object.keys(ASPECTS).map((k) => [k, k, ASPECTS[k].label]), aspect, (v) => { aspect = v; }, '.aspect')),
           h('button.btn.primary.big', { on: { click: () => create(null) } }, '＋ Create reel')),
         h('section.card.drop-card', drop),
-        h('section.card.recent-card', h('h2', 'Recent'), recent)))));
+        h('section.card.recent-card', h('h2', 'Recent'), recent),
+        // module cards (core/modules.js `home`)
+        ...listModules().filter((m) => typeof m.home === 'function').map((m) => {
+          const el = h('section.card.mod-card', { dataset: { modHome: m.id } });
+          try { m.home(el, { workspace: w, open: onOpen, rerender }); } catch (e) { console.warn('[home]', m.id, e); }
+          return el;
+        })))));
 
   loadRecipes(w).then((list) => {
     const groups = {};

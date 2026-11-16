@@ -155,7 +155,7 @@ export class Editor {
     const mods = listModules().filter((m) => m.tab && m.panel).sort((a, b) => (a.tab.order ?? 50) - (b.tab.order ?? 50));
     for (const m of mods) {
       if (this.sideTabs.querySelector(`[data-side="mod:${m.id}"]`)) continue;
-      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: 'mod:' + m.id }, on: { click: () => this.showSide('mod:' + m.id) } }, `${m.tab.icon || ''} ${m.tab.label || m.label || m.id}`.trim()));
+      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: 'mod:' + m.id }, on: { click: () => this.showSide('mod:' + m.id) } }, (typeof m.tab === 'string' ? m.tab : `${m.tab.icon || ''} ${m.tab.label || m.label || m.id}`.trim())));
       const body = h('div.side-body.mod-body', { hidden: true, dataset: { mod: m.id } });
       this.modBodies.set(m.id, { body, mounted: false, inst: null });
       this.inspEl.appendChild(body);
