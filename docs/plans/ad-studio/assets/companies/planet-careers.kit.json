@@ -1,0 +1,156 @@
+{
+ "v": 1,
+ "id": "planet-careers",
+ "name": "Planet Careers",
+ "fullName": "Planet Careers",
+ "industry": "Immigration & study-visa consultancy",
+ "industries": [
+  "immigration",
+  "education",
+  "consultancy"
+ ],
+ "colors": {
+  "primary": "#0b2545",
+  "secondary": "#13a89e",
+  "accent": "#f2c14e",
+  "text": "#ffffff",
+  "bg": "#0b2545",
+  "soft": "#e8f4f3",
+  "ink": "#0a1b30"
+ },
+ "gradient": [
+  "#0b2545",
+  "#13315c",
+  "#13a89e"
+ ],
+ "fonts": {
+  "heading": {
+   "family": "Montserrat",
+   "fallback": "Arial, sans-serif",
+   "files": [
+    {
+     "file": "fonts/montserrat.woff2",
+     "weight": "100 900"
+    }
+   ]
+  },
+  "body": {
+   "family": "Inter",
+   "fallback": "Arial, sans-serif",
+   "files": [
+    {
+     "file": "fonts/inter.woff2",
+     "weight": "100 900"
+    }
+   ]
+  },
+  "arabic": {
+   "family": "Cairo",
+   "fallback": "Tahoma, sans-serif",
+   "files": [
+    {
+     "file": "fonts/cairo-arabic.woff2",
+     "weight": "200 1000",
+     "unicodeRange": "U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC"
+    },
+    {
+     "file": "fonts/cairo-latin.woff2",
+     "weight": "200 1000"
+    }
+   ]
+  }
+ },
+ "logos": {
+  "mark": "logo-mark.svg",
+  "full": "logo.svg",
+  "light": "logo-white.svg",
+  "appIcon": "logo-app-icon.svg",
+  "markPaths": {
+   "viewBox": [
+    200,
+    200
+   ],
+   "paths": [
+    {
+     "d": "M96 58a54 54 0 1 0 0.01 0Z",
+     "fill": "#13a89e"
+    },
+    {
+     "d": "M74 60V76Q96 88 118 76V60L96 69Z",
+     "fill": "#0b2545"
+    },
+    {
+     "d": "M60 52L96 37L132 52L96 67Z",
+     "fill": "#0b2545"
+    },
+    {
+     "d": "M170.0 57.0L172.2 62.9L178.6 63.2L173.6 67.2L175.3 73.3L170.0 69.8L164.7 73.3L166.4 67.2L161.4 63.2L167.8 62.9ZM184.0 85.5L185.6 89.8L190.2 90.0L186.6 92.8L187.8 97.3L184.0 94.7L180.2 97.3L181.4 92.8L177.8 90.0L182.4 89.8ZM160.0 36.5L161.4 40.1L165.2 40.3L162.2 42.7L163.2 46.4L160.0 44.3L156.8 46.4L157.8 42.7L154.8 40.3L158.6 40.1Z",
+     "fill": "#f2c14e"
+    }
+   ],
+   "orbit": {
+    "cx": 96,
+    "cy": 112,
+    "rx": 90,
+    "ry": 27,
+    "rot": -18,
+    "stroke": "#f2c14e"
+   }
+  }
+ },
+ "intro": {
+  "style": "orbit",
+  "dur": 1.4,
+  "sfx": "whoosh"
+ },
+ "outro": {
+  "style": "reveal",
+  "dur": 1.5,
+  "sfx": "success-chime"
+ },
+ "endCard": {
+  "title": "Planet Careers",
+  "sub": "Study visas · work permits · settling abroad",
+  "cta": [
+   "Book your free consultation",
+   "DM us \"VISA\" to start",
+   "Call or WhatsApp us today"
+  ],
+  "ctaAr": [
+   "احجز استشارتك المجانية",
+   "راسلنا كلمة \"فيزا\"",
+   "اتصل أو راسلنا واتساب اليوم"
+  ],
+  "style": "gradient"
+ },
+ "contact": {
+  "website": "",
+  "phone": "",
+  "whatsapp": "",
+  "email": "",
+  "instagram": "",
+  "address": "UAE"
+ },
+ "contactLine": "<edit: phone · WhatsApp · website>",
+ "defaults": {
+  "captionStyle": "bold-outline",
+  "captionStyleAr": "bilingual",
+  "musicMoods": [
+   "corporate",
+   "inspiring",
+   "travel"
+  ],
+  "favRecipes": [
+   "pc-study-visa-steps",
+   "pc-country-spotlight",
+   "pc-success-story",
+   "pc-appointment-cta"
+  ],
+  "aspect": "9:16"
+ },
+ "motif": "eu-stars",
+ "packs": {
+  "countries": "countries/countries.json"
+ },
+ "notes": "Original mark (planet, gold orbit, mortarboard, stars) drawn for KBB Studio; replace logo files and colours when the final identity is ready. Country facts are placeholders: verify every visa/study/work rule on official sites before publishing."
+}

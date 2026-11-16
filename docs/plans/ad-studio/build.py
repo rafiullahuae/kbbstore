@@ -32,7 +32,32 @@ for p, n in NAMES.items():
     w, h = Image.open(f).size
     prods[p] = {'n': n, 'a': round(w / h, 4), 'src': 'data:image/webp;base64,' + b64(f)}
 pay = {k: 'data:image/svg+xml;base64,' + b64(os.path.join(D, 'assets', 'pay', k + '-badge.svg')) for k in ('tabby', 'tamara')}
-DATA = json.dumps({'prods': prods, 'pay': pay}, ensure_ascii=False).replace('</', '<\\/')
+# Companies (16 Nov 2026): the two seed brand kits (copied from studio/reel-studio/brands/<slug>/kit.json) and the
+# built-in art -- 33 flags (flag-icons, MIT), country outlines and landmark silhouettes (lane R3), the Planet Careers
+# mark -- as one gzip + base64 pack the editor unpacks once at start (370 KB of SVG -> ~140 KB in the file).
+import gzip, re
+CO = os.path.join(D, 'assets', 'companies')
+kits = {}
+for slug in ('kbb', 'planet-careers'):
+    k = json.load(open(os.path.join(CO, slug + '.kit.json')))
+    for f in k.get('fonts', {}).values():
+        f.pop('files', None)
+    kits[slug] = k
+def mini(svg):
+    return re.sub(r'>\s+<', '><', svg.strip())
+art = {}
+for kind, sub in (('flag', 'flags'), ('map', 'maps'), ('lm', 'landmarks')):
+    for f in sorted(os.listdir(os.path.join(CO, 'countries', sub))):
+        if f.endswith('.svg'):
+            art[kind + ':' + f[:-4]] = mini(open(os.path.join(CO, 'countries', sub, f)).read())
+mark = mini(open(os.path.join(CO, 'logo-mark.svg')).read())
+art['mark:pc'] = mark
+# for dark grounds: the planet lifted to a brighter blue so it does not sink into navy
+art['mark:pc-light'] = mark.replace('stop-color="#13315c"', 'stop-color="#2f7fc8"').replace('stop-color="#0b2545"', 'stop-color="#1d5aa0"')
+for k, v in art.items():
+    assert '<script' not in v.lower() and 'href="http' not in v and 'on' + 'load' not in v.lower(), k
+ARTPACK = base64.b64encode(gzip.compress(json.dumps(art, separators=(',', ':'), ensure_ascii=False).encode(), 9, mtime=0)).decode()
+DATA = json.dumps({'prods': prods, 'pay': pay, 'kits': kits, 'art': ARTPACK}, ensure_ascii=False).replace('</', '<\\/')
 
 
 def lib(n):
@@ -55,7 +80,7 @@ parts = {
     '/*VIDEO_CSS*/': open(os.path.join(D, 'src', 'video.css')).read(),
     '/*VIDEO_HTML*/': open(os.path.join(D, 'src', 'video.html')).read(),
     '/*VIDEO*/': safe(open(os.path.join(D, 'src', 'video.js')).read(), 'the video editor'),
-    '/*TEMPLATES*/': safe(open(os.path.join(D, 'src', 'templates.js')).read(), 'templates'),
+    '/*TEMPLATES*/': safe(open(os.path.join(D, 'src', 'templates.js')).read().replace('/*PC*/', open(os.path.join(D, 'src', 'templates-pc.js')).read(), 1), 'templates'),
     '/*APP*/': safe(app, 'the editor'),
 }
 for k, v in parts.items():

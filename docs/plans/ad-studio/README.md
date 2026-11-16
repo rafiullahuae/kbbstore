@@ -12,7 +12,66 @@ node tools/check-video.cjs            # Video mode (rewrites shots/video/*.png -
 node tools/shots.cjs post,square,story noeditor     # shots/templates-{post,square,story}.jpg
 node tools/nd-shots.cjs [out.jpg] [set] [ids-regex] # National Day contact sheet
 node tools/editing-shots.cjs          # shots/editing/*-{1280,390}.png: multi-select, group in Layers, Background panel, colour control
+node tools/check-companies.cjs        # companies, Planet Careers, country picker, KBB 0-diff (tools/kbb-baseline.json); writes shots/companies.png
+node tools/pc-shots.cjs [ids-regex]   # shots/planet-careers-{1..6}.jpg: every Planet Careers template in post / square / story
 ```
+
+## Companies (16 Nov 2026)
+
+The owner: *"create an environment 'Planet Careers' and keep the related stuff there. and also allow me options to create
+any new company etc, and i will be able to switch between one to another."* The **company switcher** sits in the top
+bar: KBB · Planet Careers · **＋ New company…** · **Import company…**, and **Edit company** next to it. A company is a
+brand kit in the shape of `studio/reel-studio/brands/kit.schema.json` (name, full name, industry, colours main / second /
+accent / light / ink, heading + body font, contact line + website / phone / WhatsApp / email / Instagram, default button
+EN + AR, payment badges -- tabby / tamara only for KBB) plus what this studio keeps for it: its **template set**
+(KBB beauty & retail, or Planet Careers study & visas), its **favourite templates** (☆ Add to favourites, ★ Favourites
+chip) and its Style → Brand kit switches and logo picture. Every saved design carries its company (`doc.co`); each
+company lists only its own designs and has its own unsaved draft, so switching is instant and loses nothing. Stored
+offline with the existing storage (IndexedDB `kv/companies`, `kv/company`; KBB's brand kit stays in `kv/brand`).
+**Edit company → Export company (.json)** writes `KBB-Studio-company-<id>.json` (`{app:'kbb-studio', kind:'company',
+kit, studio, projects, images}`) -- the kit fields are kit.schema.json's, so it moves into KBB Studio as is; Import
+company reads it back (validated field by field). The two seeds come from the kit.json files in `assets/companies/`.
+
+**KBB is untouched**: its 69 templates draw byte-for-byte as before (`tools/kbb-baseline.json`, 207 renders, checked
+by check-companies). A new company on the Planet Careers set gets those designs in its own colours, fonts, name and
+contact line; on the KBB set, the KBB designs with its brand colours.
+
+## Planet Careers (51 templates × 3 sizes)
+
+Drawn from the company kit (navy `#0B2545` / teal `#13A89E` / gold `#F2C14E`, Montserrat + Inter + Cairo, the Planet
+Careers mark), 17 layout families in `src/templates-pc.js` (spliced into templates.js by build.py): hero, boarding pass,
+postcard arch, map split, intake calendar, steps timeline, checklist, visa-approved story (photo slot + stamp),
+testimonial, event, countdown, top-5 carousel cover, myth/fact + FAQ, consultant / office, offer, language test, greeting.
+
+* **Study abroad (21)** -- study visa for the UK, Canada, Australia, Germany, Ireland (hero) · USA, New Zealand, France,
+  Malta (boarding pass) · Italy, Spain, Portugal, Netherlands (postcard) · Poland, Hungary, Sweden (map) · intake open
+  September / January / May · scholarships · scholarships by country
+* **Visas & PR (7)** -- work permit (country hero, process steps) · PR pathway (Canada) · PR (Australia) · visit visa ·
+  tourist visa · family & spouse visa
+* **Language & tests (3)** -- IELTS · PTE · German A1–B2
+* **Services (7)** -- free consultation · how it works · documents checklist (study, visit) · why choose us · meet your
+  consultant · visit our office
+* **Stories & trust (3)** -- visa approved (two) · client review   **Events & deadlines (3)** -- webinar · expo · deadline
+* **Tips & carousels (3)** -- top 5 destinations cover · myth vs fact · FAQ   **Greetings (4)** -- Eid al-Fitr ·
+  Eid al-Adha · UAE National Day · New Year
+
+Every template has an Arabic line, the company's contact line and, where facts are involved, a "rules change -- we
+confirm the current official requirements" note; numbers, dates, names and scores are `‹edit›` placeholders. No visa
+rule is written as fact. Photo slots (client, consultant, speaker): pick the slot, **Put a photo here…**, and the picture
+takes its place and shape.
+
+**Country picker** (next to ▶ Play, on any country template): one click swaps the flag, country outline, landmark
+silhouette, the flag-colour stripes and the country's name in English and Arabic -- the owner's other edits stay; one
+Ctrl+Z undoes it. 33 countries (R3's pack, copied into `assets/companies/countries/`: flag-icons MIT, outlines and
+landmarks by lane R3): UK, Canada, Australia, New Zealand, USA, Ireland, Germany, France, Netherlands, Italy, Spain,
+Portugal, Poland, Malta, Hungary, Czechia, Lithuania, Latvia, Sweden, Finland, Denmark, Austria, Belgium, Cyprus, Greece,
+Switzerland, UAE, Japan, South Korea, Singapore, Malaysia, Türkiye, Estonia. Edit → Add also places any flag, outline or
+landmark (recolourable). The art travels as one gzip + base64 pack (≈140 KB in the file) unpacked once at start.
+
+**Template browser**: set (this company's / KBB / Planet Careers / all) · category chips · ★ Favourites · country (shows
+the country templates drawn for that country; a pick opens in it) · preview size · search.
+
+Contact sheets: `shots/planet-careers-1.jpg` … `-6.jpg`, `shots/companies.png`.
 
 ## Editing (15 Nov 2026)
 
@@ -63,7 +122,7 @@ A template is data in `src/templates.js`: a layout family (`FAM.<name>`, called 
 texts + options + a product pool. Families must return the same element ids in the same order for every
 size. New templates are appended last so no older template's product rotation moves.
 
-## Templates (69)
+## KBB templates (69)
 
 **UAE & Gulf (24)** -- `ramadan-kareem` · `ramadan-nights` · `eid-al-fitr` · `eid-gifts` · `eid-al-adha` ·
 `national-day` · `emirati-women` · `mothers-day` · `dsf` · `dss` · `hijri-new-year` · `white-friday` ·

@@ -1,0 +1,2119 @@
+{
+ "v": 1,
+ "generated": "tools/r3-countries.cjs",
+ "note": "Facts marked <edit> are placeholders. Verify all visa / study / work rules on official sites before publishing.",
+ "countries": [
+  {
+   "code": "gb",
+   "name": "United Kingdom",
+   "nameAr": "المملكة المتحدة",
+   "region": "europe",
+   "colors": [
+    "#012169",
+    "#C8102E",
+    "#FFFFFF"
+   ],
+   "landmark": {
+    "id": "big-ben",
+    "name": "Elizabeth Tower, London",
+    "file": "landmarks/big-ben.svg"
+   },
+   "flag": "flags/gb.svg",
+   "map": "maps/gb.svg",
+   "stickers": {
+    "flag-pin": "stickers/gb/flag-pin.svg",
+    "map": "stickers/gb/map.svg",
+    "study-in": "stickers/gb/study-in.svg",
+    "intake-open": "stickers/gb/intake-open.svg",
+    "scholarships": "stickers/gb/scholarships.svg",
+    "visa-approved": "stickers/gb/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-gb",
+   "facts": {
+    "capital": "London",
+    "currency": "Pound sterling (GBP)",
+    "languages": "English",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في المملكة المتحدة",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "ca",
+   "name": "Canada",
+   "nameAr": "كندا",
+   "region": "north-america",
+   "colors": [
+    "#D80621",
+    "#FFFFFF",
+    "#D80621"
+   ],
+   "landmark": {
+    "id": "cn-tower",
+    "name": "CN Tower, Toronto",
+    "file": "landmarks/cn-tower.svg"
+   },
+   "flag": "flags/ca.svg",
+   "map": "maps/ca.svg",
+   "stickers": {
+    "flag-pin": "stickers/ca/flag-pin.svg",
+    "map": "stickers/ca/map.svg",
+    "study-in": "stickers/ca/study-in.svg",
+    "intake-open": "stickers/ca/intake-open.svg",
+    "scholarships": "stickers/ca/scholarships.svg",
+    "visa-approved": "stickers/ca/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-ca",
+   "facts": {
+    "capital": "Ottawa",
+    "currency": "Canadian dollar (CAD)",
+    "languages": "English, French",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في كندا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "au",
+   "name": "Australia",
+   "nameAr": "أستراليا",
+   "region": "oceania",
+   "colors": [
+    "#00008B",
+    "#FFFFFF",
+    "#E4002B"
+   ],
+   "landmark": {
+    "id": "opera-house",
+    "name": "Opera House, Sydney",
+    "file": "landmarks/opera-house.svg"
+   },
+   "flag": "flags/au.svg",
+   "map": "maps/au.svg",
+   "stickers": {
+    "flag-pin": "stickers/au/flag-pin.svg",
+    "map": "stickers/au/map.svg",
+    "study-in": "stickers/au/study-in.svg",
+    "intake-open": "stickers/au/intake-open.svg",
+    "scholarships": "stickers/au/scholarships.svg",
+    "visa-approved": "stickers/au/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-au",
+   "facts": {
+    "capital": "Canberra",
+    "currency": "Australian dollar (AUD)",
+    "languages": "English",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في أستراليا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "nz",
+   "name": "New Zealand",
+   "nameAr": "نيوزيلندا",
+   "region": "oceania",
+   "colors": [
+    "#00247D",
+    "#CC142B",
+    "#FFFFFF"
+   ],
+   "landmark": {
+    "id": "sky-tower",
+    "name": "Sky Tower, Auckland",
+    "file": "landmarks/sky-tower.svg"
+   },
+   "flag": "flags/nz.svg",
+   "map": "maps/nz.svg",
+   "stickers": {
+    "flag-pin": "stickers/nz/flag-pin.svg",
+    "map": "stickers/nz/map.svg",
+    "study-in": "stickers/nz/study-in.svg",
+    "intake-open": "stickers/nz/intake-open.svg",
+    "scholarships": "stickers/nz/scholarships.svg",
+    "visa-approved": "stickers/nz/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-nz",
+   "facts": {
+    "capital": "Wellington",
+    "currency": "New Zealand dollar (NZD)",
+    "languages": "English, Māori, NZ Sign Language",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في نيوزيلندا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "us",
+   "name": "United States",
+   "nameAr": "الولايات المتحدة",
+   "region": "north-america",
+   "colors": [
+    "#0A3161",
+    "#B31942",
+    "#FFFFFF"
+   ],
+   "landmark": {
+    "id": "liberty",
+    "name": "Statue of Liberty, New York",
+    "file": "landmarks/liberty.svg"
+   },
+   "flag": "flags/us.svg",
+   "map": "maps/us.svg",
+   "stickers": {
+    "flag-pin": "stickers/us/flag-pin.svg",
+    "map": "stickers/us/map.svg",
+    "study-in": "stickers/us/study-in.svg",
+    "intake-open": "stickers/us/intake-open.svg",
+    "scholarships": "stickers/us/scholarships.svg",
+    "visa-approved": "stickers/us/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-us",
+   "facts": {
+    "capital": "Washington, D.C.",
+    "currency": "US dollar (USD)",
+    "languages": "English",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في الولايات المتحدة",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "ie",
+   "name": "Ireland",
+   "nameAr": "أيرلندا",
+   "region": "europe",
+   "colors": [
+    "#169B62",
+    "#FFFFFF",
+    "#FF883E"
+   ],
+   "landmark": {
+    "id": "hapenny-bridge",
+    "name": "Ha'penny Bridge, Dublin",
+    "file": "landmarks/hapenny-bridge.svg"
+   },
+   "flag": "flags/ie.svg",
+   "map": "maps/ie.svg",
+   "stickers": {
+    "flag-pin": "stickers/ie/flag-pin.svg",
+    "map": "stickers/ie/map.svg",
+    "study-in": "stickers/ie/study-in.svg",
+    "intake-open": "stickers/ie/intake-open.svg",
+    "scholarships": "stickers/ie/scholarships.svg",
+    "visa-approved": "stickers/ie/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-ie",
+   "facts": {
+    "capital": "Dublin",
+    "currency": "Euro (EUR)",
+    "languages": "Irish, English",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في أيرلندا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "de",
+   "name": "Germany",
+   "nameAr": "ألمانيا",
+   "region": "europe",
+   "colors": [
+    "#000000",
+    "#DD0000",
+    "#FFCE00"
+   ],
+   "landmark": {
+    "id": "brandenburg-gate",
+    "name": "Brandenburg Gate, Berlin",
+    "file": "landmarks/brandenburg-gate.svg"
+   },
+   "flag": "flags/de.svg",
+   "map": "maps/de.svg",
+   "stickers": {
+    "flag-pin": "stickers/de/flag-pin.svg",
+    "map": "stickers/de/map.svg",
+    "study-in": "stickers/de/study-in.svg",
+    "intake-open": "stickers/de/intake-open.svg",
+    "scholarships": "stickers/de/scholarships.svg",
+    "visa-approved": "stickers/de/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-de",
+   "facts": {
+    "capital": "Berlin",
+    "currency": "Euro (EUR)",
+    "languages": "German",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في ألمانيا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "fr",
+   "name": "France",
+   "nameAr": "فرنسا",
+   "region": "europe",
+   "colors": [
+    "#002654",
+    "#FFFFFF",
+    "#CE1126"
+   ],
+   "landmark": {
+    "id": "eiffel",
+    "name": "Eiffel Tower, Paris",
+    "file": "landmarks/eiffel.svg"
+   },
+   "flag": "flags/fr.svg",
+   "map": "maps/fr.svg",
+   "stickers": {
+    "flag-pin": "stickers/fr/flag-pin.svg",
+    "map": "stickers/fr/map.svg",
+    "study-in": "stickers/fr/study-in.svg",
+    "intake-open": "stickers/fr/intake-open.svg",
+    "scholarships": "stickers/fr/scholarships.svg",
+    "visa-approved": "stickers/fr/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-fr",
+   "facts": {
+    "capital": "Paris",
+    "currency": "Euro (EUR)",
+    "languages": "French",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في فرنسا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "nl",
+   "name": "Netherlands",
+   "nameAr": "هولندا",
+   "region": "europe",
+   "colors": [
+    "#AE1C28",
+    "#FFFFFF",
+    "#21468B"
+   ],
+   "landmark": {
+    "id": "windmill",
+    "name": "Windmill, Netherlands",
+    "file": "landmarks/windmill.svg"
+   },
+   "flag": "flags/nl.svg",
+   "map": "maps/nl.svg",
+   "stickers": {
+    "flag-pin": "stickers/nl/flag-pin.svg",
+    "map": "stickers/nl/map.svg",
+    "study-in": "stickers/nl/study-in.svg",
+    "intake-open": "stickers/nl/intake-open.svg",
+    "scholarships": "stickers/nl/scholarships.svg",
+    "visa-approved": "stickers/nl/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-nl",
+   "facts": {
+    "capital": "Amsterdam",
+    "currency": "Euro (EUR)",
+    "languages": "Dutch",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في هولندا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "it",
+   "name": "Italy",
+   "nameAr": "إيطاليا",
+   "region": "europe",
+   "colors": [
+    "#009246",
+    "#FFFFFF",
+    "#CE2B37"
+   ],
+   "landmark": {
+    "id": "pisa",
+    "name": "Leaning Tower, Pisa",
+    "file": "landmarks/pisa.svg"
+   },
+   "flag": "flags/it.svg",
+   "map": "maps/it.svg",
+   "stickers": {
+    "flag-pin": "stickers/it/flag-pin.svg",
+    "map": "stickers/it/map.svg",
+    "study-in": "stickers/it/study-in.svg",
+    "intake-open": "stickers/it/intake-open.svg",
+    "scholarships": "stickers/it/scholarships.svg",
+    "visa-approved": "stickers/it/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-it",
+   "facts": {
+    "capital": "Rome",
+    "currency": "Euro (EUR)",
+    "languages": "Italian",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في إيطاليا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "es",
+   "name": "Spain",
+   "nameAr": "إسبانيا",
+   "region": "europe",
+   "colors": [
+    "#AA151B",
+    "#F1BF00",
+    "#AA151B"
+   ],
+   "landmark": {
+    "id": "sagrada",
+    "name": "Sagrada Família, Barcelona",
+    "file": "landmarks/sagrada.svg"
+   },
+   "flag": "flags/es.svg",
+   "map": "maps/es.svg",
+   "stickers": {
+    "flag-pin": "stickers/es/flag-pin.svg",
+    "map": "stickers/es/map.svg",
+    "study-in": "stickers/es/study-in.svg",
+    "intake-open": "stickers/es/intake-open.svg",
+    "scholarships": "stickers/es/scholarships.svg",
+    "visa-approved": "stickers/es/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-es",
+   "facts": {
+    "capital": "Madrid",
+    "currency": "Euro (EUR)",
+    "languages": "Spanish",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في إسبانيا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "pt",
+   "name": "Portugal",
+   "nameAr": "البرتغال",
+   "region": "europe",
+   "colors": [
+    "#006600",
+    "#FF0000",
+    "#FFFF00"
+   ],
+   "landmark": {
+    "id": "belem",
+    "name": "Belém Tower, Lisbon",
+    "file": "landmarks/belem.svg"
+   },
+   "flag": "flags/pt.svg",
+   "map": "maps/pt.svg",
+   "stickers": {
+    "flag-pin": "stickers/pt/flag-pin.svg",
+    "map": "stickers/pt/map.svg",
+    "study-in": "stickers/pt/study-in.svg",
+    "intake-open": "stickers/pt/intake-open.svg",
+    "scholarships": "stickers/pt/scholarships.svg",
+    "visa-approved": "stickers/pt/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-pt",
+   "facts": {
+    "capital": "Lisbon",
+    "currency": "Euro (EUR)",
+    "languages": "Portuguese",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في البرتغال",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "pl",
+   "name": "Poland",
+   "nameAr": "بولندا",
+   "region": "europe",
+   "colors": [
+    "#FFFFFF",
+    "#DC143C",
+    "#DC143C"
+   ],
+   "landmark": {
+    "id": "palace-culture",
+    "name": "Palace of Culture and Science, Warsaw",
+    "file": "landmarks/palace-culture.svg"
+   },
+   "flag": "flags/pl.svg",
+   "map": "maps/pl.svg",
+   "stickers": {
+    "flag-pin": "stickers/pl/flag-pin.svg",
+    "map": "stickers/pl/map.svg",
+    "study-in": "stickers/pl/study-in.svg",
+    "intake-open": "stickers/pl/intake-open.svg",
+    "scholarships": "stickers/pl/scholarships.svg",
+    "visa-approved": "stickers/pl/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-pl",
+   "facts": {
+    "capital": "Warsaw",
+    "currency": "Złoty (PLN)",
+    "languages": "Polish",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في بولندا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "mt",
+   "name": "Malta",
+   "nameAr": "مالطا",
+   "region": "europe",
+   "colors": [
+    "#FFFFFF",
+    "#CF142B",
+    "#CF142B"
+   ],
+   "landmark": {
+    "id": "valletta-dome",
+    "name": "Valletta skyline, Malta",
+    "file": "landmarks/valletta-dome.svg"
+   },
+   "flag": "flags/mt.svg",
+   "map": "maps/mt.svg",
+   "stickers": {
+    "flag-pin": "stickers/mt/flag-pin.svg",
+    "map": "stickers/mt/map.svg",
+    "study-in": "stickers/mt/study-in.svg",
+    "intake-open": "stickers/mt/intake-open.svg",
+    "scholarships": "stickers/mt/scholarships.svg",
+    "visa-approved": "stickers/mt/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-mt",
+   "facts": {
+    "capital": "Valletta",
+    "currency": "Euro (EUR)",
+    "languages": "Maltese, English",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في مالطا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "hu",
+   "name": "Hungary",
+   "nameAr": "المجر",
+   "region": "europe",
+   "colors": [
+    "#CE2939",
+    "#FFFFFF",
+    "#477050"
+   ],
+   "landmark": {
+    "id": "parliament-hu",
+    "name": "Parliament, Budapest",
+    "file": "landmarks/parliament-hu.svg"
+   },
+   "flag": "flags/hu.svg",
+   "map": "maps/hu.svg",
+   "stickers": {
+    "flag-pin": "stickers/hu/flag-pin.svg",
+    "map": "stickers/hu/map.svg",
+    "study-in": "stickers/hu/study-in.svg",
+    "intake-open": "stickers/hu/intake-open.svg",
+    "scholarships": "stickers/hu/scholarships.svg",
+    "visa-approved": "stickers/hu/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-hu",
+   "facts": {
+    "capital": "Budapest",
+    "currency": "Forint (HUF)",
+    "languages": "Hungarian",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في المجر",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "cz",
+   "name": "Czechia",
+   "nameAr": "التشيك",
+   "region": "europe",
+   "colors": [
+    "#11457E",
+    "#FFFFFF",
+    "#D7141A"
+   ],
+   "landmark": {
+    "id": "prague-tower",
+    "name": "Old Town Bridge Tower, Prague",
+    "file": "landmarks/prague-tower.svg"
+   },
+   "flag": "flags/cz.svg",
+   "map": "maps/cz.svg",
+   "stickers": {
+    "flag-pin": "stickers/cz/flag-pin.svg",
+    "map": "stickers/cz/map.svg",
+    "study-in": "stickers/cz/study-in.svg",
+    "intake-open": "stickers/cz/intake-open.svg",
+    "scholarships": "stickers/cz/scholarships.svg",
+    "visa-approved": "stickers/cz/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-cz",
+   "facts": {
+    "capital": "Prague",
+    "currency": "Czech koruna (CZK)",
+    "languages": "Czech",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في التشيك",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "lt",
+   "name": "Lithuania",
+   "nameAr": "ليتوانيا",
+   "region": "europe",
+   "colors": [
+    "#FDB913",
+    "#006A44",
+    "#C1272D"
+   ],
+   "landmark": {
+    "id": "gediminas",
+    "name": "Gediminas Tower, Vilnius",
+    "file": "landmarks/gediminas.svg"
+   },
+   "flag": "flags/lt.svg",
+   "map": "maps/lt.svg",
+   "stickers": {
+    "flag-pin": "stickers/lt/flag-pin.svg",
+    "map": "stickers/lt/map.svg",
+    "study-in": "stickers/lt/study-in.svg",
+    "intake-open": "stickers/lt/intake-open.svg",
+    "scholarships": "stickers/lt/scholarships.svg",
+    "visa-approved": "stickers/lt/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-lt",
+   "facts": {
+    "capital": "Vilnius",
+    "currency": "Euro (EUR)",
+    "languages": "Lithuanian",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في ليتوانيا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "lv",
+   "name": "Latvia",
+   "nameAr": "لاتفيا",
+   "region": "europe",
+   "colors": [
+    "#9E3039",
+    "#FFFFFF",
+    "#9E3039"
+   ],
+   "landmark": {
+    "id": "riga-spire",
+    "name": "St Peter's spire, Riga",
+    "file": "landmarks/riga-spire.svg"
+   },
+   "flag": "flags/lv.svg",
+   "map": "maps/lv.svg",
+   "stickers": {
+    "flag-pin": "stickers/lv/flag-pin.svg",
+    "map": "stickers/lv/map.svg",
+    "study-in": "stickers/lv/study-in.svg",
+    "intake-open": "stickers/lv/intake-open.svg",
+    "scholarships": "stickers/lv/scholarships.svg",
+    "visa-approved": "stickers/lv/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-lv",
+   "facts": {
+    "capital": "Riga",
+    "currency": "Euro (EUR)",
+    "languages": "Latvian",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في لاتفيا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "se",
+   "name": "Sweden",
+   "nameAr": "السويد",
+   "region": "europe",
+   "colors": [
+    "#006AA7",
+    "#FECC02",
+    "#006AA7"
+   ],
+   "landmark": {
+    "id": "stockholm-hall",
+    "name": "City Hall, Stockholm",
+    "file": "landmarks/stockholm-hall.svg"
+   },
+   "flag": "flags/se.svg",
+   "map": "maps/se.svg",
+   "stickers": {
+    "flag-pin": "stickers/se/flag-pin.svg",
+    "map": "stickers/se/map.svg",
+    "study-in": "stickers/se/study-in.svg",
+    "intake-open": "stickers/se/intake-open.svg",
+    "scholarships": "stickers/se/scholarships.svg",
+    "visa-approved": "stickers/se/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-se",
+   "facts": {
+    "capital": "Stockholm",
+    "currency": "Swedish krona (SEK)",
+    "languages": "Swedish",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في السويد",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "fi",
+   "name": "Finland",
+   "nameAr": "فنلندا",
+   "region": "europe",
+   "colors": [
+    "#FFFFFF",
+    "#002F6C",
+    "#FFFFFF"
+   ],
+   "landmark": {
+    "id": "helsinki-cathedral",
+    "name": "Helsinki Cathedral",
+    "file": "landmarks/helsinki-cathedral.svg"
+   },
+   "flag": "flags/fi.svg",
+   "map": "maps/fi.svg",
+   "stickers": {
+    "flag-pin": "stickers/fi/flag-pin.svg",
+    "map": "stickers/fi/map.svg",
+    "study-in": "stickers/fi/study-in.svg",
+    "intake-open": "stickers/fi/intake-open.svg",
+    "scholarships": "stickers/fi/scholarships.svg",
+    "visa-approved": "stickers/fi/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-fi",
+   "facts": {
+    "capital": "Helsinki",
+    "currency": "Euro (EUR)",
+    "languages": "Finnish, Swedish",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في فنلندا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "dk",
+   "name": "Denmark",
+   "nameAr": "الدنمارك",
+   "region": "europe",
+   "colors": [
+    "#C8102E",
+    "#FFFFFF",
+    "#C8102E"
+   ],
+   "landmark": {
+    "id": "nyhavn",
+    "name": "Nyhavn, Copenhagen",
+    "file": "landmarks/nyhavn.svg"
+   },
+   "flag": "flags/dk.svg",
+   "map": "maps/dk.svg",
+   "stickers": {
+    "flag-pin": "stickers/dk/flag-pin.svg",
+    "map": "stickers/dk/map.svg",
+    "study-in": "stickers/dk/study-in.svg",
+    "intake-open": "stickers/dk/intake-open.svg",
+    "scholarships": "stickers/dk/scholarships.svg",
+    "visa-approved": "stickers/dk/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-dk",
+   "facts": {
+    "capital": "Copenhagen",
+    "currency": "Danish krone (DKK)",
+    "languages": "Danish",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في الدنمارك",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "at",
+   "name": "Austria",
+   "nameAr": "النمسا",
+   "region": "europe",
+   "colors": [
+    "#C8102E",
+    "#FFFFFF",
+    "#C8102E"
+   ],
+   "landmark": {
+    "id": "riesenrad",
+    "name": "Riesenrad, Vienna",
+    "file": "landmarks/riesenrad.svg"
+   },
+   "flag": "flags/at.svg",
+   "map": "maps/at.svg",
+   "stickers": {
+    "flag-pin": "stickers/at/flag-pin.svg",
+    "map": "stickers/at/map.svg",
+    "study-in": "stickers/at/study-in.svg",
+    "intake-open": "stickers/at/intake-open.svg",
+    "scholarships": "stickers/at/scholarships.svg",
+    "visa-approved": "stickers/at/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-at",
+   "facts": {
+    "capital": "Vienna",
+    "currency": "Euro (EUR)",
+    "languages": "German",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في النمسا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "be",
+   "name": "Belgium",
+   "nameAr": "بلجيكا",
+   "region": "europe",
+   "colors": [
+    "#000000",
+    "#FDDA24",
+    "#EF3340"
+   ],
+   "landmark": {
+    "id": "atomium",
+    "name": "Atomium, Brussels",
+    "file": "landmarks/atomium.svg"
+   },
+   "flag": "flags/be.svg",
+   "map": "maps/be.svg",
+   "stickers": {
+    "flag-pin": "stickers/be/flag-pin.svg",
+    "map": "stickers/be/map.svg",
+    "study-in": "stickers/be/study-in.svg",
+    "intake-open": "stickers/be/intake-open.svg",
+    "scholarships": "stickers/be/scholarships.svg",
+    "visa-approved": "stickers/be/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-be",
+   "facts": {
+    "capital": "Brussels",
+    "currency": "Euro (EUR)",
+    "languages": "Dutch, French, German",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في بلجيكا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "cy",
+   "name": "Cyprus",
+   "nameAr": "قبرص",
+   "region": "europe",
+   "colors": [
+    "#FFFFFF",
+    "#D57800",
+    "#4E5B31"
+   ],
+   "landmark": {
+    "id": "aphrodite-rock",
+    "name": "Aphrodite's Rock, Cyprus",
+    "file": "landmarks/aphrodite-rock.svg"
+   },
+   "flag": "flags/cy.svg",
+   "map": "maps/cy.svg",
+   "stickers": {
+    "flag-pin": "stickers/cy/flag-pin.svg",
+    "map": "stickers/cy/map.svg",
+    "study-in": "stickers/cy/study-in.svg",
+    "intake-open": "stickers/cy/intake-open.svg",
+    "scholarships": "stickers/cy/scholarships.svg",
+    "visa-approved": "stickers/cy/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-cy",
+   "facts": {
+    "capital": "Nicosia",
+    "currency": "Euro (EUR)",
+    "languages": "Greek, Turkish",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في قبرص",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "gr",
+   "name": "Greece",
+   "nameAr": "اليونان",
+   "region": "europe",
+   "colors": [
+    "#0D5EAF",
+    "#FFFFFF",
+    "#0D5EAF"
+   ],
+   "landmark": {
+    "id": "parthenon",
+    "name": "Parthenon, Athens",
+    "file": "landmarks/parthenon.svg"
+   },
+   "flag": "flags/gr.svg",
+   "map": "maps/gr.svg",
+   "stickers": {
+    "flag-pin": "stickers/gr/flag-pin.svg",
+    "map": "stickers/gr/map.svg",
+    "study-in": "stickers/gr/study-in.svg",
+    "intake-open": "stickers/gr/intake-open.svg",
+    "scholarships": "stickers/gr/scholarships.svg",
+    "visa-approved": "stickers/gr/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-gr",
+   "facts": {
+    "capital": "Athens",
+    "currency": "Euro (EUR)",
+    "languages": "Greek",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في اليونان",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "ch",
+   "name": "Switzerland",
+   "nameAr": "سويسرا",
+   "region": "europe",
+   "colors": [
+    "#DA291C",
+    "#FFFFFF",
+    "#DA291C"
+   ],
+   "landmark": {
+    "id": "matterhorn",
+    "name": "Matterhorn, Switzerland",
+    "file": "landmarks/matterhorn.svg"
+   },
+   "flag": "flags/ch.svg",
+   "map": "maps/ch.svg",
+   "stickers": {
+    "flag-pin": "stickers/ch/flag-pin.svg",
+    "map": "stickers/ch/map.svg",
+    "study-in": "stickers/ch/study-in.svg",
+    "intake-open": "stickers/ch/intake-open.svg",
+    "scholarships": "stickers/ch/scholarships.svg",
+    "visa-approved": "stickers/ch/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-ch",
+   "facts": {
+    "capital": "Bern",
+    "currency": "Swiss franc (CHF)",
+    "languages": "German, French, Italian, Romansh",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في سويسرا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "ae",
+   "name": "United Arab Emirates",
+   "nameAr": "الإمارات",
+   "region": "middle-east",
+   "colors": [
+    "#00732F",
+    "#FFFFFF",
+    "#FF0000"
+   ],
+   "landmark": {
+    "id": "burj-khalifa",
+    "name": "Burj Khalifa, Dubai",
+    "file": "landmarks/burj-khalifa.svg"
+   },
+   "flag": "flags/ae.svg",
+   "map": "maps/ae.svg",
+   "stickers": {
+    "flag-pin": "stickers/ae/flag-pin.svg",
+    "map": "stickers/ae/map.svg",
+    "study-in": "stickers/ae/study-in.svg",
+    "intake-open": "stickers/ae/intake-open.svg",
+    "scholarships": "stickers/ae/scholarships.svg",
+    "visa-approved": "stickers/ae/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-ae",
+   "facts": {
+    "capital": "Abu Dhabi",
+    "currency": "UAE dirham (AED)",
+    "languages": "Arabic",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في الإمارات",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "jp",
+   "name": "Japan",
+   "nameAr": "اليابان",
+   "region": "asia",
+   "colors": [
+    "#FFFFFF",
+    "#BC002D",
+    "#FFFFFF"
+   ],
+   "landmark": {
+    "id": "fuji-torii",
+    "name": "Mount Fuji with torii, Japan",
+    "file": "landmarks/fuji-torii.svg"
+   },
+   "flag": "flags/jp.svg",
+   "map": "maps/jp.svg",
+   "stickers": {
+    "flag-pin": "stickers/jp/flag-pin.svg",
+    "map": "stickers/jp/map.svg",
+    "study-in": "stickers/jp/study-in.svg",
+    "intake-open": "stickers/jp/intake-open.svg",
+    "scholarships": "stickers/jp/scholarships.svg",
+    "visa-approved": "stickers/jp/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-jp",
+   "facts": {
+    "capital": "Tokyo",
+    "currency": "Japanese yen (JPY)",
+    "languages": "Japanese",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في اليابان",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "kr",
+   "name": "South Korea",
+   "nameAr": "كوريا الجنوبية",
+   "region": "asia",
+   "colors": [
+    "#FFFFFF",
+    "#CD2E3A",
+    "#0047A0"
+   ],
+   "landmark": {
+    "id": "seoul-tower",
+    "name": "N Seoul Tower",
+    "file": "landmarks/seoul-tower.svg"
+   },
+   "flag": "flags/kr.svg",
+   "map": "maps/kr.svg",
+   "stickers": {
+    "flag-pin": "stickers/kr/flag-pin.svg",
+    "map": "stickers/kr/map.svg",
+    "study-in": "stickers/kr/study-in.svg",
+    "intake-open": "stickers/kr/intake-open.svg",
+    "scholarships": "stickers/kr/scholarships.svg",
+    "visa-approved": "stickers/kr/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-kr",
+   "facts": {
+    "capital": "Seoul",
+    "currency": "South Korean won (KRW)",
+    "languages": "Korean",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في كوريا الجنوبية",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "sg",
+   "name": "Singapore",
+   "nameAr": "سنغافورة",
+   "region": "asia",
+   "colors": [
+    "#EF3340",
+    "#FFFFFF",
+    "#EF3340"
+   ],
+   "landmark": {
+    "id": "marina-bay",
+    "name": "Marina Bay Sands, Singapore",
+    "file": "landmarks/marina-bay.svg"
+   },
+   "flag": "flags/sg.svg",
+   "map": "maps/sg.svg",
+   "stickers": {
+    "flag-pin": "stickers/sg/flag-pin.svg",
+    "map": "stickers/sg/map.svg",
+    "study-in": "stickers/sg/study-in.svg",
+    "intake-open": "stickers/sg/intake-open.svg",
+    "scholarships": "stickers/sg/scholarships.svg",
+    "visa-approved": "stickers/sg/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-sg",
+   "facts": {
+    "capital": "Singapore",
+    "currency": "Singapore dollar (SGD)",
+    "languages": "English, Malay, Mandarin, Tamil",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في سنغافورة",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "my",
+   "name": "Malaysia",
+   "nameAr": "ماليزيا",
+   "region": "asia",
+   "colors": [
+    "#010066",
+    "#CC0001",
+    "#FFCC00"
+   ],
+   "landmark": {
+    "id": "petronas",
+    "name": "Petronas Towers, Kuala Lumpur",
+    "file": "landmarks/petronas.svg"
+   },
+   "flag": "flags/my.svg",
+   "map": "maps/my.svg",
+   "stickers": {
+    "flag-pin": "stickers/my/flag-pin.svg",
+    "map": "stickers/my/map.svg",
+    "study-in": "stickers/my/study-in.svg",
+    "intake-open": "stickers/my/intake-open.svg",
+    "scholarships": "stickers/my/scholarships.svg",
+    "visa-approved": "stickers/my/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-my",
+   "facts": {
+    "capital": "Kuala Lumpur",
+    "currency": "Ringgit (MYR)",
+    "languages": "Malay",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في ماليزيا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "tr",
+   "name": "Türkiye",
+   "nameAr": "تركيا",
+   "region": "europe-asia",
+   "colors": [
+    "#E30A17",
+    "#FFFFFF",
+    "#E30A17"
+   ],
+   "landmark": {
+    "id": "galata",
+    "name": "Galata Tower, Istanbul",
+    "file": "landmarks/galata.svg"
+   },
+   "flag": "flags/tr.svg",
+   "map": "maps/tr.svg",
+   "stickers": {
+    "flag-pin": "stickers/tr/flag-pin.svg",
+    "map": "stickers/tr/map.svg",
+    "study-in": "stickers/tr/study-in.svg",
+    "intake-open": "stickers/tr/intake-open.svg",
+    "scholarships": "stickers/tr/scholarships.svg",
+    "visa-approved": "stickers/tr/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-tr",
+   "facts": {
+    "capital": "Ankara",
+    "currency": "Turkish lira (TRY)",
+    "languages": "Turkish",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في تركيا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  },
+  {
+   "code": "ee",
+   "name": "Estonia",
+   "nameAr": "إستونيا",
+   "region": "europe",
+   "colors": [
+    "#0072CE",
+    "#000000",
+    "#FFFFFF"
+   ],
+   "landmark": {
+    "id": "tallinn-towers",
+    "name": "Old Town towers, Tallinn",
+    "file": "landmarks/tallinn-towers.svg"
+   },
+   "flag": "flags/ee.svg",
+   "map": "maps/ee.svg",
+   "stickers": {
+    "flag-pin": "stickers/ee/flag-pin.svg",
+    "map": "stickers/ee/map.svg",
+    "study-in": "stickers/ee/study-in.svg",
+    "intake-open": "stickers/ee/intake-open.svg",
+    "scholarships": "stickers/ee/scholarships.svg",
+    "visa-approved": "stickers/ee/visa-approved.svg"
+   },
+   "routes": [
+    "study",
+    "work",
+    "pr",
+    "visit"
+   ],
+   "recipe": "pc-spotlight-ee",
+   "facts": {
+    "capital": "Tallinn",
+    "currency": "Euro (EUR)",
+    "languages": "Estonian",
+    "editable": [
+     {
+      "label": "Popular intakes",
+      "value": "<edit: e.g. Sep / Jan>"
+     },
+     {
+      "label": "Typical study route",
+      "value": "<edit>"
+     },
+     {
+      "label": "Work while studying",
+      "value": "<edit after checking the official rules>"
+     },
+     {
+      "label": "Post-study options",
+      "value": "<edit after checking the official rules>"
+     }
+    ],
+    "note": "Verify current requirements on the official government / embassy website before publishing.",
+    "noteAr": "تحقق من المتطلبات الحالية على الموقع الرسمي للحكومة أو السفارة قبل النشر."
+   },
+   "sticker_text_ar": {
+    "study-in": "ادرس في إستونيا",
+    "visa-approved": "تمت الموافقة على التأشيرة",
+    "intake-open": "باب القبول مفتوح",
+    "scholarships": "منح دراسية"
+   }
+  }
+ ]
+}
