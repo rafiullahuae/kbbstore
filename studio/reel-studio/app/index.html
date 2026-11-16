@@ -9,6 +9,16 @@
 </head>
 <body>
 <div id="app"><div class="boot">Starting…</div></div>
+<script>
+/* Opened straight from the folder (file://), the app cannot run: browsers block modules and models there,
+   and nothing would ever start (the owner's first try, 16 Nov). Say what to do instead. */
+if (location.protocol === 'file:') {
+  document.getElementById('app').innerHTML = '<div class="boot" style="max-width:520px;margin:18vh auto;text-align:center;line-height:1.6;color:#ddd;font:16px/1.6 -apple-system,system-ui,sans-serif">'
+    + '<h2 style="margin:0 0 12px;color:#fff">Open KBB Studio with its launcher</h2>'
+    + 'Close this tab. In the <b>KBB Studio</b> folder, <b>right-click “Start KBB Studio”</b> → <b>Open</b> → <b>Open</b> (first time only; after that a double-click is enough).<br><br>'
+    + 'A small Terminal window opens — keep it open — and KBB Studio starts in Chrome by itself.</div>';
+}
+</script>
 <script type="module" src="editor/main.js"></script>
 </body>
 </html>
