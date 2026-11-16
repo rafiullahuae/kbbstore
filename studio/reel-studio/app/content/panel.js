@@ -15,6 +15,7 @@ import { SHAPES, exportShapes } from './relayout.js';
 import { makeShorts, exportShorts } from './shorts.js';
 import { openTeleprompter } from './recorder.js';
 import { cueSheet, measureSound, tapBpm } from './cues.js';
+import { hoverPreview, setPreview, lazySpec, formatSpec } from '../themes/hover.js';
 
 const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.round(t % 60)).padStart(2, '0')}`;
 
@@ -69,7 +70,9 @@ export function mountCreatePanel(root, ctx) {
   c2.insertBefore(libInfo, c2.out);
 
   // 3 · proven formats
-  const fSel = select(formatsFor(ws()).map((f) => [f.id, f.name]), ctx.project.meta?.content?.format?.id || formatsFor(ws())[0]?.id, () => renderSlots());
+  const fmtPrev = () => lazySpec('format:' + fSel.value, fSel.selectedOptions[0]?.textContent || '', () => formatSpec(fSel.value, ws(), ctx.project.canvas.aspect), { aspect: ctx.project.canvas.aspect, dur: 4 });
+  const fSel = select(formatsFor(ws()).map((f) => [f.id, f.name]), ctx.project.meta?.content?.format?.id || formatsFor(ws())[0]?.id, () => { renderSlots(); setPreview(fSel, fmtPrev()); });
+  hoverPreview(fSel, fmtPrev());   // hover or focus the list: the chosen format plays (arrow keys switch it)
   const slotBox = h('div.cr-slots');
   const c3 = card('formats', '🧩', 'Proven formats', 'A ready timeline: drop your footage into the slots', h('div.cr-row', fSel), null);
   c3.insertBefore(h('div.cr-row', action(c3, 'Build timeline', async () => { const r = buildFormat(ctx, fSel.value); renderSlots(); return `${r.slots.length} slots · ${r.length.toFixed(1)} s · text, look and CTA in place`; }),

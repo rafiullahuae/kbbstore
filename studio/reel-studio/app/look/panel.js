@@ -8,6 +8,7 @@ import { processLook } from './fx.js';
 import { KINDS } from './transitions.js';
 import { CURVES, EASES, rampPlan } from './ramp.js';
 import { PRESETS } from './text.js';
+import { hoverPreview, lookSpec, transitionSpec } from '../themes/hover.js';
 
 let cssDone = false;
 export function css() {
@@ -54,6 +55,7 @@ export function lookPanel(el, ctx, A) {
   const tileEls = LOOKS.map((L) => {
     const cv = h('canvas', { width: 96, height: 128 });
     const b = h('button.lk-tile', { title: L.hint, dataset: { look: L.id }, on: { click: () => run('Look', () => A.applyLook(ctx, L.id, { amount: st.amount })).then(mark) } }, cv, h('div', L.label));
+    hoverPreview(b, lookSpec(L.id, cv, () => thumbs()));   // hover: the look on a moving clip; leaving restores the still
     tiles.appendChild(b); return { L, cv, b };
   });
   function mark() {
@@ -141,7 +143,7 @@ export function lookPanel(el, ctx, A) {
         }) } }, '🧍 Remove background'),
         h('button.btn', { on: { click: () => run('Background', () => (A.clearFx(ctx, 'look.bg'), 'Background back')) } }, 'Remove'))),
     sec('Transitions',
-      h('div.lk-chips', ...Object.entries(KINDS).map(([k, v]) => { const c = h('button.chip' + (k === st.trans ? '.on' : ''), { dataset: { trans: k }, on: { click: () => { st.trans = k; for (const x of c.parentNode.children) x.classList.toggle('on', x === c); } } }, v.label); return c; })),
+      h('div.lk-chips', ...Object.entries(KINDS).map(([k, v]) => { const c = h('button.chip' + (k === st.trans ? '.on' : ''), { dataset: { trans: k }, on: { click: () => { st.trans = k; for (const x of c.parentNode.children) x.classList.toggle('on', x === c); } } }, v.label); return hoverPreview(c, transitionSpec(k, v.label)); })),
       slider({ label: 'Length', min: 0, max: 1.2, step: 0.05, value: 0, fmt: (v) => (v ? v.toFixed(2) + ' s' : 'auto'), onInput: (v) => { st.tdur = v; } }),
       h('div.lk-btns',
         h('button.btn.primary', { on: { click: () => run('Transitions', async () => { const n = await A.addTransitions(ctx, st.trans, { dur: st.tdur || null }); return `${KINDS[st.trans].label} on every cut (${n} in the edit)`; }) } }, 'On every cut'),

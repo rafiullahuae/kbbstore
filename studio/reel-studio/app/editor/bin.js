@@ -6,6 +6,7 @@ import { ops } from '../core/history.js';
 import { findTrack, createTrack } from '../core/project.js';
 import { h, clear, toast, fmtDur } from './ui.js';
 import { TEXT_PRESETS, STICKERS, textItem, shapeItem, stickerItem } from './items.js';
+import { hoverPreview, hoverToggles, audioSpec, lazySpec, recipeSpec } from '../themes/hover.js';
 
 const TABS = [['media', '🎞', 'Media'], ['music', '🎵', 'Music'], ['sfx', '🔊', 'SFX'], ['text', 'T', 'Text'], ['stickers', '✨', 'Stickers'], ['templates', '▦', 'Templates']];
 
@@ -69,7 +70,7 @@ export class Bin {
       : 'Sound effects (made for the studio, free to use). Drag one onto the SFX track, or press +.'));
     const filter = h('input.lib-filter', { type: 'search', placeholder: kind === 'music' ? 'Search title, mood, bpm…' : 'Search sounds…', 'aria-label': 'Search' });
     const list = h('div.lib-list', h('p.muted', 'Loading…'));
-    b.append(filter, list);
+    b.append(hoverToggles({ sound: true, mine: false }), filter, list);
     let rows = [];
     try { rows = await libraryRows(this.ed, kind); } catch (e) { console.warn('[library]', e.message); }
     if (this.tab !== kind) return;
@@ -85,6 +86,7 @@ export class Bin {
           h('span.lcol', h('span.lname', r.title), h('small.lmeta', r.meta)),
           h('button.add', { title: 'Add at the playhead', on: { click: () => this.addLibrary(r.src) } }, '+'));
         row.addEventListener('dragstart', (e) => { e.dataTransfer.setData('application/x-kbb-lib', r.src); e.dataTransfer.effectAllowed = 'copy'; });
+        hoverPreview(row, audioSpec(r.src, { duration: r.dur, kind }));   // hover: a few seconds (muted unless the sound toggle is on)
         list.appendChild(row);
       }
     };
@@ -169,7 +171,8 @@ export class Bin {
   /** recipes for the open company (its own, its industries', generic): Use = recipe + caption style; Make reel = Auto reel */
   async templatesTab(b) {
     const ed = this.ed;
-    b.appendChild(h('p.muted.small', `Recipes for ${ed.workspace?.name || 'this company'}: structure, caption style, music and effects. “Use” sets it for this reel; “Make reel” cuts one now.`));
+    b.appendChild(h('p.muted.small', `Recipes for ${ed.workspace?.name || 'this company'}: structure, caption style, music and effects. “Use” sets it for this reel; “Make reel” cuts one now. Hover one to preview it.`));
+    b.appendChild(hoverToggles({ mine: true }));
     const box = h('div.lib-list');
     b.appendChild(box);
     let recipes = [];
@@ -180,11 +183,12 @@ export class Bin {
     for (const r of recipes) {
       if (r.group !== group) { group = r.group; box.appendChild(h('h4.lib-group', group)); }
       const on = ed.project.recipe === r.id;
-      box.appendChild(h('div.lib-row.recipe-row' + (on ? '.on' : ''), { dataset: { recipe: r.id }, title: r.hint },
+      box.appendChild(hoverPreview(h('div.lib-row.recipe-row' + (on ? '.on' : ''), { dataset: { recipe: r.id }, title: r.hint, tabIndex: 0 },
         h('span.lcol', h('span.lname', r.name), h('small.lmeta', r.meta)),
         h('span.rbtns',
           h('button.btn.small', { title: 'Use this recipe for this reel', on: { click: async () => { const A = await import('../auto/index.js'); A.useRecipe(ed.context(), r.id); toast(`Recipe: ${r.name}`, 'ok'); this.renderBody(); } } }, on ? '✓ In use' : 'Use'),
-          h('button.btn.small.primary', { title: 'Cut a reel from your video with this recipe', on: { click: () => this.makeReel(r) } }, 'Make reel'))));
+          h('button.btn.small.primary', { title: 'Cut a reel from your video with this recipe', on: { click: () => this.makeReel(r) } }, 'Make reel'))),
+        lazySpec('recipe:' + r.id, r.name, async () => recipeSpec((await import('../auto/recipes/recipes.js')).recipeById(r.id), ed.workspace))));
     }
   }
 
@@ -204,8 +208,8 @@ export class Bin {
 export async function libraryRows(ed, kind) {
   const A = await import('../auto/index.js');
   const lib = await A.library(ed.context());
-  if (kind === 'music') return lib.music.map((t) => ({ src: t.src || 'library/music/' + t.file, title: t.title, meta: [t.source === 'user' ? 'your track' : t.mood, t.bpm ? Math.round(t.bpm) + ' bpm' : '', fmtDur(t.duration)].filter(Boolean).join(' · '), search: [t.title, t.mood, ...(t.tags || []), t.bpm, t.energy].join(' ').toLowerCase() }));
-  return lib.sfx.map((s) => ({ src: 'library/sfx/' + s.file, title: s.id.replace(/[-_]+/g, ' '), meta: [s.category, fmtDur(s.duration)].filter(Boolean).join(' · '), search: [s.id, s.category].join(' ').toLowerCase() }));
+  if (kind === 'music') return lib.music.map((t) => ({ src: t.src || 'library/music/' + t.file, title: t.title, dur: t.duration, meta: [t.source === 'user' ? 'your track' : t.mood, t.bpm ? Math.round(t.bpm) + ' bpm' : '', fmtDur(t.duration)].filter(Boolean).join(' · '), search: [t.title, t.mood, ...(t.tags || []), t.bpm, t.energy].join(' ').toLowerCase() }));
+  return lib.sfx.map((s) => ({ src: 'library/sfx/' + s.file, dur: s.duration, title: s.id.replace(/[-_]+/g, ' '), meta: [s.category, fmtDur(s.duration)].filter(Boolean).join(' · '), search: [s.id, s.category].join(' ').toLowerCase() }));
 }
 
 const countryWorkspace = (ws) => !!ws && (ws.brandRef === 'planet-careers' || ws.id === 'planet-careers' || /immigra|visa|study|consult|travel|education/i.test(`${ws.industry || ''} ${(ws.industries || []).join(' ')}`));
