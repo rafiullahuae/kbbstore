@@ -3,7 +3,7 @@
 
 import { engine } from '../core/engine.js';
 import { ops } from '../core/history.js';
-import { findTrack } from '../core/project.js';
+import { findTrack, createTrack } from '../core/project.js';
 import { h, clear, toast, fmtDur } from './ui.js';
 import { TEXT_PRESETS, STICKERS, textItem, shapeItem, stickerItem } from './items.js';
 
@@ -61,34 +61,37 @@ export class Bin {
     b.appendChild(grid);
   }
 
+  /** Music / SFX: the starter libraries (library/music/library.json, library/sfx/library.json) + his own tracks
+   *  (library/music/user/). Listen, press + (at the playhead) or drag a row onto the timeline. */
   async libTab(b, kind) {
-    b.appendChild(h('p.muted.small', kind === 'music' ? 'Music from library/music — drop your own tracks into that folder.' : 'Sound effects from library/sfx.'));
+    b.appendChild(h('p.muted.small', kind === 'music'
+      ? 'Starter music (made for the studio, free to use) and your own tracks — drop .mp3/.m4a/.wav files into library/music/user.'
+      : 'Sound effects (made for the studio, free to use). Drag one onto the SFX track, or press +.'));
+    const filter = h('input.lib-filter', { type: 'search', placeholder: kind === 'music' ? 'Search title, mood, bpm…' : 'Search sounds…', 'aria-label': 'Search' });
     const list = h('div.lib-list', h('p.muted', 'Loading…'));
-    b.appendChild(list);
-    let files = [];
-    try { files = await this.walk(`library/${kind}`); } catch {}
+    b.append(filter, list);
+    let rows = [];
+    try { rows = await libraryRows(this.ed, kind); } catch (e) { console.warn('[library]', e.message); }
     if (this.tab !== kind) return;
-    clear(list);
-    if (!files.length) { list.appendChild(h('p.muted', kind === 'music' ? 'No music yet. The starter library arrives with the next update, or drop .mp3/.m4a/.wav files into library/music.' : 'No sound effects yet. The starter pack arrives with the next update.')); return; }
-    for (const f of files) {
-      const play = h('button.icon-btn', { title: 'Listen', on: { click: () => this.preview(f.path, play) } }, '▶');
-      const row = h('div.lib-row', { draggable: 'true' }, play, h('span.lname', { title: f.path }, f.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')),
-        h('button.add', { title: 'Add at the playhead', on: { click: () => this.addLibrary(f.path) } }, '+'));
-      row.addEventListener('dragstart', (e) => { e.dataTransfer.setData('application/x-kbb-lib', f.path); });
-      list.appendChild(row);
-    }
+    const paint = () => {
+      clear(list);
+      const q = filter.value.trim().toLowerCase();
+      const shown = rows.filter((r) => !q || r.search.includes(q));
+      if (!rows.length) { list.appendChild(h('p.muted', kind === 'music' ? 'No music found in library/music.' : 'No sound effects found in library/sfx.')); return; }
+      if (!shown.length) list.appendChild(h('p.muted', 'Nothing matches.'));
+      for (const r of shown) {
+        const play = h('button.icon-btn', { title: 'Listen', on: { click: () => this.preview(r.src, play) } }, '▶');
+        const row = h('div.lib-row', { draggable: 'true', dataset: { src: r.src }, title: `${r.title}\n${r.meta}\nDrag onto the timeline, or press + to add at the playhead` }, play,
+          h('span.lcol', h('span.lname', r.title), h('small.lmeta', r.meta)),
+          h('button.add', { title: 'Add at the playhead', on: { click: () => this.addLibrary(r.src) } }, '+'));
+        row.addEventListener('dragstart', (e) => { e.dataTransfer.setData('application/x-kbb-lib', r.src); e.dataTransfer.effectAllowed = 'copy'; });
+        list.appendChild(row);
+      }
+    };
+    filter.addEventListener('input', paint);
+    filter.addEventListener('keydown', (e) => e.stopPropagation());
+    paint();
   }
-
-  async walk(dir, depth = 0) {
-    const out = [];
-    for (const e of await engine.listDir(dir)) {
-      const p = `${dir}/${e.name}`;
-      if (e.dir && depth < 2) out.push(...await this.walk(p, depth + 1));
-      else if (/\.(mp3|m4a|aac|wav|ogg|opus|flac)$/i.test(e.name)) out.push({ name: e.name, path: p });
-    }
-    return out;
-  }
-
   preview(path, btn) {
     if (this.audioPrev?.dataset.path === path) { this.stopPreview(); return; }
     this.stopPreview();
@@ -121,27 +124,109 @@ export class Bin {
 
   stickerTab(b) {
     const ed = this.ed;
-    b.appendChild(h('div.emoji-grid.big', STICKERS.map((g) => h('button.emoji', { title: 'Add ' + g, on: { click: () => ed.addItem(stickerItem(ed.project, g, ed.t), 'overlay') } }, g))));
+    const emoji = h('div.emoji-grid.big', STICKERS.map((g) => h('button.emoji', { title: 'Add ' + g, on: { click: () => ed.addItem(stickerItem(ed.project, g, ed.t), 'overlay') } }, g)));
+    // country packs first: Planet Careers (and any company in immigration / study / travel) gets flags, maps, stickers
+    if (!countryWorkspace(ed.workspace)) { b.appendChild(emoji); return; }
+    const box = h('div.country-pack', h('p.muted.small', 'Loading the country packs…'));
+    b.append(h('h4', 'Country packs'), box, h('h4', 'Emoji'), emoji);
+    loadCountries().then((list) => {
+      if (this.tab !== 'stickers' || !list.length) return;
+      let code = this.country || list[0].code;
+      const sel = h('select.country-sel', { 'aria-label': 'Country' }, list.map((c) => h('option', { value: c.code, selected: c.code === code }, c.name)));
+      const grid = h('div.sticker-grid');
+      const paint = () => {
+        const c = list.find((x) => x.code === code) || list[0];
+        clear(grid);
+        for (const [label, file] of c.items) {
+          const src = 'brands/planet-careers/countries/' + file;
+          grid.appendChild(h('button.sticker-img', { title: `${c.name} · ${label}`, dataset: { src }, on: { click: () => this.addImageSticker(src, `${c.name} · ${label}`) } },
+            h('img', { src: '/' + src, alt: label, loading: 'lazy' }), h('small', label)));
+        }
+      };
+      sel.addEventListener('change', () => { code = this.country = sel.value; paint(); });
+      box.replaceChildren(sel, grid); paint();
+    }).catch(() => box.replaceChildren(h('p.muted.small', 'Country packs are not in this copy of the studio.')));
   }
 
+  /** a picture sticker (flag, map, country badge): a media entry pointing at the file inside the studio folder */
+  async addImageSticker(src, name) {
+    const ed = this.ed;
+    try {
+      let m = ed.project.media.find((x) => x.src === src);
+      const cmds = [];
+      if (!m) { m = await ed.media.importPath(src, name); cmds.push(ops.addMedia(m, 'Sticker')); }
+      const it = stickerItem(ed.project, '', ed.t);
+      const k = m.w && m.h ? m.h / m.w : 1;
+      Object.assign(it, { media: m.id, text: '', name, h: Math.round(it.w * k) });
+      let track = ed.project.tracks.find((t) => t.kind === 'overlay' && !t.locked);
+      if (!track) { track = createTrack('overlay'); cmds.push(ops.addTrack(track)); }
+      cmds.push(ops.addItems([{ trackId: track.id, item: it }], 'Add ' + name));
+      ed.apply(ops.batch('Add ' + name, cmds));
+      ed.select([it.id]);
+    } catch (e) { toast(e.message, 'error'); }
+  }
+
+  /** recipes for the open company (its own, its industries', generic): Use = recipe + caption style; Make reel = Auto reel */
   async templatesTab(b) {
-    b.appendChild(h('p.muted.small', 'Recipes build a whole reel in your company\'s style: structure, captions, music and effects.'));
+    const ed = this.ed;
+    b.appendChild(h('p.muted.small', `Recipes for ${ed.workspace?.name || 'this company'}: structure, caption style, music and effects. “Use” sets it for this reel; “Make reel” cuts one now.`));
     const box = h('div.lib-list');
     b.appendChild(box);
     let recipes = [];
-    try { recipes = await loadRecipes(); } catch {}
+    try { recipes = await loadRecipes(ed.workspace); } catch {}
     if (this.tab !== 'templates') return;
-    if (!recipes.length) { box.appendChild(h('div.soon-card', h('b', 'Recipes are coming in the next update'), h('small', 'Unboxing, before/after, study-visa steps, country spotlight and many more.'))); return; }
-    for (const r of recipes) box.appendChild(h('div.lib-row', h('span.lname', r.name), h('small.muted', r.group || '')));
+    if (!recipes.length) { box.appendChild(h('div.soon-card', h('b', 'No recipes found'), h('small', 'The automation module is missing from this copy of the studio.'))); return; }
+    let group = null;
+    for (const r of recipes) {
+      if (r.group !== group) { group = r.group; box.appendChild(h('h4.lib-group', group)); }
+      const on = ed.project.recipe === r.id;
+      box.appendChild(h('div.lib-row.recipe-row' + (on ? '.on' : ''), { dataset: { recipe: r.id }, title: r.hint },
+        h('span.lcol', h('span.lname', r.name), h('small.lmeta', r.meta)),
+        h('span.rbtns',
+          h('button.btn.small', { title: 'Use this recipe for this reel', on: { click: async () => { const A = await import('../auto/index.js'); A.useRecipe(ed.context(), r.id); toast(`Recipe: ${r.name}`, 'ok'); this.renderBody(); } } }, on ? '✓ In use' : 'Use'),
+          h('button.btn.small.primary', { title: 'Cut a reel from your video with this recipe', on: { click: () => this.makeReel(r) } }, 'Make reel'))));
+    }
+  }
+
+  async makeReel(r) {
+    const ed = this.ed;
+    try {
+      const A = await import('../auto/index.js');
+      ed.setProgress('Auto reel · ' + r.name, 0);
+      const out = await A.autoReel(ed.context(), { recipeId: r.id, length: r.defaultLength });
+      toast(`Auto reel: ${out.plan.segments.length} moments, ${out.plan.total.toFixed(1)} s`, 'ok');
+      this.renderBody();
+    } catch (e) { toast(e.message, 'error'); } finally { ed.setProgress(null); }
   }
 }
 
-/** recipes R3 ships under app/auto/recipes/ (index.json); empty until then */
-export async function loadRecipes() {
-  if (!engine.available || !(await engine.exists('app/auto/recipes/index.json'))) return [];
-  const j = await engine.readFile('app/auto/recipes/index.json', 'json');
-  const list = Array.isArray(j) ? j : j.recipes || [];
-  return list.map((r) => ({ id: r.id, name: r.name || r.title || r.id, group: r.group || r.industry || r.category || '' })).filter((r) => r.id);
+/** the rows the Music / SFX tabs list, from the libraries' own JSON (titles, moods, bpm, durations) */
+export async function libraryRows(ed, kind) {
+  const A = await import('../auto/index.js');
+  const lib = await A.library(ed.context());
+  if (kind === 'music') return lib.music.map((t) => ({ src: t.src || 'library/music/' + t.file, title: t.title, meta: [t.source === 'user' ? 'your track' : t.mood, t.bpm ? Math.round(t.bpm) + ' bpm' : '', fmtDur(t.duration)].filter(Boolean).join(' · '), search: [t.title, t.mood, ...(t.tags || []), t.bpm, t.energy].join(' ').toLowerCase() }));
+  return lib.sfx.map((s) => ({ src: 'library/sfx/' + s.file, title: s.id.replace(/[-_]+/g, ' '), meta: [s.category, fmtDur(s.duration)].filter(Boolean).join(' · '), search: [s.id, s.category].join(' ').toLowerCase() }));
 }
 
+const countryWorkspace = (ws) => !!ws && (ws.brandRef === 'planet-careers' || ws.id === 'planet-careers' || /immigra|visa|study|consult|travel|education/i.test(`${ws.industry || ''} ${(ws.industries || []).join(' ')}`));
+let COUNTRIES_P = null;
+/** the country packs (brands/planet-careers/countries/countries.json): flag, map and the six stickers of each */
+function loadCountries() {
+  return (COUNTRIES_P ||= engine.readFile('brands/planet-careers/countries/countries.json', 'json').then((j) => (j.countries || []).map((c) => ({
+    code: c.code, name: c.name,
+    items: [['Flag', c.flag], ['Map', c.map], ...Object.entries(c.stickers || {}).filter(([k]) => k !== 'map').map(([k, f]) => [k.replace(/-/g, ' '), f])].filter(([, f]) => f),
+  }))).catch((e) => { COUNTRIES_P = null; throw e; }));
+}
+
+const GROUPS = { kbb: 'KBB', 'planet-careers': 'Planet Careers', '*': 'Any company' };
+/** recipes from app/auto/recipes (filtered by the company's industries), grouped for lists */
+export async function loadRecipes(workspace) {
+  const R = await import('../auto/recipes/recipes.js');
+  return R.recipesOnlyFor(workspace || {}).map((r) => ({
+    id: r.id, name: r.name, defaultLength: r.defaultLength,
+    group: r.country ? 'Country spotlights' : GROUPS[r.workspaces[0]] || (r.industries[0] || 'Recipes'),
+    meta: [r.lengths?.join(' / ') + ' s', r.music?.moods?.[0]].filter(Boolean).join(' · '),
+    hint: (r.structure || []).map((s) => s.part).join(' → '),
+  }));
+}
 export { ops };

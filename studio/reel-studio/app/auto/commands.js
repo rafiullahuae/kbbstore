@@ -59,8 +59,9 @@ export function autoReelCommand(p, a) {
     return it;
   });
   cmds.push(ops.addItems(clipItems.map(item => ({ trackId: vt.id, item })), 'Auto reel clips'));
-  // 2. captions follow the cut
+  // 2. captions follow the cut (and the caption item ends with the reel, or the export would run past it)
   if (p.captions?.words?.length) cmds.push(ops.setCaptions(remapCaptions(p.captions, a.plan.segments)));
+  cmds.push(fitCaptionItem(p, a.plan.segments.reduce((e, s) => Math.max(e, s.t0 + s.out - s.in), 0)));
   // 3. end card
   const kitI = kitForItems(a.kit);
   if (a.plan.endCard) cmds.push(ops.addItems([{ trackId: ot.id, item: createItem('auto.endcard', { t0: a.plan.endCard.t0, in: 0, out: a.plan.endCard.dur, x: 0, y: 0, w: canvas.w, h: canvas.h, auto: AUTO, name: 'End card', fadeOut: 0, style: { kit: kitI, ...a.endCardText, payments: (a.endCardText?.payments || []) } }) }]));
@@ -94,6 +95,13 @@ export function effectsCommands(p, ev, { kitI, sfxLib, ot = trackOf(p, 'overlay'
   }
   if (sfxAdds.length) cmds.push(ops.addItems(sfxAdds, 'Sound effects'));
   return cmds;
+}
+
+/** the caption item spans exactly 0..end (null when there is none or it already does) */
+export function fitCaptionItem(p, end) {
+  const it = tracksOfKind(p, 'caption').flatMap(t => t.items).find(i => i.type === 'caption');
+  if (!it || !(end > 0) || Math.abs(itemEnd(it) - end) < 1e-3) return null;
+  return ops.setItem(it.id, { t0: 0, in: 0, out: +end.toFixed(3), speed: 1 }, 'Captions');
 }
 
 /** music = { track (library entry), fit (fitTrack result), srcBase:'library/music/' } */
@@ -138,6 +146,8 @@ export function removeCutsCommand(p, mediaId, cuts) {
   if (moves.length) cmds.push(ops.moveItems(moves, 'Ripple'));
   if (p.captions?.words?.length) cmds.push(ops.setCaptions(remapCaptions(p.captions, segs)));
   const removed = removedAt.reduce((a, b) => a + b[1], 0);
+  // the caption item starts at 0 so the ripple never moves it: it gets shorter by what was cut before its end
+  for (const tr of p.tracks) if (tr.kind === 'caption') for (const it of tr.items) if (it.type === 'caption') { const d = shift(itemEnd(it)); if (d > 1e-4) cmds.push(ops.setItem(it.id, { out: +(it.out - d).toFixed(4) }, 'Captions')); }
   const cmd = ops.batch(`Remove silences (−${removed.toFixed(1)} s)`, cmds); cmd.removed = removed; cmd.keep = keep;
   return cmd;
 }

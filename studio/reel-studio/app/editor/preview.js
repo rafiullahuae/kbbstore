@@ -2,7 +2,7 @@
 // on-canvas editing: select, move, resize, rotate, marquee (also when the drag starts over the video),
 // Shift/Ctrl-click, snapping guides, safe-area guides.
 
-import { renderFrame, activeItems, boxAt, fadeAt } from '../core/render.js';
+import { renderFrame, activeItems, boxAt, fadeAt, evalProp } from '../core/render.js';
 import { findItem, findMedia, srcTime, isActive, safeAreas } from '../core/project.js';
 import { ops } from '../core/history.js';
 import { seekExact } from '../core/media.js';
@@ -69,7 +69,7 @@ export class Preview {
         const want = srcTime(item, t);
         const audible = playing && !track.muted && !item.muted && m.hasAudio && rate === 1;
         el.muted = !audible;
-        el.volume = Math.max(0, Math.min(1, item.volume * (track.volume ?? 1) * fadeAt(item, t)));
+        el.volume = Math.max(0, Math.min(1, evalProp(item, 'volume', t) * (track.volume ?? 1) * fadeAt(item, t)));   // kf.volume = ducking
         if (playing) {
           el.playbackRate = (item.speed || 1) * rate;
           if (Math.abs(el.currentTime - want) > 0.25 || el.paused && el.readyState < 2) el.currentTime = want;
@@ -118,6 +118,8 @@ export class Preview {
     let t = this.t0 + ((performance.now() - this.clock0) / 1000) * (ed.rate || 1);
     if (t >= T) { t = T; ed.t = t; ed.pause(); ed.timeline.renderPlayhead(); return; }
     ed.t = t;
+    // the playhead on the bus while playing too (10 a second is plenty for the transcript's "now" word)
+    if (Math.abs(t - (this.lastEmit ?? -1)) >= 0.1) { this.lastEmit = t; ed.bus.emit('playhead', { t, playing: true }); }
     this.sync(t);
     renderFrame(this.ctx, ed.project, t, { scale: this.scale, preview: true, source: this.source });
     this.timeEl.textContent = `${fmtTime(t)} / ${fmtTime(T)}`;

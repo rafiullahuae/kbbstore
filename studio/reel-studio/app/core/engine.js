@@ -22,7 +22,8 @@
 //
 // Network: ONLY through the engine's /net/*, which refuses unless askPermission() said yes for that exact URL
 // (scope 'exact') or that Hugging Face repo (scope 'repo') this session, and only to the allowlist
-// huggingface.co, cdn-lfs.huggingface.co, cas-bridge.xethub.hf.co.
+// huggingface.co, cdn-lfs.huggingface.co, cas-bridge.xethub.hf.co (redirects only to *.hf.co / *.huggingface.co, e.g.
+// us.aws.cdn.hf.co). Model FILES are read back from /models/<repo>/<path>, which the engine serves without the token.
 
 import { bus } from './bus.js';
 import { projectDir, projectsDir } from './config.js';

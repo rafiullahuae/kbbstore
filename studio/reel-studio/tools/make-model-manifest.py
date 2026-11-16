@@ -4,25 +4,29 @@
    usage: python3 -I tools/make-model-manifest.py <dir with the listings> <out manifest.json>"""
 import json, os, sys
 
+# The speech models are the *_timestamped exports (cross-attention outputs for word-level times; the plain
+# onnx-community/whisper-* exports cannot give word timestamps). Each carries BOTH runtimes app/captions/models.js
+# picks between: WASM = int8 ("_quantized") encoder + decoder; WebGPU = fp16 encoder + 4-bit ("_q4") decoder.
+WHISPER = ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json",
+           "onnx/encoder_model_quantized.onnx", "onnx/decoder_model_merged_quantized.onnx",
+           "onnx/encoder_model_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"]
+# The face finder (auto-reframe) is NOT here: app/auto uses MediaPipe BlazeFace, vendored with the app
+# (vendor/mediapipe/models/blaze_face_short_range.tflite, 230 KB), so it needs no download.
 SPEC = [
-    ("whisper-small", "onnx-community/whisper-small", "Captions (accurate): speech to text, best for Arabic", "captions", True,
-     ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/encoder_model_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"]),
-    ("whisper-base", "onnx-community/whisper-base", "Captions (fast): speech to text, quicker on older Macs", "captions", True,
-     ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/encoder_model.onnx", "onnx/decoder_model_merged_q4.onnx"]),
-    ("brief-llm", "onnx-community/Qwen2.5-0.5B-Instruct", "Writing: turns your brief into hooks, titles and on-screen text, offline", "auto", False,
+    ("whisper-small", "onnx-community/whisper-small_timestamped", "Captions (accurate): speech to text with word timing, best for Arabic", "captions", True, WHISPER),
+    ("whisper-base", "onnx-community/whisper-base_timestamped", "Captions (fast): speech to text with word timing, quicker on older Macs", "captions", True, WHISPER),
+    ("brief-llm", "onnx-community/Qwen2.5-0.5B-Instruct", "Writing: turns your brief into hooks, titles and on-screen text, offline (Brief to Designs, next update)", "auto", False,
      ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"]),
-    ("image-understanding", "onnx-community/Florence-2-base-ft", "Looking: describes what is in your video to suggest a recipe", "auto", False,
+    ("image-understanding", "onnx-community/Florence-2-base-ft", "Looking: describes what is in your video to suggest a recipe (next update)", "auto", False,
      ["config.json", "generation_config.json", "preprocessor_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/vision_encoder_fp16.onnx", "onnx/encoder_model_fp16.onnx", "onnx/embed_tokens_fp16.onnx", "onnx/decoder_model_merged_q4.onnx"]),
-    ("upscaler", "Xenova/swin2SR-classical-sr-x2-64", "Pictures: sharpens and enlarges small photos 2x", "auto", False,
+    ("upscaler", "Xenova/swin2SR-classical-sr-x2-64", "Pictures: sharpens and enlarges small photos 2x (next update)", "auto", False,
      ["config.json", "preprocessor_config.json", "onnx/model_fp16.onnx"]),
-    ("face-detector", "opencv/face_detection_yunet", "Reframe: finds faces so 16:9 video can be turned into 9:16 (YuNet, MIT)", "auto", True,
-     ["face_detection_yunet_2023mar.onnx"]),
 ]
 
 src, dst = sys.argv[1], sys.argv[2]
 out = {"v": 1, "revision": "main",
        "note": "Models the studio downloads ONCE, after one Allow, into models/<repo>/<path>. Each file has its size and "
-               "sha256 (large LFS files) or gitBlobSha1 (small text files). R2/R3 add entries; the engine installer reads this.",
+               "sha256 (large LFS files) or gitBlobSha1 (small text files). Built by tools/make-model-manifest.py; the engine installer reads this and app/captions/models.js loads from the same models/<repo>/ paths.",
        "models": []}
 for mid, repo, purpose, owner, required, files in SPEC:
     tree = {e["path"]: e for e in json.load(open(os.path.join(src, repo.replace("/", "_") + ".json"))) if e["type"] == "file"}

@@ -1,15 +1,15 @@
 {
  "v": 1,
  "revision": "main",
- "note": "Models the studio downloads ONCE, after one Allow, into models/<repo>/<path>. Each file has its size and sha256 (large LFS files) or gitBlobSha1 (small text files). R2/R3 add entries; the engine installer reads this.",
+ "note": "Models the studio downloads ONCE, after one Allow, into models/<repo>/<path>. Each file has its size and sha256 (large LFS files) or gitBlobSha1 (small text files). Built by tools/make-model-manifest.py; the engine installer reads this and app/captions/models.js loads from the same models/<repo>/ paths.",
  "models": [
   {
    "id": "whisper-small",
-   "repo": "onnx-community/whisper-small",
-   "purpose": "Captions (accurate): speech to text, best for Arabic",
+   "repo": "onnx-community/whisper-small_timestamped",
+   "purpose": "Captions (accurate): speech to text with word timing, best for Arabic",
    "owner": "captions",
    "required": true,
-   "size": 412526691,
+   "size": 661710638,
    "files": [
     {
      "path": "config.json",
@@ -37,24 +37,34 @@
      "gitBlobSha1": "d13b786c04765fb1a06492b53587752cd67665ea"
     },
     {
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 92240498,
+     "sha256": "9f5635b596e6084045c7426ca6f6f99db8ce606ea895397c3b4a3c0aa3f9b070"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 156795750,
+     "sha256": "c831996a6d5a535cf17447b0d7ecc36da6b72696e6fb906852ba6136b9199abb"
+    },
+    {
      "path": "onnx/encoder_model_fp16.onnx",
-     "size": 176607756,
-     "sha256": "5549cd8666ff4b694ceb128bfa48b95bdcceec29075cf2c2212f90002cc058de"
+     "size": 176483570,
+     "sha256": "ce444cbfbc96f079c861f696633d44ba4b48190916a078ddc5f56fce3d4509f9"
     },
     {
      "path": "onnx/decoder_model_merged_q4.onnx",
-     "size": 233149327,
-     "sha256": "795c61b344576719c2b249cc9911c78b4cc552c8c6a5407be21a3380a0791b13"
+     "size": 233421212,
+     "sha256": "333bf5560a548e89b03abab5c4d33a7057129b08782707cebcbdf25b63588915"
     }
    ]
   },
   {
    "id": "whisper-base",
-   "repo": "onnx-community/whisper-base",
-   "purpose": "Captions (fast): speech to text, quicker on older Macs",
+   "repo": "onnx-community/whisper-base_timestamped",
+   "purpose": "Captions (fast): speech to text with word timing, quicker on older Macs",
    "owner": "captions",
    "required": true,
-   "size": 208840059,
+   "size": 244650495,
    "files": [
     {
      "path": "config.json",
@@ -82,21 +92,31 @@
      "gitBlobSha1": "25be523be5ac50a7671a77f55acba082459d6314"
     },
     {
-     "path": "onnx/encoder_model.onnx",
-     "size": 82468078,
-     "sha256": "a9f3b752833b49e880dec91ee5b6d936112be7c3ea07c221024ba493439f46fe"
+     "path": "onnx/encoder_model_quantized.onnx",
+     "size": 23159167,
+     "sha256": "2714484ebe1bae7c1646e8eadb768bb9d415cf11763466d21f23039a29c62e6f"
+    },
+    {
+     "path": "onnx/decoder_model_merged_quantized.onnx",
+     "size": 53712708,
+     "sha256": "cf9a8d5bcddc0917a0078135b484cedcaf44f28909cd91910abd29dced9171db"
+    },
+    {
+     "path": "onnx/encoder_model_fp16.onnx",
+     "size": 41270731,
+     "sha256": "2d31aa4b0c8c74c2e49a5c8d8a5640e38e75aac493cf15290f8c1466ee8c1845"
     },
     {
      "path": "onnx/decoder_model_merged_q4.onnx",
-     "size": 123602419,
-     "sha256": "09f83b71ceedc97dab1d90b914715dc532a646a147abda11d83c64867b7c319c"
+     "size": 123738327,
+     "sha256": "fc1902ce2e42c69b2346d8e2a98898c60c01da1e6a64ae90f41d22350ac7db13"
     }
    ]
   },
   {
    "id": "brief-llm",
    "repo": "onnx-community/Qwen2.5-0.5B-Instruct",
-   "purpose": "Writing: turns your brief into hooks, titles and on-screen text, offline",
+   "purpose": "Writing: turns your brief into hooks, titles and on-screen text, offline (Brief to Designs, next update)",
    "owner": "auto",
    "required": false,
    "size": 490044024,
@@ -131,7 +151,7 @@
   {
    "id": "image-understanding",
    "repo": "onnx-community/Florence-2-base-ft",
-   "purpose": "Looking: describes what is in your video to suggest a recipe",
+   "purpose": "Looking: describes what is in your video to suggest a recipe (next update)",
    "owner": "auto",
    "required": false,
    "size": 416355730,
@@ -186,7 +206,7 @@
   {
    "id": "upscaler",
    "repo": "Xenova/swin2SR-classical-sr-x2-64",
-   "purpose": "Pictures: sharpens and enlarges small photos 2x",
+   "purpose": "Pictures: sharpens and enlarges small photos 2x (next update)",
    "owner": "auto",
    "required": false,
    "size": 32429086,
@@ -205,21 +225,6 @@
      "path": "onnx/model_fp16.onnx",
      "size": 32428109,
      "sha256": "87af85bb5296d997e9162a60e9732af04ca7c41a210bdbd902ed8c760539ba81"
-    }
-   ]
-  },
-  {
-   "id": "face-detector",
-   "repo": "opencv/face_detection_yunet",
-   "purpose": "Reframe: finds faces so 16:9 video can be turned into 9:16 (YuNet, MIT)",
-   "owner": "auto",
-   "required": true,
-   "size": 232589,
-   "files": [
-    {
-     "path": "face_detection_yunet_2023mar.onnx",
-     "size": 232589,
-     "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4"
     }
    ]
   }

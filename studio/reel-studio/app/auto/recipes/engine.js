@@ -3,6 +3,7 @@
 import { RECIPES } from './recipes.js';
 import { COUNTRIES } from '../countries/countries.js';
 import { normWord } from '../lib/audio.js';
+import { captionStyleFor } from './caption-styles.js';
 
 let DF = null;
 function docFreq() { // how many recipes list each keyword (common words count less)
@@ -25,7 +26,7 @@ export function suggestRecipes(input = {}) {
   const st = input.video?.stats || {}, faces = input.faces ?? null;
   const motion = st.motion == null ? null : st.motion < 0.012 ? 'low' : st.motion > 0.035 ? 'high' : 'mid';
   const cuts = st.cutsPerMin == null ? null : st.cutsPerMin < 6 ? 'few' : st.cutsPerMin > 15 ? 'many' : 'some';
-  const ws = input.workspace || {}, wsId = ws.id || ws.brandRef || '', ind = String(ws.industry || '').toLowerCase();
+  const ws = input.workspace || {}, wsId = ws.id || ws.brandRef || '', ind = (String(ws.industry || '') + ' ' + (ws.industries || []).join(' ')).toLowerCase();
   // country mentioned?
   let country = null, cBest = 0;
   for (const c of COUNTRIES) { let s = 0; for (const k of new Set([...c.keywords.en, ...c.keywords.ar].map(normWord))) s += bag.get(k) || 0; if (s > cBest) { cBest = s; country = c; } }
@@ -59,7 +60,7 @@ export function resolveRecipe(recipe, { length, lang = 'en', kit = null, variant
   const cta = (ar ? recipe.endCard?.ctaAr : recipe.endCard?.cta) || kit?.endCard?.cta || ['Learn more'];
   return {
     id: recipe.id, length: L, aspect: recipe.aspect,
-    captionStyle: ar ? (recipe.captionStyleAr || 'arabic-first') : recipe.captionStyle,
+    captionStyle: captionStyleFor(recipe, ar ? 'ar' : 'en'),
     music: recipe.music, effects: recipe.effects, pacing: recipe.pacing,
     endCard: recipe.endCard ? { template: recipe.endCard.template, cta: cta[0], ctaOptions: cta, payments: !!recipe.endCard.payments, title: variant?.title || kit?.endCard?.title, sub: kit?.endCard?.sub, contact: kit?.contactLine } : null,
     structure: recipe.structure, overlays: recipe.overlays, variant,

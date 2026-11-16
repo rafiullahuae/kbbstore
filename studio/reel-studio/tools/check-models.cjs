@@ -7,9 +7,10 @@
 //   5. nothing is installed under its final name until it verifies; no .part left behind
 //   6. too little disk space is refused up front with a plain message
 //   7. the gate: install without the Allow grant is refused
-// and, with --real, once against a real small Hugging Face file (YuNet face detector, 232 KB) through the allowlist.
+// and, with --real, the whole whisper-base_timestamped model from the real huggingface.co through the allowlist
+// (redirects to the hf.co CDNs), every file's size + checksum checked again here. --keep leaves it in tools/out/real-studio.
 //
-// usage: node tools/check-models.cjs [--real]
+// usage: node tools/check-models.cjs [--real [--keep]]
 'use strict';
 const http = require('http');
 const fs = require('fs');
@@ -86,7 +87,7 @@ function startEngine(dir, base) {
         res(p);
       }
     });
-    p.stderr.on('data', (d) => fs.appendFileSync(path.join(OUT, 'check-models-engine.log'), d));
+    p.stderr.on('data', (d) => { p.log = (p.log || '') + d; fs.appendFileSync(path.join(OUT, 'check-models-engine.log'), d); });
     p.on('exit', (c) => { if (!p.url) rej(new Error('engine exited ' + c)); });
   });
 }
@@ -173,16 +174,33 @@ const stop = (e) => new Promise((r) => { e.on('exit', r); e.kill('SIGTERM'); });
   fs.rmSync(dir, { recursive: true, force: true });
 
   if (process.argv.includes('--real')) {
+    // The whole fast speech model, for real: LFS weights are redirected by huggingface.co to its CDNs
+    // (cas-bridge.xethub.hf.co, us.aws.cdn.hf.co ...). Sizes AND sha256 are checked here independently of the engine.
     const real = JSON.parse(fs.readFileSync(path.join(ROOT, 'models', 'manifest.json'), 'utf8'));
-    const face = real.models.find((m) => m.id === 'face-detector');
-    const d2 = makeStudio({ v: 1, revision: 'main', models: [face] });
-    const e2 = await startEngine(d2, '');
-    await allow(e2, face.repo);
-    await api(e2, '/api/models/install', { ids: [face.id] });
-    const s2 = await waitState(e2, ['done', 'stalled'], 90000);
-    ok(s2.installer.state === 'done', `real Hugging Face file installed and sha256-verified (${face.repo}): ${s2.installer.message}`);
-    await stop(e2);
+    const wb = real.models.find((m) => m.id === 'whisper-base');
+    const d2 = path.join(OUT, 'real-studio');
     fs.rmSync(d2, { recursive: true, force: true });
+    fs.cpSync(makeStudio({ v: 1, revision: 'main', models: [wb] }), d2, { recursive: true });
+    const e2 = await startEngine(d2, '');
+    await allow(e2, wb.repo);
+    const t0 = Date.now();
+    await api(e2, '/api/models/install', { ids: [wb.id] });
+    const s2 = await waitState(e2, ['done', 'stalled'], 30 * 60000);
+    const secs = (Date.now() - t0) / 1000;
+    ok(s2.installer.state === 'done', `real download of ${wb.repo} (${(wb.size / 1e6).toFixed(0)} MB, ${wb.files.length} files) in ${secs.toFixed(0)} s: ${s2.installer.message}`);
+    let good = 0;
+    for (const f of wb.files) {
+      const p = path.join(d2, 'models', wb.repo, f.path);
+      const b = fs.existsSync(p) ? fs.readFileSync(p) : Buffer.alloc(0);
+      const same = b.length === f.size && (f.sha256 ? sha256(b) === f.sha256 : gitsha1(b) === f.gitBlobSha1);
+      if (same) good++; else console.log('  mismatch', f.path, b.length, f.size);
+    }
+    ok(good === wb.files.length, `every file on disk has the manifest size and checksum (${good}/${wb.files.length})`);
+    const hosts = [...new Set([...(e2.log || '').matchAll(/redirect to ([\w.-]+)/g)].map((m) => m[1]))];
+    ok(hosts.length > 0 && hosts.every((h) => /(^|\.)(hf\.co|huggingface\.co)$/.test(h)), 'redirects followed only to Hugging Face hosts: ' + hosts.join(', '));
+    ok(!fs.readdirSync(path.join(d2, 'models', wb.repo, 'onnx')).some((n) => n.endsWith('.part')), 'no .part files left');
+    await stop(e2);
+    if (!process.argv.includes('--keep')) fs.rmSync(d2, { recursive: true, force: true });
   }
   console.log(failures ? `\n${failures} FAILED` : '\nall model-installer checks passed');
   process.exit(failures ? 1 : 0);

@@ -6,6 +6,7 @@ import { bus } from '../core/bus.js';
 import { createWorkspace, slugify } from '../core/project.js';
 import { SEED_WORKSPACES, wsDir } from '../core/config.js';
 import { h, modal, toast, field } from './ui.js';
+import { workspaceFromKit, kitFromWorkspace, validateKit, initialMarkSvg, industryTags } from './kits.js';
 
 const LAST_KEY = 'kbbstudio.workspace';
 export const state = { list: [], current: null };
@@ -13,26 +14,12 @@ export const state = { list: [], current: null };
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 
-/** read a brand kit R3 ships under brands/<ref>/ (brand.json); tolerant of any missing piece */
+/** a brand kit under brands/<ref>/kit.json (R3), or null */
 async function brandKit(ref) {
-  if (!ref) return null;
-  for (const f of ['brand.json', 'kit.json']) {
-    const p = `brands/${ref}/${f}`;
-    try { if (await engine.exists(p)) return await engine.readFile(p, 'json'); } catch {}
-  }
+  if (!ref || !/^[a-z0-9-]{1,40}$/.test(ref)) return null;
+  const p = `brands/${ref}/kit.json`;
+  try { if (await engine.exists(p)) return await engine.readFile(p, 'json'); } catch {}
   return null;
-}
-
-function fromKit(ws, kit) {
-  if (!kit) return ws;
-  const c = kit.colors || kit.palette;
-  if (c && typeof c === 'object') ws.colors = Object.assign({}, ws.colors, Object.fromEntries(Object.entries(c).filter(([, v]) => typeof v === 'string' && /^#[0-9a-f]{3,8}$/i.test(v))));
-  if (kit.fonts && typeof kit.fonts === 'object') ws.fonts = Object.assign({}, ws.fonts, kit.fonts);
-  const logo = kit.logo && (typeof kit.logo === 'string' ? kit.logo : kit.logo.primary || kit.logo.src);
-  if (logo && !ws.logo) ws.logo = /^brands\//.test(logo) ? logo : `brands/${ws.brandRef}/${logo}`;
-  if (kit.contact && !ws.contact) ws.contact = typeof kit.contact === 'string' ? kit.contact : Object.values(kit.contact).filter((v) => typeof v === 'string').join(' · ');
-  if (kit.name && ws.name !== kit.name && !ws.fullName) ws.fullName = kit.name;
-  return ws;
 }
 
 export async function loadWorkspaces() {
@@ -42,12 +29,19 @@ export async function loadWorkspaces() {
   for (const d of dirs) {
     try { list.push(await engine.readFile(`${wsDir(d.name)}/workspace.json`, 'json')); } catch {}
   }
-  // seed the two companies the owner named, once
+  // seed the two companies the owner named, once, from their brand kits
   for (const seed of SEED_WORKSPACES) {
-    if (list.some((w) => w.id === slugify(seed.name))) continue;
-    const ws = fromKit(Object.assign(createWorkspace(seed), { fullName: seed.fullName }), await brandKit(seed.brandRef));
+    const id = seed.brandRef || slugify(seed.name);
+    const have = list.find((w) => w.id === id || w.id === slugify(seed.name));
+    // a company seeded before the kits were read (KBB in pink #e8508b, fonts as objects): refresh it from its kit once
+    if (have && have.kitSeeded) continue;
+    const kit = await brandKit(seed.brandRef);
+    const base = have || Object.assign(createWorkspace(seed), { fullName: seed.fullName });
+    const ws = kit ? workspaceFromKit(kit, base) : base;
+    if (have) { ws.name = have.name; ws.created = have.created; }
+    ws.modified = new Date().toISOString();
     if (engine.available) await engine.writeFile(`${wsDir(ws.id)}/workspace.json`, ws);
-    list.push(ws);
+    if (have) list.splice(list.indexOf(have), 1, ws); else list.push(ws);
   }
   list.sort((a, b) => (a.created || '').localeCompare(b.created || '') || a.name.localeCompare(b.name));
   state.list = list;
@@ -115,7 +109,7 @@ export function companyDialog(ws, onDone) {
   const contact = h('input', { value: w.contact || '', placeholder: 'website · phone · @instagram' });
   const colorKeys = [['primary', 'Main'], ['secondary', 'Second'], ['accent', 'Accent'], ['text', 'Text'], ['bg', 'Background']];
   const colors = colorKeys.map(([k, l]) => { const i = h('input', { type: 'color', value: w.colors[k] || '#000000' }); i.dataset.k = k; return h('label.swatch', i, h('small', l)); });
-  const fontSel = (v) => h('select', FONTS.map((f) => h('option', { value: f, selected: f === v, style: { fontFamily: f } }, f)));
+  const fontSel = (v) => h('select', [...new Set([v, ...FONTS].filter(Boolean))].map((f) => h('option', { value: f, selected: f === v, style: { fontFamily: f } }, f)));
   const fh = fontSel(w.fonts.heading), fb = fontSel(w.fonts.body);
   const endTitle = h('input', { value: w.endCard?.title || '', placeholder: 'End card title' });
   const endCta = h('input', { value: w.endCard?.cta || '', placeholder: 'Call to action, e.g. Shop now' });
@@ -142,13 +136,31 @@ export function companyDialog(ws, onDone) {
         for (const c of colors) { const i = c.querySelector('input'); w.colors[i.dataset.k] = i.value; }
         w.fonts = { heading: fh.value, body: fb.value };
         w.endCard = Object.assign({}, w.endCard, { title: endTitle.value.trim() || nm, cta: endCta.value.trim() });
-        if (isNew) { let id = slugify(nm), n = 2; while (state.list.some((x) => x.id === id)) id = slugify(nm) + '-' + n++; w.id = id; }
+        w.industries = industryTags(w.industry);
+        if (isNew) {
+          let id = slugify(nm), n = 2;
+          while (state.list.some((x) => x.id === id) || await engine.exists(`brands/${id}/kit.json`)) id = slugify(nm) + '-' + n++;
+          w.id = id; w.brandRef = id; w.ownKit = 1;
+        }
         w.modified = new Date().toISOString();
         try {
+          let full = null;
           if (logoFile) {
             const ext = (logoFile.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
             w.logo = `${wsDir(w.id)}/brand/logo.${ext}`;
             await engine.writeFile(w.logo, logoFile);
+            if (w.ownKit) { full = `logo.${ext}`; await engine.writeFile(`brands/${w.id}/${full}`, logoFile); }
+          }
+          // a company made here has its own brand kit (brands/<slug>/kit.json), checked against brands/kit.schema.json
+          if (w.ownKit) {
+            const kit = kitFromWorkspace(w, { mark: full || 'logo-mark.svg', full: full || undefined });
+            let schema = null;
+            try { schema = await engine.readFile('brands/kit.schema.json', 'json'); } catch {}
+            const errs = schema ? validateKit(kit, schema) : [];
+            if (errs.length) { toast('The brand kit is not valid: ' + errs.slice(0, 3).join('; '), 'error'); return false; }
+            if (!full) await engine.writeFile(`brands/${w.id}/logo-mark.svg`, new Blob([initialMarkSvg(w)], { type: 'image/svg+xml' }));
+            if (!full && !w.logo) w.logo = `brands/${w.id}/logo-mark.svg`;
+            await engine.writeFile(`brands/${w.id}/kit.json`, kit);
           }
           await engine.writeFile(`${wsDir(w.id)}/workspace.json`, w);
         } catch (e) { toast('Could not save: ' + e.message, 'error'); return false; }

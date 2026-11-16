@@ -20,8 +20,18 @@ import { isActive, itemDur, srcTime, findMedia } from './project.js';
 const layers = new Map();
 const fxs = new Map();
 const overlays = [];
+const prepares = new Map();
 
 export function registerLayer(kind, drawFn) { layers.set(kind, drawFn); }
+/**
+ * registerPrepare(id, async fn(project)) — work a layer needs done BEFORE it can draw synchronously (decode the
+ * end card's badge images, load a brand kit's fonts). The export awaits prepareRender() before its first frame and the
+ * editor runs it when a project opens, so a reloaded project draws exactly like the one that was saved.
+ */
+export function registerPrepare(id, fn) { prepares.set(id, fn); }
+export async function prepareRender(project) {
+  for (const [id, fn] of prepares) { try { await fn(project); } catch (e) { warnOnce('prepare:' + id, e); } }
+}
 export function registerFx(type, fn) { fxs.set(type, fn); }
 export function registerOverlay(id, fn, z = 0) {
   const i = overlays.findIndex((o) => o.id === id); if (i >= 0) overlays.splice(i, 1);

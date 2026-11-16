@@ -175,7 +175,8 @@ const check = (name, ok, detail = '') => { results.checks.push({ name, ok, detai
   check('undo all restores the original exactly', m.undoAllRestores);
   check('redo all restores the edited state exactly', m.redoAllRestores);
   check('Planet Careers default = info-card in its navy/gold', m.pc.id === 'info-card' && m.pc.bg?.color === '#0b2545' && m.pc.accent === '#f2c14e', JSON.stringify(m.pc));
-  check('KBB default = word-box in its pink', m.kbb.id === 'word-box' && m.kbb.activeBg === '#e8508b', JSON.stringify(m.kbb));
+  // integration: the seed's fallback colours are the KBB kit's (#C6395F); the live workspace also picks soft-beauty from the kit
+  check('KBB default = word-box in its pink (the kit primary #C6395F)', m.kbb.id === 'word-box' && m.kbb.activeBg === '#C6395F', JSON.stringify(m.kbb));
   check('explicit workspace caption defaults win', m.explicit.id === 'neon' && m.explicit.font === 'Inter' && m.explicit.color === '#ffeeaa');
 
   // ------------------------------------------------------------------ every style rendered at 3 times

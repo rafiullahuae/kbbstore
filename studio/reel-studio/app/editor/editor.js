@@ -15,6 +15,7 @@ import { Inspector } from './inspector.js';
 import { Bin } from './bin.js';
 import { exportDialog } from './exportdlg.js';
 import { clipFromMedia, trackEnd, reflowTo } from './items.js';
+import { prepareRender } from '../core/render.js';
 
 export class Editor {
   constructor(root, project, { onHome } = {}) {
@@ -42,6 +43,8 @@ export class Editor {
     window.addEventListener('pagehide', this.unloadHandler);
     bus.emit('project:load', { project });
     this.changed(true);
+    // badges and brand fonts the layers need (a reopened project draws exactly like the one that was saved)
+    prepareRender(project).then(() => this.preview?.draw());
     window.kbbEditor = this; // for the check scripts and the console
   }
 
@@ -51,6 +54,7 @@ export class Editor {
     for (const off of this.offs) off();
     document.removeEventListener('keydown', this.keyHandler);
     window.removeEventListener('pagehide', this.unloadHandler);
+    this.capPanel?.destroy?.();
     this.preview.destroy(); this.timeline.destroy();
     for (const m of this.project.media) this.media.release(m.id);
     if (window.kbbEditor === this) delete window.kbbEditor;
@@ -98,13 +102,19 @@ export class Editor {
     this.progressLine = h('div.mod-progress', { hidden: true });
     this.binEl = h('aside.bin');
     this.previewEl = h('section.monitor');
-    this.inspEl = h('aside.inspector');
+    // the right column: the Inspector, and the caption editor (R2's panel, mounted once, kept alive)
+    this.inspBody = h('div.side-body.insp-body');
+    this.capBody = h('div.side-body.cap-body', { hidden: true });
+    this.sideTabs = h('nav.side-tabs', { role: 'tablist' },
+      h('button.side-tab.on', { role: 'tab', dataset: { side: 'inspector' }, on: { click: () => this.showSide('inspector') } }, '⚙ Inspector'),
+      h('button.side-tab', { role: 'tab', dataset: { side: 'captions' }, on: { click: () => this.showSide('captions') } }, '💬 Captions'));
+    this.inspEl = h('aside.inspector.side', this.sideTabs, this.inspBody, this.capBody);
     this.tlEl = h('section.timeline');
     this.root.appendChild(h('div.editor', top, h('div.doit-row', h('span.doit-lbl', 'Do it for me'), this.doit, this.progressLine),
       h('div.work', this.binEl, this.previewEl, this.inspEl), this.tlEl));
     this.bin = new Bin(this, this.binEl);
     this.preview = new Preview(this, this.previewEl);
-    this.inspector = new Inspector(this, this.inspEl);
+    this.inspector = new Inspector(this, this.inspBody);
     this.timeline = new Timeline(this, this.tlEl);
     this.renderDoit();
   }
@@ -134,7 +144,21 @@ export class Editor {
     } finally { this.setProgress(null, null); }
   }
 
+  /** right column: 'inspector' | 'captions' */
+  showSide(which) {
+    for (const b of this.sideTabs.children) b.classList.toggle('on', b.dataset.side === which);
+    this.inspBody.hidden = which !== 'inspector';
+    this.capBody.hidden = which !== 'captions';
+    if (which === 'captions' && !this.capMounted) {
+      const mod = getModule('auto-captions');
+      if (mod?.panel) { this.capMounted = true; this.capPanel = mod.panel(this.capBody, this.context()); }
+      else this.capBody.replaceChildren(h('p.muted.pad', 'Captions are not installed in this copy of the studio.'));
+    }
+    this.side = which;
+  }
+
   openModulePanel(id) {
+    if (id === 'auto-captions') { this.showSide('captions'); return; }
     const mod = getModule(id); if (!mod?.panel) return;
     const el = h('div.mod-panel');
     modal({ title: mod.label || id, body: el, wide: true });
