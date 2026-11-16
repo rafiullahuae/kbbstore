@@ -45,6 +45,30 @@ are for features coming in the next update, so you can leave them unticked for n
   **Stickers** (Planet Careers also gets flags, maps and country stickers for 33 countries), **Text**.
 * **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 30 or 60 fps; also 1:1, 4:5 or 16:9 if you tick them).
 
+### Make it go viral (the 🔥 Viral tab)
+
+One press each, and **⌘Z** takes any of them back in one step. Pressing one again replaces what it made before.
+
+* **🪝 Hook builder** — writes 10 opening lines from what you say (English or Arabic, for beauty or visas), puts the
+  best one on screen for the first 2 seconds with a zoom on the face and a sound hit, and fixes a black or blurred
+  first frame. **⏩ Flash-forward** plays the best moment first ("wait for it…"), then the reel from the top.
+* **🎣 Add a hook** — a video hook (snap zoom, freeze-frame + record scratch, whip-in, reveal, before → after flash,
+  object toss, face close-up, speed ramp, shake, light leak) with a matching sound (stamp, boarding chime, ASMR taps,
+  spray, shutter, riser …), landing on the music's first beat. Press again for the next pair. All 21 sounds are in
+  the tab with ▶ to listen and **+** to add one at the playhead.
+* **📈 Retention** — scores every second; red stretches show under the timeline ruler. **Fix all dead zones** adds
+  jump cuts, punch-ins, text pops and stickers there.
+* **⚡ Tighten** — cuts the breaths and gaps between words (never inside a word, with tiny fades so nothing clicks).
+* **🔍 Smart zooms** on the words you stress · **Face in upper third** for 16:9 → 9:16.
+* **📱 Safe zones** — shows where Instagram, TikTok, YouTube Shorts or Snapchat put their buttons and moves captions,
+  text and stickers out of the way. The Export window warns you if anything is still under them.
+* **🔁 Loop ending** — the last moment blends into the first frame so the reel replays seamlessly.
+* **📣 CTA** — "Comment VISA", link in bio, save/share, DM, WhatsApp or call, in your colours, English or Arabic.
+* **🔢 Chapters & steps** — a progress bar and "STEP 2/4" for list videos.
+* **🅰️ A/B variations** — three versions with different openers, saved as three MP4s.
+* **🛡️ Claim safety** — flags "guaranteed visa", "100 % approval", "cures acne", "no side effects", whitening … and
+  offers safer wording (a guide, not legal advice).
+
 ## 5. Where your things are
 
 | Folder inside KBB Studio | What is in it |
@@ -99,6 +123,8 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
   tree listings). The engine installs from it; `app/captions/models.js` loads from the same `models/<repo>/` paths.
 * `vendor/` — pinned third-party code with licences: transformers.js 3.8.1 + onnxruntime-web, MediaPipe tasks-vision
   0.10.21 + BlazeFace, mp4-muxer 5.2.2, mp4box.js 0.5.2, caption fonts (OFL). `library/LICENSES.md` lists the rest.
+* `app/viral/` — the Viral engine (hooks, retention, tightening, safe zones, loop, CTA, chapters, A/B, claims); sound hooks
+  in `library/sfx/hooks/` from `tools/v-sfx.cjs`; checked end to end by `tools/v-media.cjs` + `tools/v-check.cjs`.
 * `tools/` — `int-media.cjs` + `int-check.cjs` (end-to-end), `check-r1.cjs`, `check-models.cjs [--real]`,
   `r2-check.cjs`, `r3-check.cjs`, `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
 * The app name lives in `app/core/config.js` `APP_NAME` (and `appName` in `engine/main.go`, the launcher's file name).
