@@ -38,8 +38,10 @@ contact line; on the KBB set, the KBB designs with its brand colours.
 
 ## Planet Careers (51 templates × 3 sizes)
 
-Drawn from the company kit (navy `#0B2545` / teal `#13A89E` / gold `#F2C14E`, Montserrat + Inter + Cairo, the Planet
-Careers mark), 17 layout families in `src/templates-pc.js` (spliced into templates.js by build.py): hero, boarding pass,
+Drawn from the company kit -- the real brand from theplanetcareers.com (owner, 16 Nov 2026): navy `#002768`, red `#BE0B32`,
+white, slate `#556171`, light `#EFF4FA`, Afacad (vendored from npm, OFL) + Cairo, and the site's own logo (white-on-dark on navy grounds;
+made by `studio/reel-studio/brands/planet-careers/source/make-logos.py`, never redrawn). `kitPal` turns any kit into roles
+(text 4.5:1 on its ground; an accent that cannot be text on the primary becomes pills, fills and lifted icons). 17 layout families in `src/templates-pc.js` (spliced into templates.js by build.py): hero, boarding pass,
 postcard arch, map split, intake calendar, steps timeline, checklist, visa-approved story (photo slot + stamp),
 testimonial, event, countdown, top-5 carousel cover, myth/fact + FAQ, consultant / office, offer, language test, greeting.
 
