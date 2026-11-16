@@ -24,6 +24,8 @@ import { mountGallery } from './gallery.js';
 import { mountScript } from './script-view.js';
 import { dragPrefs } from './drag.js';
 import { wsDir } from '../core/config.js';
+import { mountTranslate } from './translate/panel.js';
+import { lineFlags } from './translate/pipeline.js';
 
 const h = (tag, attrs = {}, ...kids) => {
   const el = document.createElement(tag);
@@ -105,7 +107,8 @@ export function mountCaptionPanel(el, ctx) {
   const tabs = h('div', { class: 'rs-cap-tabs', role: 'tablist' },
     h('button', { role: 'tab', 'data-tab': 'transcript', onclick: () => show('transcript') }, 'Transcript'),
     h('button', { role: 'tab', 'data-tab': 'script', onclick: () => show('script') }, 'Script'),
-    h('button', { role: 'tab', 'data-tab': 'style', onclick: () => show('style') }, 'Style'));
+    h('button', { role: 'tab', 'data-tab': 'style', onclick: () => show('style') }, 'Style'),
+    h('button', { role: 'tab', 'data-tab': 'translate', onclick: () => show('translate') }, 'Translate'));
 
   // ---------------------------------------------------------------- transcript tab
   const findIn = h('input', { class: 'rs-cap-in', placeholder: 'Find', size: 8 });
@@ -242,6 +245,7 @@ export function mountCaptionPanel(el, ctx) {
       renderSelBar(); renderDropped(); return;
     }
     const frag = document.createDocumentFragment();
+    const trFlags = c.tr?.mode === 'replace' && c.tr.active && c.tr.langs?.[c.tr.active] ? lineFlags(c.tr.langs[c.tr.active].sents) : {};
     for (const L of c.lines) {
       const words = [];
       for (let i = L.wordIdx[0]; i <= L.wordIdx[1]; i++) {
@@ -252,7 +256,7 @@ export function mountCaptionPanel(el, ctx) {
       const words2 = c.words.slice(L.wordIdx[0], L.wordIdx[1] + 1).map((w) => w.w);
       const emo = suggestEmoji(words2, 3);
       const styled = lineHasOv(c, L);
-      const row = h('div', { class: 'rs-cap-line' + (styled ? ' has-ov' : ''), role: 'listitem', 'data-line': L.id },
+      const row = h('div', { class: 'rs-cap-line' + (styled ? ' has-ov' : '') + (trFlags[L.id] ? ' tr-flag' : ''), role: 'listitem', 'data-line': L.id, title: trFlags[L.id] ? 'Translation: ' + trFlags[L.id].map((f) => f.msg).join(' · ') : null },
         h('button', { class: 'rs-cap-time', title: styled ? 'Go to this line · this line has its own style' : 'Go to this line', onclick: () => ctx.seek?.(L.t0) }, fmt(L.t0), styled ? h('i', { class: 'rs-cap-dot', 'aria-label': 'styled' }) : null),
         h('div', { class: 'rs-cap-text', dir: isRtlText(lineText(c, L)) ? 'rtl' : 'ltr' }, words),
         h('div', { class: 'rs-cap-emoji' },
@@ -311,6 +315,10 @@ export function mountCaptionPanel(el, ctx) {
   const scriptPane = h('div', { class: 'rs-cap-pane', 'data-pane': 'script', hidden: true });
   let script = null;
 
+  // ---------------------------------------------------------------- translate tab (translate/panel.js)
+  const translatePane = h('div', { class: 'rs-cap-pane', 'data-pane': 'translate', hidden: true });
+  let trView = null;
+
   // ---------------------------------------------------------------- style tab (gallery + fields)
   const galleryEl = h('div', { class: 'rs-cap-gallery' });
   const form = h('div', { class: 'rs-cap-form' });
@@ -367,7 +375,8 @@ export function mountCaptionPanel(el, ctx) {
   function show(t) {
     tab = t;
     for (const b of tabs.children) b.setAttribute('aria-selected', String(b.dataset.tab === t));
-    transcriptPane.hidden = t !== 'transcript'; stylePane.hidden = t !== 'style'; scriptPane.hidden = t !== 'script';
+    transcriptPane.hidden = t !== 'transcript'; stylePane.hidden = t !== 'style'; scriptPane.hidden = t !== 'script'; translatePane.hidden = t !== 'translate';
+    if (t === 'translate') { if (!trView) trView = mountTranslate(translatePane, ctx, apply); else trView.render(); }
     if (t === 'style') { gallery.render(); renderForm(); gallery.start(); } else gallery.stop();
     if (t === 'script') { if (!script) script = mountScript(scriptPane, ctx, apply); else script.render(); }
     if (t === 'transcript') renderList();
@@ -381,8 +390,9 @@ export function mountCaptionPanel(el, ctx) {
     h('div', { class: 'rs-cap-row' }, modelSel, langSel),
     h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel),
     vocabBox);
-  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, settings), progress),
-    tabs, transcriptPane, scriptPane, stylePane);
+  const trBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'open-translate', title: 'Translate the captions (Urdu, Arabic, English, Hindi …)', onclick: () => show('translate') }, '🌐 Translate');
+  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, trBtn, settings), progress),
+    tabs, transcriptPane, scriptPane, stylePane, translatePane);
 
   let queued = false;
   const refresh = () => {
@@ -394,6 +404,7 @@ export function mountCaptionPanel(el, ctx) {
       tagChip.textContent = '· ♪ ' + (TAG_MODES.find((m) => m.id === tagSel.value)?.label || '');
       if (tab === 'transcript') renderList();
       else if (tab === 'script') { if (!scriptPane.contains(document.activeElement)) script?.render(); }
+      else if (tab === 'translate') { if (!translatePane.contains(document.activeElement) || document.activeElement.tagName !== 'DIV') trView?.render(); }
       else { renderForm(); gallery.mark(resolveStyle(currentSpec()).id); }
     });
   };
@@ -409,7 +420,7 @@ export function mountCaptionPanel(el, ctx) {
   renderVocab();
   show('transcript');
   return {
-    show, refresh, runAuto, edit, gallery, get script() { return script; },
+    show, refresh, runAuto, edit, gallery, get script() { return script; }, get translate() { return trView; },
     select(i) { sel = i; renderList(); },
     overrides(mode) { ovMode = mode; renderSelBar(); },
     destroy() { offs.forEach((f) => f()); gallery.destroy(); el.replaceChildren(); el.classList.remove('rs-cap'); },
