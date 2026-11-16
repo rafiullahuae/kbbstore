@@ -1,0 +1,2 @@
+lucide-static 0.460.0 (ISC), npm registry, 16 Nov 2026.
+icons.json = icon-nodes.json + tags.json merged: {icons:{name:{n:[[tag,attrs]...], t:[tags]}}}. 24x24, stroke 2, round caps.

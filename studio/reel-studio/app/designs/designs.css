@@ -1,0 +1,64 @@
+/* KBB Studio · Designs (Brief → Designs) — screen, grid, visuals panel, design editor. Uses the editor's tokens. */
+.dz { height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+.dz-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 360px 1fr 330px; }
+.dz-col { min-height: 0; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.dz-left { border-right: 1px solid var(--line); background: var(--panel); }
+.dz-right { border-left: 1px solid var(--line); background: var(--panel); }
+.dz h2 { margin: 0; font-size: 16px; }
+.dz h3 { margin: 0; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.dz-brief { width: 100%; min-height: 128px; resize: vertical; font-size: 15px; line-height: 1.45; }
+.dz-ex { display: flex; flex-wrap: wrap; gap: 6px; }
+.dz-ex button { font-size: 11px; }
+.dz-spec { display: flex; flex-direction: column; gap: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.dz-kv { display: grid; grid-template-columns: 96px 1fr; gap: 6px 8px; align-items: center; font-size: 13px; }
+.dz-kv > span:nth-child(odd) { color: var(--muted); }
+.dz-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.dz-chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--panel3); border: 1px solid var(--line2); display: inline-flex; gap: 5px; align-items: center; }
+.dz-chip img { width: 18px; height: 18px; object-fit: contain; }
+.dz-note { font-size: 12px; color: var(--warn); }
+.dz-via { font-size: 12px; color: var(--muted); }
+.dz-go { width: 100%; }
+.dz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; align-content: start; }
+.dz-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: border-color .15s, transform .15s; }
+.dz-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.dz-card canvas { width: 100%; height: auto; display: block; background: #222; }
+.dz-card-foot { display: flex; align-items: center; gap: 6px; padding: 8px 10px; font-size: 12px; }
+.dz-card-foot b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dz-score { font-weight: 700; color: var(--ok); }
+.dz-sizes { display: flex; gap: 4px; padding: 0 10px 10px; flex-wrap: wrap; }
+.dz-empty { color: var(--muted); text-align: center; padding: 60px 20px; border: 1px dashed var(--line2); border-radius: 16px; }
+.dz-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.dz-cands { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dz-cand { position: relative; border-radius: 10px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: #111; }
+.dz-cand.on { border-color: var(--accent); }
+.dz-cand canvas, .dz-cand img { width: 100%; display: block; aspect-ratio: 1; object-fit: cover; }
+.dz-cand .flag { position: absolute; left: 4px; bottom: 4px; font-size: 10px; background: rgba(0,0,0,.7); color: var(--warn); border-radius: 6px; padding: 1px 5px; }
+.dz-cand .seed { position: absolute; right: 4px; top: 4px; font-size: 10px; background: rgba(0,0,0,.6); border-radius: 6px; padding: 1px 5px; }
+.dz-pal { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 10px; border: 1px solid var(--line); cursor: pointer; font-size: 12px; }
+.dz-pal:hover { border-color: var(--accent); }
+.dz-sw { display: flex; } .dz-sw i { width: 18px; height: 26px; display: block; } .dz-sw i:first-child { border-radius: 6px 0 0 6px; } .dz-sw i:last-child { border-radius: 0 6px 6px 0; }
+.dz-icons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.dz-icons img { width: 100%; background: var(--panel3); border-radius: 8px; padding: 6px; }
+.dz-arts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.dz-arts canvas { width: 100%; border-radius: 8px; display: block; }
+.dz-prog { font-size: 12px; color: var(--muted); }
+.dz-small { font-size: 12px; color: var(--muted); }
+.dz-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.dz-saved { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.dz-saved img { height: 120px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer; }
+
+/* design editor */
+.de { position: fixed; inset: 0; z-index: 65; background: var(--bg); display: flex; flex-direction: column; }
+.de-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px 1fr 320px; }
+.de-layers { border-right: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.de-layers button { text-align: left; border: 0; background: transparent; padding: 6px 8px; border-radius: 8px; font-size: 12px; color: var(--muted); display: flex; gap: 6px; }
+.de-layers button.on { background: var(--panel3); color: var(--text); }
+.de-stage { display: grid; place-items: center; min-height: 0; overflow: hidden; background: repeating-conic-gradient(#191a20 0 25%, #1d1e25 0 50%) 0 0 / 24px 24px; position: relative; }
+.de-stage canvas { box-shadow: 0 20px 60px rgba(0,0,0,.6); touch-action: none; }
+.de-insp { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.de-insp textarea { width: 100%; min-height: 70px; resize: vertical; }
+.de-insp .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.de-insp .row > span:first-child { min-width: 70px; color: var(--muted); font-size: 12px; }
+.de-rules { display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.de-rules .ok { color: var(--ok); } .de-rules .bad { color: var(--err); }
+.de-num { width: 70px; }

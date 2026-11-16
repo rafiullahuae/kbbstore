@@ -30,8 +30,17 @@ SPEC = [
      ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_q4f16.onnx"]),
     ("copy-llm-lite", "onnx-community/Qwen2.5-0.5B-Instruct", "Writing (no-GPU fallback): the same post copy on the CPU when the browser has no WebGPU", "content", False,
      ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "onnx/model_quantized.onnx"]),
-    ("upscaler", "Xenova/swin2SR-classical-sr-x2-64", "Pictures: sharpens and enlarges small photos 2x (next update)", "auto", False,
-     ["config.json", "preprocessor_config.json", "onnx/model_fp16.onnx"]),
+    ("upscaler", "Xenova/swin2SR-classical-sr-x2-64", "Pictures (upscale): sharpens and enlarges AI pictures and small photos 2x, for full-HD designs", "designs", False,
+     ["config.json", "preprocessor_config.json", "onnx/model_fp16.onnx"], {"group": "Image AI", "licence": "Apache-2.0"}),
+    # Round 3 (Brief -> Designs): the offline picture model. SDXS-512-DreamShaper (IDKiro, CreativeML Open RAIL++-M:
+    # commercial use allowed, with use restrictions) -- a ONE-step distillation of Stable Diffusion 1.5 / DreamShaper 8, so
+    # a picture is one UNet pass (seconds on a Mac GPU, ~14 s on a CPU). ONNX conversion by creador (fp16, WebGPU-ready,
+    # TAESD for previews and SD1.5's full VAE decoder for the kept picture). Chosen over SD-Turbo (Stability AI Community
+    # Licence: commercial use needs registration and ends above US$1M revenue) because it is openly licensed, 2.6x smaller
+    # (983 MB vs 2.58 GB) and one step instead of 1-4.
+    ("image-ai", "creador/sdxs-512-dreamshaper-onnx", "Pictures (AI): makes backgrounds, scenes, artwork and worker photos offline on the Mac's GPU, for Brief to Designs", "designs", False,
+     ["manifest.json", "tokenizer.json", "tokenizer_config.json", "text_encoder_fp16.onnx", "unet_fp16.onnx", "taesd_decoder_fp16.onnx", "vae_large_decoder_fp16.onnx"],
+     {"group": "Image AI", "licence": "CreativeML Open RAIL++-M (use restrictions apply)", "licenceUrl": "https://huggingface.co/spaces/CompVis/stable-diffusion-license"}),
 ]
 
 src, dst = sys.argv[1], sys.argv[2]
@@ -39,7 +48,7 @@ out = {"v": 1, "revision": "main",
        "note": "Models the studio downloads ONCE, after one Allow, into models/<repo>/<path>. Each file has its size and "
                "sha256 (large LFS files) or gitBlobSha1 (small text files). Built by tools/make-model-manifest.py; the engine installer reads this and app/captions/models.js loads from the same models/<repo>/ paths.",
        "models": []}
-for mid, repo, purpose, owner, required, files in SPEC:
+for mid, repo, purpose, owner, required, files, *extra in SPEC:
     tree = {e["path"]: e for e in json.load(open(os.path.join(src, repo.replace("/", "_") + ".json"))) if e["type"] == "file"}
     fl = []
     for p in files:
@@ -50,8 +59,8 @@ for mid, repo, purpose, owner, required, files in SPEC:
         else:
             f["gitBlobSha1"] = e["oid"]
         fl.append(f)
-    out["models"].append({"id": mid, "repo": repo, "purpose": purpose, "owner": owner, "required": required,
-                          "size": sum(x["size"] for x in fl), "files": fl})
+    out["models"].append(dict({"id": mid, "repo": repo, "purpose": purpose, "owner": owner, "required": required,
+                               "size": sum(x["size"] for x in fl), "files": fl}, **(extra[0] if extra else {})))
 with open(dst, "w") as fh:
     json.dump(out, fh, indent=1)
 for m in out["models"]:

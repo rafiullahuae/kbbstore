@@ -97,6 +97,7 @@ export class Editor {
       h('div.sep'),
       this.undoBtn, this.redoBtn,
       h('button.icon-btn', { title: 'Keyboard shortcuts (?)', on: { click: () => this.shortcuts() } }, '⌨'),
+      h('button.icon-btn#configure-btn', { title: 'Configure: companies, keys, Claude, models, folders, languages', on: { click: () => import('../settings/configure.js').then((m) => m.openConfigure()) } }, '⚙'),
       h('button.btn.primary.export-btn', { on: { click: () => exportDialog(this) } }, '⬇ Export'),
       h('button.btn.ghost.stop-btn', { title: `Stop ${APP_NAME}`, on: { click: () => stopStudio() } }, '⏻ Stop'),
     );
