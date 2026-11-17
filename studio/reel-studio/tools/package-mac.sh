@@ -11,7 +11,7 @@ NAME="KBB Studio"   # keep in step with app/core/config.js APP_NAME
 ./engine/build.sh >/dev/null
 rm -rf "dist/$NAME" "dist/$NAME.zip"
 mkdir -p "dist/$NAME/engine" "dist/$NAME/models" "dist/$NAME/workspaces" "dist/$NAME/library/music/user"
-cp "Start $NAME.command" README.md "dist/$NAME/"
+cp "Start $NAME.command" README.md "GUIDE - keys and what to send.html" "dist/$NAME/"
 chmod +x "dist/$NAME/Start $NAME.command"
 cp engine/kbbstudio-mac-arm64 engine/kbbstudio-mac-amd64 "dist/$NAME/engine/"
 chmod +x "dist/$NAME/engine/"kbbstudio-mac-*

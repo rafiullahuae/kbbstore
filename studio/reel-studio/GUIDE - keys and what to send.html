@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KBB Studio Guide</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#14161f;--muted:#5b6070;--line:#e3e6ef;--acc:#4f5bd5;--ok:#13795b;--warn:#a15c00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101218;--card:#181b24;--ink:#eceef5;--muted:#a3a9ba;--line:#2a2f3d;--acc:#8b95ff;--ok:#4cc79a;--warn:#f0b34a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 80px}
+h1{font-size:30px;margin:0 0 6px}h2{font-size:21px;margin:0 0 8px}h3{font-size:16px;margin:18px 0 6px}
+.sub{color:var(--muted);margin:0 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:0 0 18px}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;margin-left:8px;vertical-align:middle;border:1px solid var(--line);color:var(--muted)}
+.need{color:var(--warn);border-color:currentColor}.opt{color:var(--ok);border-color:currentColor}
+ol,ul{padding-left:22px;margin:6px 0}li{margin:4px 0}
+code,kbd{font:14px ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--acc) 12%,transparent);padding:1px 6px;border-radius:6px}
+.where{border-left:3px solid var(--acc);padding:6px 12px;margin:12px 0 0;color:var(--muted)}
+.safe{border:1px solid var(--warn);border-radius:12px;padding:12px 16px;margin:0 0 22px}
+a{color:var(--acc)}
+nav ol{columns:2;column-gap:28px}
+@media (max-width:600px){nav ol{columns:1}h1{font-size:25px}}
+</style>
+</head>
+<body>
+<main>
+<h1>KBB Studio guide: keys and what to send</h1>
+<p class="sub">Every item from the "what I need from you" list, step by step. Do them in any order; the studio works without all of them.</p>
+
+<div class="safe"><b>Keys are private.</b> Paste a key only into <b>⚙ Configure</b> inside KBB Studio, never into a chat, email or WhatsApp. The studio keeps keys in its own <code>settings</code> folder on your Mac and shows only the last four characters.</div>
+
+<nav class="card"><h2>Contents</h2><ol>
+<li><a href="#pexels">Pexels photo key</a></li>
+<li><a href="#unsplash">Unsplash photo key</a></li>
+<li><a href="#claude">Claude key (optional)</a></li>
+<li><a href="#pc">Planet Careers details</a></li>
+<li><a href="#kbb">KBB handles and call to action</a></li>
+<li><a href="#photos">Your photos, videos and music</a></li>
+<li><a href="#rec">Arabic and Urdu recordings</a></li>
+<li><a href="#arabic">Arabic style</a></li>
+<li><a href="#banned">Banned words</a></li>
+<li><a href="#mac">Your Mac details</a></li>
+<li><a href="#apple">Apple Developer signing (optional)</a></li>
+</ol></nav>
+
+<section class="card" id="pexels"><h2>1. Pexels photo key <span class="tag need">recommended · free</span></h2>
+<p>Free stock photos and videos (workers, cities, scenes) for the 📷 Photos tab.</p>
+<ol>
+<li>Go to <b>pexels.com</b> and click <b>Join</b> to make a free account (or log in).</li>
+<li>Open <b>pexels.com/api</b> and click <b>Your API Key</b> (or <b>Get Started</b>).</li>
+<li>Fill the short form: describe the project as "KBB Studio: photos for our own ads and reels", website <code>kbeautybliss.com</code>, tick the terms, and submit.</li>
+<li>Your key appears on the same page straight away. Click <b>Copy</b>.</li>
+</ol>
+<p class="where"><b>Where to paste:</b> KBB Studio → ⚙ Configure → <b>Photo sources</b> → Pexels → paste → <b>Save</b> → <b>Test</b>.</p>
+<p>Free limit: 200 requests per hour and 20,000 per month, which is far more than daily use needs.</p>
+</section>
+
+<section class="card" id="unsplash"><h2>2. Unsplash photo key <span class="tag need">recommended · free</span></h2>
+<ol>
+<li>Go to <b>unsplash.com</b>, click <b>Join</b> to make a free account, and confirm your email.</li>
+<li>Open <b>unsplash.com/developers</b> → <b>Your apps</b> → <b>New Application</b>.</li>
+<li>Tick all the guideline boxes → <b>Accept terms</b>.</li>
+<li>Application name: <code>KBB Studio</code>. Description: "Offline ad and reel editor for our own company posts". Click <b>Create application</b>.</li>
+<li>Scroll to <b>Keys</b> and copy the <b>Access Key</b>. Do not use the Secret key; the studio doesn't need it.</li>
+</ol>
+<p class="where"><b>Where to paste:</b> ⚙ Configure → <b>Photo sources</b> → Unsplash → paste the Access Key → <b>Save</b> → <b>Test</b>.</p>
+<p>A new app starts in "Demo" mode: 50 requests per hour. That is enough to start. For more, press <b>Apply for production</b> on the app page later.</p>
+</section>
+
+<section class="card" id="claude"><h2>3. Claude key <span class="tag opt">optional · paid per use</span></h2>
+<p>Everything works offline without it. With it, briefs are read more cleverly and translation gets a <b>Best quality</b> option. The studio asks before each session that uses it.</p>
+<ol>
+<li>Go to <b>console.anthropic.com</b> and sign up (email and phone).</li>
+<li>Open <b>Settings → Billing</b> and add a payment card and a small credit (for example US$10). Optionally set a monthly spend limit in <b>Limits</b>.</li>
+<li>Open <b>Settings → API Keys</b> → <b>Create Key</b>, name it <code>KBB Studio</code>, and copy it. It starts with <code>sk-ant-</code> and is shown only once.</li>
+</ol>
+<p class="where"><b>Where to paste:</b> ⚙ Configure → <b>Connect Claude</b> → paste → <b>Save</b> → <b>Test</b>. The model stays on the default <b>Claude Sonnet 5.5</b>. <b>Disconnect</b> deletes the key from your Mac.</p>
+<p>Cost: a brief or a page of captions usually costs a few US cents.</p>
+</section>
+
+<section class="card" id="pc"><h2>4. Planet Careers details <span class="tag need">needed for finished ads</span></h2>
+<p>Send these in the chat. They are not secret.</p>
+<ul>
+<li>Phone and WhatsApp number to show on ads, plus email and website.</li>
+<li>The call to action you want, e.g. "Book a free consultation", "WhatsApp us now".</li>
+<li>A comment keyword for reels, e.g. comment <b>VISA</b> and we'll send details.</li>
+<li>The countries you serve, and for each the real facts you are happy to show (intakes, job types, processing time). The studio never invents visa rules or salaries: they stay editable placeholders until you give them.</li>
+</ul>
+<p class="where"><b>You can also type them yourself:</b> ⚙ Configure → <b>Contact &amp; social</b> (switch company at the top).</p>
+</section>
+
+<section class="card" id="kbb"><h2>5. KBB handles and call to action <span class="tag need">needed for finished ads</span></h2>
+<ul>
+<li>Instagram, TikTok, Snapchat and YouTube handles.</li>
+<li>The call to action you like, e.g. "Shop now on kbeautybliss.com", "Order on WhatsApp".</li>
+</ul>
+<p class="where"><b>Where:</b> ⚙ Configure → <b>Contact &amp; social</b> (company: KBB).</p>
+</section>
+
+<section class="card" id="photos"><h2>6. Your photos, videos and music <span class="tag need">makes ads look real</span></h2>
+<ul>
+<li><b>Planet Careers:</b> photos of your team, happy clients (with their permission) and workers in uniform: nurse, driver, welder, chef and so on.</li>
+<li><b>KBB:</b> product photos and short videos of the shop, unboxing and textures.</li>
+<li><b>Music you own or have bought</b> (MP3/WAV). The built-in library is royalty-free already.</li>
+</ul>
+<p class="where"><b>Where:</b> drop them into the studio. In the editor, drag files onto the media bin, or put music in <code>KBB Studio/library/music/user</code>. Large files don't need to be sent to me.</p>
+</section>
+
+<section class="card" id="rec"><h2>7. Arabic and Urdu recordings <span class="tag need">finishes word-perfect sync</span></h2>
+<p>English captions already land within a few thousandths of a second. To make Arabic and Urdu as good, I need real voices.</p>
+<ol>
+<li>Record 3–4 short clips, 20–30 seconds each, on your phone or Mac. On a Mac use <b>QuickTime Player → File → New Movie Recording</b>.</li>
+<li>Talk normally, as in a real reel: two clips in Arabic and two in Urdu.</li>
+<li>Write down exactly what you said (the script) for each clip.</li>
+<li>Send the clips and scripts in the chat, or put them in <code>KBB Studio/workspaces</code> and tell me.</li>
+</ol>
+</section>
+
+<section class="card" id="arabic"><h2>8. Arabic style <span class="tag need">one word answer</span></h2>
+<p>Tell me <b>MSA</b> (formal Modern Standard Arabic) or <b>Gulf</b> (Emirati and Khaleeji, friendlier) for captions and ad copy, or one for each company.</p>
+</section>
+
+<section class="card" id="banned"><h2>9. Banned words <span class="tag opt">optional</span></h2>
+<p>Any words or claims ads must never use, e.g. "guaranteed visa", "100% approval", "cures acne". The studio will refuse them in every design and caption.</p>
+</section>
+
+<section class="card" id="mac"><h2>10. Your Mac details <span class="tag need">for speed tuning</span></h2>
+<ol>
+<li>Click the  <b>Apple menu</b> (top-left) → <b>About This Mac</b>.</li>
+<li>Send a screenshot (<kbd>⇧ Shift</kbd> <kbd>⌘ Cmd</kbd> <kbd>4</kbd>, then click the window after pressing Space). It shows the chip (M1, M2… or Intel), the memory and the macOS version.</li>
+<li>Tell me if you use <b>Google Chrome</b> (recommended) or Safari.</li>
+</ol>
+</section>
+
+<section class="card" id="apple"><h2>11. Apple Developer signing <span class="tag opt">optional · US$99/year</span></h2>
+<p>Only needed so macOS stops showing "cannot be opened" warnings. Without it, the right-click → <b>Open</b> trick keeps working.</p>
+<ol>
+<li>Go to <b>developer.apple.com/programs/enroll</b> and sign in with your Apple ID (two-factor authentication must be on).</li>
+<li>Choose <b>Individual</b>, or <b>Organization</b> if you have a company D-U-N-S number, then pay US$99.</li>
+<li>Approval takes from a few hours to two days. Then tell me, and I'll send exact steps to make a signing certificate on your Mac. Certificates are never sent in chat.</li>
+</ol>
+</section>
+
+<section class="card"><h2>If something says "An older engine is running"</h2>
+<p>Close every Terminal window of KBB Studio, then double-click <b>Start KBB Studio</b> inside the <b>new</b> folder. When moving from an old version, copy only <code>models</code>, <code>workspaces</code>, <code>settings</code> and <code>library</code>, never the <code>engine</code> folder.</p>
+</section>
+</main>
+</body>
+</html>

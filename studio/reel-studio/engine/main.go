@@ -41,6 +41,11 @@ import (
 const appName = "KBB Studio" // keep in step with app/core/config.js APP_NAME
 const version = "0.1.0"
 
+// apiLevel goes up whenever the app starts needing an endpoint an older engine lacks. app/editor/main.js refuses to
+// run on an older engine and says how to restart, instead of every new page failing with "no such endpoint"
+// (the owner, 17 Nov: Configure → Photo sources / Languages, after the new app ran on the previous engine).
+const apiLevel = 3
+
 var (
 	readRoots  = map[string]bool{"app": true, "vendor": true, "models": true, "library": true, "brands": true, "workspaces": true}
 	writeRoots = map[string]bool{"workspaces": true, "library": true, "brands": true, "models": true}
@@ -391,7 +396,7 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 	q := r.URL.Query()
 	switch p {
 	case "/api/info":
-		writeJSON(w, map[string]any{"app": appName, "version": version, "os": runtime.GOOS, "arch": runtime.GOARCH, "netHosts": keys(netHosts)})
+		writeJSON(w, map[string]any{"app": appName, "version": version, "api": apiLevel, "os": runtime.GOOS, "arch": runtime.GOARCH, "netHosts": keys(netHosts)})
 
 	case "/api/list":
 		abs, err := s.resolve(strings.TrimSuffix(q.Get("path"), "/"), readRoots)
