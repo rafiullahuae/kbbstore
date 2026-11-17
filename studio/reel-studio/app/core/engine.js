@@ -4,6 +4,9 @@
 // of the engine's roots; the engine refuses anything else (and any '..'):
 //   readable: app/ vendor/ models/ library/ brands/ workspaces/
 //   writable: workspaces/ library/ brands/ models/
+// The paths are the same since 17 Nov, but the owner's roots live in KBB Studio Data outside the app folder (engine
+// -data, engine/data.go): workspaces/ and models/ there; library/ and brands/ are his files there merged with the
+// built-in ones of the app folder (reads and listings see both; writes and deletes go to his).
 //
 //   import { engine } from '../core/engine.js';
 //   await engine.connect();                       -> true when the engine answers (engine.available)

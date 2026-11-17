@@ -248,7 +248,7 @@ const RENDER = {
 
   async folders(sec) {
     const f = await api('/api/folders');
-    ap(sec, h('h2', 'Folders & storage'), h('p.cfg-muted', `Everything ${APP_NAME} makes stays inside its folder: ${f.root}. Free on this Mac: ${fmtBytes(f.free)}.`));
+    ap(sec, h('h2', 'Folders & storage'), h('p.cfg-muted', f.separate ? `Everything ${APP_NAME} makes, and your models and keys, are kept in ${f.root}, outside the ${APP_NAME} folder: an update replaces the ${APP_NAME} folder and keeps all of it. Free on this Mac: ${fmtBytes(f.free)}.` : `Everything ${APP_NAME} makes stays inside its folder: ${f.root}. Free on this Mac: ${fmtBytes(f.free)}.`));
     const open = async (p) => { try { const r = await api('/api/open', { path: p }); toast(r.opened ? 'Opened in Finder' : 'Folder: ' + p, 'ok'); } catch (e) { toast(e.message, 'error'); } };
     const card = h('div.cfg-card');
     for (const x of f.folders) card.appendChild(h('div.cfg-model', { dataset: { folder: x.id } }, h('div', h('b', x.label), h('div.cfg-muted', x.path + '/')), h('span.cfg-muted', `${fmtBytes(x.size)} · ${x.files} files`), h('button.btn.small', { on: { click: () => open(x.path) } }, 'Open in Finder')));

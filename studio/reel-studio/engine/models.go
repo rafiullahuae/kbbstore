@@ -140,7 +140,7 @@ func fileSize(p string) int64 {
 // status: every model with installed/partial bytes, totals and free disk
 func (s *server) modelStatus() map[string]any {
 	m, err := s.readManifest()
-	out := map[string]any{"free": freeBytes(filepath.Join(s.root, "models"))}
+	out := map[string]any{"free": freeBytes(filepath.Join(s.dataDir(), "models"))}
 	if err != nil {
 		out["error"] = err.Error()
 		out["models"] = []any{}
@@ -241,7 +241,7 @@ func (s *server) installModels(ids []string) error {
 			need += f.Size - f.Done
 		}
 	}
-	free := freeBytes(filepath.Join(s.root, "models"))
+	free := freeBytes(filepath.Join(s.dataDir(), "models"))
 	margin := max(int64(300<<20), need/20)
 	if free >= 0 && free < need+margin {
 		in.State = "nospace"

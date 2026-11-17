@@ -14,4 +14,7 @@ chmod +x "$ENGINE" 2>/dev/null
 # The folder was downloaded, so macOS marks the engine as "from the internet"; you already approved this folder
 # by opening this file with right-click > Open, so clear the mark on our own engine only.
 xattr -d com.apple.quarantine "$ENGINE" 2>/dev/null
-exec "$ENGINE" --dir "$PWD"
+# Your models, companies, projects, keys, music, photos and brand kits live in "KBB Studio Data" in your home folder,
+# NOT in this folder: an update replaces this folder and touches none of them. On the first start anything of yours
+# still in here (and the models of an older KBB Studio folder in Downloads, Desktop, Documents ...) is moved there.
+exec "$ENGINE" --dir "$PWD" --data "$HOME/KBB Studio Data"

@@ -1,6 +1,9 @@
 // KBB Studio engine: a tiny local server for the studio folder.
 //
-//   - listens on 127.0.0.1 only, on a random free port, and opens the default browser (Chrome when present on a Mac)
+//   - listens on 127.0.0.1 only, on a FIXED port (41917; a random free one only when that is busy), so the page keeps
+//     one origin from launch to launch, and opens the default browser (Chrome when present on a Mac)
+//   - the owner's data (models, workspaces, settings, his brands and library files) lives in -data, outside the app
+//     folder, so replacing the app folder with a new zip loses nothing (data.go)
 //   - serves app/, vendor/, models/, library/, brands/, workspaces/ with the COOP/COEP headers multithreaded WASM needs
 //   - a JSON file API that only reads/writes inside the studio folder (path traversal and symlink escapes refused)
 //   - /net/* is the ONLY way out to the internet: refused unless the app has sent a permission grant for that exact
@@ -44,7 +47,12 @@ const version = "0.1.0"
 // apiLevel goes up whenever the app starts needing an endpoint an older engine lacks. app/editor/main.js refuses to
 // run on an older engine and says how to restart, instead of every new page failing with "no such endpoint"
 // (the owner, 17 Nov: Configure → Photo sources / Languages, after the new app ran on the previous engine).
-const apiLevel = 3
+// 4 (17 Nov): the data folder outside the app folder (/api/info data, /api/prefs?merge=1).
+const apiLevel = 4
+
+// preferredPort: the page's origin is http://127.0.0.1:<port>, and everything a browser keeps (storage, permissions)
+// belongs to that origin. A random port every launch lost all of it every time; this one is kept unless it is busy.
+const preferredPort = 41917
 
 var (
 	readRoots  = map[string]bool{"app": true, "vendor": true, "models": true, "library": true, "brands": true, "workspaces": true}
@@ -54,7 +62,9 @@ var (
 )
 
 type server struct {
-	root       string // real path of the studio folder
+	root       string // real path of the studio (app) folder
+	data       string // real path of the owner's data folder (-data); "" = inside the app folder (data.go)
+	dataShow   string // the data folder as the owner would type it (~/KBB Studio Data)
 	token      string
 	addr       string
 	mu         sync.Mutex
@@ -88,7 +98,8 @@ func main() {
 	exe, _ := os.Executable()
 	defDir := filepath.Dir(filepath.Dir(exe))
 	dir := flag.String("dir", defDir, "the studio folder (holds app/, vendor/, workspaces/ ...)")
-	port := flag.Int("port", 0, "port (0 = a random free port)")
+	port := flag.Int("port", preferredPort, "port to listen on, falling back to a random free one when it is busy (0 = random)")
+	dataDir := flag.String("data", "", "the owner's data folder (models, workspaces, settings, his brands and library files), kept outside the app folder so updates never touch it; empty = inside the app folder")
 	noBrowser := flag.Bool("no-browser", false, "do not open a browser")
 	idle := flag.Duration("idle", 20*time.Second, "stop this long after the last tab closes")
 	testBase := flag.String("test-hf-base", "", "TESTS ONLY: download models from this http://127.0.0.1:<port> server instead of huggingface.co")
@@ -104,19 +115,42 @@ func main() {
 	if st, err := os.Stat(filepath.Join(real, "app", "index.html")); err != nil || st.IsDir() {
 		log.Fatalf("%s: no app/index.html here — run me from the %s folder", real, appName)
 	}
-	for _, d := range []string{"workspaces", "models", "library", "brands"} {
-		_ = os.MkdirAll(filepath.Join(real, d), 0o755)
+	home, _ := os.UserHomeDir()
+	data := ""
+	if *dataDir != "" {
+		abs, _ := filepath.Abs(*dataDir)
+		if err := os.MkdirAll(abs, 0o755); err != nil {
+			log.Fatalf("data folder %s: %v", abs, err)
+		}
+		data, err = filepath.EvalSymlinks(abs)
+		if err != nil {
+			log.Fatalf("data folder: %v", err)
+		}
+		if data != real && strings.HasPrefix(data, real+string(os.PathSeparator)) {
+			log.Fatalf("the data folder %s is inside the app folder, where an update would replace it", data)
+		}
 	}
 
-	ln, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(*port))
-	if err != nil {
-		log.Fatalf("listen: %v", err)
-	}
 	s := &server{
-		root: real, token: randHex(16), addr: ln.Addr().String(),
+		root: real, data: data, token: randHex(16),
 		grants: map[string]bool{}, subs: map[chan []byte]bool{}, jobs: map[string]*job{},
 		idle: *idle, shutdown: make(chan struct{}),
 	}
+	s.dataShow = displayPath(s.dataDir(), home)
+	s.setupData(home)
+	if s.separateData() {
+		fmt.Printf("Your models, companies, projects and keys are kept in %s and survive updates.\n", s.dataShow)
+	}
+
+	ln, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(*port))
+	if err != nil && *port != 0 {
+		log.Printf("port %d is busy (another %s still open?): using a free one for this session", *port, appName)
+		ln, err = net.Listen("tcp", "127.0.0.1:0")
+	}
+	if err != nil {
+		log.Fatalf("listen: %v", err)
+	}
+	s.addr = ln.Addr().String()
 	s.inst = &installer{s: s, State: "idle"}
 	s.noBrowser = *noBrowser
 	if *claudeBase != "" {
@@ -290,12 +324,13 @@ func writeJSON(w http.ResponseWriter, v any) {
 
 var errRefused = errors.New("path refused")
 
-// resolve maps a folder-relative path to an absolute one inside the studio folder, or refuses it.
+// candidates maps a folder-relative path to the absolute places it may live (data.go bases: the data folder first,
+// then the app folder, for library/ and brands/), or refuses it.
 // Refused: empty, absolute, backslashes, NUL, any '..' or hidden segment, a first segment outside roots,
-// and anything whose real path (symlinks followed) leaves the studio folder.
-func (s *server) resolve(rel string, roots map[string]bool) (string, error) {
+// and anything whose real path (symlinks followed) leaves its base folder.
+func (s *server) candidates(rel string, roots map[string]bool) ([]string, error) {
 	if rel == "" || strings.ContainsAny(rel, "\\\x00") || strings.HasPrefix(rel, "/") {
-		return "", errRefused
+		return nil, errRefused
 	}
 	segs := strings.Split(rel, "/")
 	for i, seg := range segs {
@@ -303,29 +338,61 @@ func (s *server) resolve(rel string, roots map[string]bool) (string, error) {
 			continue // trailing slash
 		}
 		if seg == "" || seg == "." || seg == ".." || strings.HasPrefix(seg, ".") {
-			return "", errRefused
+			return nil, errRefused
 		}
 	}
 	if !roots[segs[0]] {
+		return nil, errRefused
+	}
+	clean := path.Clean(rel)
+	var out []string
+	for _, base := range s.bases(clean) {
+		abs := filepath.Join(base, filepath.FromSlash(clean))
+		// follow symlinks on the longest existing prefix and make sure we are still inside the base folder
+		probe := abs
+		for {
+			if real, err := filepath.EvalSymlinks(probe); err == nil {
+				if real != base && !strings.HasPrefix(real, base+string(os.PathSeparator)) {
+					return nil, errRefused
+				}
+				break
+			}
+			parent := filepath.Dir(probe)
+			if parent == probe {
+				return nil, errRefused
+			}
+			probe = parent
+		}
+		out = append(out, abs)
+	}
+	return out, nil
+}
+
+// resolve: where a path is READ from: the first candidate that exists, else the first one
+func (s *server) resolve(rel string, roots map[string]bool) (string, error) {
+	c, err := s.candidates(rel, roots)
+	if err != nil {
+		return "", err
+	}
+	for _, abs := range c {
+		if _, err := os.Lstat(abs); err == nil {
+			return abs, nil
+		}
+	}
+	return c[0], nil
+}
+
+// resolveWrite: where a path is WRITTEN or deleted: always the first candidate, i.e. the data folder for the owner's
+// roots. The app folder's built-in library and brand files are never changed through the API, the model list never.
+func (s *server) resolveWrite(rel string, roots map[string]bool) (string, error) {
+	if path.Clean(rel) == "models/manifest.json" {
 		return "", errRefused
 	}
-	abs := filepath.Join(s.root, filepath.FromSlash(path.Clean(rel)))
-	// follow symlinks on the longest existing prefix and make sure we are still inside the folder
-	probe := abs
-	for {
-		if real, err := filepath.EvalSymlinks(probe); err == nil {
-			if real != s.root && !strings.HasPrefix(real, s.root+string(os.PathSeparator)) {
-				return "", errRefused
-			}
-			break
-		}
-		parent := filepath.Dir(probe)
-		if parent == probe {
-			return "", errRefused
-		}
-		probe = parent
+	c, err := s.candidates(rel, roots)
+	if err != nil {
+		return "", err
 	}
-	return abs, nil
+	return c[0], nil
 }
 
 func (s *server) static(w http.ResponseWriter, r *http.Request, rel string) {
@@ -396,29 +463,32 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 	q := r.URL.Query()
 	switch p {
 	case "/api/info":
-		writeJSON(w, map[string]any{"app": appName, "version": version, "api": apiLevel, "os": runtime.GOOS, "arch": runtime.GOARCH, "netHosts": keys(netHosts)})
+		writeJSON(w, map[string]any{"app": appName, "version": version, "api": apiLevel, "os": runtime.GOOS, "arch": runtime.GOARCH, "netHosts": keys(netHosts),
+			"data": s.dataShow, "dataSeparate": s.separateData()})
 
 	case "/api/list":
-		abs, err := s.resolve(strings.TrimSuffix(q.Get("path"), "/"), readRoots)
+		dirs, err := s.candidates(strings.TrimSuffix(q.Get("path"), "/"), readRoots)
 		if err != nil {
 			jsonErr(w, 403, "path refused")
 			return
 		}
-		ents, err := os.ReadDir(abs)
-		if err != nil {
-			writeJSON(w, []any{}) // a folder that isn't there yet is simply empty (no error noise in the browser)
-			return
-		}
+		// library/ and brands/ list the owner's files and the built-in ones together (his win on a name clash);
+		// a folder that isn't there yet is simply empty (no error noise in the browser)
 		out := []map[string]any{}
-		for _, e := range ents {
-			if strings.HasPrefix(e.Name(), ".") {
-				continue
+		seen := map[string]bool{}
+		for _, abs := range dirs {
+			ents, _ := os.ReadDir(abs)
+			for _, e := range ents {
+				if strings.HasPrefix(e.Name(), ".") || seen[e.Name()] {
+					continue
+				}
+				info, err := e.Info()
+				if err != nil {
+					continue
+				}
+				seen[e.Name()] = true
+				out = append(out, map[string]any{"name": e.Name(), "dir": e.IsDir(), "size": info.Size(), "mtime": info.ModTime().UnixMilli()})
 			}
-			info, err := e.Info()
-			if err != nil {
-				continue
-			}
-			out = append(out, map[string]any{"name": e.Name(), "dir": e.IsDir(), "size": info.Size(), "mtime": info.ModTime().UnixMilli()})
 		}
 		sort.Slice(out, func(i, j int) bool { return out[i]["name"].(string) < out[j]["name"].(string) })
 		writeJSON(w, out)
@@ -442,7 +512,7 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		rel := q.Get("path")
-		abs, err := s.resolve(rel, writeRoots)
+		abs, err := s.resolveWrite(rel, writeRoots)
 		if err != nil || strings.HasSuffix(rel, "/") {
 			jsonErr(w, 403, "path refused")
 			return
@@ -459,11 +529,17 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		rel := strings.TrimSuffix(q.Get("path"), "/")
-		abs, err := s.resolve(rel, map[string]bool{"workspaces": true, "library": true})
+		abs, err := s.resolveWrite(rel, map[string]bool{"workspaces": true, "library": true})
 		// never a whole root or a whole workspace: only things inside them
 		if err != nil || strings.Count(rel, "/") < 2 && strings.HasPrefix(rel, "workspaces/") || !strings.Contains(rel, "/") {
 			jsonErr(w, 403, "path refused")
 			return
+		}
+		if _, e := os.Lstat(abs); e != nil {
+			if have, _ := s.resolve(rel, readRoots); have != abs { // only in the app folder: built-in, comes back with every update
+				jsonErr(w, 403, "built-in files cannot be removed")
+				return
+			}
 		}
 		if err := os.RemoveAll(abs); err != nil {
 			jsonErr(w, 500, err.Error())
@@ -539,7 +615,7 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			jsonErr(w, 403, "downloads go to models/ only")
 			return
 		}
-		abs, err := s.resolve(d.Dest, map[string]bool{"models": true})
+		abs, err := s.resolveWrite(d.Dest, map[string]bool{"models": true})
 		if err != nil {
 			jsonErr(w, 403, "path refused")
 			return
