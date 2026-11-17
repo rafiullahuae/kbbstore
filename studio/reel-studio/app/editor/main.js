@@ -49,9 +49,19 @@ function openProject(p, files) {
   if (files?.length) editor.importFiles(files);
 }
 
+const ENGINE_API = 3; // engine/main.go apiLevel
+
 async function boot() {
   if (!(await engine.connect())) {
     root.replaceChildren(h('div.stopped', h('h1', `${APP_NAME} needs its engine`), h('p', `Open the studio by double-clicking "Start ${APP_NAME}" in the ${APP_NAME} folder.`), h('p.muted', 'If you just pressed Stop, that is why — start it again the same way.')));
+    return;
+  }
+  // An engine left over from an earlier version (old Terminal window still open, or the old engine folder copied
+  // over the new one) answers the old endpoints only: say so plainly instead of "no such endpoint" on new pages.
+  if ((engine.info?.api || 0) < ENGINE_API) {
+    root.replaceChildren(h('div.stopped', h('h1', 'An older engine is running'),
+      h('p', `This ${APP_NAME} is newer than the engine that opened it. Close every Terminal window of ${APP_NAME}, then double-click "Start ${APP_NAME}" inside the NEW ${APP_NAME} folder.`),
+      h('p.muted', 'If you copied folders from the old version, copy only models, workspaces, settings and library — never the engine folder.')));
     return;
   }
   await loadWorkspaces();
