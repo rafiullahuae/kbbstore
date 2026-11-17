@@ -13,19 +13,20 @@ import { SOURCES, searchUrl, testUrl, normalize, credit, sourceLink, savePath, s
 
 const CSS = `
 .sx { display: grid; gap: 10px; padding: 10px 10px 24px; font-size: 13px; min-width: 0; overflow-x: hidden; }
-.sx details { border: 1px solid var(--line2); border-radius: 10px; background: var(--panel2); min-width: 0; }
+.sx details { border: 1px solid var(--line); border-radius: var(--r2); background: var(--panel2); min-width: 0; }
 .sx summary { cursor: pointer; padding: 9px 11px; font-weight: 700; list-style: none; display: flex; gap: 8px; align-items: center; }
 .sx summary::-webkit-details-marker { display: none; }
 .sx summary small { margin-left: auto; color: var(--muted); font-weight: 500; }
 .sx .sx-body { display: grid; gap: 8px; padding: 0 11px 11px; min-width: 0; }
 .sx .sx-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-width: 0; }
 .sx .sx-row > input, .sx .sx-row > select { flex: 1 1 0; min-width: 70px; }
-.sx button.sx-b { border: 1px solid var(--line2); background: var(--panel3); border-radius: 8px; padding: 6px 10px; font-weight: 600; font-size: 12px; }
-.sx button.sx-b.pri { background: var(--ws); border-color: var(--ws); color: #fff; }
+.sx button.sx-b { border: 1px solid var(--line2); background: var(--panel3); border-radius: var(--r-sm); padding: 0 10px; min-height: 32px; font-weight: 600; font-size: 12px; transition: background-color var(--t), border-color var(--t); }
+.sx button.sx-b:hover:not(:disabled) { border-color: var(--line3); }
+.sx button.sx-b.pri { background: var(--accent); border-color: transparent; color: var(--accent-fg); }
 .sx button.sx-b.on { border-color: var(--ws); background: color-mix(in srgb, var(--ws) 18%, transparent); }
 .sx button.sx-b:disabled { opacity: .5; }
 .sx .sx-chips { display: flex; gap: 5px; flex-wrap: wrap; }
-.sx .sx-chips button { font-size: 11px; padding: 4px 8px; border-radius: 999px; }
+.sx .sx-chips button { font-size: 11px; padding: 0 9px; min-height: 26px; border-radius: 999px; }
 .sx .sx-muted { color: var(--muted); font-size: 12px; }
 .sx .sx-muted a, .sx .sx-cr a { color: inherit; text-decoration: underline; }
 .sx .sx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

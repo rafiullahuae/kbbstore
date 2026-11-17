@@ -64,8 +64,39 @@ export function switchWorkspace(id) {
 
 /** the company's accent colour tints the UI a little, so it is obvious which company is open */
 export function applyTheme(ws) {
-  const c = ws?.colors?.primary || '#e8508b';
-  document.documentElement.style.setProperty('--ws', c);
+  const t = themeFor(ws?.colors);
+  const st = document.documentElement.style;
+  for (const [k, v] of Object.entries(t)) st.setProperty(k, v);
+}
+
+// ── the accent, from the brand kit: plain colour arithmetic (no layout is measured) ──
+const DEFAULT_ACCENT = '#e8508b';
+const hex = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)) : null);
+const toHex = (c) => '#' + c.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const mix = (a, b, f) => a.map((v, i) => v + (b[i] - v) * f);
+const PANEL = [0x1b, 0x1c, 0x25], WHITE = [255, 255, 255];
+/** CSS variables for a company's colours: --brand is the kit's own primary (hero, glows); --ws/--accent is the first kit
+ *  colour that shows up on a dark UI (Planet Careers' navy does not, so its red leads), with white text that reads on it;
+ *  --accent-text is a lighter shade for text and focus rings that clears 4.5:1 on the panels. */
+export function themeFor(colors = {}) {
+  const brand = hex(colors.primary) || hex(DEFAULT_ACCENT);
+  const cands = [colors.primary, colors.accent, colors.secondary].map(hex).filter(Boolean);
+  // usable as a button: visible on the panels (≥ 1.8:1) and white text on it reads (≥ 4.5:1), after darkening a little if needed
+  let acc = null;
+  for (const c of cands) {
+    if (contrast(c, PANEL) < 1.8) continue;
+    let x = c; for (let i = 0; i < 6 && contrast(x, WHITE) < 4.5; i++) x = mix(x, [0, 0, 0], 0.08);
+    if (contrast(x, WHITE) >= 4.5 && contrast(x, PANEL) >= 1.6) { acc = x; break; }
+  }
+  if (!acc) acc = hex(DEFAULT_ACCENT).map((v) => v * 0.9);
+  let txt = acc; for (let i = 0; i < 12 && contrast(txt, PANEL) < 5; i++) txt = mix(txt, WHITE, 0.12);
+  const [r, g, b] = acc;
+  return {
+    '--brand': toHex(brand), '--ws': toHex(acc), '--accent': toHex(acc), '--accent-hi': toHex(mix(acc, WHITE, 0.12)), '--accent-fg': '#ffffff',
+    '--accent-text': toHex(txt), '--accent-soft': `rgba(${r | 0}, ${g | 0}, ${b | 0}, .17)`, '--accent-line': `rgba(${r | 0}, ${g | 0}, ${b | 0}, .6)`,
+  };
 }
 
 export const logoUrl = (ws) => (ws?.logo ? '/' + ws.logo.split('/').map(encodeURIComponent).join('/') + '?v=' + encodeURIComponent(ws.modified || '') : '');

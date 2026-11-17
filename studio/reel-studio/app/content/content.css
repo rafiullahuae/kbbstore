@@ -16,7 +16,7 @@
 .cr-ok { margin: 0; color: var(--ok); }
 .cr-err { margin: 0; color: var(--err); }
 .cr-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.chip { background: var(--panel3); border: 1px solid var(--line2); border-radius: 999px; padding: 2px 8px; cursor: pointer; font-size: 11px; }
+.cr-panel .chip { font-size: 11px; min-height: 24px; padding: 2px 9px; }
 .cr-list { display: flex; flex-direction: column; gap: 3px; max-height: 220px; overflow: auto; }
 .cr-li { padding: 4px 6px; border-radius: 6px; background: var(--panel3); cursor: pointer; }
 .cr-li:hover { background: var(--line2); }
@@ -35,17 +35,20 @@
 .cr-covers figcaption { font-size: 10px; color: var(--muted); }
 .cr-copy { background: var(--panel3); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
 .cr-copy pre { white-space: pre-wrap; font: inherit; margin: 0; }
-.cr-copy p { margin: 0; color: var(--accent); }
+.cr-copy p { margin: 0; color: var(--accent-text); }
 .cr-copy ul { margin: 0; padding-inline-start: 16px; }
 .cr-copy .btn { align-self: flex-start; }
-/* home card */
-.mod-card[data-mod-home="create"] { grid-column: 1 / -1; order: 2; }
-.home-grid > .recent-card { order: 3; }
-.cr-home { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: start; }
-.cr-big { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--line); text-align: left; }
-.cr-big b { font-size: 15px; }
-.cr-big small { color: var(--muted); }
+/* home: the Create card is a row of three start tiles that sit on the home grid's own columns (subgrid) */
+.home-grid > .new-card { order: 1; }
+.home-grid > .drop-card { order: 2; }
+.home-grid > .mod-card[data-mod-home="designs"] { order: 3; }
+.mod-card[data-mod-home="create"] { grid-column: 1 / -1; order: 4; display: grid; grid-template-columns: subgrid; gap: inherit; padding: 0; background: none; border: 0; box-shadow: none; }
+.home-grid > .mod-card[data-mod-home="create"]:hover { box-shadow: none; }
+.home-grid > .recent-card { order: 5; }
+.cr-big { text-align: start; }
+.home-grid .cr-big:hover { border-color: var(--line2); box-shadow: var(--sh-2); }
 .cr-fmt select { width: 100%; }
+.tile-note { margin: 0; font-size: 13px; line-height: 1.5; }
 /* teleprompter */
 .tp-modal { width: min(1200px, 96vw) !important; }
 .modal-body > .tp { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; min-height: 0; height: min(72vh, 760px); }

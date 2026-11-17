@@ -117,6 +117,7 @@ export class Bin {
   textTab(b) {
     const ed = this.ed;
     b.appendChild(h('div.preset-list', Object.entries(TEXT_PRESETS).map(([k, p]) => h('button.preset', {
+      dataset: { sample: 'text-style' },   // the button shows the style itself (its colours are the preset's, not the UI's)
       on: { click: () => ed.addItem(textItem(ed.project, k, ed.t, ed.workspace), 'text') },
       style: { fontWeight: p.style.weight, color: p.style.bg ? p.style.color : undefined, background: p.style.bg || undefined, WebkitTextStroke: p.style.strokeW ? '1px #000' : undefined },
     }, p.label))));

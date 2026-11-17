@@ -62,13 +62,17 @@ function homeCard(el, home) {
     await after?.(ed.context(), ed);
   };
   const longIn = h('input', { type: 'file', accept: 'video/*', hidden: true, on: { change: () => { const f = longIn.files[0]; if (f) newReel(f.name.replace(/\.[^.]+$/, ''), [f], async (ctx) => { toast('Imported. Press "Find the shorts" in Create → Long video → shorts', 'info', 5000); }); } } });
+  // three start tiles on the home grid (the card is a subgrid row of editor.css .home-grid; content.css)
+  const tile = (ic, title, sub, ...body) => h('div.card.cr-big', h('div.tile-head', h('span.tile-ic', { 'aria-hidden': 'true' }, ic), h('div', h('h2', title), h('small', sub))), ...body);
   el.append(
-    h('h2', '🚀 Create'),
-    h('div.cr-home',
-      h('button.btn.cr-big', { on: { click: () => newReel('Teleprompter take', null, (ctx) => recorder.openTeleprompter(ctx)) } }, h('b', '🎬 Record'), h('small', 'Teleprompter + camera, best take picked')),
-      h('button.btn.cr-big', { on: { click: () => longIn.click() } }, h('b', '✂️ Webinar → shorts'), h('small', '8–12 shorts from one long video')), longIn,
-      h('div.cr-big.cr-fmt', h('b', '🧩 Start from a proven format'), fSel,
-        h('button.btn.primary', { on: { click: () => { const f = formats.formatById(fSel.value); newReel(f.name, null, (ctx) => { formats.buildFormat(ctx, f.id); }); } } }, 'Build it'))));
+    tile('🎥', 'Record', 'Teleprompter + camera, best take picked',
+      h('p.muted.tile-note', 'Read your script from the screen while the camera rolls; the studio keeps the cleanest take.'),
+      h('div.tile-foot', h('button.btn.primary', { on: { click: () => newReel('Teleprompter take', null, (ctx) => recorder.openTeleprompter(ctx)) } }, '🎬 Start recording'))),
+    tile('✂️', 'Webinar → shorts', '8–12 shorts from one long video',
+      h('p.muted.tile-note', 'Drop a talk, webinar or live; the best moments become vertical shorts with captions.'),
+      h('div.tile-foot', h('button.btn', { on: { click: () => longIn.click() } }, '📂 Choose a long video')), longIn),
+    tile('🧩', 'Proven format', 'Start from a format that works', h('div.cr-fmt', fSel),
+      h('div.tile-foot', h('button.btn.primary', { on: { click: () => { const f = formats.formatById(fSel.value); newReel(f.name, null, (ctx) => { formats.buildFormat(ctx, f.id); }); } } }, '⚡ Build it'))));
 }
 
 registerModule({

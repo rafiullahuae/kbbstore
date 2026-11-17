@@ -60,7 +60,7 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
         h('label.dz-row', smart, h('span', h('b', 'Smart brief (Claude)'), h('span.dz-small', cl.set ? ' — asks once per session' : ' — connect Claude in ⚙ Configure'))),
         goBtn, prog, specBox,
         h('h3', 'Saved designs'), saved),
-      h('main.dz-col', h('div.dz-row', h('h2', 'Designs'), h('div.grow'), sizeTabs), grid),
+      h('main.dz-col.dz-main', h('div.dz-row', h('h2', 'Designs'), h('div.grow'), sizeTabs), grid),
       right)));
 
   // ── the reading ──

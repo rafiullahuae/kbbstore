@@ -9,16 +9,17 @@ import { heat } from './lib/pacing.js';
 const CSS = `
 .vx { display: grid; gap: 8px; padding: 10px 10px 24px; font-size: 13px; min-width: 0; overflow-x: hidden; }
 .vx details, .vx .vx-body { min-width: 0; }
-.vx details { border: 1px solid var(--line2); border-radius: 10px; background: var(--panel2); }
+.vx details { border: 1px solid var(--line); border-radius: var(--r2); background: var(--panel2); transition: border-color var(--t); }
+.vx details[open] { border-color: var(--line2); }
 .vx summary { cursor: pointer; padding: 9px 11px; font-weight: 700; list-style: none; display: flex; gap: 8px; align-items: center; }
 .vx summary::-webkit-details-marker { display: none; }
 .vx summary small { margin-left: auto; color: var(--muted); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vx .vx-body { display: grid; gap: 8px; padding: 0 11px 11px; }
 .vx .vx-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .vx .vx-row > select, .vx .vx-row > input { flex: 1 1 0; min-width: 64px; }
-.vx button.vx-b { border: 1px solid var(--line2); background: var(--panel3); border-radius: 8px; padding: 6px 10px; font-weight: 600; font-size: 12px; white-space: normal; text-align: center; }
-.vx button.vx-b.pri { background: var(--ws); border-color: var(--ws); color: #fff; }
-.vx button.vx-b:hover { filter: brightness(1.12); }
+.vx button.vx-b { border: 1px solid var(--line2); background: var(--panel3); border-radius: var(--r-sm); padding: 5px 10px; min-height: 32px; font-weight: 600; font-size: 12px; white-space: normal; text-align: center; line-height: 1.25; transition: background-color var(--t), border-color var(--t); }
+.vx button.vx-b.pri { background: var(--accent); border-color: transparent; color: var(--accent-fg); }
+.vx button.vx-b:hover:not(:disabled) { border-color: var(--line3); }
 .vx .vx-out { color: var(--muted); font-size: 12px; white-space: pre-wrap; }
 .vx .vx-out b { color: var(--text); }
 .vx .vx-hook { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer; }

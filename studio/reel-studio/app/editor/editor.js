@@ -17,6 +17,13 @@ import { exportDialog } from './exportdlg.js';
 import { clipFromMedia, trackEnd, reflowTo } from './items.js';
 import { prepareRender } from '../core/render.js';
 
+/** a right-column tab label "🎨 Look" as an icon over a word (editor.css .side-tab); textContent stays "🎨 Look" */
+function sideLabel(text) {
+  const m = /^(\S+)(\s.+)$/u.exec(text);
+  if (!m || /[\p{L}\p{N}]/u.test(m[1])) return [h('span.st-lbl', text)];
+  return [h('span.st-ic', { 'aria-hidden': 'true' }, m[1]), h('span.st-lbl', m[2])];
+}
+
 export class Editor {
   constructor(root, project, { onHome } = {}) {
     this.root = root;
@@ -109,8 +116,8 @@ export class Editor {
     this.inspBody = h('div.side-body.insp-body');
     this.capBody = h('div.side-body.cap-body', { hidden: true });
     this.sideTabs = h('nav.side-tabs', { role: 'tablist' },
-      h('button.side-tab.on', { role: 'tab', dataset: { side: 'inspector' }, on: { click: () => this.showSide('inspector') } }, '⚙ Inspector'),
-      h('button.side-tab', { role: 'tab', dataset: { side: 'captions' }, on: { click: () => this.showSide('captions') } }, '💬 Captions'));
+      h('button.side-tab.on', { role: 'tab', dataset: { side: 'inspector' }, on: { click: () => this.showSide('inspector') } }, ...sideLabel('⚙ Inspector')),
+      h('button.side-tab', { role: 'tab', dataset: { side: 'captions' }, on: { click: () => this.showSide('captions') } }, ...sideLabel('💬 Captions')));
     this.modBodies = new Map();   // right-column tabs that modules add (registerModule({tab}))
     this.inspEl = h('aside.inspector.side', this.sideTabs, this.inspBody, this.capBody);
     this.renderSideTabs();
@@ -156,7 +163,7 @@ export class Editor {
     const mods = listModules().filter((m) => m.tab && m.panel).sort((a, b) => (a.tab.order ?? 50) - (b.tab.order ?? 50));
     for (const m of mods) {
       if (this.sideTabs.querySelector(`[data-side="mod:${m.id}"]`)) continue;
-      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: 'mod:' + m.id }, on: { click: () => this.showSide('mod:' + m.id) } }, (typeof m.tab === 'string' ? m.tab : `${m.tab.icon || ''} ${m.tab.label || m.label || m.id}`.trim())));
+      this.sideTabs.appendChild(h('button.side-tab', { role: 'tab', dataset: { side: 'mod:' + m.id }, title: m.label || m.id, on: { click: () => this.showSide('mod:' + m.id) } }, ...sideLabel(typeof m.tab === 'string' ? m.tab : `${m.tab.icon || ''} ${m.tab.label || m.label || m.id}`.trim())));
       const body = h('div.side-body.mod-body', { hidden: true, dataset: { mod: m.id } });
       this.modBodies.set(m.id, { body, mounted: false, inst: null });
       this.inspEl.appendChild(body);
