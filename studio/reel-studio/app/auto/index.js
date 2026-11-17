@@ -112,7 +112,9 @@ export async function analyse(ctx, mediaId, { faces = true, onProgress } = {}) {
   }
   prog('Done', 1); ctx.progress?.(null);
   const res = { mediaId, duration: m.dur, audio, video, subjects, words };
-  cache.set(key, res); return res;
+  cache.set(key, res);
+  ctx.bus?.emit?.('auto:analysis', res);   // e.g. captions/drag.js: the face box is a snap target and a warning
+  return res;
 }
 
 // ── features ──

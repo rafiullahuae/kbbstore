@@ -1,6 +1,7 @@
 // KBB Studio — making items for the timeline (pure functions).
 
 import { createItem, fitBox, itemEnd, ASPECTS, VISUAL_KINDS } from '../core/project.js';
+import { runReflows } from '../core/modules.js';
 
 export function clipFromMedia(project, m, trackKind, t0 = 0) {
   if (m.kind === 'audio') return createItem('audio', { media: m.id, t0, in: 0, out: m.dur || 1, name: m.name, fadeOut: 0 });
@@ -70,7 +71,9 @@ export function reflowTo(aspect) {
       for (const it of tr.items) {
         if (tr.kind === 'music' || tr.kind === 'sfx') continue;
         const full = it.type === 'clip' && it.w >= W1 * 0.98 && it.h >= H1 * 0.98;
-        if (full) {
+        if (it.type === 'caption' && it.w >= W1 * 0.98 && it.h >= H1 * 0.98) {   // a caption item spans the frame: it stays full-frame
+          Object.assign(it, { x: 0, y: 0, w: W2, h: H2 });                          // (shrunk, its handles sat over the captions)
+        } else if (full) {
           const m = p.media.find((x) => x.id === it.media);
           Object.assign(it, fitBox({ w: W2, h: H2 }, m?.w || it.w, m?.h || it.h, 'cover'));
         } else {
@@ -82,6 +85,7 @@ export function reflowTo(aspect) {
         it.kf = {};
       }
     }
+    runReflows(p, { w: W1, h: H1, aspect: p.canvas.aspect }, { w: W2, h: H2, aspect });   // e.g. captions keep a layout per shape
     Object.assign(p.canvas, { w: W2, h: H2, aspect });
   };
 }

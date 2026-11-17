@@ -6,7 +6,7 @@ import { renderFrame, activeItems, boxAt, fadeAt, evalProp } from '../core/rende
 import { findItem, findMedia, srcTime, isActive, safeAreas } from '../core/project.js';
 import { ops } from '../core/history.js';
 import { seekExact } from '../core/media.js';
-import { canvasGrab } from '../core/modules.js';
+import { canvasGrab, drawCanvasOverlays, canvasHover, canvasMenu } from '../core/modules.js';
 import { h, clear, fmtTime } from './ui.js';
 
 const SNAP_PX = 7;
@@ -33,6 +33,10 @@ export class Preview {
     this.ro.observe(el);
     this.overlay.addEventListener('pointerdown', (e) => this.onDown(e));
     this.overlay.addEventListener('dblclick', (e) => this.onDbl(e));
+    // module hooks (core/modules.js): hover cursor/box, right-click menu — e.g. a caption line's move box
+    const hov = (e) => { if (e.buttons || ed.playing) return; const r = canvasHover(ed.project, ed.t, e.type === 'pointerleave' ? null : this.toCanvas(e), e); this.overlay.style.cursor = r?.cursor || ''; if (r?.changed) this.drawOverlay(); };
+    this.overlay.addEventListener('pointermove', hov); this.overlay.addEventListener('pointerleave', hov);
+    this.overlay.addEventListener('contextmenu', (e) => { if (canvasMenu(ed.project, ed.t, this.toCanvas(e), e, { apply: (cmd) => ed.apply(cmd), redraw: () => this.drawOverlay() })) e.preventDefault(); });
     el.addEventListener('dragover', (e) => { if (e.dataTransfer?.types.includes('Files')) { e.preventDefault(); el.classList.add('drop'); } });
     el.addEventListener('dragleave', () => el.classList.remove('drop'));
     el.addEventListener('drop', (e) => { el.classList.remove('drop'); if (e.dataTransfer?.files.length) { e.preventDefault(); ed.importFiles([...e.dataTransfer.files]); } });
@@ -143,6 +147,7 @@ export class Preview {
       const sa = safeAreas(c);
       for (const [name, r] of Object.entries(sa)) ov.appendChild(h('div.safe.' + name, { style: box(r, k) }));
     }
+    drawCanvasOverlays(ov, { project: ed.project, t: ed.t, k, playing: ed.playing });
     const sel = ed.selectedItems().filter(({ track, item }) => !track.hidden && isActive(item, ed.t));
     if (!sel.length || ed.playing) return;
     const single = sel.length === 1 ? sel[0] : null;
@@ -193,7 +198,8 @@ export class Preview {
     const p0 = this.toCanvas(e);
     const hd = e.target.dataset?.h;
     if (hd) { const id = e.target.closest('.sel-box').dataset.id; return hd === 'rot' ? this.dragRotate(e, id, p0) : this.dragResize(e, id, hd, p0); }
-    const grab = e.altKey ? null : canvasGrab(ed.project, ed.t, p0, e, { apply: (cmd) => ed.apply(cmd) });
+    // Alt reaches the grab too: on a caption it means "move without snapping" (elsewhere Alt still box-selects)
+    const grab = canvasGrab(ed.project, ed.t, p0, e, { apply: (cmd) => ed.apply(cmd), k: this.k || 1, guides: (list) => this.showGuides(list) });
     if (grab) { this.track(e, (ev) => { const p = this.toCanvas(ev); grab.move(p.x - p0.x, p.y - p0.y, ev); }, (ev) => { if (grab.end?.(ev) === false) { const hit = this.hitTest(p0); if (hit) ed.select([hit.item.id]); } }); return; }
     const multi = e.shiftKey || e.metaKey || e.ctrlKey;
     const hit = e.altKey ? null : this.hitTest(p0);
@@ -308,6 +314,16 @@ export class Preview {
     const k = this.k, c = this.ed.project.canvas;
     if (x != null) this.overlay.appendChild(h('div.snap.v', { style: { left: x * k + 'px', height: c.h * k + 'px' } }));
     if (y != null) this.overlay.appendChild(h('div.snap.h', { style: { top: y * k + 'px', width: c.w * k + 'px' } }));
+  }
+  /** a module's drag guides: [{ axis:'x'|'y', at, kind } | { rect:{x,y,w,h}, kind }] in canvas px (cleared on pointer-up) */
+  showGuides(list) {
+    this.clearSnap();
+    const k = this.k, c = this.ed.project.canvas;
+    for (const g of list || []) {
+      if (g.rect) this.overlay.appendChild(h('div.snap.rect.' + (g.kind || 'box'), { style: box(g.rect, k) }));
+      else if (g.axis === 'x') this.overlay.appendChild(h('div.snap.v.' + (g.kind || 'line'), { style: { left: g.at * k + 'px', height: c.h * k + 'px' } }));
+      else this.overlay.appendChild(h('div.snap.h.' + (g.kind || 'line'), { style: { top: g.at * k + 'px', width: c.w * k + 'px' } }));
+    }
   }
   clearSnap() { for (const n of [...this.overlay.querySelectorAll('.snap')]) n.remove(); }
 }

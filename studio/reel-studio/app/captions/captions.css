@@ -120,3 +120,26 @@
 .rs-cap-fav { position: absolute; right: 4px; bottom: 26px; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; font-size: 14px; }
 .rs-cap-fav.on { color: #ffd400; }
 .rs-cap-fav:hover { background: rgba(0,0,0,.8); }
+
+/* ── on-canvas positioning (drag.js): hover box, picked lines, first-time hint, guides, right-click menu ── */
+.cap-box { position: absolute; pointer-events: none; border: 1px dashed rgba(255,255,255,.75); border-radius: 4px; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
+.cap-box.sel { border: 2px solid var(--sel, #ffd166); border-radius: 3px; }
+.cap-hdl { position: absolute; width: 9px; height: 9px; background: #fff; border: 2px solid var(--sel, #ffd166); border-radius: 2px; margin: -6px 0 0 -6px; }
+.cap-hdl.nw { left: 0; top: 0; } .cap-hdl.ne { left: 100%; top: 0; } .cap-hdl.sw { left: 0; top: 100%; } .cap-hdl.se { left: 100%; top: 100%; }
+.cap-hint { position: absolute; pointer-events: none; transform: translate(-50%, calc(-100% - 8px)); white-space: nowrap; background: rgba(12,12,16,.92); color: #fff;
+  font: 600 12px/1.2 var(--font, system-ui, sans-serif); padding: 6px 10px; border-radius: 7px; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+.cap-hint.below { transform: translate(-50%, 8px); }
+.snap.centre { background: #ff4fa3; } .snap.third { background: #5ad1ff; } .snap.safe { background: #ffb547; } .snap.line { background: #3ccf91; } .snap.face { background: #ff5d6c; }
+.snap.rect { background: none; border: 1px dashed #ff5d6c; border-radius: 6px; }
+.snap.rect.face-warn { border: 2px solid #ff5d6c; background: rgba(255,93,108,.42); }
+.snap.rect.face-warn::after { content: 'Over a face'; position: absolute; left: 50%; top: 100%; transform: translate(-50%, 6px); white-space: nowrap; background: #ff5d6c; color: #fff;
+  font: 700 11px/1 var(--font, system-ui, sans-serif); padding: 4px 7px; border-radius: 6px; }
+.cap-menu { position: fixed; z-index: 1000; min-width: 200px; display: flex; flex-direction: column; padding: 5px; background: var(--panel2, #1f2028); color: var(--text, #ececf1);
+  border: 1px solid var(--line2, #34343f); border-radius: 9px; box-shadow: 0 14px 40px rgba(0,0,0,.55); font: 13px/1.3 var(--font, system-ui, sans-serif); }
+.cap-menu button { all: unset; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+.cap-menu button:hover:not(:disabled), .cap-menu button:focus-visible { background: var(--accent-soft, rgba(232,80,139,.2)); }
+.cap-menu button:disabled { opacity: .45; cursor: default; }
+.cap-menu-tip { padding: 6px 10px 3px; color: var(--muted, #a9aec0); font-size: 11.5px; border-top: 1px solid var(--line2, #34343f); margin-top: 4px; }
+.rs-cap-line.pos-sel { background: var(--accent-soft, rgba(232,80,139,.16)); box-shadow: inset 2px 0 0 var(--sel, #ffd166); }
+.rs-cap-ov .rs-cap-pair { min-width: 0; } .rs-cap-ov .rs-cap-pair input[type="range"] { width: 0; min-width: 0; }   /* X + Y sliders share one row */
+.rs-cap .rs-cap-posval { flex: 1 1 0; width: 0; min-width: 0; padding: 5px 6px; }

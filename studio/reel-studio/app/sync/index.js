@@ -13,7 +13,7 @@ import { registerLayer } from '../core/render.js';
 import { registerHistoryHook } from '../core/history.js';
 import { bus } from '../core/bus.js';
 import '../captions/index.js';                       // the captions module registers its layer FIRST; ours wraps it below
-import { drawCaptions } from '../captions/render.js';
+import { drawCaptions, captionClock } from '../captions/render.js';
 import { speechClips, layoutSig, anchorCaptions, followCaptions, captionsSwap } from './follow.js';
 import { alignWords, sharedAligner, ALIGN_MODEL } from './align.js';
 import { timelineSpeech } from '../captions/auto.js';
@@ -40,11 +40,7 @@ registerHistoryHook({
 });
 
 // ── timing nudge + lead where the captions draw (preview and export alike) ──
-registerLayer('caption', (ctx, item, t, project, env) => {
-  const s = project.meta?.sync;
-  const off = s ? ((s.nudgeMs || 0) + (s.leadMs || 0)) / 1000 : 0;
-  return drawCaptions(ctx, item, t + off, project, env);
-});
+registerLayer('caption', (ctx, item, t, project, env) => drawCaptions(ctx, item, captionClock(project, t), project, env));
 
 // ── the model (installed by the same installer as the first-run Setup screen) ──
 async function modelState(engine) {

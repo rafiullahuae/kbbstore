@@ -72,7 +72,7 @@ export async function runExportChecks(project, ctx) {
 }
 
 // On-canvas grabs: a module may claim a pointer-down on the preview before the editor's own select/move, e.g. to
-// drag ONE caption line. grab(project, t, p {x,y canvas px}, ev, { apply(cmd) }) -> null (not mine) or
+// drag ONE caption line. grab(project, t, p {x,y canvas px}, ev, { apply(cmd), k, guides(list) }) -> null (not mine) or
 // { move(dx, dy, ev), end(ev) }. The editor seals the undo step when the pointer goes up.
 const grabs = new Map();
 export function registerCanvasGrab(g) { grabs.set(g.id, g); }
@@ -80,6 +80,30 @@ export function canvasGrab(project, t, p, ev, api) {
   for (const g of grabs.values()) { try { const r = g.grab(project, t, p, ev, api); if (r) return r; } catch (e) { console.warn('[canvas-grab]', g.id, e); } }
   return null;
 }
+
+// More of the same, for professional on-canvas positioning (captions/drag.js uses them; the editor knows nothing about
+// captions). Every hook is optional and a throwing hook is skipped:
+//   registerCanvasOverlay({ id, draw(el, env) })  add DOM to the preview's overlay on every overlay paint (it is cleared
+//                          before each paint); env = { project, t, k (css px per canvas px), playing }.
+//   registerCanvasHover({ id, hover(project, t, p, ev) -> { cursor, changed } | null })   pointer moving over the preview
+//                          with no button down: a cursor for that spot; changed=true repaints the overlay.
+//   registerCanvasMenu({ id, menu(project, t, p, ev, api) -> true | null })   right-click on the preview: true = handled.
+//   registerCanvasKey({ id, key(ev, ctx) -> true | null })   a key the editor sees before its own shortcuts (arrows to
+//                          nudge what a module selected on the canvas); true = handled.
+//   registerReflow({ id, run(project, from {w,h,aspect}, to {w,h,aspect}) })   the project is being re-laid for another
+//                          shape (editor shape switch and multi-shape export); replace, never mutate, shared objects.
+const overlays = new Map(), hovers = new Map(), menus = new Map(), canvasKeys = new Map(), reflows = new Map();
+const each = (m, fn) => { for (const g of m.values()) { try { const r = fn(g); if (r) return r; } catch (e) { console.warn('[canvas-hook]', g.id, e); } } return null; };
+export function registerCanvasOverlay(g) { overlays.set(g.id, g); }
+export function drawCanvasOverlays(el, env) { each(overlays, (g) => { g.draw(el, env); }); }
+export function registerCanvasHover(g) { hovers.set(g.id, g); }
+export const canvasHover = (project, t, p, ev) => each(hovers, (g) => g.hover(project, t, p, ev));
+export function registerCanvasMenu(g) { menus.set(g.id, g); }
+export const canvasMenu = (project, t, p, ev, api) => each(menus, (g) => g.menu(project, t, p, ev, api));
+export function registerCanvasKey(g) { canvasKeys.set(g.id, g); }
+export const canvasKey = (ev, ctx) => each(canvasKeys, (g) => g.key(ev, ctx));
+export function registerReflow(g) { reflows.set(g.id, g); }
+export function runReflows(project, from, to) { each(reflows, (g) => { g.run(project, from, to); }); }
 
 // Single-key shortcuts a module adds (no modifier; keys the editor itself does not use, e.g. I / O to mark a range):
 // registerKey({ key: 'i', label: 'Mark in', run(ctx) }). Case-insensitive; listed in the editor's shortcut sheet.

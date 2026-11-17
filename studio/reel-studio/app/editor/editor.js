@@ -6,7 +6,7 @@ import { MediaStore } from '../core/media.js';
 import { engine } from '../core/engine.js';
 import { APP_NAME, projectDir } from '../core/config.js';
 import { ASPECTS, projectDuration, findItem, findTrack, itemDur, itemEnd, uid, clone, groupMembers, createTrack } from '../core/project.js';
-import { SLOTS, getModule, listModules, keyBinding, listKeys } from '../core/modules.js';
+import { SLOTS, getModule, listModules, keyBinding, listKeys, canvasKey } from '../core/modules.js';
 import { h, $, clear, toast, modal, seg, isTyping, fmtTime } from './ui.js';
 import { workspaceSwitcher, state as wsState } from './workspaces.js';
 import { Preview } from './preview.js';
@@ -381,6 +381,7 @@ export class Editor {
     if (isTyping(e) || document.querySelector('.modal-back')) return;
     const mod = e.metaKey || e.ctrlKey, k = e.key;
     const done = () => { e.preventDefault(); e.stopPropagation(); };
+    if (canvasKey(e, this.context())) { done(); return; }     // a module's canvas selection (e.g. arrows nudge a caption line)
     if (mod && k.toLowerCase() === 'z') { done(); e.shiftKey ? this.history.redo() : this.history.undo(); return; }
     if (mod && k.toLowerCase() === 'y') { done(); this.history.redo(); return; }
     if (mod && k.toLowerCase() === 'c') { done(); this.copy(); return; }
@@ -423,7 +424,8 @@ export class Editor {
       ['⌘Z / ⇧⌘Z', 'Undo / redo'], ['⌘C / ⌘X / ⌘V', 'Copy / cut / paste at playhead'], ['⌘D', 'Duplicate'], ['⌘A', 'Select all'],
       ['⌘G / ⇧⌘G', 'Group / ungroup'], ['↑ ↓ (Alt + ← →)', 'Nudge selected 1 px (Shift: 10 px)'], ['M', 'Add marker'],
       ['+ / − / \\', 'Timeline zoom in / out / fit'], ['⌘S', 'Save now'], ['⌘E', 'Export'], ['Esc', 'Clear selection'],
-      ['Drag on the video', 'Box-select (starts over the video too)'], ['Shift / ⌘ click', 'Add to / remove from selection'], ['Alt + drag', 'Always box-select'],
+      ['Drag on the video', 'Box-select (starts over the video too)'], ['Shift / ⌘ click', 'Add to / remove from selection'], ['Alt + drag', 'Always box-select (on a caption: move it without snapping)'],
+      ['Drag a caption', 'Move that line (Shift: every line · ⌘-click: add to the lines you move · ← → ↑ ↓ nudge it)'],
       ...listKeys().map((x) => [x.key.toUpperCase(), x.label]),
     ];
     modal({ title: 'Keyboard shortcuts', wide: true, body: h('div.keys', rows.map(([a, b]) => h('div.key-row', h('kbd', a), h('span', b)))) });

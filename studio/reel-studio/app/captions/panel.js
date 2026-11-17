@@ -22,7 +22,7 @@ import { vocabFor } from './vocab.js';
 import { alignEdit } from './script.js';
 import { mountGallery } from './gallery.js';
 import { mountScript } from './script-view.js';
-import { dragPrefs } from './drag.js';
+import { dragPrefs, posSel, selectLines, lineKey, linePos, resetLines, resetAll } from './drag.js';
 import { wsDir } from '../core/config.js';
 import { mountTranslate } from './translate/panel.js';
 import { lineFlags } from './translate/pipeline.js';
@@ -209,12 +209,21 @@ export function mountCaptionPanel(el, ctx) {
         field('Position', h('span', { class: 'rs-cap-pair' },
           range(0, 1, 0.01, num(ov.pos?.x, st.pos.x ?? 0.5), (v) => set({ pos: { ...(L.ov?.pos || { y: st.pos.y }), x: v } }, 'posx')),
           range(0, 1, 0.01, num(ov.pos?.y, st.pos.y), (v) => set({ pos: { x: st.pos.x ?? 0.5, ...(L.ov?.pos || {}), y: v } }, 'posy')))),
-        h('div', { class: 'rs-cap-muted' }, 'Tip: drag the caption on the video to move this line (Shift-drag moves all lines).'));
+        posFields(L, set),
+        h('div', { class: 'rs-cap-muted' }, 'Tip: drag the caption on the video to move this line (Shift-drag moves all lines · ⌘/Shift-click lines here to move several · arrows nudge).'));
     }
     ovBox.replaceChildren(
       h('div', { class: 'rs-cap-formhead' }, h('b', {}, isWord ? `Word “${w0.w}”` : 'This line'),
         h('button', { class: 'rs-cap-btn ghost', 'data-x': 'reset', title: 'Remove this line’s own style (and its words’)', onclick: () => apply(isWord ? C.setWordOverride(sel, { color: null, size: null, font: null, weight: null, hl: null, emoji: null }) : C.resetOverrides(L.id)) }, 'Reset to style')),
       ...rows);
+  }
+  // the exact X / Y the canvas drag writes (percent of the safe area), and "Reset position"
+  function posFields(L, set) {
+    const p = linePos(cap(), L);
+    const numIn = (f, v) => { const i = h('input', { class: 'rs-cap-in rs-cap-posval', type: 'number', min: 0, max: 100, step: 0.01, 'data-f': f, value: (v * 100).toFixed(2) });
+      i.onchange = () => set({ pos: { ...linePos(cap(), L), [f === 'posx' ? 'x' : 'y']: Math.max(0, Math.min(1, +(+i.value / 100).toFixed(4))) } }, f); return i; };
+    return field('X / Y %', h('span', { class: 'rs-cap-pair' }, numIn('posx', p.x), numIn('posy', p.y),
+      h('button', { class: 'rs-cap-btn ghost', 'data-x': 'reset-pos', title: 'Back to the style’s position', disabled: !L.ov?.pos, onclick: () => apply(resetLines([lineKey('', L.id)])) }, '↺')));
   }
   function field(label, input) { return h('label', { class: 'rs-cap-field' }, h('span', {}, label), input); }
 
@@ -256,7 +265,7 @@ export function mountCaptionPanel(el, ctx) {
       const words2 = c.words.slice(L.wordIdx[0], L.wordIdx[1] + 1).map((w) => w.w);
       const emo = suggestEmoji(words2, 3);
       const styled = lineHasOv(c, L);
-      const row = h('div', { class: 'rs-cap-line' + (styled ? ' has-ov' : '') + (trFlags[L.id] ? ' tr-flag' : ''), role: 'listitem', 'data-line': L.id, title: trFlags[L.id] ? 'Translation: ' + trFlags[L.id].map((f) => f.msg).join(' · ') : null },
+      const row = h('div', { class: 'rs-cap-line' + (styled ? ' has-ov' : '') + (trFlags[L.id] ? ' tr-flag' : '') + (posSel.has(lineKey('', L.id)) ? ' pos-sel' : ''), role: 'listitem', 'data-line': L.id, title: trFlags[L.id] ? 'Translation: ' + trFlags[L.id].map((f) => f.msg).join(' · ') : null },
         h('button', { class: 'rs-cap-time', title: styled ? 'Go to this line · this line has its own style' : 'Go to this line', onclick: () => ctx.seek?.(L.t0) }, fmt(L.t0), styled ? h('i', { class: 'rs-cap-dot', 'aria-label': 'styled' }) : null),
         h('div', { class: 'rs-cap-text', dir: isRtlText(lineText(c, L)) ? 'rtl' : 'ltr' }, words),
         h('div', { class: 'rs-cap-emoji' },
@@ -271,7 +280,19 @@ export function mountCaptionPanel(el, ctx) {
     markNow(ctx.playhead?.() ?? 0);
   }
 
+  // ⌘/Ctrl-click a line: add it to (or take it out of) the lines a canvas drag moves; Shift-click: the range up to it
+  let anchor = null;
   list.addEventListener('click', (e) => {
+    const row = e.target.closest('.rs-cap-line');
+    if (row && (e.metaKey || e.ctrlKey || e.shiftKey) && !e.target.isContentEditable) {
+      e.preventDefault();
+      const ids = cap().lines.map((L) => L.id), b = ids.indexOf(row.dataset.line), a = anchor ? ids.indexOf(anchor) : -1;
+      if (e.shiftKey && a >= 0) selectLines(ids.slice(Math.min(a, b), Math.max(a, b) + 1).map((id) => lineKey('', id)), 'add');
+      else selectLines([lineKey('', row.dataset.line)], 'toggle');
+      anchor = row.dataset.line;
+      return;
+    }
+    if (row) { anchor = row.dataset.line; selectLines([lineKey('', row.dataset.line)]); }
     const s = e.target.closest('.rs-cap-w'); if (!s || s.isContentEditable) return;
     const i = +s.dataset.i;
     list.querySelector('.rs-cap-w.sel')?.classList.remove('sel');
@@ -367,6 +388,7 @@ export function mountCaptionPanel(el, ctx) {
       field('Line length', range(8, 44, 1, st.rowChars, (v) => set({ rowChars: v }), true)),
       field('Rows', sel2(['1', '2'], String(st.maxRows), (v) => set({ maxRows: +v }, true))),
       field('Drag moves', scope),
+      h('button', { class: 'rs-cap-btn', 'data-x': 'reset-pos-all', title: 'Every line back to the style’s position, in this shape', onclick: () => apply(resetAll(cap())) }, '↺ Reset all positions'),
       anyOv ? h('button', { class: 'rs-cap-btn', 'data-x': 'reset-all', onclick: () => apply(C.resetOverrides()) }, '↺ Reset every line to the style') : null,
     );
   }
@@ -411,6 +433,7 @@ export function mountCaptionPanel(el, ctx) {
   if (ctx.bus) {
     offs.push(ctx.bus.on('project:change', refresh), ctx.bus.on('project:load', () => { sel = -1; refresh(); }),
       ctx.bus.on('playhead', (e) => tab === 'transcript' && markNow(e.t)),
+      ctx.bus.on('captions:possel', () => { for (const r of list.querySelectorAll('.rs-cap-line')) r.classList.toggle('pos-sel', posSel.has(lineKey('', r.dataset.line))); }),
       ctx.bus.on('workspace', () => { renderVocab(); if (tab === 'style') gallery.render(); }));
   }
   modelSel.onchange = langSel.onchange = () => saveMeta();

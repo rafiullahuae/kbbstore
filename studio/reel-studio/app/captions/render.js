@@ -338,6 +338,10 @@ function paintText(ctx, st, text, x, color, k, active, px) {
  * Where the caption blocks go at time t: [{ cap, L, st, lay, box:{x,y,w,h}, align, bx, bw, top }]. Shared by the
  * renderer and the on-canvas drag (hit test), so what you grab is exactly what is drawn.
  */
+/** The caption clock at timeline t: the sync lane's per-project nudge + lead (meta.sync, ms), applied where the layer
+ *  draws (sync/index.js) AND where the canvas drag hit-tests (drag.js), so a grab always finds the line on screen. */
+export const captionClock = (project, t) => { const s = project && project.meta && project.meta.sync; return s ? t + ((s.nudgeMs || 0) + (s.leadMs || 0)) / 1000 : t; };
+
 /** The captions an item draws: the main track, or a translated second track (item.capTrack = 'ar', translation lane). */
 export function captionsFor(project, item) {
   const cap = project && project.captions;
