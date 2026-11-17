@@ -1,0 +1,4 @@
+KBB Studio UI audit · run · 2026-11-17T10:02:27.982Z
+327 screen×size states, kbb + planet-careers, 1280×800 / 1440×900 / 1920×1080
+findings: 0 (0 unique) — none
+

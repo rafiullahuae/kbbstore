@@ -111,11 +111,12 @@ export class Inspector {
   // ── one item ──
   itemPanel({ item, track }) {
     const ed = this.ed, m = item.media ? findMedia(ed.project, item.media) : null;
-    const title = { clip: m?.kind === 'image' ? 'Picture' : 'Video clip', audio: track.kind === 'sfx' ? 'Sound effect' : 'Music', text: 'Text', shape: 'Shape', sticker: 'Sticker', caption: 'Captions', 'auto.transition': 'Transition', 'auto.pricetag': 'Price tag', 'auto.logo': 'Logo sting', 'auto.endcard': 'End card' }[item.type] || item.type;
+    const title = { clip: m?.kind === 'image' ? 'Picture' : 'Video clip', audio: track.kind === 'sfx' ? 'Sound effect' : 'Music', text: 'Text', shape: 'Shape', sticker: 'Sticker', caption: 'Captions', 'auto.transition': 'Transition', 'theme.el': 'Theme element', 'theme.sting': 'Theme intro', 'theme.outro': 'Theme end card', 'theme.overlay': 'Theme overlay', 'auto.pricetag': 'Price tag', 'auto.logo': 'Logo sting', 'auto.endcard': 'End card' }[item.type] || item.type;
     this.el.append(h('div.insp-head', h('b', title), h('small', (m?.name || item.name || '') + ' · ' + fmtDur(itemDur(item)) + (track.locked ? ' · 🔒 locked track' : ''))));
     if (item.type === 'text') this.textPanel(item);
     if (item.type === 'shape') this.shapePanel(item);
     if (item.type === 'sticker') this.stickerPanel(item);
+    if (/^theme\./.test(item.type)) this.themePanel(item, track);
     if (item.type === 'clip' || item.type === 'audio') this.timingPanel(item, m);
     if (m?.hasAudio && (item.type === 'clip' || item.type === 'audio')) this.audioPanel(item);
     if (item.type === 'clip') { this.lookPanel(item); this.cropZoomPanel(item, m); }
@@ -140,6 +141,46 @@ export class Inspector {
       slider({ label: 'Fade in', min: 0, max: 3, step: 0.1, value: item.fadeIn || 0, fmt: secs, onInput: (v) => this.set(item, { fadeIn: v }, 'Fade in'), onDone: this.seal }),
       slider({ label: 'Fade out', min: 0, max: 3, step: 0.1, value: item.fadeOut || 0, fmt: secs, onInput: (v) => this.set(item, { fadeOut: v }, 'Fade out'), onDone: this.seal }),
     ));
+  }
+
+  /** a country transition on a cut: its length (it stays centred on the cut) and which switch it is */
+  transPanel(item) {
+    const ctx = this.ed.context();
+    import('../themes/transitions.js').then((T) => {
+      const len = h('input', { type: 'number', step: 0.1, min: 0.2, max: 2.5, value: (item.out - item.in).toFixed(2), dataset: { th: 'duration' }, title: 'Length of the switch, centred on the cut' });
+      len.addEventListener('change', () => { const v = +len.value; if (Number.isFinite(v)) { T.setTransitionDuration(ctx, item.id, v); this.seal(); } });
+      len.addEventListener('keydown', (e) => e.stopPropagation());
+      const kind = select(T.TRANSITIONS.map((x) => [x.id, x.label]), item.style?.kind || 'slabs', (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.kind = v; this.set(item, { style, name: `${T.TRANSITIONS.find((x) => x.id === v)?.icon || ''} ${T.TRANSITIONS.find((x) => x.id === v)?.label || v}` }, 'Transition kind'); this.seal(); });
+      kind.dataset.th = 'kind';
+      this.el.append(this.section('Country transition', field('Duration', len), field('Switch', kind), h('small.muted', 'It sits on the cut between two clips: both clips show through it. Delete removes it; Themes → Transitions puts one on every cut.')));
+    });
+  }
+
+  /** a theme element: start and duration as numbers, its placeholder words, the sticker kind */
+  themePanel(item, track) {
+    if (item.type === 'theme.trans') return this.transPanel(item);
+    const ed = this.ed, num = (label, value, min, onSet, title) => field(label, h('input', { type: 'number', step: 0.1, min, value: (+value).toFixed(2), title, dataset: { th: label.toLowerCase() }, on: { change: (e) => { const v = +e.target.value; if (Number.isFinite(v) && v >= min) { onSet(v); this.seal(); } } } }));
+    const dur = itemDur(item);
+    const kids = [
+      num('Start', item.t0, 0, (v) => this.set(item, { t0: v }, 'Element start'), 'When it starts on the timeline (seconds)'),
+      num('Duration', dur, 0.2, (v) => this.set(item, { out: item.in + v * (item.speed || 1) }, 'Element duration'), 'How long it runs; the animation re-times itself'),
+    ];
+    if (item.auto === 'theme') kids.push(h('small.muted', item.style?.whole ? 'Whole video: follows the reel’s length. Switch it off in Themes → Place elements.' : 'Placed by the theme; applying another theme replaces it.'));
+    const el = item.type === 'theme.sting' ? 'intro' : item.type === 'theme.outro' ? 'end' : item.style?.el;
+    const FIELDS = { intro: ['title', 'titleAr', 'kicker'], title: ['title', 'titleAr', 'kicker'], lower: ['name', 'role'], end: ['cta', 'ctaAr', 'phone', 'web', 'handle', 'brand'], counter: ['value', 'label'], ticket: ['from', 'to', 'flight', 'gate', 'seat', 'date'], stamp: ['stamp', 'approved', 'date'], hiring: ['hiring', 'hiringAr', 'role0', 'role1', 'role2'], globe: ['from', 'to'], postcard: ['title', 'titleAr', 'greet'], map: ['title'] }[el] || [];
+    const LBL = { title: 'Title', titleAr: 'Title (Arabic)', kicker: 'Small line', name: 'Name', role: 'Role', cta: 'Call to action', ctaAr: 'CTA (Arabic)', phone: 'Phone', web: 'Website', handle: 'Handle', brand: 'Company', value: 'Number', label: 'Label', from: 'From', to: 'To', flight: 'Flight', gate: 'Gate', seat: 'Seat', date: 'Date', stamp: 'Stamp', approved: 'Second stamp', hiring: 'Banner', hiringAr: 'Banner (Arabic)', role0: 'Role 1', role1: 'Role 2', role2: 'Role 3', greet: 'Small line' };
+    const setText = (k, v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.text = Object.assign({}, style.text, { [k]: v }); if (!v) delete style.text[k]; this.set(item, { style }, 'Element text'); };
+    for (const k of FIELDS) {
+      const inp = h('input', { type: 'text', value: item.style?.text?.[k] || '', placeholder: 'theme default', dir: /Ar$/.test(k) ? 'rtl' : 'auto', dataset: { thText: k } });
+      inp.addEventListener('change', () => { setText(k, inp.value.trim()); this.seal(); }); inp.addEventListener('keydown', (e) => e.stopPropagation());
+      kids.push(field(LBL[k] || k, inp));
+    }
+    if (FIELDS.includes('phone') || FIELDS.includes('value')) kids.push(h('small.muted', 'Placeholders: put in your own details. Nothing here states a visa rule, a fee or a salary.'));
+    if (el === 'sticker') {
+      const vs = ['flag', 'visa', 'plane', 'pin', 'coin', 'landmark', 'sparkle'];
+      kids.push(field('Sticker', select(vs.map((v) => [v, v[0].toUpperCase() + v.slice(1)]), item.style?.variant || 'flag', (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.variant = v; this.set(item, { style }, 'Sticker'); this.seal(); })));
+    }
+    this.el.append(this.section('Theme element', ...kids));
   }
 
   fadePanel(item) {

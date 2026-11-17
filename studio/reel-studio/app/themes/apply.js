@@ -7,6 +7,8 @@ import { createItem, createTrack, projectDuration, itemEnd, itemDur, findMedia, 
 import { themeById } from './themes.js';
 import { textItem } from '../look/text.js';
 import { libraryMedia } from '../auto/commands.js';
+import { ELEMENTS, elementById, boxFor, elementStyle } from './elements.js';
+import { transItem, transitionOf, cutsOf as cutPairs } from './transitions.js';
 
 export const TAG = 'theme';
 const r3 = (x) => +(+x).toFixed(3);
@@ -109,7 +111,7 @@ export async function applyTheme(ctx, id, opts = {}) {
   const beats = opts.beats || await beatsOf(ctx);
   const faces = opts.faces || (opts.safe === false ? [] : await detectFaces(ctx));
   const style = themeStyle(th, { ...opts, beats, faces }, ws);
-  const cmds = [], placed = { overlay: null, sting: null, outro: null, transitions: 0, title: null, sfx: 0 };
+  const cmds = [], placed = { overlay: null, sting: null, outro: null, transitions: 0, title: null, signature: null, lower: null, grade: null, sfx: 0 };
   const old = themeItems(p).map((x) => x.item.id); if (old.length) cmds.push(ops.removeItems(old, 'Replace theme'));
   // the overlay gets its own "Theme" lane right above the video (under the owner's stickers, text and captions);
   // the sting, outro and transitions go on the ordinary overlay track
@@ -124,25 +126,39 @@ export async function applyTheme(ctx, id, opts = {}) {
   const ot = track('overlay'), name = th.name;
   const ov = createItem('theme.overlay', { t0: 0, in: 0, out: r3(D), x: 0, y: 0, w: W, h: H, auto: TAG, name: 'Theme · ' + name, style });
   const add = [{ trackId: tt.id, item: ov }]; placed.overlay = ov.id;
-  const kit = { colors: style.colors, hero: th.sting?.hero, icons: (th.layers.find((l) => l.kind === 'icons')?.icons || []).slice(0, 1) };
-  if (opts.sting !== false && D >= 3) { const it = createItem('theme.sting', { t0: 0, in: 0, out: 1.1, x: 0, y: 0, w: W, h: H, auto: TAG, name: 'Theme intro · ' + name, style: clone(kit) }); add.push({ trackId: ot.id, item: it }); placed.sting = it.id; }
-  if (opts.outro !== false && D >= 5) { const it = createItem('theme.outro', { t0: r3(D - 1.4), in: 0, out: 1.4, x: 0, y: 0, w: W, h: H, auto: TAG, name: 'Theme outro · ' + name, style: clone(kit) }); add.push({ trackId: ot.id, item: it }); placed.outro = it.id; }
+  // the complete package, one family: grade (whole reel) · intro sting · title card · signature element · lower third ·
+  // a colour-slab wipe on every cut · end card with CTA. All theme.* items, all tagged, so the next theme replaces them.
+  const es = (el, extra = {}) => elementStyle(th.id, el, { colors: style.colors, brand: ws?.name || null, logo: ws?.logo || null, ...extra });
+  const el = (type, el2, t0, dur, props = {}) => createItem(type, { t0: r3(t0), in: 0, out: r3(dur), auto: TAG, name: `Theme ${elementById(el2)?.label || el2} · ${name}`, ...boxFor(el2, W, H), ...props });
+  if (opts.grade !== false) { const it = el('theme.el', 'grade', 0, D, { style: es('grade', { whole: 'span' }) }); add.unshift({ trackId: tt.id, item: it }); placed.grade = it.id; }
+  if (opts.sting !== false && D >= 3) { const it = el('theme.sting', 'intro', 0, 0.9, { style: es('intro') }); it.name = 'Theme intro · ' + name; add.push({ trackId: ot.id, item: it }); placed.sting = it.id; }
+  const endDur = D >= 9 ? 2.6 : 1.6;
+  if (opts.outro !== false && D >= 5) { const it = el('theme.outro', 'end', D - endDur, endDur, { style: es('end') }); it.name = 'Theme outro · ' + name; add.push({ trackId: ot.id, item: it }); placed.outro = it.id; }
   const cuts = opts.transitions === false ? [] : cutsOf(p);
   const owned = p.tracks.flatMap((t) => t.items).filter((i) => /transition/.test(i.type) && i.auto !== TAG);
+  const tk = transitionOf(th);
   for (const c of cuts) {
     if (owned.some((i) => c >= i.t0 - 0.05 && c <= itemEnd(i) + 0.05)) continue;   // the owner's own transition stays
-    add.push({ trackId: ot.id, item: createItem('auto.transition', { t0: r3(Math.max(0, c - 0.2)), in: 0, out: 0.4, x: 0, y: 0, w: W, h: H, auto: TAG, name: 'Theme transition · ' + th.transition, style: { kind: th.transition, color: th.transition === 'slide' || th.transition === 'wipe' ? style.colors.primary : '#ffffff', accent: style.colors.accent } }) });
+    const pair = cutPairs(p).find((x) => Math.abs(x.t - c) < 0.01);
+    // a full-screen country transition between the two clips (both clips show through it); a plain wipe where the cut
+    // is not between two clips of the main track
+    add.push({ trackId: ot.id, item: pair ? transItem(p, pair, tk, { theme: th.id, colors: style.colors, auto: TAG }) : el('theme.el', 'wipe', Math.max(0, c - 0.25), 0.5, { style: es('wipe') }) });
     placed.transitions++;
   }
-  if (opts.title !== false && th.text?.title) {
-    const lang = p.captions?.lang === 'ar' ? 'ar' : 'en', txt = typeof opts.title === 'string' ? opts.title : lang === 'ar' && th.text.titleAr && th.text.preset !== 'bilingual' ? th.text.titleAr : th.text.title;
-    const t0 = placed.sting ? 1.05 : 0.3;
-    if (D > t0 + 2) {
-      const it = textItem(th.text.preset, p.canvas, { ...ws, colors: { primary: style.colors.primary, accent: style.colors.accent, text: '#ffffff' } }, t0, { text: txt, auto: TAG, name: 'Theme title · ' + txt });
-      if (th.text.preset === 'bilingual' && th.text.titleAr) it.style.sub = th.text.titleAr;
-      await placeTitle(p, it, faces);
-      add.push({ trackId: track('text').id, item: it }); placed.title = it.id;
-    }
+  const lane = track('text'), body = D - (placed.outro ? endDur : 0);
+  let t1 = placed.sting ? 0.8 : 0.3;
+  if (opts.title !== false && body > t1 + 2) {
+    const it = el('theme.el', 'title', t1, Math.min(2.8, body - t1 - 0.2), { style: es('title') });
+    await placeTitle(p, it, faces); add.push({ trackId: lane.id, item: it }); placed.title = it.id; t1 += it.out + 0.4;
+  }
+  const sig = opts.signature === false ? null : signatureOf(th);
+  if (sig && body > t1 + 2.4) {
+    const it = el('theme.el', sig, t1, Math.min(elementById(sig).dur + 0.4, body - t1 - 0.2), { style: es(sig) });
+    await placeTitle(p, it, faces); add.push({ trackId: ot.id, item: it }); placed.signature = it.id; t1 += it.out + 0.6;
+  }
+  if (opts.lower !== false && body > t1 + 3) {
+    const it = el('theme.el', 'lowerbar', t1, 3.5, { style: es('lowerbar') });
+    await placeTitle(p, it, faces); add.push({ trackId: lane.id, item: it }); placed.lower = it.id;
   }
   if (opts.sfx !== false && th.sfx) {
     const lib = await sfxLibrary(ctx), st = track('sfx'); let pp = p;
@@ -155,7 +171,7 @@ export async function applyTheme(ctx, id, opts = {}) {
     };
     if (placed.sting) put(th.sfx.intro, 0.05, 0.6, 'intro');
     if (placed.outro) put(th.sfx.outro, D - 1.2, 0.55, 'outro');
-    if (placed.title) put(th.sfx.accent, (placed.sting ? 1.05 : 0.3) + 0.1, 0.45, 'title');
+    if (placed.title) put(th.sfx.accent, (placed.sting ? 0.8 : 0.3) + 0.1, 0.45, 'title');
     for (const c of cuts.slice(0, 24)) put(th.sfx.transition, c, 0.4, 'transition');
   }
   cmds.push(ops.addItems(add, 'Theme'));
@@ -236,10 +252,15 @@ export function reelEnd(p) {
  */
 export function followReel(p) {
   if (!p?.tracks) return false;
-  const ov = overlayOf(p); if (!ov) return false;
+  const ov = overlayOf(p); if (!ov && !themeItems(p).some((x) => x.item.style?.whole)) return false;
   const D = reelEnd(p); if (!(D > 0)) return false;
   let moved = false;
-  if (Math.abs(itemEnd(ov) - D) > 0.001) { ov.t0 = 0; ov.in = 0; ov.out = r3(D * (ov.speed || 1)); moved = true; }
+  if (ov && Math.abs(itemEnd(ov) - D) > 0.001) { ov.t0 = 0; ov.in = 0; ov.out = r3(D * (ov.speed || 1)); moved = true; }
+  for (const { item } of themeItems(p)) {
+    const wh = item.style?.whole; if (!wh || item.type !== 'theme.el') continue;
+    if (wh === 'span' && (Math.abs(item.t0) > 0.001 || Math.abs(itemEnd(item) - D) > 0.001)) { item.t0 = 0; item.in = 0; item.out = r3(D * (item.speed || 1)); moved = true; }
+    if (wh === 'end') { const t0 = r3(Math.max(0, D - itemDur(item))); if (Math.abs(item.t0 - t0) > 0.001) { item.t0 = t0; moved = true; } }
+  }
   const outro = themeItems(p).find((x) => x.item.type === 'theme.outro')?.item;
   if (outro) {
     const t0 = r3(Math.max(0, D - itemDur(outro))), dt = t0 - outro.t0;
@@ -252,3 +273,80 @@ export function followReel(p) {
   return moved;
 }
 export async function resyncBeats(ctx) { const beats = await beatsOf(ctx); tuneTheme(ctx, { beats }, 'Theme beats'); return beats.length; }
+
+/** each theme's signature moment in the package */
+export function signatureOf(th) {
+  if (!th) return null;
+  if (th.group === 'Countries') return 'breaking';
+  if (th.id === 'europe') return 'globe';
+  return { travel: 'ticket', passport: 'stamp', study: 'postcard', 'work-trades': 'hiring', 'work-care': 'hiring', 'work-hospitality': 'hiring', 'work-abroad': 'hiring' }[th.id]
+    || (/^(Offers|Seasonal)$/.test(th.group) ? 'confetti' : 'sticker');
+}
+/** the theme an element placed now should draw: the reel's theme, else the given one */
+const themeNow = (p, fallback) => fallback || overlayOf(p)?.style?.theme || themeItems(p).find((x) => x.item.style?.theme)?.item.style.theme || 'travel';
+
+/**
+ * Place one package element as an ordinary timeline item (the owner's own: drag it, trim it, delete it). ONE undo step.
+ * opts = { theme, t0, dur, variant, trackId, box:{x,y,w,h}, text }. 'overlay' places the running overlay as a clip.
+ */
+export function placeElement(ctx, el, opts = {}) {
+  const p = ctx.project, W = p.canvas.w, H = p.canvas.h, id = themeNow(p, opts.theme), th = themeById(id); if (!th) throw new Error('No such theme: ' + id);
+  const ws = ctx.workspace || {}, mode = overlayOf(p)?.style?.colorMode || 'theme';
+  const cmds = []; let item;
+  if (el === 'overlay') {
+    const style = themeStyle(th, { intensity: overlayOf(p)?.style?.intensity || 'normal', colorMode: mode, beats: overlayOf(p)?.style?.beats || [], faces: overlayOf(p)?.style?.faces || [] }, ws);
+    item = createItem('theme.overlay', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || 4), x: 0, y: 0, w: W, h: H, name: 'Theme overlay · ' + th.name, style });
+  } else {
+    const def = elementById(el); if (!def) throw new Error('No such element: ' + el);
+    const style = elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, text: opts.text, brand: ws?.name || null, logo: ws?.logo || null });
+    item = createItem('theme.el', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || def.dur), ...(opts.box || boxFor(el, W, H)), name: `${def.icon} ${def.label}${opts.variant ? ' · ' + opts.variant : ''} · ${th.name}`, style });
+  }
+  // the row it was dropped on when that row is free at that time, else the first free overlay row, else a new one
+  const t1 = item.t0 + (item.out - item.in), free = (t) => !t.items.some((i) => i.t0 < t1 - 0.001 && itemEnd(i) > item.t0 + 0.001);
+  let tr = opts.trackId && p.tracks.find((t) => t.id === opts.trackId && !t.locked && /^(overlay|text)$/.test(t.kind) && free(t));
+  if (!tr) tr = p.tracks.find((t) => t.kind === 'overlay' && !t.locked && !t.theme && free(t));
+  if (!tr) { tr = createTrack('overlay'); const lastVideo = p.tracks.reduce((a, t, i) => (t.kind === 'video' ? i : a), -1); cmds.push(ops.addTrack(tr, lastVideo + 2)); }
+  cmds.push(ops.addItems([{ trackId: tr.id, item }], 'Add ' + item.name));
+  ctx.history.apply(ops.batch('Add ' + item.name, cmds));
+  return item;
+}
+
+/** the whole-video item(s) of an element (null when it is off) */
+export const wholeItems = (p, el, variant) => themeItems(p).filter((x) => (el === 'overlay' ? x.item.type === 'theme.overlay' : x.item.type === 'theme.el' && x.item.style?.el === el && x.item.style?.whole && (!variant || x.item.style.variant === variant))).map((x) => x.item);
+export const isWhole = (p, el, variant) => wholeItems(p, el, variant).length > 0;
+
+/**
+ * Switch an element on or off for the whole video. ONE undo step. What "whole video" means comes from the catalogue:
+ * span = from the first frame to the last (and it follows every trim), start = at the top, end = closing the reel,
+ * cuts = on every cut. The overlay toggles the running overlay itself.
+ */
+export async function setWhole(ctx, el, on, opts = {}) {
+  const p = ctx.project, W = p.canvas.w, H = p.canvas.h, D = reelEnd(p) || projectDuration(p) || 10;
+  const cur = wholeItems(p, el, opts.variant), cmds = [];
+  if (!on) { if (!cur.length) return 0; ctx.history.apply(ops.batch('Whole video off', [ops.removeItems(cur.map((i) => i.id), 'Whole video off')])); return 0; }
+  if (cur.length) return cur.length;
+  const id = themeNow(p, opts.theme), th = themeById(id); if (!th) throw new Error('No such theme: ' + id);
+  const ws = ctx.workspace || {}, mode = overlayOf(p)?.style?.colorMode || 'theme';
+  const lastVideo = p.tracks.reduce((a, t, i) => (t.kind === 'video' ? i : a), -1);
+  let tt = p.tracks.find((x) => x.kind === 'overlay' && x.theme);
+  if (!tt) { tt = Object.assign(createTrack('overlay', 'Theme'), { theme: true }); cmds.push(ops.addTrack(tt, lastVideo + 1)); }
+  const add = [];
+  if (el === 'overlay') {
+    const style = themeStyle(th, { intensity: opts.intensity || 'normal', colorMode: mode, beats: opts.beats || await beatsOf(ctx), faces: opts.faces || (opts.safe === false ? [] : await detectFaces(ctx)) }, ws);
+    add.push({ trackId: tt.id, item: createItem('theme.overlay', { t0: 0, in: 0, out: r3(D), x: 0, y: 0, w: W, h: H, auto: TAG, name: 'Theme · ' + th.name, style }) });
+  } else {
+    const def = elementById(el); if (!def) throw new Error('No such element: ' + el);
+    const style = (whole) => elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, whole, brand: ws?.name || null, logo: ws?.logo || null });
+    const mk = (t0, dur, whole) => createItem('theme.el', { t0: r3(Math.max(0, t0)), in: 0, out: r3(dur), ...boxFor(el, W, H), auto: TAG, name: `${def.icon} ${def.label} · whole video · ${th.name}`, style: style(whole) });
+    const lane = def.box === 'full' && el !== 'grade' ? (p.tracks.find((t) => t.kind === 'overlay' && !t.locked && !t.theme) || tt) : tt;
+    if (def.whole === 'span') add.push({ trackId: lane.id, item: mk(0, D, 'span') });
+    else if (def.whole === 'start') add.push({ trackId: lane.id, item: mk(0, Math.min(def.dur, D), 'start') });
+    else if (def.whole === 'end') add.push({ trackId: lane.id, item: mk(Math.max(0, D - def.dur), Math.min(def.dur, D), 'end') });
+    else if (def.whole === 'cuts') for (const c of cutsOf(p)) add.push({ trackId: lane.id, item: mk(c - def.dur / 2, def.dur, 'cuts') });
+  }
+  if (!add.length) return 0;
+  cmds.push(ops.addItems(add, 'Whole video'));
+  ctx.history.apply(ops.batch(`Whole video · ${elementById(el)?.label || 'Theme overlay'}`, cmds));
+  return add.length;
+}
+export { ELEMENTS };

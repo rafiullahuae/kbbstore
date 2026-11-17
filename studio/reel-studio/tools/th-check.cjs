@@ -116,12 +116,12 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
     ed.history.undo(); const n2 = ed.project.tracks.reduce((s, t) => s + t.items.length, 0);
     ed.history.redo(); const n3 = ed.project.tracks.reduce((s, t) => s + t.items.length, 0);
     const r2 = await window.TH.apply(window.CTX, 'country-de', { faces: [FACE] }); const n4 = ed.project.tracks.reduce((s, t) => s + t.items.length, 0);
-    return { r, n0, n1, n2, n3, n4, steps: u1 - u0, types: ed.project.tracks.flatMap((t) => t.items.filter((i) => i.auto === 'theme').map((i) => i.type)) };
+    return { r, n0, n1, n2, n3, n4, steps: u1 - u0, types: ed.project.tracks.flatMap((t) => t.items.filter((i) => i.auto === 'theme').map((i) => (i.type === 'theme.el' ? 'theme.el:' + i.style.el : i.type))) };
   }, { FACE });
   numbers.apply = undo;
   ok(undo.steps === 1 && undo.n2 === undo.n0 && undo.n3 === undo.n1 && undo.n1 > undo.n0, `apply Europe = ONE undo step: +${undo.n1 - undo.n0} items (overlay, sting, outro, ${undo.r.transitions} transition, title, ${undo.r.sfx} sounds); undo → ${undo.n2} items, redo → ${undo.n3}`);
   ok(undo.n4 === undo.n1 - 0 || undo.n4 > undo.n0, `applying a second theme replaces the first (${undo.types.filter((x) => x === 'theme.overlay').length} overlay on the reel)`);
-  ok(undo.types.filter((x) => x === 'theme.overlay').length === 1 && undo.types.includes('theme.sting') && undo.types.includes('theme.outro') && undo.types.includes('auto.transition') && undo.types.includes('look.text') && undo.types.includes('audio'), `a theme places: ${[...new Set(undo.types)].join(', ')}`);
+  ok(undo.types.filter((x) => x === 'theme.overlay').length === 1 && undo.types.includes('theme.sting') && undo.types.includes('theme.outro') && undo.types.includes('theme.trans') && undo.types.includes('theme.el:title') && undo.types.includes('theme.el:grade') && undo.types.includes('audio'), `a theme places the complete package: ${[...new Set(undo.types)].join(', ')}`);
 
   // ── the theme follows the reel: trim the tail, the overlay ends at the new reel end (and the outro closes it); undo
   //    brings both back, redo cuts them again. Without the project-change hook in themes/index.js the overlay keeps its
@@ -255,14 +255,15 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
   const pv = await ev(async ({ FACE }) => {
     const ed = window.kbbEditor; ed.setAspect('9:16');
     await window.TH.apply(window.CTX, 'country-de', { faces: [FACE] });
+    window.TH.placeElement(window.CTX, 'stamp', { t0: 1.2, dur: 2 }); await window.TH.setWhole(window.CTX, 'lowerbar', true);
     const E = await import('/app/core/export.js'), p = ed.project;
-    const r = await E.exportMp4(p, ed.media, { quality: 'high', width: 540, height: 960, duration: 4 });
+    const r = await E.exportMp4(p, ed.media, { quality: 'high', width: 540, height: 960, duration: 5.6 });
     const file = `workspaces/${p.workspace}/exports/th-preview-vs-export.mp4`; await ed.engine.writeFile(file, r.blob);
     return { file, note: r.note };
   }, { FACE });
   const out = path.join(STUDIO, pv.file);
   const pdiffs = [];
-  for (const t of [0.5, 1.5, 2.6]) {
+  for (const t of [0.5, 1.5, 2.6, 4.8, 5.2]) {
     await ev((t) => window.kbbEditor.seek(t), t);
     await page.waitForFunction(() => window.kbbEditor.preview.pending === 0, null, { timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(500);
@@ -279,13 +280,13 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
     bdiffs.push({ t, diff: +meanDiff(Uint8Array.from(fr.data), frameRGB(path.join(STUDIO, base), t, fr.w, fr.h)).toFixed(2) });
   }
   numbers.previewVsExport = { note: pv.note, frames: pdiffs, withoutTheme: bdiffs };
-  ok(pdiffs.every((x) => x.diff < 6), `preview frame vs export frame (Germany theme + sting + title + transition): ${pdiffs.map((x) => `${x.t} s ${x.diff}/255`).join(', ')} (< 6) at ${pdiffs[0].w}×${pdiffs[0].h}; the same reel without the theme: ${bdiffs.map((x) => x.diff).join(', ')}`);
+  ok(pdiffs.every((x) => x.diff < 6), `preview frame vs export frame (Germany package + a hand-placed passport stamp + a whole-video bulletin bar + the flag transition mid-switch): ${pdiffs.map((x) => `${x.t} s ${x.diff}/255`).join(', ')} (< 6) at ${pdiffs[0].w}×${pdiffs[0].h}; the same reel without the theme: ${bdiffs.map((x) => x.diff).join(', ')}`);
 
   // ── the Themes tab (with Germany on the reel) ──
   const titleClear = await ev(async ({ FACE }) => {
     await window.TH.apply(window.CTX, 'country-de', { faces: [FACE] }); window.kbbEditor.seek(2.4);
     const p = window.kbbEditor.project, W = p.canvas.w, H = p.canvas.h, R = await import('/app/captions/render.js');
-    const it = p.tracks.flatMap((t) => t.items).find((i) => i.auto === 'theme' && i.type === 'look.text'), cap = p.tracks.flatMap((t) => t.items).find((i) => i.type === 'caption');
+    const it = p.tracks.flatMap((t) => t.items).find((i) => i.auto === 'theme' && i.type === 'theme.el' && i.style.el === 'title'), cap = p.tracks.flatMap((t) => t.items).find((i) => i.type === 'caption');
     const g = document.createElement('canvas').getContext('2d'); let area = 0;
     for (let t = it.t0; t < it.t0 + it.out - it.in; t += 0.1) {
       const boxes = [{ x: (FACE.x - FACE.w / 2) * W, y: (FACE.y - FACE.h / 2) * H, w: FACE.w * W, h: FACE.h * H }, ...R.captionBlocks(g, p, t, cap).map((b) => b.box)];
@@ -304,17 +305,199 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
       await window.TH.apply(window.CTX, id, { faces: [FACE], sfx: false, sting: false, outro: false, transitions: false, title: false });
       out[id] = +(await run()).toFixed(1);
     }
+    await window.TH.apply(window.CTX, 'country-gb', { faces: [FACE], sfx: false }); out.package = +(await run()).toFixed(1);   // the whole package (intro, title, wipe, end card, grade) — reported
     if (keep) await window.TH.apply(window.CTX, keep, { faces: [FACE] });
     return out;
   }, { FACE });
   numbers.exportMsPerFrame = cost;
-  const extra = Object.entries(cost).filter(([k]) => k !== 'none').map(([k, v]) => [k, +(v - cost.none).toFixed(1)]);
-  ok(extra.every(([, v]) => v < cost.none * 0.6), `1080×1920 export cost: ${cost.none} ms/frame without a theme; a theme adds ${extra.map(([k, v]) => k + ' +' + v).join(', ')} ms/frame (budget: < 60 % of a plain frame; measured on a software GPU shared with other jobs — a Mac's GPU is far faster)`);
+  const extra = Object.entries(cost).filter(([k]) => k !== 'none' && k !== 'package').map(([k, v]) => [k, +(v - cost.none).toFixed(1)]);
+  ok(extra.every(([, v]) => v < cost.none * 0.6), `1080×1920 export cost: ${cost.none} ms/frame without a theme; a theme's overlay + grade adds ${extra.map(([k, v]) => k + ' +' + v).join(', ')} ms/frame; the whole UK package (intro, title card, wipes, end card, grade, overlay) over the first 2 s: ${cost.package} ms/frame (budget: < 60 % of a plain frame; measured on a software GPU shared with other jobs — a Mac's GPU is far faster)`);
+  // ── theme elements anywhere: place at a time, trim, move, whole video, undo, save + reload, every element draws ──
+  const elx = await ev(async ({ FACE }) => {
+    const ed = window.kbbEditor, TH = window.TH, R = await import('/app/core/render.js'), Hv = await import('/app/themes/hover.js');
+    ed.setAspect('9:16'); await new Promise((r) => setTimeout(r, 50));
+    await TH.apply(window.CTX, 'country-gb', { faces: [FACE], sfx: false, title: false, transitions: false });
+    const all = () => ed.project.tracks.flatMap((t) => t.items), find = (id) => all().find((i) => i.id === id), out = {};
+    const cv = document.createElement('canvas'); cv.width = 216; cv.height = 384; const g = cv.getContext('2d', { willReadFrequently: true });
+    const v = ed.project.tracks.find((t) => t.kind === 'video').items[0], bm = await ed.media.frameAt(v.media, 1.0, 540), src = (item) => (item.type === 'clip' ? bm : null);
+    const px = (proj, t, skip) => { R.renderFrame(g, proj, t, { scale: 0.2, source: src, skip }); return g.getImageData(0, 0, 216, 384).data; };
+    const diff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i += 4) s += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]); return +(s / (a.length / 4 * 3)).toFixed(2); };
+    const steps = () => ed.history.undoStack.length, count = () => all().length;
+    // 1. place a globe at 2.0 s: one undo step, the owner's own item (not tagged), drawn only while it runs
+    const n0 = count(), u0 = steps();
+    const it = TH.placeElement(window.CTX, 'globe', { t0: 2.0 }); ed.history.seal();
+    await R.prepareRender(ed.project);
+    const sk = new Set([it.id]), P = ed.project;
+    out.place = { steps: steps() - u0, items: count() - n0, t0: find(it.id).t0, dur: +(find(it.id).out - find(it.id).in).toFixed(2), auto: find(it.id).auto || null, inside: diff(px(P, 3.2), px(P, 3.2, sk)), before: diff(px(P, 1.5), px(P, 1.5, sk)) };
+    // 2. trim the right edge to 1.6 s, then the left edge 0.5 s later (what the timeline's trim handles do): it re-times
+    ed.history.apply(ed.ops.setItems([{ id: it.id, props: { out: 1.6 } }], 'Trim')); ed.history.seal();
+    const r1 = { ...find(it.id) };
+    ed.history.apply(ed.ops.setItems([{ id: it.id, props: { t0: 2.5, out: 1.1 } }], 'Trim')); ed.history.seal();
+    const r2 = { ...find(it.id) };
+    out.trim = { right: [r1.t0, +(r1.out - r1.in).toFixed(2)], left: [r2.t0, +(r2.out - r2.in).toFixed(2)], gone: diff(px(P, 2.3), px(P, 2.3, sk)), mid: diff(px(P, 3.0), px(P, 3.0, sk)), after: diff(px(P, 3.7), px(P, 3.7, sk)) };
+    // 3. move it to 5 s
+    ed.history.apply(ed.ops.setItems([{ id: it.id, props: { t0: 5 } }], 'Move')); ed.history.seal();
+    out.move = { t0: find(it.id).t0, at: diff(px(P, 5.5), px(P, 5.5, sk)) };
+    // 4. undo walks back through move, trims, place: the item is gone and the reel is as before
+    for (let k = 0; k < 4; k++) ed.history.undo();
+    out.undo = { gone: !find(it.id), items: count() - n0 };
+    ed.history.redo(); out.redo = { back: !!find(it.id), t0: find(it.id)?.t0 };
+    ed.history.undo();
+    // 5. whole video: confetti on = ONE step spanning 0 → reel end, follows a trim of the reel, off removes it; intro "at
+    //    the start", end card "at the end", wipe "on every cut"
+    const D0 = TH.reelEnd(ed.project), u1 = steps();
+    await TH.setWhole(window.CTX, 'confetti', true); ed.history.seal();
+    const w = all().filter((i) => i.type === 'theme.el' && i.style.el === 'confetti' && i.style.whole);
+    out.whole = { steps: steps() - u1, n: w.length, t0: w[0]?.t0, end: +(w[0]?.t0 + w[0]?.out - w[0]?.in).toFixed(3), reel: D0, isOn: TH.isWhole(ed.project, 'confetti') };
+    const tail = all().filter((i) => i.auto !== 'theme' && Math.abs(i.t0 + (i.out - i.in) / (i.speed || 1) - D0) < 0.05).map((i) => ({ id: i.id, props: { out: +(i.out - 1 * (i.speed || 1)).toFixed(3) } }));
+    ed.history.apply(ed.ops.setItems(tail, 'Trim')); ed.history.seal();
+    const w2 = all().find((i) => i.id === w[0].id); out.whole.followed = { reel: TH.reelEnd(ed.project), end: +(w2.t0 + w2.out - w2.in).toFixed(3) };
+    ed.history.undo();
+    await TH.setWhole(window.CTX, 'confetti', false); ed.history.seal(); out.whole.off = !TH.isWhole(ed.project, 'confetti');
+    ed.history.undo(); out.whole.undoOff = TH.isWhole(ed.project, 'confetti');
+    for (const [el, mode] of [['intro', 'start'], ['end', 'end'], ['wipe', 'cuts'], ['overlay', 'span']]) {
+      if (el === 'overlay') { TH.remove(window.CTX); }
+      await TH.setWhole(window.CTX, el, true, { theme: 'country-gb', faces: [FACE] }); ed.history.seal();
+      const its = el === 'overlay' ? all().filter((i) => i.type === 'theme.overlay') : all().filter((i) => i.style?.el === el && i.style?.whole === mode);
+      out.whole['k_' + el] = its.map((i) => [+i.t0.toFixed(2), +(i.t0 + i.out - i.in).toFixed(2)]);
+    }
+    // 6. save + reload: placements (with edited words) come back identical and draw identically
+    const lw = TH.placeElement(window.CTX, 'lower', { t0: 1.0 }); const st = TH.placeElement(window.CTX, 'sticker', { t0: 2.0, variant: 'coin' });
+    const ls = JSON.parse(JSON.stringify(find(lw.id).style)); ls.text = { name: 'Test Name', role: 'Visa consultant' };
+    ed.history.apply(ed.ops.setItems([{ id: lw.id, props: { style: ls } }], 'Element text')); ed.history.seal();
+    await ed.save();
+    const p2 = await window.CTX.engine.loadProject(ed.project.workspace, ed.project.id);
+    const pick = (proj) => JSON.stringify(proj.tracks.flatMap((t) => t.items).filter((i) => /^theme\./.test(i.type)).map((i) => [i.id, i.type, i.t0, i.in, i.out, i.x, i.y, i.w, i.h, i.auto || '', i.style?.el || '', JSON.stringify(i.style?.text || {}), i.style?.variant || '', i.style?.whole || ''])).length;
+    const same = JSON.stringify(ed.project.tracks.flatMap((t) => t.items).filter((i) => /^theme\./.test(i.type))) === JSON.stringify(p2.tracks.flatMap((t) => t.items).filter((i) => /^theme\./.test(i.type)));
+    await R.prepareRender(p2);
+    out.save = { same, items: p2.tracks.flatMap((t) => t.items).filter((i) => /^theme\./.test(i.type)).length, sig: pick(p2), lowerText: p2.tracks.flatMap((t) => t.items).find((i) => i.id === lw.id)?.style.text?.name, frameDiff: [1.6, 2.6].map((t) => diff(px(ed.project, t), px(p2, t))) };
+    // 7. every element (and every sticker) draws something, in four very different themes, with no warning
+    const draws = [];
+    for (const tid of ['country-gb', 'work-trades', 'travel', 'beauty-petals']) {
+      for (const d of [...TH.ELEMENTS.filter((e) => e.id !== 'sticker'), ...['flag', 'visa', 'plane', 'pin', 'coin', 'landmark', 'sparkle'].map((vv) => ({ id: 'sticker', variant: vv })), { id: 'overlay' }]) {
+        const spec = Hv.elementSpec(tid, d.id, { variant: d.variant }); await spec.prepare();
+        const c2 = document.createElement('canvas'); c2.width = 108; c2.height = 192; const g2 = c2.getContext('2d', { willReadFrequently: true });
+        const T = d.id === 'wipe' ? 0.35 : d.id === 'intro' ? 0.55 : d.id === 'confetti' ? 0.6 : 1.4;
+        spec.draw(g2, 108, 192, T); const a = g2.getImageData(0, 0, 108, 192).data;
+        const keep = spec.project.tracks.map((t) => t.items.slice()); spec.project.tracks.forEach((t, i) => { if (i > 0) t.items = []; });
+        spec.draw(g2, 108, 192, T); const b = g2.getImageData(0, 0, 108, 192).data; spec.project.tracks.forEach((t, i) => { t.items = keep[i]; });
+        let ch = 0; for (let i = 0; i < a.length; i += 4) if (Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])) > 24) ch++;
+        draws.push({ theme: tid, el: d.id + (d.variant ? ':' + d.variant : ''), diff: diff(a, b), changed: +(ch / (a.length / 4)).toFixed(4) });
+      }
+    }
+    out.draws = { n: draws.length, flat: draws.filter((x) => x.changed < 0.004), least: draws.slice().sort((a, b) => a.changed - b.changed).slice(0, 3) };
+    // 8. an older project (a theme applied before 2026-11: colour-only sting / outro, old overlay layers, look.text title)
+    //    opens and draws with the new art
+    const { createItem } = await import('/app/core/project.js');
+    const old = JSON.parse(JSON.stringify(ed.project)); old.tracks.forEach((t) => { t.items = t.items.filter((i) => !/^theme\./.test(i.type)); });
+    const ot = old.tracks.find((t) => t.kind === 'overlay'), W = old.canvas.w, H = old.canvas.h;
+    ot.items.push(createItem('theme.overlay', { t0: 0, in: 0, out: 8, x: 0, y: 0, w: W, h: H, auto: 'theme', style: { theme: 'country-de', intensity: 'normal', colorMode: 'theme', colors: { primary: '#DD0000', accent: '#FFCE00', soft: '#ffffff', ink: '#111111', extra: ['#000000', '#DD0000', '#FFCE00'] }, beat: true, beats: [], safe: true, faces: [FACE],
+      defs: [{ id: 'flag', kind: 'flag', code: 'de', corner: 'tr', size: 0.15 }, { id: 'map', kind: 'map', code: 'de', corner: 'tl', size: 0.2 }, { id: 'ribbons', kind: 'ribbons', colors: ['c0', 'c1', 'c2'], edge: 'top', count: 3 }, { id: 'landmark', kind: 'landmark', lm: 'brandenburg-gate', side: 'both', height: 0.2 }, { id: 'glow', kind: 'glow', color: 'primary' }], layers: {} } }));
+    ot.items.push(createItem('theme.sting', { t0: 0, in: 0, out: 1.1, x: 0, y: 0, w: W, h: H, auto: 'theme', style: { colors: { primary: '#DD0000', accent: '#FFCE00', soft: '#ffffff', ink: '#111111' }, hero: 'star4', icons: [] } }));
+    ot.items.push(createItem('theme.outro', { t0: 6.6, in: 0, out: 1.4, x: 0, y: 0, w: W, h: H, auto: 'theme', style: { colors: { primary: '#DD0000', accent: '#FFCE00', soft: '#ffffff', ink: '#111111' }, hero: 'star4', icons: [] } }));
+    await R.prepareRender(old);
+    const bare = JSON.parse(JSON.stringify(old)); bare.tracks.forEach((t) => { t.items = t.items.filter((i) => !/^theme\./.test(i.type)); });
+    out.old = [0.5, 3, 7.5].map((t) => diff(px(old, t), px(bare, t)));
+    await TH.apply(window.CTX, 'country-de', { faces: [FACE] });
+    return out;
+  }, { FACE });
+  numbers.elements = elx;
+  ok(elx.place.steps === 1 && elx.place.items === 1 && elx.place.t0 === 2 && !elx.place.auto && elx.place.inside > 1 && elx.place.before === 0, `place an element at a time: Flight globe at ${elx.place.t0} s for ${elx.place.dur} s = ONE undo step, the owner's own clip; drawn while it runs (mean diff ${elx.place.inside}), nothing before it (${elx.place.before})`);
+  ok(elx.trim.right[1] === 1.6 && elx.trim.left[0] === 2.5 && elx.trim.left[1] === 1.1 && elx.trim.gone === 0 && elx.trim.mid > 1 && elx.trim.after === 0, `trim it: right edge → ${elx.trim.right[1]} s, left edge → starts ${elx.trim.left[0]} s, ${elx.trim.left[1]} s long; nothing drawn before (${elx.trim.gone}) or after (${elx.trim.after}), the re-timed animation inside (${elx.trim.mid}); moved to ${elx.move.t0} s it draws there (${elx.move.at})`);
+  ok(elx.undo.gone && elx.undo.items === 0 && elx.redo.back, `undo walks back move → trims → place (element gone, ${elx.undo.items} items changed); redo brings it back at ${elx.redo.t0} s`);
+  ok(elx.whole.steps === 1 && elx.whole.n === 1 && elx.whole.t0 === 0 && Math.abs(elx.whole.end - elx.whole.reel) < 0.002 && Math.abs(elx.whole.followed.end - elx.whole.followed.reel) < 0.002 && elx.whole.off && elx.whole.undoOff, `whole video: confetti on = ONE step spanning 0 → ${elx.whole.end} s (the reel); after a 1 s trim it ends at ${elx.whole.followed.end} s = reel ${elx.whole.followed.reel} s; off removes it, ⌘Z brings it back`);
+  ok(elx.whole.k_intro?.[0]?.[0] === 0 && elx.whole.k_end?.length === 1 && Math.abs(elx.whole.k_end[0][1] - elx.whole.reel) < 0.01 && elx.whole.k_wipe?.length >= 1 && elx.whole.k_overlay?.length === 1, `whole video for each kind: intro at the start ${JSON.stringify(elx.whole.k_intro)}, end card at the end ${JSON.stringify(elx.whole.k_end)}, a wipe on every cut ${JSON.stringify(elx.whole.k_wipe)}, the running overlay ${JSON.stringify(elx.whole.k_overlay)}`);
+  ok(elx.save.same && elx.save.lowerText === 'Test Name' && elx.save.frameDiff.every((x) => x === 0), `save + reload: ${elx.save.items} theme items come back identical (lower third's edited name "${elx.save.lowerText}"), frames of the reloaded project equal the open one (${elx.save.frameDiff.join(', ')})`);
+  ok(elx.draws.n >= 80 && !elx.draws.flat.length, `every element draws in 4 themes (least changed: ${elx.draws.least.map((x) => x.theme + '/' + x.el + ' ' + (x.changed * 100).toFixed(1) + '%').join(', ')}; ${elx.draws.n} element × theme renders: intro, title, lower third, wipe, globe, stamp, ticket, hiring, counter, postcard, map, confetti, end card, grade, 7 stickers, overlay)${elx.draws.flat.length ? '; flat: ' + elx.draws.flat.map((x) => x.theme + '/' + x.el).join(', ') : ''}`);
+  ok(elx.old.every((x) => x > 1), `an older project (colour-only sting / outro, pre-2026-11 overlay layers) opens and draws with the new art (diff vs no theme at 0.5 / 3 / 7.5 s: ${elx.old.join(', ')})`);
+  // ── country transitions on the cuts: apply places one, drop one on a cut, both clips show, all cuts, duration, undo,
+  //    save + reload ──
+  const trx = await ev(async ({ FACE }) => {
+    const ed = window.kbbEditor, TH = window.TH, R = await import('/app/core/render.js'), LK = await import('/app/look/index.js');
+    ed.setAspect('9:16'); await new Promise((r) => setTimeout(r, 50));
+    const all = () => ed.project.tracks.flatMap((t) => t.items), find = (id) => all().find((i) => i.id === id), out = {};
+    await TH.apply(window.CTX, 'country-fr', { faces: [FACE], sfx: false });
+    const cut = TH.cutPairs(ed.project)[0];
+    out.applied = all().filter((i) => i.type === 'theme.trans').map((i) => ({ kind: i.style.kind, mid: +(i.t0 + (i.out - i.in) / 2).toFixed(3), a: i.style.a === cut.a.id, b: i.style.b === cut.b.id }));
+    // drop the landmark reveal near the cut (what the timeline's drop does): it replaces the theme's own, ONE step
+    const u0 = ed.history.undoStack.length;
+    const [it] = TH.placeTransition(window.CTX, 'landmark', { at: cut.t + 0.4, theme: 'country-fr' }); ed.history.seal();
+    out.place = { steps: ed.history.undoStack.length - u0, onCut: all().filter((i) => i.type === 'theme.trans' && i.style.a === cut.a.id).length, mid: +(find(it.id).t0 + (find(it.id).out - find(it.id).in) / 2).toFixed(3), kind: find(it.id).style.kind };
+    // both clips show: a pixel inside the landmark silhouette before the cut is the INCOMING clip; one outside it after the
+    // cut is the OUTGOING clip
+    await LK.ensureFreezeFrames(ed.project); await R.prepareRender(ed.project);
+    const W = 216, H = 384, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d', { willReadFrequently: true });
+    const P = ed.project, skipAll = new Set(all().filter((i) => /^theme\./.test(i.type) || i.type === 'caption').map((i) => i.id)), skipOthers = new Set([...skipAll].filter((id) => id !== it.id));
+    const { srcTime } = await import('/app/core/project.js');
+    const bmA = await ed.media.frameAt(cut.a.media, srcTime(cut.a, cut.t - 0.06), 540), bmB = await ed.media.frameAt(cut.b.media, srcTime(cut.b, cut.t + 0.06), 540);
+    const source = (item) => (item.id === cut.a.id ? bmA : item.id === cut.b.id ? bmB : null);
+    const at = (t, skip, x, y) => { R.renderFrame(g, P, t, { scale: 0.2, skip, source }); const d = g.getImageData(Math.round(x * W) - 1, Math.round(y * H) - 1, 3, 3).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } return [r / 9, gg / 9, b / 9]; };
+    const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const tb = cut.t - 0.06, ta = cut.t + 0.06;
+    const inB = at(tb, skipOthers, 0.5, 0.6), aOnly = at(tb, skipAll, 0.5, 0.6), bOnly = at(cut.t + 0.01, skipAll, 0.5, 0.6);
+    const outA = at(ta, skipOthers, 0.08, 0.08), aOnly2 = at(cut.t - 0.01, skipAll, 0.08, 0.08), bOnly2 = at(ta, skipAll, 0.08, 0.08);
+    out.both = { beforeCut: { toB: +dist(inB, bOnly).toFixed(1), toA: +dist(inB, aOnly).toFixed(1) }, afterCut: { toA: +dist(outA, aOnly2).toFixed(1), toB: +dist(outA, bOnly2).toFixed(1) } };
+    // duration: 1.6 s, still centred on the cut
+    TH.setTransitionDuration(window.CTX, it.id, 1.6); ed.history.seal();
+    out.dur = { len: +(find(it.id).out - find(it.id).in).toFixed(3), mid: +(find(it.id).t0 + 0.8).toFixed(3), cut: cut.t };
+    // all cuts: a third clip makes two cuts; "All cuts" puts the slab push on both in ONE step; undo takes it off
+    const m = await ed.media.importPath('library/th-test/b.mp4'); ed.addMediaToTimeline(m); ed.history.seal();
+    await new Promise((r) => setTimeout(r, 100));
+    const n0 = all().length, u1 = ed.history.undoStack.length;
+    const items = TH.placeTransition(window.CTX, 'slabs', { all: true, theme: 'country-fr' }); ed.history.seal();
+    out.allCuts = { cuts: TH.cutPairs(ed.project).length, placed: items.length, steps: ed.history.undoStack.length - u1, onReel: all().filter((i) => i.type === 'theme.trans').length, kinds: [...new Set(all().filter((i) => i.type === 'theme.trans').map((i) => i.style.kind))] };
+    ed.history.undo(); out.allCuts.undo = { items: all().length - n0, landmarkBack: !!find(it.id) };
+    ed.history.redo(); out.allCuts.redo = all().filter((i) => i.type === 'theme.trans').length;
+    // save + reload: the transitions come back as they were
+    await ed.save();
+    const p2 = await window.CTX.engine.loadProject(ed.project.workspace, ed.project.id);
+    const pick = (proj) => JSON.stringify(proj.tracks.flatMap((t) => t.items).filter((i) => i.type === 'theme.trans'));
+    out.save = { same: pick(ed.project) === pick(p2), n: p2.tracks.flatMap((t) => t.items).filter((i) => i.type === 'theme.trans').length };
+    ed.history.undo(); ed.history.undo();   // take the slabs and the third clip off again
+    await TH.apply(window.CTX, 'country-de', { faces: [FACE] });
+    return out;
+  }, { FACE });
+  numbers.transitions = trx;
+  ok(trx.applied.length === 1 && trx.applied[0].a && trx.applied[0].b, `apply a country theme: a full-screen country transition on the cut (${trx.applied.map((x) => x.kind + ' centred on ' + x.mid + ' s').join(', ')})`);
+  ok(trx.place.steps === 1 && trx.place.onCut === 1 && trx.place.kind === 'landmark', `put a transition on a cut (dropped 0.4 s after it): Landmark reveal lands centred on the cut (${trx.place.mid} s), replaces the theme's own, ONE undo step`);
+  ok(trx.both.beforeCut.toB < trx.both.beforeCut.toA && trx.both.afterCut.toA < trx.both.afterCut.toB, `both clips show through it: before the cut the silhouette holds the incoming clip (distance to B ${trx.both.beforeCut.toB} vs A ${trx.both.beforeCut.toA}); after it the outgoing clip shows outside (to A ${trx.both.afterCut.toA} vs B ${trx.both.afterCut.toB})`);
+  ok(trx.dur.len === 1.6 && Math.abs(trx.dur.mid - trx.dur.cut) < 0.002, `duration edit: ${trx.dur.len} s, still centred on the cut (${trx.dur.mid} s = ${trx.dur.cut} s)`);
+  ok(trx.allCuts.cuts === 2 && trx.allCuts.placed === 2 && trx.allCuts.steps === 1 && trx.allCuts.onReel === 2 && trx.allCuts.undo.items === 0 && trx.allCuts.undo.landmarkBack && trx.allCuts.redo === 2, `apply to all cuts: ${trx.allCuts.placed} cuts get the colour-slab push in ONE step (replacing the landmark reveal); undo brings the reel back exactly, redo puts them again`);
+  ok(trx.save.same && trx.save.n === 2, `save + reload: ${trx.save.n} transitions come back identical`);
+
   await page.click('.side-tab[data-side="mod:themes"]');
   await page.waitForSelector('.th-grid .th-tile', { timeout: 30000 });
   await page.waitForTimeout(1500);
   await shot('01-themes-tab');
   await shot('01b-themes-elements', async () => { await page.locator('.th-card[data-applied]').scrollIntoViewIfNeeded(); await page.waitForTimeout(300); });
+  const SH2 = path.join(ROOT, 'shots', 'themes2'); fs.mkdirSync(SH2, { recursive: true });
+  for (const [w, hh] of [[1920, 1080], [1280, 800]]) {
+    await page.setViewportSize({ width: w, height: hh }); await page.waitForTimeout(500);
+    await ev(() => { const c = document.querySelector('.th-card[data-place-box]'); c.scrollIntoView({ block: 'start' }); let sc = c.parentElement; while (sc && sc.scrollHeight <= sc.clientHeight) sc = sc.parentElement; const hd = document.querySelector('.th .insp-head'); if (sc) sc.scrollTop -= (hd?.offsetHeight || 0) + 12; }); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(SH2, `panel-place-elements-${w}x${hh}.png`) });
+    await ev(() => { const c = document.querySelector('.th-place[data-place-trans]'); c.scrollIntoView({ block: 'start' }); let sc = c.parentElement; while (sc && sc.scrollHeight <= sc.clientHeight) sc = sc.parentElement; const hd = document.querySelector('.th .insp-head'); if (sc) sc.scrollTop -= (hd?.offsetHeight || 0) + 60; }); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(SH2, `panel-transitions-${w}x${hh}.png`) });
+  }
+  await page.setViewportSize({ width: 1920, height: 1080 }); await page.waitForTimeout(300);
+  // drag a chip onto the timeline (a real HTML5 drag): it lands where it is dropped, as its own clip
+  const dropRes = await (async () => {
+    const before = await ev(() => window.kbbEditor.project.tracks.flatMap((t) => t.items).filter((i) => i.type === 'theme.el' && !i.auto).length);
+    const chip = page.locator('.th-place[data-place="ticket"] .th-elchip'); await chip.scrollIntoViewIfNeeded();
+    const tl = await ev(() => { const r = document.querySelector('.tl-scroll, .timeline .tl-content, .tl-content')?.getBoundingClientRect(); return r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null; });
+    if (tl) await chip.dragTo(page.locator('.tl-content, .tl-scroll').first(), { targetPosition: { x: Math.min(tl.w - 20, 260), y: 20 } }).catch(() => {});
+    await page.waitForTimeout(500);
+    const after = await ev(() => window.kbbEditor.project.tracks.flatMap((t) => t.items).filter((i) => i.type === 'theme.el' && !i.auto).map((i) => ({ el: i.style.el, t0: +i.t0.toFixed(2) })));
+    return { before, after };
+  })();
+  numbers.dragDrop = dropRes;
+  ok(dropRes.after.length === dropRes.before + 1 && dropRes.after.some((x) => x.el === 'ticket'), `drag "Boarding pass" from Themes → Place elements onto the timeline: a ticket clip lands at ${dropRes.after.find((x) => x.el === 'ticket')?.t0} s (${dropRes.before} → ${dropRes.after.length} placed elements)`);
+  await ev(() => { const ed = window.kbbEditor, it = ed.project.tracks.flatMap((t) => t.items).find((i) => i.type === 'theme.el' && i.style.el === 'ticket' && !i.auto); if (it) { ed.select([it.id]); ed.seek(it.t0 + 1); } });
+  await page.waitForTimeout(900);
+  for (const [w, hh] of [[1920, 1080], [1280, 800]]) { await page.setViewportSize({ width: w, height: hh }); await page.waitForTimeout(700); await page.screenshot({ path: path.join(SH2, `editor-placed-element-${w}x${hh}.png`) }); }
+  await page.setViewportSize({ width: 1920, height: 1080 }); await page.waitForTimeout(300);
+  const insp = await ev(() => ({ head: document.querySelector('.insp-head b')?.textContent, start: !!document.querySelector('[data-th="start"]'), dur: !!document.querySelector('[data-th="duration"]'), texts: [...document.querySelectorAll('[data-th-text]')].map((x) => x.dataset.thText) }));
+  ok(insp.start && insp.dur && insp.texts.length >= 4, `the inspector edits a placed element: ${insp.head} · Start · Duration · ${insp.texts.join(', ')}`);
+  await page.click('.side-tab[data-side="mod:themes"]'); await page.waitForSelector('.th-grid .th-tile');
   const elRows = await page.locator('.th-card[data-applied] .th-el').count();
   // tune one element from the panel: one coalesced undo step, preview follows
   const tuned = await ev(async () => { const ed = window.kbbEditor, u0 = ed.history.undoStack.length; const cb = document.querySelector('.th-el input[type=checkbox]'); cb.click(); await new Promise((r) => setTimeout(r, 50)); const ov = ed.project.tracks.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay'); const off = ov.style.layers[cb.dataset.layer]?.on === false; ed.history.undo(); const ov2 = ed.project.tracks.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay'); return { layer: cb.dataset.layer, off, steps: ed.history.undoStack.length - u0 + 1, back: ov2.style.layers[cb.dataset.layer]?.on !== false }; });

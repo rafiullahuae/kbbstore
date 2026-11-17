@@ -11,10 +11,13 @@ import { bus } from '../core/bus.js';
 import './draw.js';
 import { THEMES, GROUPS, themeById } from './themes.js';
 import { suggestThemes, countryOf } from './suggest.js';
-import { applyTheme, tuneTheme, tuneLayer as tuneL, removeTheme, resyncBeats, followReel, reelEnd, overlayOf, detectFaces, beatsOf, themeStyle } from './apply.js';
+import { applyTheme, tuneTheme, tuneLayer as tuneL, removeTheme, resyncBeats, followReel, reelEnd, overlayOf, detectFaces, beatsOf, themeStyle, placeElement, setWhole, isWhole, wholeItems, signatureOf } from './apply.js';
 import { recipeById } from '../auto/recipes/recipes.js';
 
-export { THEMES, GROUPS, themeById, suggestThemes, countryOf, detectFaces, beatsOf, overlayOf, themeStyle, followReel, reelEnd };
+export { THEMES, GROUPS, themeById, suggestThemes, countryOf, detectFaces, beatsOf, overlayOf, themeStyle, followReel, reelEnd, placeElement, setWhole, isWhole, wholeItems, signatureOf };
+export { ELEMENTS, elementById, boxFor } from './elements.js';
+export { kitFor } from './kit.js';
+export { TRANSITIONS, placeTransition, setTransitionDuration, cutsOf as cutPairs, transitionOf } from './transitions.js';
 export { pulseAt, renderThemeLayer, avoidBoxes, loadAssets, INTENSITY, ELEMENT_KINDS } from './draw.js';
 
 const textOf = (p) => (p.captions?.words || []).map((w) => w.w).join(' ');

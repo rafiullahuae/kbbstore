@@ -14,7 +14,12 @@
 import { registerLayer, registerPrepare, roundRect } from '../core/render.js';
 import { captionBlocks } from '../captions/render.js';
 import { LANDMARKS } from '../auto/countries/landmarks.js';
-import { CAPITALS, EUROPE_OUTLINE } from './themes.js';
+import { CAPITALS, EUROPE_OUTLINE, themeById } from './themes.js';
+import * as ART from './art.js';
+import { loadCaptionFonts } from '../captions/fonts.js';
+import { coveredAt, gradesAt, drawElement } from './elements.js';
+import { kitFor } from './kit.js';
+import './transitions.js';
 
 export const INTENSITY = { subtle: { a: 0.55, n: 0.6 }, normal: { a: 0.85, n: 1 }, bold: { a: 1, n: 1.5 } };
 const TAU = Math.PI * 2;
@@ -63,6 +68,20 @@ const loadImg = (key, src) => {
   img.src = src; IMG.set(key, rec); return rec.ready;
 };
 const img = (key) => { const r = IMG.get(key); return r && r.ok ? r.img : null; };
+/** the company's logo (its own aspect, at most 256 px) once loaded */
+const LOGOS = new Map();
+function loadLogo(src) {
+  if (LOGOS.has(src)) return LOGOS.get(src).ready;
+  const rec = { img: null }, im = new Image();
+  rec.ready = new Promise((res) => { im.onload = () => { try { const k = Math.min(1, 256 / Math.max(im.naturalWidth || 256, im.naturalHeight || 256)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round((im.naturalWidth || 256) * k)); c.height = Math.max(1, Math.round((im.naturalHeight || 256) * k)); c.getContext('2d', { willReadFrequently: true }).drawImage(im, 0, 0, c.width, c.height); rec.img = c; } catch {} res(); }; im.onerror = () => res(); });
+  im.src = /^(data|blob):/.test(src) ? src : '/' + String(src).split('/').map(encodeURIComponent).join('/');
+  LOGOS.set(src, rec); return rec.ready;
+}
+export const logoImage = (src) => LOGOS.get(src)?.img || null;
+/** the rasterised flag of a country (null until loadAssets has fetched it) */
+export const flagImage = (code) => img('flag:' + code);
+/** the country's map paths (Natural Earth, 200 box) once loaded */
+export const mapPaths = (code) => MAPS.get(code)?.paths || null;
 async function loadMap(code) {
   if (MAPS.has(code)) return MAPS.get(code).ready;
   const rec = { paths: null }; MAPS.set(code, rec);
@@ -96,11 +115,16 @@ const landmark = (id) => {
 export function loadAssets(style) {
   const jobs = [];
   for (const L of style?.defs || []) {
-    if (L.kind === 'flag') jobs.push(loadImg('flag:' + L.code, `/brands/planet-careers/countries/flags/${L.code}.svg`));
+    if ((L.kind === 'flag' || L.kind === 'bug') && L.code) jobs.push(loadImg('flag:' + L.code, `/brands/planet-careers/countries/flags/${L.code}.svg`));
     if (L.kind === 'map') jobs.push(loadMap(L.code));
     if (L.kind === 'icons') for (const n of L.icons || []) jobs.push(loadIcon(n));
   }
   for (const n of style?.icons || []) jobs.push(loadIcon(n));
+  // a package element / sting / outro draws its theme's flag and map, and the broadcast type (Anton, Cairo, Montserrat)
+  const code = themeById(style?.theme)?.country;
+  if (style?.logo) jobs.push(loadLogo(style.logo));
+  if (code) { jobs.push(loadImg('flag:' + code, `/brands/planet-careers/countries/flags/${code}.svg`)); jobs.push(loadMap(code)); }
+  if (style && typeof document !== 'undefined') jobs.push(loadCaptionFonts().catch(() => null));
   return Promise.all(jobs);
 }
 registerPrepare('themes', async (project) => {
@@ -280,13 +304,16 @@ E.routes = (c, L, S, o) => {
 
 E.map = (c, L, S, o) => {
   const rec = MAPS.get(L.code); const { cx, cy, r } = corner(S, L.corner || 'tl', L.size || 0.2);
-  const t = S.t * (o.speed ?? 1), col = S.col(o.color || 'soft');
+  const t = S.t * (o.speed ?? 1), col = S.col(o.color || 'soft'), fl = S.colors.extra || [S.col('primary')];
   if (rec && rec.paths && rec.paths.length) {
     c.globalAlpha = S.a;
-    cached(c, `map:${L.code}:${S.col('primary')}:${col}`, cx - r, cy - r, 2 * r, 2 * r, (g) => {
+    cached(c, `map2:${L.code}:${fl.join(',')}:${col}`, cx - r, cy - r, 2 * r, 2 * r, (g) => {
       g.scale((2 * r) / 200, (2 * r) / 200);
-      g.globalAlpha = 0.25; g.fillStyle = S.col('primary'); for (const p of rec.paths) g.fill(p);
-      g.globalAlpha = 0.85; g.strokeStyle = col; g.lineWidth = 2.2; g.lineJoin = 'round'; for (const p of rec.paths) g.stroke(p);
+      const clip = new Path2D(); for (const p of rec.paths) clip.addPath(p);
+      g.save(); g.shadowColor = 'rgba(0,0,0,0.45)'; g.shadowBlur = 10; g.fillStyle = '#ffffff'; g.fill(clip); g.restore();
+      g.save(); g.clip(clip); fl.forEach((cc, i) => { g.fillStyle = cc; g.fillRect(0, (200 * i) / fl.length, 200, 200 / fl.length + 1); });
+      const sh = g.createLinearGradient(0, 0, 200, 200); sh.addColorStop(0, 'rgba(255,255,255,0.35)'); sh.addColorStop(1, 'rgba(0,0,0,0.3)'); g.fillStyle = sh; g.fillRect(0, 0, 200, 200); g.restore();
+      g.strokeStyle = col; g.lineWidth = 2.4; g.lineJoin = 'round'; g.stroke(clip);
     });
   }
   const ph = fr(t / 1.6); shape(c, 'dot', cx, cy, S.u * 0.008 * (1 + 0.6 * S.pulse), 0, S.col('accent'), S.a, S);
@@ -297,21 +324,14 @@ E.map = (c, L, S, o) => {
 // straight onto a big GPU-backed layer costs ~20× more on a software GPU
 let FLAG = null;
 E.flag = (c, L, S, o) => {
-  const { cx, cy, r } = corner(S, L.corner || 'tr', L.size || 0.15), w = r * 2, h = w * 0.7, x0 = cx - r, y0 = cy - h / 2, t = S.t * (o.speed ?? 1);
-  const im = img('flag:' + L.code), N = 18, amp = h * 0.07 * (1 + 0.6 * S.pulse);
-  c.globalAlpha = S.a * 0.9; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = S.u * 0.004; c.beginPath(); c.moveTo(x0 - S.u * 0.004, y0 - h * 0.1); c.lineTo(x0 - S.u * 0.004, y0 + h * 1.5); c.stroke();
-  const m = c.getTransform(), k = Math.hypot(m.a, m.b) || 1, pw = Math.max(8, Math.ceil(w * k)), ph = Math.max(8, Math.ceil((h + 2 * amp) * k));
+  const { cx, cy, r } = corner(S, L.corner || 'tr', L.size || 0.15), w = r * 2, h = w * 0.66, x0 = cx - r, y0 = cy - h / 2, t = S.t * (o.speed ?? 1);
+  const im = img('flag:' + L.code), amp = h * 0.08 * (1 + 0.6 * S.pulse), pole = w * 0.06;
+  const m = c.getTransform(), k = Math.hypot(m.a, m.b) || 1, pw = Math.max(8, Math.ceil((w + pole) * k)), ph = Math.max(8, Math.ceil((h * 1.9 + 2 * amp) * k));
   if (!FLAG) { FLAG = document.createElement('canvas'); FLAG.g = FLAG.getContext('2d', { willReadFrequently: true }); }
   if (FLAG.width !== pw || FLAG.height !== ph) { FLAG.width = pw; FLAG.height = ph; }
-  const g = FLAG.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, pw, ph); g.setTransform(k, 0, 0, k, 0, amp * k);
-  for (let i = 0; i < N; i++) {
-    const f = i / N, dy = Math.sin(t * 3.2 - f * 5.5) * amp * f, sx = (w / N) * i, sw = w / N + 0.6;
-    g.globalAlpha = 1;
-    if (im) g.drawImage(im, im.width * f, 0, im.width / N + 0.5, im.height, sx, dy, sw, h);
-    else { const ex = S.colors.extra || [S.col('primary'), S.col('soft'), S.col('accent')]; ex.forEach((col, j) => { g.fillStyle = col; g.fillRect(sx, dy + (j * h) / ex.length, sw, h / ex.length + 0.5); }); }
-    const shade = Math.cos(t * 3.2 - f * 5.5) * 0.16 * f; g.globalAlpha = Math.abs(shade); g.fillStyle = shade > 0 ? '#ffffff' : '#000000'; g.fillRect(sx, dy, sw, h);
-  }
-  c.globalAlpha = S.a; c.drawImage(FLAG, x0, y0 - amp, pw / k, ph / k);
+  const g = FLAG.g; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, pw, ph); g.setTransform(k, 0, 0, k, 0, 0);
+  ART.flagCloth(g, im, S.colors.extra || [S.col('primary'), S.col('soft'), S.col('accent')], pole, amp + h * 0.13, w, h, t, { amp: 0.08 * (1 + 0.6 * S.pulse), strips: 18 });
+  c.globalAlpha = S.a; c.drawImage(FLAG, x0 - pole, y0 - amp - h * 0.13, pw / k, ph / k);
 };
 
 E.ribbons = (c, L, S, o) => {
@@ -330,15 +350,14 @@ E.ribbons = (c, L, S, o) => {
 };
 
 E.landmark = (c, L, S, o) => {
-  const lm = landmark(L.lm); if (!lm) return;
-  const t = S.t * (o.speed ?? 1), hh = (S.land ? 0.34 : L.height || 0.2) * S.H, k = hh / 200, col = S.col(o.color || 'soft');
-  const draw = (x, kk, alpha) => {
-    c.save(); c.translate(x, S.H - 200 * kk); c.scale(kk, kk); c.globalAlpha = S.a * alpha; c.fillStyle = col; for (const p of lm.d) c.fill(p);
-    c.globalCompositeOperation = 'destination-out'; c.globalAlpha = 1; for (const p of lm.h) c.fill(p); c.restore();
-  };
-  const par = Math.sin(t * 0.12) * S.u * 0.035;
-  draw(S.W * 0.02 - 30 * k + par, k, 0.3);
-  if (L.side === 'both') draw(S.W * 0.98 - 170 * k * 0.72 - par * 0.5, k * 0.72, 0.18);
+  if (!ART.hasLandmark(L.lm)) return;
+  // the hero landmark, illustrated with depth, rising in the lower corner (parallax drift; captions are cut out of it)
+  const t = S.t * (o.speed ?? 1), size = (S.land ? 0.42 : (L.height || 0.2) * 1.2) * S.H, rise = easeOut(S.t / 0.9);
+  const x = (L.side === 'left' ? S.W * 0.2 : S.W * 0.8) + Math.sin(t * 0.15) * S.u * 0.02, y = S.H + size * 0.02 + (1 - rise) * size * 0.4;
+  const glow = c.createRadialGradient(x, S.H, 0, x, S.H, size * 0.7); glow.addColorStop(0, rgba(S.col('accent'), 0.35 * S.a)); glow.addColorStop(1, rgba(S.col('accent'), 0));
+  c.fillStyle = glow; c.fillRect(x - size * 0.7, S.H - size * 0.7, size * 1.4, size * 0.7);
+  ART.landmark(c, L.lm, x, y, size, L.light || 'gold', S.a * 0.95 * rise);
+  if (L.second) ART.landmark(c, L.second, S.W * 0.2 - Math.sin(t * 0.15) * S.u * 0.01, y, size * 0.7, L.light || 'gold', S.a * 0.75 * rise);
 };
 
 E.constellation = (c, L, S, o) => {
@@ -368,8 +387,6 @@ E.stamps = (c, L, S, o) => {
       c.font = `800 ${Math.round(r * 0.32)}px "Courier New", ui-monospace, monospace`; c.fillText(text.slice(0, 12), 0, -r * 0.08, w * 0.86);
       c.font = `700 ${Math.round(r * 0.16)}px "Courier New", ui-monospace, monospace`; c.fillText('✈  ARRIVAL  ✈', 0, r * 0.3, w * 0.8);
     }
-    // worn ink: a few deterministic gaps
-    c.globalCompositeOperation = 'destination-out'; for (let j = 0; j < 14; j++) { c.beginPath(); c.arc((rnd(k * 50 + j, 34) - 0.5) * r * 2, (rnd(k * 50 + j, 35) - 0.5) * r * 1.6, r * 0.04 * rnd(j, 36), 0, TAU); c.fill(); }
     c.restore();
   }
 };
@@ -410,12 +427,12 @@ E.clouds = (c, L, S, o) => {
 };
 
 E.globe = (c, L, S, o) => {
-  const { cx, cy, r } = corner(S, L.corner || 'br', L.size || 0.13), t = S.t * (o.speed ?? 1), col = S.col(o.color || 'soft'), k = 1 + 0.08 * S.pulse;
-  c.globalAlpha = S.a * 0.3; c.fillStyle = S.col('primary'); c.beginPath(); c.arc(cx, cy, r * k, 0, TAU); c.fill();
-  c.strokeStyle = col; c.lineWidth = S.u * 0.0025; c.globalAlpha = S.a * 0.85; c.beginPath(); c.arc(cx, cy, r * k, 0, TAU); c.stroke();
-  for (let i = 0; i < 6; i++) { const ph = (i * Math.PI) / 6 + t * 0.5, rx = Math.abs(Math.cos(ph)) * r * k; c.globalAlpha = S.a * (0.25 + 0.5 * Math.abs(Math.sin(ph))); c.beginPath(); c.ellipse(cx, cy, Math.max(0.5, rx), r * k, 0, 0, TAU); c.stroke(); }
-  for (const la of [-0.55, 0, 0.55]) { c.globalAlpha = S.a * 0.5; c.beginPath(); c.ellipse(cx, cy + la * r * k, r * k * Math.cos(Math.asin(la)), r * k * 0.08, 0, 0, TAU); c.stroke(); }
-  const a = t * 1.1; shape(c, 'plane', cx + Math.cos(a) * r * 1.25, cy + Math.sin(a) * r * 0.45, S.u * 0.014, a + Math.PI / 2, S.col('accent'), S.a, S);
+  // a small 3D globe in the corner, slowly turning, a plane orbiting it
+  const { cx, cy, r } = corner(S, L.corner || 'br', L.size || 0.13), t = S.t * (o.speed ?? 1), k = 1 + 0.06 * S.pulse;
+  c.globalAlpha = S.a;
+  ART.globe(c, cx, cy, r * 0.82 * k, { lon0: 40 + t * 12, lat0: 20, pal: { ocean: ART.mix(S.col('primary'), '#1f7ae0', 0.5), ocean2: ART.mix(S.col('primary'), '#020a24', 0.6), land: '#f4f8ff', glow: '#8fd8ff' } });
+  const a = t * 1.1;
+  ART.plane(c, cx + Math.cos(a) * r * 1.05, cy + Math.sin(a) * r * 0.38, S.u * 0.018, a + Math.PI / 2, '#ffffff');
 };
 
 const DOODLES = [
@@ -648,9 +665,92 @@ E.burst = (c, L, S, o) => {
 E.glow = (c, L, S, o) => {
   const g0 = S.beatOn && S.beats.length ? 0.1 + 0.55 * S.pulse : 0.12 + 0.05 * Math.sin(S.t * 1.3), col = S.col(o.color || L.color || 'primary'), d = S.u * 0.11;
   if (g0 <= 0.005) return;
+  // four edge strips stretched from one cached 1-D gradient (the same look as four live gradients, a fraction of the cost)
   c.globalAlpha = clamp(S.a * g0 * 1.4);
-  for (const [x0, y0, x1, y1, rx, ry, rw, rh] of [[0, 0, 0, d, 0, 0, S.W, d], [0, S.H, 0, S.H - d, 0, S.H - d, S.W, d], [0, 0, d, 0, 0, 0, d, S.H], [S.W, 0, S.W - d, 0, S.W - d, 0, d, S.H]]) {
-    const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, rgba(col, 0.9)); g.addColorStop(1, rgba(col, 0)); c.fillStyle = g; c.fillRect(rx, ry, rw, rh);
+  const sv = ART.cached('glowv:' + col, 1, 64, (g, W2, H2) => { const gr = g.createLinearGradient(0, 0, 0, H2); gr.addColorStop(0, rgba(col, 0.9)); gr.addColorStop(1, rgba(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, W2, H2); });
+  const sh = ART.cached('glowh:' + col, 64, 1, (g, W2, H2) => { const gr = g.createLinearGradient(0, 0, W2, 0); gr.addColorStop(0, rgba(col, 0.9)); gr.addColorStop(1, rgba(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, W2, H2); });
+  c.drawImage(sv, 0, 0, S.W, d);
+  c.save(); c.translate(0, S.H); c.scale(1, -1); c.drawImage(sv, 0, 0, S.W, d); c.restore();
+  c.drawImage(sh, 0, 0, d, S.H);
+  c.save(); c.translate(S.W, 0); c.scale(-1, 1); c.drawImage(sh, 0, 0, d, S.H); c.restore();
+};
+
+// ── broadcast layers (2026-11): the corner bug, flag-colour frame bars, light leaks + lens glints, role badges ──
+const LEAK = new Map();
+function leakSprite(col) {   // a soft additive blob painted once (scaling a sprite is far cheaper than a big gradient)
+  let cv = LEAK.get(col); if (cv) return cv;
+  cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d', { willReadFrequently: true }), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, rgba(col, 0.9)); gr.addColorStop(0.35, rgba(col, 0.42)); gr.addColorStop(1, rgba(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  LEAK.set(col, cv); return cv;
+}
+E.leaks = (c, L, S, o) => {
+  const t = S.t * (o.speed ?? 1), cols = (L.colors || ['accent', '#ff8a3d']).map((k) => S.col(k)), n = Math.max(1, Math.round((L.count || 2) * (o.density ?? 1)));
+  c.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) {
+    const side = i % 2, ph = t * (0.06 + 0.025 * i) + i * 0.37, r = S.u * (0.24 + 0.06 * Math.sin(ph * 4 + i));
+    const x = side ? S.W * (0.96 + 0.08 * Math.sin(ph * TAU)) : S.W * (0.04 - 0.08 * Math.sin(ph * TAU * 0.8)), y = S.H * (0.12 + 0.6 * fr(0.1 + i * 0.37 + t * 0.018));
+    c.globalAlpha = clamp(S.a * (0.42 + 0.18 * Math.sin(t * 1.1 + i * 2) + 0.25 * S.pulse) * (L.amount ?? 1));
+    c.drawImage(leakSprite(cols[i % cols.length]), x - r, y - r, 2 * r, 2 * r);
+  }
+  c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+  // a lens glint every few beats (or on a steady clock), near the top edge
+  const evs = events(S, 2.4 / (o.density ?? 1), 0.6);
+  for (const e of lastEvents(evs, S.t, 0.7)) {
+    const k = evs.indexOf(e), d = (S.t - e) / 0.7, x = S.W * (0.12 + 0.76 * rnd(k, 141)), y = S.H * (S.land ? 0.1 : 0.06) + S.u * 0.05 * rnd(k, 142);
+    ART.glint(c, x, y, S.u * 0.045, S.a * Math.sin(Math.PI * d), '#ffffff');
+  }
+};
+E.bug = (c, L, S, o) => {
+  // the channel bug, top-left: a waving flag chip and the name in English and Arabic on a colour slab
+  const t = S.t * (o.speed ?? 1), h = S.u * 0.085 * (L.size ? L.size / 0.085 : 1), x0 = S.u * 0.045, y0 = S.land ? S.u * 0.04 : S.H * 0.075, k = easeOut(S.t / 0.6);
+  const name = (L.text || '').toUpperCase(), fw = h * 1.2, P = S.col('primary'), A2 = S.col(o.color || 'accent');
+  c.font = `400 ${Math.round(h * 0.46)}px ${ART.FONT_EN}`; const tw = Math.min(S.W * 0.5, c.measureText(name).width);
+  const w = (fw + h * 0.45 + tw + h * 0.4) * k;
+  c.globalAlpha = S.a; c.save(); c.beginPath(); c.rect(x0 - h, y0 - h, w + h * 1.2, h * 3); c.clip();
+  ART.slab(c, x0 + h * 0.08, y0 + h * 0.1, w, h, 0.18, 'rgba(0,0,0,0.3)');
+  ART.slab(c, x0, y0, w, h, 0.18, P);
+  ART.slab(c, x0 + h * 0.1, y0 + h * 0.92, w * 0.7, h * 0.16, 0.5, A2);
+  const im = L.code ? img('flag:' + L.code) : L.stars ? ART.bandFlag(L.flag, 'stars') : L.emblem ? ART.emblem(kitFor(L.emblem, S.colors)) : null, fl = L.flag || S.colors.extra || [P, S.col('soft'), A2];
+  c.save(); c.beginPath(); c.rect(x0 + h * 0.16, y0 + h * 0.16, fw, h * 0.68); c.clip();
+  ART.flagCloth(c, im, fl, x0 + h * 0.16, y0 + h * 0.16, fw, h * 0.68, t, { pole: false, strips: 8, amp: 0.06 }); c.restore();
+  c.fillStyle = ART.onColor(P); c.font = `400 ${Math.round(h * 0.46)}px ${ART.FONT_EN}`; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+  c.fillText(name, x0 + fw + h * 0.36, y0 + h * 0.6, S.W * 0.5);
+  if (L.textAr) { c.direction = 'rtl'; c.font = `700 ${Math.round(h * 0.22)}px ${ART.FONT_AR}`; c.textAlign = 'right'; c.globalAlpha = S.a * 0.9; c.fillText(L.textAr, x0 + fw + h * 0.36 + tw, y0 + h * 0.88, tw); c.direction = 'ltr'; }
+  ART.sheen(c, x0, y0, w, h, fr(t / 4), 0.35);
+  c.restore();
+};
+E.frame = (c, L, S, o) => {
+  // flag-colour bars along the top and bottom edges with a light running through them, and two corner brackets
+  const fl = (L.flag || (S.colors.extra && S.colors.extra.length ? S.colors.extra : [S.col('primary'), S.col('soft'), S.col('accent')])).slice(0, 3), bh = S.u * 0.009, t = S.t * (o.speed ?? 1), k = easeOut(S.t / 0.8);
+  c.globalAlpha = S.a;
+  fl.forEach((col, i) => { c.fillStyle = col; c.fillRect(0, i * bh, S.W * k, bh + 0.5); c.fillRect(S.W * (1 - k), S.H - (i + 1) * bh, S.W * k, bh + 0.5); });
+  const sx = fr(t / 3.5) * S.W * 1.4 - S.W * 0.2, g = c.createLinearGradient(sx - S.u * 0.15, 0, sx + S.u * 0.15, 0);
+  g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.85)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(sx - S.u * 0.15, 0, S.u * 0.3, bh * fl.length);
+  const m = S.u * 0.035, len = S.u * 0.07 * (1 + 0.25 * S.pulse), y1 = S.H - (S.land ? m : S.H * 0.1);
+  c.strokeStyle = S.col(o.color || 'accent'); c.lineWidth = S.u * 0.006; c.lineCap = 'square';
+  c.beginPath(); c.moveTo(m, y1 - len); c.lineTo(m, y1); c.lineTo(m + len, y1); c.moveTo(S.W - m, y1 - len); c.lineTo(S.W - m, y1); c.lineTo(S.W - m - len, y1); c.stroke();
+};
+E.crawl = (c, L, S, o) => {
+  // a news crawl along the bottom edge: a label block and the words scrolling (edit them in Themes → Elements)
+  const h = S.u * 0.055, y = S.H - S.u * 0.009 * 3 - h, t = S.t * (o.speed ?? 1), k = easeOut((S.t - 0.3) / 0.6);
+  if (k <= 0) return;
+  c.globalAlpha = S.a; c.save(); c.beginPath(); c.rect(0, y, S.W * k, h); c.clip();
+  c.fillStyle = 'rgba(8,10,24,0.9)'; c.fillRect(0, y, S.W, h);
+  const lw = h * 2.6, lab = (L.label || 'UPDATE').toUpperCase(); c.fillStyle = S.col(o.color || 'primary'); c.fillRect(0, y, lw, h);
+  c.fillStyle = ART.onColor(S.col(o.color || 'primary')); c.font = `900 ${Math.round(h * 0.46)}px ${ART.FONT_UI}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(lab, lw / 2, y + h * 0.53, lw * 0.9);
+  c.beginPath(); c.rect(lw, y, S.W - lw, h); c.clip();
+  const txt = String(o.text ?? L.text ?? '') + '   ·   '; c.font = `700 ${Math.round(h * 0.46)}px ${ART.FONT_UI}`; c.textAlign = 'left'; c.fillStyle = '#ffffff';
+  const tw = Math.max(1, c.measureText(txt).width), off = (t * h * 2.2) % tw;
+  for (let x = lw + h * 0.4 - off; x < S.W; x += tw) c.fillText(txt, x, y + h * 0.53);
+  c.restore();
+};
+E.roles = (c, L, S, o) => {
+  // job-role badges drifting up the two side margins
+  const list = L.roles || ['nurse', 'driver', 'welder', 'chef', 'caregiver'], n = Math.max(1, Math.round((L.count || 4) * (o.density ?? 1))), t = S.t * (o.speed ?? 1);
+  for (let i = 0; i < n; i++) {
+    const r = S.u * 0.052 * (1 + 0.1 * S.pulse), span = S.H + r * 4, p = fr(rnd(i, 151) + t * 0.035 * (0.7 + 0.5 * rnd(i, 152)));
+    const x = i % 2 ? S.W - S.u * (0.09 + 0.03 * rnd(i, 153)) : S.u * (0.09 + 0.03 * rnd(i, 153)), y = S.H + r * 2 - p * span + Math.sin(t + i) * r * 0.2;
+    c.save(); c.globalAlpha = S.a * Math.min(1, p * 6, (1 - p) * 6); ART.roleBadge(c, list[i % list.length], x, y, r, '#ffffff', S.col('primary')); c.restore();
   }
 };
 
@@ -697,13 +797,11 @@ function layerCanvas(w, h) {
  * Draw a theme overlay into its own layer canvas (devW × devH device px, `xf` = the canvas-unit → device transform) and
  * cut the face and caption boxes out of it. Returns { canvas, boxes }.
  */
-export function renderThemeLayer(project, item, t, devW, devH, xf) {
-  const style = item.style || {}, rec = layerCanvas(devW, devH), c = rec.x;
-  c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, devW, devH);
-  c.setTransform(xf.a, xf.b, xf.c, xf.d, xf.e, xf.f);
-  const W = project.canvas.w, H = project.canvas.h, I = INTENSITY[style.intensity] || INTENSITY.normal, P = paletteOf(style);
+/** every element of the overlay, drawn into c (canvas units); alpha = the item's own opacity × fade */
+function drawLayers(c, project, item, t, alpha) {
+  const style = item.style || {}, W = project.canvas.w, H = project.canvas.h, I = INTENSITY[style.intensity] || INTENSITY.normal, P = paletteOf(style);
   const beats = style.beat ? style.beats || [] : [];
-  const S = { t, W, H, u: Math.min(W, H), land: W > H * 1.05, a: I.a, n: I.n, beats, beatOn: !!style.beat, pulse: pulseAt(beats, t), col: P.col, cols: P.cols, colors: P.C, end: (item.out - item.in) + (item.t0 || 0) };
+  const S = { t, W, H, u: Math.min(W, H), land: W > H * 1.05, a: I.a * alpha, n: I.n, beats, beatOn: !!style.beat, pulse: pulseAt(beats, t), col: P.col, cols: P.cols, colors: P.C, end: (item.out - item.in) + (item.t0 || 0) };
   for (const L of style.defs || []) {
     const o = (style.layers || {})[L.id] || {}; if (o.on === false) continue;
     const fn = E[L.kind]; if (!fn) continue;
@@ -711,6 +809,15 @@ export function renderThemeLayer(project, item, t, devW, devH, xf) {
     try { fn(c, L, S, o); } catch (e) { if (!warned.has(L.kind)) { warned.add(L.kind); console.warn('[themes]', L.kind, e); } }
     c.restore();
   }
+  return S;
+}
+export function renderThemeLayer(project, item, t, devW, devH, xf) {
+  const style = item.style || {}, rec = layerCanvas(devW, devH), c = rec.x;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, devW, devH);
+  c.setTransform(xf.a, xf.b, xf.c, xf.d, xf.e, xf.f);
+  // the theme's colour grade, when one runs now, is painted first in this same layer (a full-frame pass less on the frame)
+  for (const gi of gradesAt(project, t)) { c.save(); c.globalAlpha = Math.max(0, Math.min(1, gi.opacity ?? 1)); drawElement(c, 'grade', gi, project, { box: { x: 0, y: 0, w: project.canvas.w, h: project.canvas.h }, local: t - gi.t0 }, null, true); c.restore(); }
+  const S = drawLayers(c, project, item, t, 1);
   let boxes = [];
   if (style.safe !== false) {
     boxes = avoidBoxes(project, style, t, c);
@@ -734,50 +841,15 @@ export function renderThemeLayer(project, item, t, devW, devH, xf) {
 }
 const warned = new Set();
 
+// The overlay is drawn into its own software layer (many small strokes and slices stay off the GPU-backed frame, where
+// each costs a round trip on a software GPU), the face and caption boxes are cut out of it with a feather, and it is
+// placed with ONE drawImage. While a full-frame card covers the picture it is skipped: none of it would be seen.
 registerLayer('theme.overlay', (ctx, item, t, project, env) => {
+  if (coveredAt(project, t)) return;
   ctx.translate(-env.box.x, -env.box.y);
   const m = ctx.getTransform(), cv = ctx.canvas;
   const { canvas } = renderThemeLayer(project, item, t, cv.width, cv.height, m);
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.filter = 'none'; ctx.drawImage(canvas, 0, 0); ctx.restore();
 });
 
-// ── intro sting / outro ──
-function heroAt(c, style, kind, x, y, r, rot, col, a) {
-  const S = { u: 1 };
-  if (kind === 'icon') return shape(c, 'icon', x, y, r, rot, col, a, S, 1, (style.icons || [])[0]);
-  shape(c, kind || 'star4', x, y, r, rot, col, a, S);
-}
-function card(c, style, W, H, holeR, alpha) {
-  const P = paletteOf(style), g = c.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, P.col('primary')); g.addColorStop(1, rgba(P.col('accent'), 1));
-  c.save(); c.globalAlpha *= alpha; c.fillStyle = g; c.beginPath(); c.rect(0, 0, W, H);
-  if (holeR > 0) c.arc(W / 2, H / 2, holeR, 0, TAU, true);
-  c.fill('evenodd');
-  c.fillStyle = 'rgba(0,0,0,0.18)'; c.fill('evenodd');
-  if (holeR > 0) { c.strokeStyle = P.col('soft'); c.lineWidth = Math.min(W, H) * 0.012; c.beginPath(); c.arc(W / 2, H / 2, holeR, 0, TAU); c.stroke(); }
-  c.restore();
-}
-registerLayer('theme.sting', (ctx, item, t, project, env) => {
-  ctx.translate(-env.box.x, -env.box.y);
-  const s = item.style || {}, W = env.w, H = env.h, u = Math.min(W, H), d = Math.max(0.3, item.out - item.in), p = clamp(env.local / d), diag = Math.hypot(W, H) / 2;
-  const P = paletteOf(s);
-  card(ctx, s, W, H, diag * easeIO((p - 0.32) / 0.6) * 1.02, 1);
-  const k = easeOut(p / 0.55);
-  for (let i = 0; i < 16; i++) {
-    const a = (i / 16) * TAU + rnd(i, 121) * 0.3, dist = u * (0.06 + 0.55 * k * (0.6 + 0.4 * rnd(i, 122)));
-    heroAt(ctx, s, s.hero, W / 2 + Math.cos(a) * dist, H / 2 + Math.sin(a) * dist, u * (0.02 + 0.02 * rnd(i, 123)) * (1 - p * 0.5), a + p * 3, i % 2 ? P.col('soft') : P.col('accent'), clamp(1.4 - p * 1.4));
-  }
-  heroAt(ctx, s, s.hero, W / 2, H / 2, u * 0.11 * back(p / 0.35) * (1 - easeIO((p - 0.45) / 0.4)), 0, P.col('soft'), 1);
-});
-registerLayer('theme.outro', (ctx, item, t, project, env) => {
-  ctx.translate(-env.box.x, -env.box.y);
-  const s = item.style || {}, W = env.w, H = env.h, u = Math.min(W, H), d = Math.max(0.3, item.out - item.in), p = clamp(env.local / d), diag = Math.hypot(W, H) / 2;
-  const P = paletteOf(s);
-  card(ctx, s, W, H, diag * (1 - easeIO(p / 0.75)) * 1.02, 1);
-  const k = easeIO(p / 0.8);
-  for (let i = 0; i < 16; i++) {
-    const a = (i / 16) * TAU + rnd(i, 131) * 0.3, dist = u * (0.75 - 0.62 * k) * (0.6 + 0.4 * rnd(i, 132));
-    heroAt(ctx, s, s.hero, W / 2 + Math.cos(a) * dist, H / 2 + Math.sin(a) * dist, u * 0.022, a - p * 3, i % 2 ? P.col('soft') : P.col('accent'), clamp(p * 3) * (1 - clamp((p - 0.85) / 0.15) * 0.6));
-  }
-  if (p > 0.7) heroAt(ctx, s, s.hero, W / 2, H / 2, u * 0.12 * back((p - 0.7) / 0.25), 0, P.col('soft'), 1);
-});
+// ── intro sting / outro: drawn by elements.js (the same intro and end card as the package elements) ──
