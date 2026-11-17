@@ -231,12 +231,16 @@ export function themeSpec(id, { canvas, aspect = '9:16', opts = {}, ws = null, o
   p.tracks[0].items.push(clipItem(p, 0, dur + 1));
   if (opts.grade !== false) p.tracks[1].items.push(createItem('theme.el', { t0: 0, in: 0, out: dur + 1, ...boxFor('grade', W, H), auto: TAG, style: { ...es('grade'), whole: 'span' } }));
   p.tracks[1].items.push(createItem('theme.overlay', { t0: 0, in: 0, out: dur + 1, x: 0, y: 0, w: W, h: H, auto: TAG, style }));
-  if (opts.package !== false) {
+  if (th.pkg) {
+    // a design-family package: its intro composition, then its signature moment
+    if (opts.sting !== false) p.tracks[2].items.push(createItem('theme.el', { t0: 0, in: 0, out: 1.9, ...boxFor(th.pkg.intro, W, H), style: es(th.pkg.intro) }));
+    if (opts.package !== false) p.tracks[2].items.push(createItem('theme.el', { t0: opts.sting !== false ? 1.9 : 0.3, in: 0, out: 1.8, ...boxFor(th.pkg.sig, W, H), style: es(th.pkg.sig) }));
+  } else if (opts.package !== false) {
     p.tracks[2].items.push(createItem('theme.el', { t0: 0.75, in: 0, out: 1.65, ...boxFor('title', W, H), style: es('title') }));
     const sig = signatureOf(th);
     if (sig) { const b = boxFor(sig, W, H); if (elementById(sig)?.box !== 'full' && W < H) { const s2 = Math.min(1, (H * 0.27) / b.h); b.w *= s2; b.h *= s2; b.x = elementById(sig).box === 'counter' || elementById(sig).box === 'map' ? b.x : W - b.w - W * 0.04; } p.tracks[2].items.push(createItem('theme.el', { t0: 2.25, in: 0, out: 1.5, ...b, style: es(sig) })); }
   }
-  if (opts.sting !== false) p.tracks[2].items.push(createItem('theme.sting', { t0: 0, in: 0, out: 0.9, x: 0, y: 0, w: W, h: H, style: es('intro') }));
+  if (opts.sting !== false && !th.pkg) p.tracks[2].items.push(createItem('theme.sting', { t0: 0, in: 0, out: 0.9, x: 0, y: 0, w: W, h: H, style: es('intro') }));
   let ready = null;   // flags / maps / fonts are fetched on the first hover or thumbnail, never for the whole gallery at once
   const prepare = () => (ready ||= Promise.all([loadAssets(style), loadAssets(es('intro'))]));
   return { id: 'theme:' + id, label: th.name, aspect, canvas, dur, onStop, prepare, draw: (g, w, h, t) => drawMini(g, w, h, p, t), project: p, style };

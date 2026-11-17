@@ -11,6 +11,7 @@
 import * as A from '../themes/art.js';
 import { kitFor } from '../themes/kit.js';
 import { mapPaths, loadAssets } from '../themes/draw.js';
+import { FAM_PIECES, drawFam } from '../themes/fam.js';
 
 const { TAU, clamp, easeOut, back, elastic, rnd, fr, mix, rgba, lum } = A;
 const isAr = (s) => /[؀-ۿ]/.test(s || '');
@@ -61,6 +62,7 @@ export async function preparePieces(D) {
     const ccs = [el.cc, ...(el.ccs || [])].filter(Boolean);
     for (const cc of ccs) { jobs.push(loadFlag(cc)); jobs.push(loadAssets({ theme: 'country-' + cc })); }
     if (!ccs.length) jobs.push(loadAssets({ theme: el.theme || 'travel' }));
+    if (el.fam) jobs.push(loadAssets({ theme: 'europe' }), loadAssets({ theme: 'travel' }));   // the postcard stack draws these too
   }
   await Promise.all(jobs);
 }
@@ -362,5 +364,10 @@ export function drawPiece(c, D, el0, g, t) {
     fn(c, box, t, el, D.palette, K);
   } catch (e) { console.warn('[designs] piece', el.kind, e.message); }
   c.restore();
+}
+// ── the design families (themes/fam.js): careers, travel, occupations, bright future -- kind 'fam-<piece>' ──
+for (const [id, pc] of Object.entries(FAM_PIECES)) {
+  P_['fam-' + id] = (c, box, t, el, P, K) => drawFam(c, id, box, t, { fam: el.fam || pc.fam, K, flag: flagImg(K), words: el.words, role: el.role, rtl: el.rtl && pc.dir, ar: !!el.rtl || Object.values(el.words || {}).some(isAr) });
+  PIECE_NAMES['fam-' + id] = pc.name;
 }
 export const PIECE_KINDS = Object.keys(P_);

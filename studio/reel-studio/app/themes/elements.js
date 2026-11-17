@@ -14,6 +14,7 @@ import { flagImage, mapPaths, pulseAt, logoImage } from './draw.js';
 import * as A from './art.js';
 import { kitFor } from './kit.js';
 import { themeById } from './themes.js';
+import { FAM_PIECES, FAM_PAL, FAMILY_ICONS, FAMILY_LABELS, TRADE_IDS, TRADES, drawFam } from './fam.js';
 
 const { clamp, easeOut, easeIO, easeIn, back, elastic, TAU, rnd, fr, mix, rgba, onColor } = A;
 
@@ -39,8 +40,20 @@ export const ELEMENTS = [
   { id: 'end', label: 'End card', icon: '🏁', dur: 2.6, box: 'full', whole: 'end', note: 'Call to action + contact placeholders' },
   { id: 'grade', label: 'Colour grade', icon: '🎨', dur: 4, box: 'full', whole: 'span', note: 'The theme’s tint over the picture' },
   { id: 'sticker', label: 'Sticker', icon: '⭐', dur: 3, box: 'sticker', whole: 'span', variants: ['flag', 'visa', 'plane', 'pin', 'coin', 'landmark', 'sparkle'], note: 'Animated sticker set', hidden: true },
+  // the design families (2026-11): careers, travel, occupations, bright future -- big compositions, nothing bulletin
+  ...famElements(),
 ];
+/** one element per family piece: full-screen scenes start the reel, panels can run over the whole video */
+function famElements() {
+  const CARD = new Set(['cv', 'offer', 'path', 'departures', 'trades', 'growth', 'stamps', 'postcards', 'route', 'kinetic', 'tree', 'stars']);
+  return Object.entries(FAM_PIECES).filter(([, pc]) => !pc.over).map(([id, pc]) => ({
+    id: 'fam-' + id, label: pc.name, icon: FAMILY_ICONS[pc.fam], dur: 4.2, box: CARD.has(id) ? 'famcard' : 'full', whole: CARD.has(id) ? 'span' : 'start',
+    fam: pc.fam, piece: id, note: `${FAMILY_LABELS[pc.fam]} · ${pc.style}`, words: Object.keys(pc.words || {}),
+    ...(pc.roles || id === 'trades' || id === 'day' ? { variants: TRADE_IDS, variantLabels: Object.fromEntries(TRADE_IDS.map((r) => [r, TRADES[r].en])) } : {}),
+  }));
+}
 export const elementById = (id) => ELEMENTS.find((e) => e.id === id) || null;
+const FAM_DEFAULT_ROLE = { 'fam-worker': 'nurse', 'fam-trades': 'welder', 'fam-day': 'chef', 'fam-morph': 'electrician' };
 export const STICKER_LABELS = { flag: 'Flag badge', visa: 'Visa approved', plane: 'Plane', pin: 'Map pin', coin: 'Currency coin', landmark: 'Landmark badge', sparkle: 'Sparkle' };
 
 /** where an element sits by default (canvas px) */
@@ -62,6 +75,7 @@ export function boxFor(el, W, H) {
     case 'lowerbar': { const w = cw(0.94, 1.25), h = w * 0.17; return at(w, h, (W - w) / 2, land ? H * 0.7 : H * 0.62); }
     case 'board': { const w = cw(0.9, 1.1), h = w * 0.82; return at(w, h, (W - w) / 2, top); }
     case 'sticker': { const s = u * 0.26; return at(s, s, W - s - u * 0.06, top + u * 0.05); }
+    case 'famcard': { const w = land ? Math.min(W * 0.62, H * 0.84 * 1.45) : W * 0.9, h = land ? H * 0.84 : Math.min(H * 0.58, w * 1.3); return at(w, h, (W - w) / 2, land ? H * 0.08 : H * 0.12); }
     default: return at(W, H, 0, 0);
   }
 }
@@ -564,6 +578,22 @@ D.visa = (c, K, S) => {
   c.restore();
 };
 
+// ── the design families: the same drawings as the Ad Studio (themes/fam.js), re-timed to the clip's length ──
+for (const def of ELEMENTS.filter((e) => e.fam)) {
+  D[def.id] = (c, K, S) => {
+    const { w, h } = S, U = Math.min(w, h), ii = S.inn(0.4), oo = S.out(0.35); if (oo <= 0 || ii <= 0) return;
+    // the piece builds in about 3.8 s; a shorter clip plays it faster so it always finishes
+    const ta = S.tl * Math.max(1, 3.8 / Math.max(0.6, S.d * 0.85));
+    const words = Object.fromEntries(Object.entries(S.txt || {}).filter(([k, v]) => def.words.includes(k) && v));
+    const card = def.box === 'famcard', r = card ? U * 0.05 : 0;
+    c.save(); c.globalAlpha *= Math.min(ii, oo);
+    const z = 0.94 + 0.06 * ii; c.translate(w / 2, h / 2); c.scale(z, z); c.translate(-w / 2, -h / 2);
+    if (card) { c.save(); c.shadowColor = 'rgba(20,20,60,0.35)'; c.shadowBlur = U * 0.06; c.shadowOffsetY = U * 0.02; c.fillStyle = FAM_PAL[def.fam].paper; c.beginPath(); A.rr(c, 0, 0, w, h, r); c.fill(); c.restore(); c.beginPath(); A.rr(c, 0, 0, w, h, r); c.clip(); }
+    drawFam(c, def.piece, { x: 0, y: 0, w, h }, ta, { fam: def.fam, K, flag: K.code ? flagImage(K.code) : null, words, role: S.style?.variant || undefined });
+    c.restore();
+  };
+}
+
 export const ELEMENT_DRAW = D;
 
 // ── one renderer for theme.el, theme.sting, theme.outro ──
@@ -584,7 +614,7 @@ registerLayer('theme.outro', (ctx, item, t, project, env) => drawElement(ctx, 'e
 
 /** a theme.el item for el at t0 (canvas px box); text placeholders start empty so the kit's words show */
 export function elementStyle(themeId, el, { colors, variant, whole, text, brand, logo } = {}) {
-  return { theme: themeId, el, colors: colors || null, variant: variant || (el === 'sticker' ? 'flag' : undefined), whole: whole || false, text: text || {}, brand: brand || null, logo: logo || null };
+  return { theme: themeId, el, colors: colors || null, variant: variant || (el === 'sticker' ? 'flag' : elementById(el)?.variants && elementById(el)?.fam ? FAM_DEFAULT_ROLE[el] || 'nurse' : undefined), whole: whole || false, text: text || {}, brand: brand || null, logo: logo || null };
 }
 
 /**

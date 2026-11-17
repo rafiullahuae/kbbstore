@@ -131,9 +131,11 @@ export async function applyTheme(ctx, id, opts = {}) {
   const es = (el, extra = {}) => elementStyle(th.id, el, { colors: style.colors, brand: ws?.name || null, logo: ws?.logo || null, ...extra });
   const el = (type, el2, t0, dur, props = {}) => createItem(type, { t0: r3(t0), in: 0, out: r3(dur), auto: TAG, name: `Theme ${elementById(el2)?.label || el2} · ${name}`, ...boxFor(el2, W, H), ...props });
   if (opts.grade !== false) { const it = el('theme.el', 'grade', 0, D, { style: es('grade', { whole: 'span' }) }); add.unshift({ trackId: tt.id, item: it }); placed.grade = it.id; }
-  if (opts.sting !== false && D >= 3) { const it = el('theme.sting', 'intro', 0, 0.9, { style: es('intro') }); it.name = 'Theme intro · ' + name; add.push({ trackId: ot.id, item: it }); placed.sting = it.id; }
-  const endDur = D >= 9 ? 2.6 : 1.6;
-  if (opts.outro !== false && D >= 5) { const it = el('theme.outro', 'end', D - endDur, endDur, { style: es('end') }); it.name = 'Theme outro · ' + name; add.push({ trackId: ot.id, item: it }); placed.outro = it.id; }
+  // a design-family package (th.pkg) opens and closes on its own big compositions instead of the slab sting / end card
+  const pk = th.pkg || null, introDur = pk ? Math.min(3.2, Math.max(1.6, D * 0.25)) : 0.9;
+  if (opts.sting !== false && D >= 3) { const it = pk ? el('theme.el', pk.intro, 0, introDur, { style: es(pk.intro) }) : el('theme.sting', 'intro', 0, 0.9, { style: es('intro') }); it.name = 'Theme intro · ' + name; add.push({ trackId: ot.id, item: it }); placed.sting = it.id; }
+  const endDur = pk ? Math.min(3.2, Math.max(1.6, D * 0.25)) : D >= 9 ? 2.6 : 1.6;
+  if (opts.outro !== false && D >= 5) { const it = pk ? el('theme.el', pk.end, D - endDur, endDur, { style: es(pk.end) }) : el('theme.outro', 'end', D - endDur, endDur, { style: es('end') }); it.name = 'Theme outro · ' + name; add.push({ trackId: ot.id, item: it }); placed.outro = it.id; }
   const cuts = opts.transitions === false ? [] : cutsOf(p);
   const owned = p.tracks.flatMap((t) => t.items).filter((i) => /transition/.test(i.type) && i.auto !== TAG);
   const tk = transitionOf(th);
@@ -146,8 +148,8 @@ export async function applyTheme(ctx, id, opts = {}) {
     placed.transitions++;
   }
   const lane = track('text'), body = D - (placed.outro ? endDur : 0);
-  let t1 = placed.sting ? 0.8 : 0.3;
-  if (opts.title !== false && body > t1 + 2) {
+  let t1 = placed.sting ? (pk ? introDur + 0.3 : 0.8) : 0.3;
+  if (opts.title !== false && !pk && body > t1 + 2) {
     const it = el('theme.el', 'title', t1, Math.min(2.8, body - t1 - 0.2), { style: es('title') });
     await placeTitle(p, it, faces); add.push({ trackId: lane.id, item: it }); placed.title = it.id; t1 += it.out + 0.4;
   }
@@ -156,7 +158,7 @@ export async function applyTheme(ctx, id, opts = {}) {
     const it = el('theme.el', sig, t1, Math.min(elementById(sig).dur + 0.4, body - t1 - 0.2), { style: es(sig) });
     await placeTitle(p, it, faces); add.push({ trackId: ot.id, item: it }); placed.signature = it.id; t1 += it.out + 0.6;
   }
-  if (opts.lower !== false && body > t1 + 3) {
+  if (opts.lower !== false && !pk && body > t1 + 3) {
     const it = el('theme.el', 'lowerbar', t1, 3.5, { style: es('lowerbar') });
     await placeTitle(p, it, faces); add.push({ trackId: lane.id, item: it }); placed.lower = it.id;
   }
@@ -277,6 +279,7 @@ export async function resyncBeats(ctx) { const beats = await beatsOf(ctx); tuneT
 /** each theme's signature moment in the package */
 export function signatureOf(th) {
   if (!th) return null;
+  if (th.pkg) return th.pkg.sig;
   if (th.group === 'Countries') return 'breaking';
   if (th.id === 'europe') return 'globe';
   return { travel: 'ticket', passport: 'stamp', study: 'postcard', 'work-trades': 'hiring', 'work-care': 'hiring', 'work-hospitality': 'hiring', 'work-abroad': 'hiring' }[th.id]

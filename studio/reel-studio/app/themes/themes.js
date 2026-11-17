@@ -10,7 +10,7 @@
 import { COUNTRIES } from '../auto/countries/countries.js';
 import { HERO, HERO_OF, SECONDARY } from './landmarks2.js';
 
-export const GROUPS = ['Countries', 'Travel & study', 'Work abroad', 'Beauty', 'Luxury', 'Offers', 'Seasonal', 'Business', 'Food', 'Fitness', 'Real estate'];
+export const GROUPS = ['Countries', 'Travel & study', 'Work abroad', 'Careers', 'Travel', 'Occupations', 'Bright future', 'Beauty', 'Luxury', 'Offers', 'Seasonal', 'Business', 'Food', 'Fitness', 'Real estate'];
 
 const L = (id, kind, label, p = {}) => ({ id, kind, label, ...p });
 const T = (o) => Object.assign({
@@ -441,6 +441,28 @@ for (const th of THEMES) {
     th.layers.splice(glowAt(), 0, L('crawl', 'crawl', 'News crawl', { label: th.group === 'Work abroad' ? 'JOBS' : 'UPDATE', text: `${nm} · YOUR HEADLINE HERE · BOOK A FREE CONSULTATION · PLACEHOLDER: VERIFY ON THE OFFICIAL WEBSITE` }));
   }
 }
+
+// ── the design families (2026-11, the owner: "make totally different careers based, traveling based, occupations based,
+// bright future based designs"): complete packages whose intro, signature moment, end card and cut transition are the
+// family's big compositions (themes/fam.js). Their running overlay stays light (light leaks, the beat glow, drifting
+// clouds for travel): no bug, no news crawl, no colour bars. th.pkg = {intro, sig, end, trans}
+const FP = { careers: { primary: '#3A4CCB', accent: '#FF6B4A', soft: '#FFF8EE', ink: '#1B1F3B' }, travel: { primary: '#0096E6', accent: '#FFB703', soft: '#FFFBF2', ink: '#073B4C' }, occupations: { primary: '#5D5FEF', accent: '#FF8C42', soft: '#F6F7FF', ink: '#1F2041' }, future: { primary: '#6C5CE7', accent: '#FF5FA2', soft: '#FFF5F8', ink: '#2B2D42' } };
+const FG = { careers: 'Careers', travel: 'Travel', occupations: 'Occupations', future: 'Bright future' };
+const famTheme = (id, fam, name, nameAr, icon, pkg, kw, title, titleAr, extra = []) => T({ id, name, nameAr, group: FG[fam], icon, fam, palette: { ...FP[fam] },
+  keywords: { en: kw[0], ar: kw[1] }, industries: ['immigration', 'consultancy', 'recruitment', 'education'], recipes: [], pkg,
+  layers: [...extra, L('leaks', 'leaks', 'Light leaks + lens glints', { colors: ['accent', '#ff8a3d'], count: 2 }), L('glow', 'glow', 'Edge glow (beat)', { color: 'primary' })],
+  sting: { hero: 'star4' }, transition: 'slide', text: { preset: 'kinetic', title, titleAr },
+  sfx: { intro: 'whoosh', outro: 'success-chime', transition: 'swoosh', accent: 'sparkle' } });
+THEMES.push(
+  famTheme('fam-careers-climb', 'careers', 'Careers · Climb', 'المسيرة · صعود', '🪜', { intro: 'fam-ladder', sig: 'fam-cv', end: 'fam-offer', trans: 'fam-cv' }, [['career', 'careers', 'promotion', 'cv', 'resume', 'job offer', 'interview', 'hired'], ['مسيره', 'وظيفه', 'سيره ذاتيه', 'مقابله', 'عرض عمل']], 'Your next role', 'وظيفتك القادمة'),
+  famTheme('fam-careers-path', 'careers', 'Careers · Next role', 'المسيرة · الخطوة التالية', '🤝', { intro: 'fam-handshake', sig: 'fam-path', end: 'fam-ladder', trans: 'fam-door' }, [['contract', 'employer', 'apply', 'steps', 'recruitment', 'placement'], ['عقد', 'صاحب عمل', 'قدم', 'خطوات', 'توظيف']], 'Five steps to work abroad', 'خمس خطوات للعمل في الخارج'),
+  famTheme('fam-travel-journey', 'travel', 'Travel · Journey', 'السفر · رحلة', '🧳', { intro: 'fam-window', sig: 'fam-route', end: 'fam-suitcase', trans: 'fam-suitcase' }, [['journey', 'road trip', 'route', 'suitcase', 'luggage', 'destination', 'explore'], ['رحله', 'وجهه', 'حقيبه', 'طريق']], 'Your next destination', 'وجهتك القادمة', [L('clouds', 'clouds', 'Cloud drift', { count: 3 })]),
+  famTheme('fam-travel-board', 'travel', 'Travel · Departures', 'السفر · المغادرة', '🛫', { intro: 'fam-suitcase', sig: 'fam-departures', end: 'fam-stamps', trans: 'fam-suitcase' }, [['departures', 'boarding', 'gate', 'postcard', 'passport stamps'], ['مغادره', 'صعود', 'بوابه', 'اختام']], 'Now boarding', 'الصعود الآن', [L('clouds', 'clouds', 'Cloud drift', { count: 3 })]),
+  famTheme('fam-occ-uniforms', 'occupations', 'Occupations · Uniforms', 'المهن · الأزياء', '🦺', { intro: 'fam-morph', sig: 'fam-trades', end: 'fam-worker', trans: 'fam-door' }, [['trade', 'trades', 'uniform', 'nurse', 'welder', 'electrician', 'chef', 'mechanic', 'farm', 'housekeeper', 'beautician'], ['مهنه', 'زي', 'ممرض', 'لحام', 'كهربائي', 'طاهي']], 'Pick your trade', 'اختر مهنتك'),
+  famTheme('fam-occ-day', 'occupations', 'Occupations · A day at work', 'المهن · يوم عمل', '🏗️', { intro: 'fam-isosite', sig: 'fam-day', end: 'fam-worker', trans: 'fam-sunrise' }, [['day in the life', 'site', 'warehouse', 'construction', 'shift'], ['يوم', 'موقع', 'مستودع', 'بناء', 'نوبه']], 'A day in the life', 'يوم في حياة'),
+  famTheme('fam-future-sunrise', 'future', 'Bright future · Sunrise', 'مستقبل مشرق · شروق', '🌅', { intro: 'fam-sunrise', sig: 'fam-stars', end: 'fam-door', trans: 'fam-sunrise' }, [['future', 'dream', 'goals', 'new life', 'success story', 'hope'], ['مستقبل', 'حلم', 'اهداف', 'حياه جديده']], 'Your bright future', 'مستقبلك المشرق'),
+  famTheme('fam-future-home', 'future', 'Bright future · Home', 'مستقبل مشرق · البيت', '🔑', { intro: 'fam-door', sig: 'fam-tree', end: 'fam-home', trans: 'fam-door' }, [['family', 'reunion', 'home', 'settle', 'residency', 'graduation', 'growth'], ['عائله', 'لم الشمل', 'بيت', 'اقامه', 'تخرج']], 'A new home', 'بيت جديد'),
+);
 
 export const themeById = (id) => THEMES.find((t) => t.id === id) || null;
 export const themesIn = (group) => THEMES.filter((t) => !group || group === 'All' || t.group === group);

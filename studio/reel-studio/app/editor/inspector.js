@@ -7,6 +7,8 @@ import { FILTER_PRESETS, boxAt } from '../core/render.js';
 import { h, clear, slider, field, select, seg, fmtDur } from './ui.js';
 import { STICKERS } from './items.js';
 import { bounds } from './preview.js';
+// the design-family elements (their placeholder words and trades), read once the themes module has loaded
+let FAM_ELS = null; import('../themes/elements.js').then((m) => { FAM_ELS = m.ELEMENTS.filter((d) => d.fam); }).catch(() => {});
 
 const FONTS = ['system-ui', 'Helvetica Neue', 'Avenir Next', 'Futura', 'Gill Sans', 'Georgia', 'Didot', 'Baskerville', 'Times New Roman', 'Courier New', 'Arial Rounded MT Bold', 'Impact', 'Geeza Pro', 'Damascus', 'Baghdad'];
 const pct = (v) => Math.round(v * 100) + '%';
@@ -157,6 +159,9 @@ export class Inspector {
   }
 
   /** a theme element: start and duration as numbers, its placeholder words, the sticker kind */
+  /** a design-family element's catalogue entry (its words and trades); the themes module is loaded with the editor */
+  famDef(el) { return /^fam-/.test(el || '') ? (FAM_ELS || []).find((d) => d.id === el) || null : null; }
+
   themePanel(item, track) {
     if (item.type === 'theme.trans') return this.transPanel(item);
     const ed = this.ed, num = (label, value, min, onSet, title) => field(label, h('input', { type: 'number', step: 0.1, min, value: (+value).toFixed(2), title, dataset: { th: label.toLowerCase() }, on: { change: (e) => { const v = +e.target.value; if (Number.isFinite(v) && v >= min) { onSet(v); this.seal(); } } } }));
@@ -167,7 +172,7 @@ export class Inspector {
     ];
     if (item.auto === 'theme') kids.push(h('small.muted', item.style?.whole ? 'Whole video: follows the reel’s length. Switch it off in Themes → Place elements.' : 'Placed by the theme; applying another theme replaces it.'));
     const el = item.type === 'theme.sting' ? 'intro' : item.type === 'theme.outro' ? 'end' : item.style?.el;
-    const FIELDS = { intro: ['title', 'titleAr', 'kicker'], title: ['title', 'titleAr', 'kicker'], lower: ['name', 'role'], end: ['cta', 'ctaAr', 'phone', 'web', 'handle', 'brand'], counter: ['value', 'label'], ticket: ['from', 'to', 'flight', 'gate', 'seat', 'date'], stamp: ['stamp', 'approved', 'date'], hiring: ['hiring', 'hiringAr', 'role0', 'role1', 'role2'], globe: ['from', 'to'], postcard: ['title', 'titleAr', 'greet'], map: ['title'] }[el] || [];
+    const FIELDS = { intro: ['title', 'titleAr', 'kicker'], title: ['title', 'titleAr', 'kicker'], lower: ['name', 'role'], end: ['cta', 'ctaAr', 'phone', 'web', 'handle', 'brand'], counter: ['value', 'label'], ticket: ['from', 'to', 'flight', 'gate', 'seat', 'date'], stamp: ['stamp', 'approved', 'date'], hiring: ['hiring', 'hiringAr', 'role0', 'role1', 'role2'], globe: ['from', 'to'], postcard: ['title', 'titleAr', 'greet'], map: ['title'] }[el] || this.famDef?.(el)?.words || [];
     const LBL = { title: 'Title', titleAr: 'Title (Arabic)', kicker: 'Small line', name: 'Name', role: 'Role', cta: 'Call to action', ctaAr: 'CTA (Arabic)', phone: 'Phone', web: 'Website', handle: 'Handle', brand: 'Company', value: 'Number', label: 'Label', from: 'From', to: 'To', flight: 'Flight', gate: 'Gate', seat: 'Seat', date: 'Date', stamp: 'Stamp', approved: 'Second stamp', hiring: 'Banner', hiringAr: 'Banner (Arabic)', role0: 'Role 1', role1: 'Role 2', role2: 'Role 3', greet: 'Small line' };
     const setText = (k, v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.text = Object.assign({}, style.text, { [k]: v }); if (!v) delete style.text[k]; this.set(item, { style }, 'Element text'); };
     for (const k of FIELDS) {
@@ -180,6 +185,8 @@ export class Inspector {
       const vs = ['flag', 'visa', 'plane', 'pin', 'coin', 'landmark', 'sparkle'];
       kids.push(field('Sticker', select(vs.map((v) => [v, v[0].toUpperCase() + v.slice(1)]), item.style?.variant || 'flag', (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.variant = v; this.set(item, { style }, 'Sticker'); this.seal(); })));
     }
+    const fd = this.famDef?.(el);
+    if (fd?.variants) kids.push(field('Trade', select(fd.variants.map((v) => [v, fd.variantLabels?.[v] || v]), item.style?.variant || fd.variants[0], (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.variant = v; this.set(item, { style }, 'Trade'); this.seal(); })));
     this.el.append(this.section('Theme element', ...kids));
   }
 

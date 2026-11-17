@@ -19,6 +19,8 @@ import { promptsFor, sanitize } from './imagegen/prompts.js';
 import * as IG from './imagegen/index.js';
 import { openDesignEditor, saveDesign, listSaved } from './editor.js';
 import { adTemplatesFor, makeAd, makeCarousel, AD_NAMES, AD_SIZES } from './ads.js';
+import { FAM_FILTERS } from './ads-fam.js';
+import { FAMILY_ICONS } from '../themes/fam.js';
 import { claudeStatus } from '../settings/claude.js';
 const ap = (el, ...k) => { el.append(...k.flat(Infinity).filter((x) => x != null && x !== false)); return el; };
 
@@ -55,23 +57,26 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
     if (m === 'templates' && !tplBox.childElementCount) paintTemplates();
   }
   // ── the broadcast ad templates ──
-  const T = { lang: 'en', size: 'post', cc: '' };
+  const T = { lang: 'en', size: 'post', cc: '', fam: ls.get('kbbstudio.adFamily') || 'all' };
   async function paintTemplates() {
     clear(tplBox);
     const pc = /planet|consult|visa|immigra/i.test(ws.id + ' ' + (ws.industry || ''));
     const langSel = h('select#dz-t-lang', { 'aria-label': 'Language' }, h('option', { value: 'en', selected: T.lang === 'en' }, 'English'), h('option', { value: 'ar', selected: T.lang === 'ar' }, 'العربية'));
     const sizeSel = h('div.dz-tabs#dz-t-sizes', AD_SIZES.map((s) => h('button.chip' + (s === T.size ? '.on' : ''), { dataset: { size: s }, on: { click: () => { T.size = s; paintTemplates(); } } }, `${s} ${PX[s].join('×')}`)));
     const ccSel = pc ? h('select#dz-t-cc', { 'aria-label': 'Country' }, h('option', { value: '' }, 'Each template’s own country'), cat.countries.map((c) => h('option', { value: c.code, selected: c.code === T.cc }, c.name))) : null;
+    // the families (2026-11): Careers / Travel / Occupations / Bright future beside the broadcast bulletin templates
+    const fams = [['all', 'All'], ['broadcast', '📺 Broadcast & bulletin'], ...FAM_FILTERS.map(([f, n]) => [f, `${FAMILY_ICONS[f]} ${n}`])];
+    const famSel = pc ? h('div.dz-tabs#dz-t-fam', { role: 'group', 'aria-label': 'Template family' }, fams.map(([f, n]) => h('button.chip' + (f === T.fam ? '.on' : ''), { dataset: { fam: f }, on: { click: () => { T.fam = f; ls.set('kbbstudio.adFamily', f); paintTemplates(); } } }, n))) : null;
     langSel.addEventListener('change', () => { T.lang = langSel.value; paintTemplates(); });
     ccSel?.addEventListener('change', () => { T.cc = ccSel.value; paintTemplates(); });
     const list = h('div.dz-grid.dz-tgrid');
     ap(tplBox, h('p.dz-small', 'Broadcast templates in your kit — the themes’ flags, landmarks, stamps and passes. Every word is editable (English or Arabic), facts are placeholders, contact and button come from ⚙ Configure. Each opens in the editor; export PNG, JPG or an animated MP4.'),
-      h('div.dz-row', langSel, ccSel, h('div.grow'), sizeSel), list);
-    for (const t of adTemplatesFor(ws)) {
+      famSel, h('div.dz-row', langSel, ccSel, h('div.grow'), sizeSel), list);
+    for (const t of adTemplatesFor(ws).filter((x) => !pc || T.fam === 'all' || (T.fam === 'broadcast' ? !x.fam : x.fam === T.fam))) {
       const opts = { lang: T.lang, cc: T.cc || undefined, ccs: T.cc && t.ccs ? [T.cc, ...t.ccs.filter((x) => x !== T.cc)].slice(0, t.ccs.length) : undefined };
       const Ds = t.slides ? makeCarousel(t.id, ws, cat, opts) : [makeAd(t.id, ws, cat, opts)];
       const strip = h('div.dz-strip');
-      const card = h('div.dz-card' + (t.slides ? '.dz-wide' : ''), { dataset: { tpl: t.id } }, strip,
+      const card = h('div.dz-card' + (t.slides ? '.dz-wide' : ''), { dataset: { tpl: t.id, fam: t.fam || 'broadcast' } }, strip,
         h('div.dz-card-foot', h('b', (T.lang === 'ar' ? t.nameAr : t.name) + (t.slides ? ` · ${t.slides} slides` : '')), h('span.dz-score', T.size)));
       list.appendChild(card);
       for (const D of Ds) {

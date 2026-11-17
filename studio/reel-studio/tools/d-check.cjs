@@ -14,6 +14,9 @@
 //     Arabic mirrors, facts are placeholders, company details fill contact / button / logo / photo slots, export =
 //     preview (PNG and the MP4's frame at the still), save → reload, an older saved design still opens; renders of
 //     every template (4:5 PNG + 9:16 MP4) -> tools/out/ads2/
+//   - the design families (careers / travel / occupations / bright future, ads-fam.js): every family template × format ×
+//     EN / AR through the same rules / RTL / facts checks, the family filter on the screen, export = preview, save →
+//     reload, renders (4:5 PNG + 9:16 MP4) -> tools/out/families/
 //   - screenshots 1920×1080 + 1280×800 -> shots/d/ (the ad-template screen -> tools/out/d/)
 // node tools/d-check.cjs [--no-ai]
 'use strict';
@@ -369,6 +372,22 @@ async function adTemplates(page, e, dir) {
     const spec = B.parseBrief('Work abroad: welders wanted for Poland, apply on WhatsApp. Story, post and 16:9 wide.', W.state.current, cat);
     const g = await Gn.generate(spec, W.state.current, cat, { count: 8 });
     out.brief = { n: g.designs.length, ads: g.designs.filter((D) => D.ad).map((D) => D.family), distinct: new Set(g.designs.map((D) => D.family)).size, pass: g.designs.every((D) => D.sizes.every((s) => Ru.check(D, s).pass)), sizes: spec.sizes, wide: g.designs.filter((D) => D.sizes.includes('wide')).length };
+    // the design families (careers / travel / occupations / bright future): in the catalogue, out of a brief's picks,
+    // Arabic pieces run right to left, export = preview, the still = the frame at t = still, save → reload
+    const F = Ad.AD_TEMPLATES.filter((t) => t.fam), pcws = (W.switchWorkspace('planet-careers'), W.state.current);
+    out.fam = { n: F.length, by: Object.fromEntries(['careers', 'travel', 'occupations', 'future'].map((f) => [f, F.filter((t) => t.fam === f).length])), inBrief: Ad.adTemplatesFor(pcws, spec).filter((t) => t.fam).length, pieces: new Set(F.map((t) => t.piece)).size };
+    const Fa = Ad.makeAd('fam-cv', pcws, cat, { lang: 'ar' }); await R.prepare(Fa);
+    out.fam.rtl = Ad.makeAd('fam-path', pcws, cat, { lang: 'ar' }).els.filter((e) => e.t === 'art').every((e) => e.rtl) && !Ad.makeAd('fam-path', pcws, cat, { lang: 'en' }).els.some((e) => e.rtl);
+    const [fpng] = await Ed.exportDesign(Fa, { sizes: ['post'], scale: 1, type: 'png' });
+    const fbm = await createImageBitmap(await (await fetch('/' + fpng.path)).blob()), fcv = document.createElement('canvas'); fcv.width = fbm.width; fcv.height = fbm.height; fcv.getContext('2d').drawImage(fbm, 0, 0);
+    out.fam.exportVsPreview = diff(pix(fcv), pix(R.renderCanvas(Fa, 'post', 1))).max;
+    out.fam.stillVsT = diff(pix(R.renderCanvas(Fa, 'story', 0.4)), pix(R.renderCanvas(Fa, 'story', 0.4, { t: Mo.motionOf(Fa).still }))).max;
+    out.fam.early = diff(pix(R.renderCanvas(Fa, 'story', 0.4)), pix(R.renderCanvas(Fa, 'story', 0.4, { t: 0.6 }))).mean;
+    const Fw = Ad.makeAd('fam-worker', pcws, cat, { lang: 'en' }); Fw.els.find((e) => e.t === 'art').role = 'chef'; await R.prepare(Fw);
+    const fsp = await Ed.saveDesign(Fw), fback = await (await import('/app/core/engine.js')).engine.readFile(fsp, 'json'); await R.prepare(fback);
+    out.fam.reload = diff(pix(R.renderCanvas(Fw, 'square', 0.5)), pix(R.renderCanvas(fback, 'square', 0.5))).max; out.fam.reloadRole = fback.els.find((e) => e.t === 'art').role;
+    const Fs = Ad.makeAd('fam-worker', pcws, cat, { lang: 'en', spec: { ...spec, occupations: ['welder'] } });
+    out.fam.briefRole = Fs.els.find((e) => e.t === 'art').role;
     return out;
   });
   ok(!r.fails.length, `${r.ids.length} broadcast templates (${r.ids.join(', ')}) × 1:1 / 4:5 / 9:16 / 16:9 × EN / AR (${r.cells} design-sizes, carousel slides included): every hard rule passes as made · lowest text contrast ${r.worst.toFixed(1)}:1` + (r.fails.length ? '\n     ' + r.fails.slice(0, 8).join('\n     ') : ''));
@@ -386,6 +405,9 @@ async function adTemplates(page, e, dir) {
   const vdiff = dsum / fr.length;
   ok(pr.streams[0].codec_name === 'h264' && pr.streams[0].width === 432 && pr.streams[0].height === 768 && Math.abs(+pr.format.duration - 8) < 0.2 && vdiff < 8, `animated export: H.264 MP4 432×768, ${(+pr.format.duration).toFixed(2)} s; its frame at the still matches the still PNG (mean difference ${vdiff.toFixed(1)} of 255, compression only)`);
   ok(r.reload.max === 0, `save → reload: ${r.reloadPath.split('/').pop()} draws the same pixels after reading it back`);
+  const Fm = r.fam;
+  ok(Fm.n >= 20 && Object.values(Fm.by).every((n) => n >= 5) && Fm.pieces === Fm.n && Fm.inBrief === 0, `design families: ${Fm.n} templates (${Object.entries(Fm.by).map(([k, v]) => k + ' ' + v).join(', ')}), each its own piece; a brief still leads with the broadcast templates (${Fm.inBrief} family templates in its picks)`);
+  ok(Fm.rtl && Fm.exportVsPreview === 0 && Fm.stillVsT === 0 && Fm.early > 1 && Fm.reload === 0 && Fm.reloadRole === 'chef' && Fm.briefRole === 'welder', `families: Arabic pieces run right to left; export = preview (max ${Fm.exportVsPreview}); the still is the frame at t = still, at 0.6 s the piece is still building (mean ${Fm.early.toFixed(1)}); save → reload keeps the trade (${Fm.reloadRole}) and the pixels; a brief's welders draw a welder`);
   ok(r.brief.n >= 6 && r.brief.n <= 8 && r.brief.distinct === r.brief.n && r.brief.pass && r.brief.ads.length >= 3 && r.brief.sizes.includes('wide') && r.brief.wide >= 3, `a brief leads with broadcast templates: ${r.brief.n} distinct designs (${r.brief.ads.join(', ')} first), all passing every rule, ${r.brief.wide} of them also in 16:9`);
   // an older saved design (before the broadcast templates) still opens and draws as it did
   const legacy = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'fixtures', 'legacy-design.json'), 'utf8'));
@@ -411,10 +433,21 @@ async function adTemplates(page, e, dir) {
   await page.goto(e.url + '/app/'); await page.waitForSelector('#home-brief');
   await page.click('[data-mod-home="designs"] .tile-actions .btn:not(.primary)');
   await page.waitForSelector('#dz-mode'); await page.click('#dz-mode [data-mode="templates"]');
-  await page.waitForFunction(() => document.querySelectorAll('#dz-templates .dz-card canvas').length >= 13, null, { timeout: 120000 });
-  const nT = await page.$$eval('#dz-templates .dz-card', (x) => x.length);
-  ok(nT === 10, `Designs → 📺 Ad templates lists the company's ${nT} broadcast templates (carousels as one strip of slides)`);
+  await page.waitForSelector('#dz-t-fam');
   const SH = path.join(ROOT, 'tools', 'out', 'd');
+  // the family filter: Careers / Travel / Occupations / Bright future beside the broadcast templates
+  const famScreen = {};
+  for (const f of ['careers', 'travel', 'occupations', 'future']) {
+    await page.click(`#dz-t-fam [data-fam="${f}"]`);
+    await page.waitForFunction((f) => { const c = [...document.querySelectorAll('#dz-templates .dz-card')]; return c.length >= 5 && c.every((x) => x.dataset.fam === f) && c.every((x) => x.querySelector('canvas')); }, f, { timeout: 120000 });
+    famScreen[f] = await page.$$eval('#dz-templates .dz-card', (x) => x.length);
+    if (f === 'careers') { await page.screenshot({ path: path.join(SH, 'ad-templates-careers-1920.png') }); await page.setViewportSize({ width: 1280, height: 800 }); await page.waitForTimeout(300); await page.screenshot({ path: path.join(SH, 'ad-templates-careers-1280.png') }); await page.setViewportSize({ width: 1920, height: 1080 }); }
+  }
+  ok(Object.values(famScreen).every((n) => n >= 5), `Designs → 📺 Ad templates → family filter: ${Object.entries(famScreen).map(([k, v]) => k + ' ' + v).join(', ')} templates, each card from its own family`);
+  await page.click('#dz-t-fam [data-fam="broadcast"]');
+  await page.waitForFunction(() => document.querySelectorAll('#dz-templates .dz-card canvas').length >= 13 && [...document.querySelectorAll('#dz-templates .dz-card')].every((x) => x.dataset.fam === 'broadcast'), null, { timeout: 120000 });
+  const nT = await page.$$eval('#dz-templates .dz-card', (x) => x.length);
+  ok(nT === 10, `Designs → 📺 Ad templates → Broadcast & bulletin lists the company's ${nT} broadcast templates (carousels as one strip of slides)`);
   await page.screenshot({ path: path.join(SH, 'ad-templates-1920.png') });
   await page.setViewportSize({ width: 1280, height: 800 }); await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(SH, 'ad-templates-1280.png') });
@@ -433,7 +466,7 @@ async function adTemplates(page, e, dir) {
   ok(words.includes('approved') && words.includes('date') && sizesSeg.join() === 'story,post,square,wide' && +ed.played >= 7.9, `editor: a template opens in all four formats (${sizesSeg.join(', ')}); the passport piece's words (${words.join(', ')}) are editable; ▶ Play ran the ${ed.played} s animation once and stopped`);
   await page.click('#de-back');
   // the renders: every template in 4:5 (PNG) and 9:16 (MP4 432×768, 8 s)
-  const list = await page.evaluate(async () => (await import('/app/designs/ads.js')).AD_TEMPLATES.map((t) => [t.id, t.co, t.slides || 0]));
+  const list = await page.evaluate(async () => (await import('/app/designs/ads.js')).AD_TEMPLATES.filter((t) => !t.fam).map((t) => [t.id, t.co, t.slides || 0]));
   let nPng = 0, nMp4 = 0, bad = [];
   for (const [id, co, slides] of list) {
     const res = await page.evaluate(async ({ id, co, slides }) => {
@@ -456,4 +489,22 @@ async function adTemplates(page, e, dir) {
     }
   }
   ok(!bad.length && nMp4 === nPng, `renders: ${nPng} stills (4:5, 1080×1350 PNG) and ${nMp4} animated 9:16 MP4s (432×768, 8 s) in tools/out/ads2/` + (bad.length ? ' bad: ' + bad.join(', ') : ''));
+  // the design families: every template as a 4:5 still and a 9:16 animated MP4 → tools/out/families/<family>-<id>
+  const OUTF = path.join(ROOT, 'tools', 'out', 'families'); fs.mkdirSync(OUTF, { recursive: true });
+  const fl = await page.evaluate(async () => (await import('/app/designs/ads.js')).AD_TEMPLATES.filter((t) => t.fam).map((t) => [t.id, t.fam]));
+  let fP = 0, fM = 0; const fbad = [];
+  for (const [id, fam] of fl) {
+    const x = await page.evaluate(async ({ id }) => {
+      const W = await import('/app/editor/workspaces.js'), Ct = await import('/app/designs/catalogue.js'), Ad = await import('/app/designs/ads.js'), Ed = await import('/app/designs/editor.js');
+      W.switchWorkspace('planet-careers'); const D = Ad.makeAd(id, W.state.current, await Ct.catalogueAll(), {}); D.name = id;
+      const [p] = await Ed.exportDesign(D, { sizes: ['post'], type: 'png' }), [v] = await Ed.exportDesign(D, { sizes: ['story'], type: 'mp4', width: 432 });
+      return { png: p.path, mp4: v.path };
+    }, { id });
+    const base = path.join(OUTF, `${fam}-${id.replace(/^fam-/, '')}`);
+    fs.copyFileSync(path.join(dir, x.png), base + '-4x5.png'); fP++;
+    fs.copyFileSync(path.join(dir, x.mp4), base + '-9x16.mp4');
+    const q = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=width,height', '-of', 'json', base + '-9x16.mp4']).toString());
+    if (q.streams[0].width !== 432 || q.streams[0].height !== 768 || Math.abs(+q.format.duration - 8) > 0.2) fbad.push(id); else fM++;
+  }
+  ok(!fbad.length && fM === fP && fP >= 20, `family renders: ${fP} stills (4:5 PNG) and ${fM} animated 9:16 MP4s (432×768, 8 s) in tools/out/families/` + (fbad.length ? ' bad: ' + fbad.join(', ') : ''));
 }

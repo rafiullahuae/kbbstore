@@ -11,6 +11,9 @@
 //   hover:   Themes / Templates / Look / transitions / Create formats / Music / SFX: starts within 300 ms, stops on leave,
 //            one at a time, no request storm while sweeping, frame time reported
 //   shots:   the Themes tab and hover previews at 1920×1080 + 1280×800 → shots/th/
+//   families: the design families (careers / travel / occupations / bright future): every element placed (ONE step)
+//            and on for the whole video, the four family transitions on a cut, a family package (ONE step, no
+//            bulletin pieces), preview = export, save + reload, the Place-elements family filter
 //
 // usage: NODE_PATH=/home/user/kbbstore/node_modules node tools/th-check.cjs   (QUICK=1: fewer themes)
 'use strict';
@@ -465,6 +468,86 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
   ok(trx.allCuts.cuts === 2 && trx.allCuts.placed === 2 && trx.allCuts.steps === 1 && trx.allCuts.onReel === 2 && trx.allCuts.undo.items === 0 && trx.allCuts.undo.landmarkBack && trx.allCuts.redo === 2, `apply to all cuts: ${trx.allCuts.placed} cuts get the colour-slab push in ONE step (replacing the landmark reveal); undo brings the reel back exactly, redo puts them again`);
   ok(trx.save.same && trx.save.n === 2, `save + reload: ${trx.save.n} transitions come back identical`);
 
+  // ── the design families (2026-11, "totally different careers / travel / occupations / bright future designs"):
+  //    every family element placed anywhere (ONE step) and on for the whole video, the family transitions on a cut, a
+  //    family package applied (ONE step, its own intro / signature / end / transition, no bulletin bar or crawl),
+  //    preview = export, save + reload ──
+  const famx = await ev(async ({ FACE }) => {
+    const ed = window.kbbEditor, TH = window.TH, R = await import('/app/core/render.js'), out = {};
+    ed.setAspect('9:16'); await new Promise((r) => setTimeout(r, 50));
+    const all = () => ed.project.tracks.flatMap((t) => t.items), find = (id) => all().find((i) => i.id === id);
+    const fe = TH.ELEMENTS.filter((d) => d.fam), ft = TH.TRANSITIONS.filter((d) => d.fam), fth = TH.THEMES.filter((t) => t.fam);
+    out.counts = { el: fe.length, by: Object.fromEntries(['careers', 'travel', 'occupations', 'future'].map((f) => [f, fe.filter((d) => d.fam === f).length])), trans: ft.map((x) => x.id), themes: fth.length, groups: [...new Set(fth.map((t) => t.group))] };
+    // a family package: ONE undo step
+    const u0 = ed.history.undoStack.length;
+    await TH.apply(window.CTX, 'fam-future-sunrise', { faces: [FACE], sfx: false }); ed.history.seal();
+    const mine = all().filter((i) => i.auto === 'theme'), ov = mine.find((i) => i.type === 'theme.overlay');
+    out.pkg = { steps: ed.history.undoStack.length - u0, els: mine.filter((i) => i.type === 'theme.el' && i.style.el !== 'grade').map((i) => i.style.el), trans: mine.filter((i) => i.type === 'theme.trans').map((i) => i.style.kind), news: ov.style.defs.filter((d) => ['crawl', 'bug', 'frame', 'ticker'].includes(d.kind)).map((d) => d.kind), bulletin: mine.filter((i) => ['lowerbar', 'breaking', 'bulletin', 'title'].includes(i.style?.el)).length };
+    // every family element at a time of his choosing: ONE step, his own clip, starts where he put it
+    const bad = [];
+    for (const d of fe) {
+      const n0 = ed.history.undoStack.length, it = TH.placeElement(window.CTX, d.id, { theme: 'fam-careers-climb', t0: 1.25, dur: 2.5, variant: d.variants ? d.variants[4] : undefined }); ed.history.seal();
+      if (ed.history.undoStack.length - n0 !== 1 || Math.abs(find(it.id).t0 - 1.25) > 1e-6 || find(it.id).auto) bad.push(d.id);
+    }
+    out.place = { n: fe.length, bad };
+    // whole video: a panel spans the reel, a full-screen scene opens it; ONE step each, undo takes it off
+    const reel = TH.reelEnd(ed.project) || ed.duration();
+    const w1 = await TH.setWhole(window.CTX, 'fam-path', true, { theme: 'fam-careers-climb' }); ed.history.seal();
+    const span = TH.wholeItems(ed.project, 'fam-path')[0];
+    const w2 = await TH.setWhole(window.CTX, 'fam-sunrise', true, { theme: 'fam-future-sunrise' }); ed.history.seal();
+    const start = TH.wholeItems(ed.project, 'fam-sunrise')[0];
+    out.whole = { n: w1 + w2, span: [+span.t0.toFixed(3), +(span.t0 + span.out - span.in).toFixed(3)], start: [+start.t0.toFixed(3), +(start.out - start.in).toFixed(3)], reel: +reel.toFixed(3) };
+    ed.history.undo(); out.whole.undone = !TH.isWhole(ed.project, 'fam-sunrise');
+    // the family transitions on the cut: each lands centred on it in ONE step and draws over the switch
+    await R.prepareRender(ed.project);
+    const cut = TH.cutPairs(ed.project)[0], tr = [];
+    const W = 216, H = 384, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d', { willReadFrequently: true });
+    const px = (t, skip) => { R.renderFrame(g, ed.project, t, { scale: 0.2, skip }); return g.getImageData(0, 0, W, H).data; };
+    const diff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i += 4) s += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]); return +(s / (a.length / 4) / 3).toFixed(1); };
+    for (const d of ft) {
+      const n0 = ed.history.undoStack.length, [it] = TH.placeTransition(window.CTX, d.id, { at: cut.t + 0.3, theme: 'fam-travel-journey' }); ed.history.seal();
+      const i2 = find(it.id), mid = i2.t0 + (i2.out - i2.in) / 2;
+      const skip = new Set(all().filter((i) => i.type === 'theme.trans' || i.type === 'caption').map((i) => i.id));
+      tr.push({ id: d.id, steps: ed.history.undoStack.length - n0, mid: +mid.toFixed(3), cut: cut.t, drawn: diff(px(cut.t, new Set(all().filter((i) => i.type === 'caption').map((i) => i.id))), px(cut.t, skip)) });
+    }
+    out.trans = tr;
+    // save + reload: the family items come back identical and draw the same pixels
+    await ed.save();
+    const p2 = await window.CTX.engine.loadProject(ed.project.workspace, ed.project.id); await R.prepareRender(p2);
+    const pick = (p) => JSON.stringify(p.tracks.flatMap((t) => t.items).filter((i) => /^fam-/.test(i.style?.el || i.style?.kind || '')));
+    const f2 = (p, t) => { R.renderFrame(g, p, t, { scale: 0.2 }); return g.getImageData(0, 0, W, H).data; };
+    out.save = { same: pick(ed.project) === pick(p2), n: p2.tracks.flatMap((t) => t.items).filter((i) => /^fam-/.test(i.style?.el || i.style?.kind || '')).length, frames: [1.0, 2.4, cut.t].map((t) => diff(f2(ed.project, t), f2(p2, t))) };
+    return out;
+  }, { FACE });
+  numbers.families = famx;
+  ok(famx.counts.el >= 24 && Object.values(famx.counts.by).every((n) => n >= 5) && famx.counts.trans.length === 4 && famx.counts.themes >= 8 && famx.counts.groups.length === 4, `design families in the reels: ${famx.counts.el} elements (${Object.entries(famx.counts.by).map(([k, v]) => k + ' ' + v).join(', ')}), transitions ${famx.counts.trans.join(', ')}, ${famx.counts.themes} packages in the groups ${famx.counts.groups.join(' / ')}`);
+  ok(famx.pkg.steps === 1 && famx.pkg.els.length >= 3 && famx.pkg.els.every((x) => /^fam-/.test(x)) && famx.pkg.trans.every((x) => /^fam-/.test(x)) && famx.pkg.trans.length >= 1 && !famx.pkg.news.length && !famx.pkg.bulletin, `apply the Bright future · Sunrise package = ONE undo step: ${famx.pkg.els.join(', ')} + ${famx.pkg.trans.join(', ')} on the cut; no bug, crawl, colour bars, title slab or bulletin bar`);
+  ok(!famx.place.bad.length, `every family element placed at 1.25 s for 2.5 s = ONE undo step each, the owner's own clip (${famx.place.n} elements${famx.place.bad.length ? '; bad: ' + famx.place.bad.join(', ') : ''})`);
+  ok(famx.whole.n === 2 && famx.whole.span[0] === 0 && Math.abs(famx.whole.span[1] - famx.whole.reel) < 0.01 && famx.whole.start[0] === 0 && famx.whole.undone, `whole video: the 5-step path spans 0 → ${famx.whole.span[1]} s (reel ${famx.whole.reel} s), the sunrise opens the reel (${famx.whole.start[1]} s); undo takes it off`);
+  ok(famx.trans.every((x) => x.steps === 1 && Math.abs(x.mid - x.cut) < 0.002 && x.drawn > 8), `family transitions on the cut (dropped 0.3 s after it): ${famx.trans.map((x) => `${x.id} centred ${x.mid} s, ${x.drawn}/255 over the switch`).join('; ')}`);
+  ok(famx.save.same && famx.save.n > 20 && famx.save.frames.every((x) => x === 0), `save + reload: ${famx.save.n} family items come back identical; frames of the reloaded reel equal the open one (${famx.save.frames.join(', ')})`);
+  // preview = export with a family package, a hand-placed family element and a family transition mid-switch
+  const fpv = await ev(async ({ FACE }) => {
+    const ed = window.kbbEditor; ed.setAspect('9:16');
+    await window.TH.apply(window.CTX, 'fam-travel-journey', { faces: [FACE], sfx: false });
+    window.TH.placeElement(window.CTX, 'fam-departures', { t0: 3.4, dur: 2.2, theme: 'fam-travel-board' });
+    const E = await import('/app/core/export.js'), p = ed.project;
+    const r = await E.exportMp4(p, ed.media, { quality: 'high', width: 540, height: 960, duration: 6 });
+    const file = `workspaces/${p.workspace}/exports/th-fam-preview-vs-export.mp4`; await ed.engine.writeFile(file, r.blob);
+    return { file, cut: window.TH.cutPairs(p)[0].t };
+  }, { FACE });
+  const fdiffs = [];
+  for (const t of [0.8, 2.0, fpv.cut, 4.4]) {
+    await ev((t) => window.kbbEditor.seek(t), t);
+    await page.waitForFunction(() => window.kbbEditor.preview.pending === 0, null, { timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    const fr = await ev(() => { const c = window.kbbEditor.preview.canvas, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, rgb = new Uint8Array(c.width * c.height * 3); for (let i = 0, j = 0; i < d.length; i += 4) { rgb[j++] = d[i]; rgb[j++] = d[i + 1]; rgb[j++] = d[i + 2]; } return { w: c.width, h: c.height, data: Array.from(rgb) }; });
+    fdiffs.push({ t: +t.toFixed(2), diff: +meanDiff(Uint8Array.from(fr.data), frameRGB(path.join(STUDIO, fpv.file), t, fr.w, fr.h)).toFixed(2) });
+  }
+  numbers.familiesPreviewVsExport = fdiffs;
+  ok(fdiffs.every((x) => x.diff < 6), `preview = export with a family package (Travel · Journey), a hand-placed departures board and the suitcase transition mid-switch: ${fdiffs.map((x) => `${x.t} s ${x.diff}/255`).join(', ')} (< 6)`);
+  await ev(async ({ FACE }) => { await window.TH.apply(window.CTX, 'country-de', { faces: [FACE] }); }, { FACE });
+
   await page.click('.side-tab[data-side="mod:themes"]');
   await page.waitForSelector('.th-grid .th-tile', { timeout: 30000 });
   await page.waitForTimeout(1500);
@@ -504,6 +587,21 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
   ok(elRows >= 4 && tuned.off && tuned.back, `per-element controls: ${elRows} elements (on/off, density, speed, colour); hiding “${tuned.layer}” is one undoable step and ⌘Z brings it back`);
   const tiles = await page.locator('.th-grid .th-tile').count();
   ok(tiles === nThemes, `the gallery shows all ${tiles} themes, suggestions on top (${await ev(() => [...document.querySelectorAll('.th-sugg .th-tile')].map((b) => b.dataset.theme).join(', '))})`);
+
+  // the family filter in Themes → Place elements: each family lists only its own elements; the choice is remembered
+  const famUi = {};
+  for (const f of ['careers', 'travel', 'occupations', 'future', 'broadcast', 'all']) {
+    await page.click(`[data-fam-filter="${f}"]`); await page.waitForTimeout(250);
+    famUi[f] = await ev(() => ({ rows: [...document.querySelectorAll('.th-place[data-place]')].map((r) => r.dataset.place), variants: document.querySelectorAll('[data-fam-variant]').length }));
+    if (f === 'occupations') {
+      for (const [w, hh] of [[1920, 1080], [1280, 800]]) { await page.setViewportSize({ width: w, height: hh }); await page.waitForTimeout(400); await ev(() => document.querySelector('[data-place-fam]')?.scrollIntoView({ block: 'start' })); await page.waitForTimeout(300); await page.screenshot({ path: path.join(SH2, `panel-families-occupations-${w}x${hh}.png`) }); }
+      await page.setViewportSize({ width: 1920, height: 1080 }); await page.waitForTimeout(300);
+    }
+  }
+  numbers.familiesPanel = Object.fromEntries(Object.entries(famUi).map(([k, v]) => [k, v.rows.length]));
+  const famOnly = (f) => famUi[f].rows.every((id) => famx && TH_FAM[id] === f);
+  const TH_FAM = await ev(() => Object.fromEntries(window.TH.ELEMENTS.filter((d) => d.fam).map((d) => [d.id, d.fam])));
+  ok(['careers', 'travel', 'occupations', 'future'].every((f) => famUi[f].rows.length >= 5 && famOnly(f)) && famUi.broadcast.rows.every((id) => !TH_FAM[id]) && famUi.broadcast.rows.includes('ticket') && famUi.all.rows.length === famUi.broadcast.rows.length + Object.keys(TH_FAM).length && famUi.occupations.variants >= 13, `Place elements family filter: ${Object.entries(famUi).map(([k, v]) => k + ' ' + v.rows.length).join(' · ')}; the trades chips (${famUi.occupations.variants}) under the occupation elements`);
 
   // ── hover previews ──
   const hoverTest = async (label, sel, { audio = false, n = 3 } = {}) => {

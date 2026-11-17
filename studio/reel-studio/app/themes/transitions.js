@@ -19,6 +19,7 @@ import { themeById } from './themes.js';
 import { flagImage, mapPaths } from './draw.js';
 import { HERO } from './landmarks2.js';
 import { LANDMARKS } from '../auto/countries/landmarks.js';
+import { FAM_PAL } from './families.js';
 
 const { clamp, easeIO, easeOut, easeIn, TAU, mix, rgba } = A;
 
@@ -31,12 +32,18 @@ export const TRANSITIONS = [
   { id: 'slabs', label: 'Colour-slab push', icon: '🟥', dur: 0.6, note: 'Flag-colour slabs push through' },
   { id: 'landmark', label: 'Landmark reveal', icon: '🏛', dur: 1.0, note: 'The landmark silhouette opens onto the next clip' },
   { id: 'ticket', label: 'Boarding-pass tear', icon: '🎫', dur: 0.8, note: 'A boarding pass slams in and tears' },
+  // the design families (2026-11): bright, full-screen, no bulletin look
+  { id: 'fam-door', label: 'Door wipe', icon: '🚪', dur: 1.0, note: 'Two doors close on the clip and swing open on the next', fam: 'future' },
+  { id: 'fam-cv', label: 'CV page slide', icon: '📄', dur: 0.9, note: 'A CV page slides up over the cut and away', fam: 'careers' },
+  { id: 'fam-suitcase', label: 'Suitcase open', icon: '🧳', dur: 1.0, note: 'A suitcase snaps shut and opens on the next clip', fam: 'travel' },
+  { id: 'fam-sunrise', label: 'Sunrise wipe', icon: '🌅', dur: 1.1, note: 'The sun rises, fills the frame and clears on the next clip', fam: 'future' },
 ];
 export const transitionById = (id) => TRANSITIONS.find((x) => x.id === id) || null;
 
 /** the transition a theme uses on its cuts */
 export function transitionOf(th) {
   if (!th) return 'slabs';
+  if (th.pkg?.trans) return th.pkg.trans;
   if (th.group === 'Countries') return ['flag', 'map', 'landmark', 'globe', 'slabs'][(th.country || 'xx').charCodeAt(0) % 5];
   return { europe: 'flag', travel: 'plane', passport: 'page', study: 'slabs', 'work-trades': 'slabs', 'work-care': 'slabs', 'work-hospitality': 'ticket', 'work-abroad': 'plane' }[th.id] || 'slabs';
 }
@@ -87,6 +94,7 @@ function drawTrans(ctx, item, t, project, env) {
     A.glint(ctx, W * 0.5, H * 0.5, u * 0.12 * Math.sin(Math.PI * p), Math.sin(Math.PI * p) * 0.8, '#ffffff');
     return;
   }
+  if (/^fam-/.test(kind)) { famTrans(ctx, kind, p, W, H, u, t); return; }
   const img = K.code ? flagImage(K.code) : K.flagKind === 'stars' ? A.bandFlag(K.flag, 'stars') : A.emblem(K);
   if (kind === 'slabs') {
     // flag-colour slabs push across; the incoming clip rides in behind the last slab
@@ -156,6 +164,69 @@ function drawTrans(ctx, item, t, project, env) {
     else {
       const k = easeIn((p - 0.5) / 0.5), dy = k * H * 1.2, rot = k * 0.35;
       for (const half of [-1, 1]) { ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(half * rot * 0.5); ctx.translate(half * k * W * 0.3, half * dy * (land ? 0.3 : 1)); ctx.translate(-W / 2, -H / 2); draw(half); ctx.restore(); }
+    }
+  }
+}
+/**
+ * the design-family transitions: before the cut (p < 0.5) the graphic closes over the outgoing clip, at the cut it holds
+ * the whole frame, after it opens onto the incoming clip (the frame under it is already the next clip)
+ */
+function famTrans(c, kind, p, W, H, u, t) {
+  const close = p < 0.5 ? easeOut(p / 0.5) : 1 - easeIn((p - 0.5) / 0.5);
+  if (close <= 0.001) return;
+  const rr = (x, y, w, h, r) => { c.beginPath(); A.rr(c, x, y, w, h, r); };
+  if (kind === 'fam-door') {
+    const P = FAM_PAL.future, half = W / 2, opening = p >= 0.5;
+    for (const s of [-1, 1]) {
+      // closing they slide in; opening they swing on their hinges (narrowing as they turn away)
+      const cw = opening ? half * close : half * close, x = s < 0 ? 0 : W - cw;
+      const g = c.createLinearGradient(x, 0, x + cw, 0); g.addColorStop(0, mix(P.a, '#000000', s < 0 ? 0 : 0.18)); g.addColorStop(1, mix(P.a, '#000000', s < 0 ? 0.18 : 0));
+      c.fillStyle = g; c.fillRect(x, 0, cw + 1, H);
+      c.strokeStyle = rgba('#ffffff', 0.35); c.lineWidth = u * 0.01;
+      for (const [y0, y1] of [[0.08, 0.46], [0.54, 0.92]]) c.strokeRect(x + cw * 0.14, H * y0, cw * 0.72, H * (y1 - y0));
+      c.fillStyle = P.b; c.beginPath(); c.arc(s < 0 ? x + cw * 0.88 : x + cw * 0.12, H * 0.5, u * 0.022, 0, TAU); c.fill();
+    }
+    if (p > 0.35 && p < 0.75) { c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.sin(Math.PI * (p - 0.35) / 0.4) * 0.8; A.gradRect(c, W / 2 - u * 0.15, 0, u * 0.3, H, [[0, 'rgba(255,240,190,0)'], [0.5, 'rgba(255,240,190,0.9)'], [1, 'rgba(255,240,190,0)']], 'h'); c.restore(); }
+    return;
+  }
+  if (kind === 'fam-cv') {
+    const P = FAM_PAL.careers, y = p < 0.5 ? H * (1 - close) : -H * (1 - close);
+    c.save(); c.translate(0, y); c.rotate((1 - close) * (p < 0.5 ? 0.04 : -0.04));
+    c.fillStyle = '#ffffff'; c.fillRect(-W * 0.05, -H * 0.02, W * 1.1, H * 1.04);
+    c.fillStyle = P.d; c.fillRect(-W * 0.05, 0, W * 1.1, H * 0.16);
+    c.fillStyle = P.b; c.beginPath(); c.arc(W * 0.2, H * 0.16, u * 0.12, 0, TAU); c.fill(); c.fillStyle = '#ffffff'; c.beginPath(); c.arc(W * 0.2, H * 0.16, u * 0.1, 0, TAU); c.fill(); c.fillStyle = P.a; c.beginPath(); c.arc(W * 0.2, H * 0.14, u * 0.035, 0, TAU); c.fill(); c.beginPath(); c.ellipse(W * 0.2, H * 0.2, u * 0.06, u * 0.035, 0, Math.PI, 0); c.fill();
+    c.fillStyle = rgba(P.ink, 0.14); for (let i = 0; i < 9; i++) { rr(W * 0.1, H * (0.32 + i * 0.065), W * (0.8 - (i % 3) * 0.16), H * 0.018, H * 0.009); c.fill(); }
+    for (let i = 0; i < 3; i++) { c.fillStyle = [P.a, P.c, P.d][i]; rr(W * 0.1, H * (0.32 + (i * 3 + 1) * 0.065), W * 0.5 * (0.6 + 0.3 * i / 2), H * 0.018, H * 0.009); c.fill(); }
+    c.restore();
+    A.gradRect(c, 0, p < 0.5 ? y - u * 0.06 : y + H, W, u * 0.06, p < 0.5 ? [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.25)']] : [[0, 'rgba(0,0,0,0.25)'], [1, 'rgba(0,0,0,0)']]);
+    return;
+  }
+  if (kind === 'fam-suitcase') {
+    const P = FAM_PAL.travel, hh = H / 2 * close + 1, col = P.c;
+    const shell = (y, h, top) => {
+      const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, mix(col, '#ffffff', top ? 0.15 : 0)); g.addColorStop(1, mix(col, '#000000', top ? 0 : 0.2)); c.fillStyle = g; c.fillRect(0, y, W, h);
+      c.fillStyle = mix(col, '#000000', 0.25); for (const k of [0.25, 0.75]) c.fillRect(W * k - u * 0.03, y, u * 0.06, h);
+      c.fillStyle = rgba('#ffffff', 0.18); for (let i = 1; i < 4; i++) c.fillRect(0, y + (h * i) / 4, W, u * 0.006);
+    };
+    shell(0, hh, true); shell(H - hh, hh, false);
+    if (close > 0.9) { c.fillStyle = '#C0C7D1'; rr(W / 2 - u * 0.12, H / 2 - u * 0.04, u * 0.24, u * 0.08, u * 0.02); c.fill(); c.fillStyle = P.b; rr(W * 0.7, H / 2 - u * 0.06, u * 0.16, u * 0.12, u * 0.02); c.fill(); }
+    c.fillStyle = '#C0C7D1'; c.fillRect(0, hh - u * 0.012, W, u * 0.024); c.fillRect(0, H - hh - u * 0.012, W, u * 0.024);
+    return;
+  }
+  if (kind === 'fam-sunrise') {
+    const P = FAM_PAL.future;
+    if (p < 0.5) {
+      // the sun rises from the bottom edge and swells until its light fills the frame
+      const R = Math.hypot(W, H) * 1.05 * close, cy = H + u * 0.1 - (H * 0.5 + u * 0.1) * close;
+      const g = c.createRadialGradient(W / 2, cy, 0, W / 2, cy, Math.max(1, R)); g.addColorStop(0, '#FFF6D5'); g.addColorStop(0.45, P.b); g.addColorStop(0.8, P.a); g.addColorStop(1, rgba(P.a, 0));
+      c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = close * 0.5; c.translate(W / 2, cy); c.rotate(t * 0.2); c.fillStyle = 'rgba(255,240,200,0.35)'; for (let i = 0; i < 16; i++) { c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, Math.hypot(W, H), (i / 16) * TAU, ((i + 0.45) / 16) * TAU); c.closePath(); c.fill(); } c.restore();
+    } else {
+      // the light clears from the middle outward onto the next clip
+      const hole = Math.hypot(W, H) * 0.6 * (1 - close);
+      const g = c.createRadialGradient(W / 2, H / 2, Math.max(0, hole * 0.7), W / 2, H / 2, Math.max(1, hole * 0.7 + Math.hypot(W, H) * 0.5));
+      g.addColorStop(0, rgba('#FFF6D5', 0)); g.addColorStop(0.15, rgba('#FFF6D5', close)); g.addColorStop(0.6, rgba(P.b, close)); g.addColorStop(1, rgba(P.a, close));
+      c.fillStyle = g; c.fillRect(0, 0, W, H);
     }
   }
 }

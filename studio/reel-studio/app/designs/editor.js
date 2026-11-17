@@ -21,6 +21,7 @@ import { searchIcons, loadIcons } from './icons.js';
 import { exportDesignVideo } from './video.js';
 import { motionOf } from './motion.js';
 import { PIECE_NAMES } from './broadcast.js';
+import { TRADES, TRADE_IDS } from '../themes/fam.js';
 const ap = (el, ...k) => { el.append(...k.flat(Infinity).filter((x) => x != null && x !== false)); return el; };
 
 const PKEYS = [['ink', 'Text'], ['sub', 'Soft text'], ['accText', 'Accent text'], ['acc', 'Accent'], ['acc2', 'Accent 2'], ['onAcc', 'On accent'], ['card', 'Card'], ['cardInk', 'Card text'], ['bg', 'Background'], ['bg2', 'Background 2']];
@@ -227,6 +228,12 @@ export function openDesignEditor(D0, { ws, cat, spec, size, home, onSaved }) {
         ap(insp, h('div.row', h('span', k), i));
       }
       if (el.cc) ap(insp, countryPick(el.cc, (c) => { el.cc = c; }));
+      // a design-family piece that draws a trade (worker portrait, pick-your-trade, day in the life, uniform morph)
+      if (el.fam && el.role) {
+        const rs = h('select.de-role', { 'aria-label': 'Trade' }, TRADE_IDS.map((r) => h('option', { value: r, selected: r === el.role }, TRADES[r].en)));
+        rs.addEventListener('change', () => { snap(); el.role = rs.value; changed(); });
+        ap(insp, h('div.row', h('span', 'Trade'), rs));
+      }
     }
     const num = (k) => { const i = h('input.de-num', { type: 'number', value: Math.round(g[k] || 0), 'aria-label': k }); i.addEventListener('change', () => { snap(); g[k] = +i.value; changed(); }); return h('span', k.toUpperCase() + ' ', i); };
     const op = h('input', { type: 'range', min: 10, max: 100, value: el.op ?? 100 }); op.addEventListener('change', () => { snap(); el.op = +op.value; changed(); });

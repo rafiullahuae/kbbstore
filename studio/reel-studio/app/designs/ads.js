@@ -20,6 +20,8 @@ import { withL, mix, lum, norm, hsl } from './lib/color.js';
 import { wordsFor } from './broadcast.js';
 import { brandOf, fontsFor } from './generate.js';
 import { motionOf } from './motion.js';
+import { FAM_TEMPLATES, FAM_W, famCompose, famPalette, roleOf, roleWords, pieceWords } from './ads-fam.js';
+import { FAM_PIECES } from '../themes/fam.js';
 
 export const AD_SIZES = ['story', 'post', 'square', 'wide'];
 const uid = () => 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -69,13 +71,16 @@ export const AD_TEMPLATES = [
   { id: 'kbb-tips', co: KBB, kinds: ['brand', 'generic'], name: 'Before / after tips', nameAr: 'نصائح قبل وبعد', pal: 'deep' },
   { id: 'kbb-bundle', co: KBB, kinds: ['offer', 'brand'], name: 'Bundle', nameAr: 'باقة', pal: 'light' },
   { id: 'kbb-carousel', co: KBB, kinds: ['offer', 'launch', 'brand'], name: 'Carousel · routine', nameAr: 'كاروسيل · الروتين', slides: 4, pal: 'deep' },
+  // the design families (ads-fam.js): careers, travel, occupations, bright future
+  ...FAM_TEMPLATES,
 ];
 export const AD_NAMES = Object.fromEntries(AD_TEMPLATES.map((t) => [t.id, t.name]));
 export const adById = (id) => AD_TEMPLATES.find((t) => t.id === id) || null;
 const isPC = (ws) => /planet|consult|visa|immigra/i.test((ws?.id || '') + ' ' + (ws?.industry || ''));
 /** the templates that fit a company (and a brief's kind, best first) */
 export function adTemplatesFor(ws, spec = null) {
-  const co = isPC(ws) ? PC : KBB, list = AD_TEMPLATES.filter((t) => t.co === co);
+  // a brief keeps leading with the broadcast templates; the design families are picked in Designs → 📺 Ad templates
+  const co = isPC(ws) ? PC : KBB, list = AD_TEMPLATES.filter((t) => t.co === co && (!spec || !t.fam));
   if (!spec) return list;
   const k = spec.kind, fit = list.filter((t) => t.kinds.includes(k) && !t.slides), rest = list.filter((t) => !fit.includes(t) && !t.slides);
   return [...fit, ...rest];
@@ -101,6 +106,7 @@ const W = {
   'kbb-bundle': { kicker: ['BUNDLE', 'باقة'], headline: ['THE GLOW BUNDLE', 'باقة الإشراقة'], offer: ['Bundle price AED ‹XX›', 'سعر الباقة ‹XX› درهم'], cta: ['Get the bundle', 'اطلبي الباقة'], trust: ['While stocks last', 'حتى نفاد الكمية'] },
   'kbb-carousel': { kicker: ['SWIPE · YOUR ROUTINE', 'اسحبي · روتينك'], headline: ['GLOW IN FOUR STEPS', 'إشراقتك بأربع خطوات'], s1: ['Cleanse', 'تنظيف'], s2: ['Treat', 'سيروم'], s3: ['Moisturise', 'ترطيب'], sub: ['Authentic Korean skincare · UAE delivery', 'منتجات كورية أصلية · توصيل في الإمارات'], cta: ['Shop now', 'تسوّقي الآن'], trust: ['General tips · not medical advice', 'نصائح عامة · ليست نصيحة طبية'] },
 };
+Object.assign(W, FAM_W);
 const ROLE_AR = { nurse: 'ممرض/ة', caregiver: 'مقدّم رعاية', driver: 'سائق', welder: 'لحّام', chef: 'طاهٍ', electrician: 'كهربائي', builder: 'عامل بناء', waiter: 'موظف فندق', warehouse: 'مستودع' };
 const ROLE_EN = { nurse: 'NURSE', caregiver: 'CAREGIVER', driver: 'DRIVER', welder: 'WELDER', chef: 'CHEF', electrician: 'ELECTRICIAN', builder: 'BUILDER', waiter: 'HOTEL STAFF', warehouse: 'WAREHOUSE' };
 /** the themes' drawn job roles that match the brief's occupations (else a trades trio) */
@@ -578,6 +584,9 @@ C['kbb-carousel'] = (X) => {
   return out;
 };
 
+// ── the design families: one composition each (ads-fam.js) on the same builders ──
+for (const t of FAM_TEMPLATES) C[t.id] = (X) => famCompose(t, X, { art, shape, logoChip, CHIP });
+
 // ── assembling a design ──
 const BG_KINDS = new Set(['flag', 'scene', 'glow', 'rays', 'silk', 'petals', 'confetti', 'leaks', 'frame', 'stripes']);
 const MIRROR = (W, [el, g]) => {
@@ -591,6 +600,7 @@ const MIRROR = (W, [el, g]) => {
     if (el.pts) e.pts = el.pts.map(([x, y]) => [W - x, y]);
     if (el.tilt != null) e.tilt = -el.tilt;
     if (el.kind === 'plane') e.flip = true;
+    if (el.fam) e.rtl = true;   // a family piece runs its own direction right to left (its words still read)
   }
   return [e, g2];
 };
@@ -613,9 +623,11 @@ export function makeAd(id, ws, cat = {}, opts = {}) {
   if (photoOf(ws, 'product') && !pids.length) products.unshift({ id: 'own', name: 'Your product', brand: '', src: photoOf(ws, 'product'), w: 800, h: 1000 });
   const roles = rolesFor(spec);
   const occ = (cat.occupations || []).find((o) => spec?.occupations?.includes(o.id));
-  const pal = opts.palette || broadcastPalettes(ws)[tpl.pal || 'deep'];
+  const pal = opts.palette || (tpl.fam ? famPalette(tpl) : broadcastPalettes(ws)[tpl.pal || 'deep']);
+  const role = tpl.fam ? roleOf(tpl, spec) : null;
   const ct = contactOf(ws, lang);
   const words = wordsOf(tpl, lang, { country, product: products[0]?.name, brand: (products[0]?.brand || '').toUpperCase(), roles });
+  if (tpl.fam) for (const k of Object.keys(words)) words[k] = words[k].replace(/\{R\}/g, roleWords(role, false)).replace(/\{ra\}/g, roleWords(role, true));
   words.cta = ctaOf(ws, lang, words.cta);
   words.contact = ct.line;
   if (tpl.id === 'pc-europe') ccs.forEach((c, k) => { const C2 = (cat.countries || []).find((x) => x.code === c); words['c' + k] = ar ? C2?.nameAr || c : (C2?.name || c).toUpperCase(); });
@@ -635,9 +647,9 @@ export function makeAd(id, ws, cat = {}, opts = {}) {
   }
   if (tpl.id === 'pc-carousel' && slide === slides - 1) words.end = ar ? 'وظيفتك القادمة تبدأ هنا' : 'YOUR NEXT JOB STARTS HERE';
   if (tpl.id === 'kbb-carousel' && slide > 0) words['n' + slide] = String(slide);
-  const fonts = Object.assign(fontsFor(ws), { display: 'Anton' });
+  const fonts = Object.assign(fontsFor(ws), { display: tpl.font || 'Anton' });
   const D = {
-    v: 1, id: uid(), name: `${tpl.name}${slides ? ` · ${slide + 1}/${slides}` : ''} · ${ar ? 'عربي' : 'EN'}`, workspace: ws.id, family: tpl.id, ad: { tpl: tpl.id, cc, ccs, slide: slides ? slide : undefined, slides: slides || undefined, set: opts.set },
+    v: 1, id: uid(), name: `${tpl.name}${slides ? ` · ${slide + 1}/${slides}` : ''} · ${ar ? 'عربي' : 'EN'}`, workspace: ws.id, family: tpl.id, ad: { tpl: tpl.id, fam: tpl.fam, cc, ccs, slide: slides ? slide : undefined, slides: slides || undefined, set: opts.set },
     lang, copyId: opts.copy?.id || null, paletteId: pal.id, sizes: sizes.slice(), palette: { ...pal }, art: { base: 'linear', angle: 160, seed: opts.seed || 1, layers: [] }, bgImage: null,
     brand: brandOf(ws), fonts, els: [], geo: {}, motion: motionOf(null),
     spec: spec ? { kind: spec.kind, brief: spec.brief, occasion: spec.occasion?.id || null, products: spec.products, countries: spec.countries, occupations: spec.occupations, languages: spec.languages, tone: spec.tone, industry: spec.industry } : { kind: tpl.kinds[0], brief: '', products: products.map((p) => p.id), countries: ccs, occupations: [], languages: [lang], industry: tpl.co === PC ? 'consultancy' : 'beauty' },
@@ -647,7 +659,7 @@ export function makeAd(id, ws, cat = {}, opts = {}) {
   for (const size of sizes) {
     const [Wc, H] = PX[size], A = SAFE[size];
     const X = { size, W: Wc, H, A, aw: A.x1 - A.x0, story: size === 'story', post: size === 'post', sq: size === 'square', wide: size === 'wide', ar, P: pal, txt: words, words: pw, cc, ccs, roles, ws, products, slide, slides,
-      workerSrc: occ ? 'library/occupations/' + (occ.figure?.file || 'figures/trades.svg') : null, stk: { measureD: D, textK: opts.textK || 1 } };
+      workerSrc: occ ? 'library/occupations/' + (occ.figure?.file || 'figures/trades.svg') : null, role, pieceWords: tpl.fam ? pieceWords(tpl, lang) : null, pieceName: tpl.fam ? (ar ? FAM_PIECES[tpl.piece]?.nameAr : FAM_PIECES[tpl.piece]?.name) : null, stk: { measureD: D, textK: opts.textK || 1 } };
     X.T = texts(X);
     let list = C[tpl.id](X).filter(([el]) => el);
     if (ar) list = list.map((x) => MIRROR(Wc, x));

@@ -5,6 +5,7 @@ import { THEMES, GROUPS, themeById } from './themes.js';
 import { suggestThemes, countryOf } from './suggest.js';
 import { applyTheme, tuneTheme, tuneLayer, removeTheme, resyncBeats, overlayOf, themeItems, placeElement, setWhole, isWhole } from './apply.js';
 import { ELEMENTS, STICKER_LABELS } from './elements.js';
+import { FAMILIES, FAMILY_LABELS, FAMILY_ICONS } from './fam.js';
 import { hoverPreview, themeSpec, elementSpec, transSpec, hoverToggles, css as hoverCss, drawMini } from './hover.js';
 import { TRANSITIONS, placeTransition, cutsOf as cutPairs } from './transitions.js';
 import { recipeById } from '../auto/recipes/recipes.js';
@@ -137,7 +138,7 @@ export function mountPanel(el, ctx) {
   // ── Place elements: every piece of the package as a clip (drag onto the timeline, or ＋ at the playhead), or on for
   //    the whole video with one tick. Each is one undo step; they save with the project like any item.
   const placeBox = h('div');
-  const FOR_KEY = 'kbbstudio.themes.placeFor';
+  const FOR_KEY = 'kbbstudio.themes.placeFor', FAM_KEY = 'kbbstudio.themes.placeFam';
   const forTheme = () => overlayOf(ctx.project)?.style?.theme || (() => { try { return localStorage.getItem(FOR_KEY); } catch { return null; } })() || suggestThemes({ text: transcript(ctx.project), recipe: recipeById(ctx.project.recipe), workspace: ctx.workspace, limit: 1 })[0]?.id || 'travel';
   function renderPlace() {
     const tid = forTheme(), th = themeById(tid) || themeById('travel');
@@ -158,7 +159,11 @@ export function mountPanel(el, ctx) {
         h('button.th-add', { type: 'button', title: 'On the cut nearest the playhead', dataset: { addTrans: d.id }, on: { click: () => tput(d.id, false) } }, '＋'),
         h('button.btn.small', { type: 'button', title: 'Put this transition on every cut', disabled: !nCuts, dataset: { allCuts: d.id }, on: { click: () => tput(d.id, true) } }, 'All cuts'));
     });
-    const rows = [{ id: 'overlay', icon: '✨', label: 'Running overlay', note: 'Bug, frame, news crawl, leaks', whole: 'span' }, ...ELEMENTS.filter((d) => d.bulletin), ...ELEMENTS.filter((d) => !d.bulletin && !d.hidden)].map((d) => {
+    // the design families (2026-11) beside the broadcast / bulletin set: one chip row filters the list
+    const famNow = (() => { try { return localStorage.getItem(FAM_KEY) || 'all'; } catch { return 'all'; } })();
+    const famChips = h('div.th-chips', { dataset: { placeFam: '1' } }, [['all', 'All'], ['broadcast', '📺 Broadcast & bulletin'], ...FAMILIES.map((f) => [f, FAMILY_ICONS[f] + ' ' + FAMILY_LABELS[f]])].map(([f, n]) => h('button.chip' + (f === famNow ? '.on' : ''), { type: 'button', dataset: { famFilter: f }, on: { click: () => { try { localStorage.setItem(FAM_KEY, f); } catch {} renderPlace(); } } }, n)));
+    const showRow = (d) => famNow === 'all' || (famNow === 'broadcast' ? !d.fam : d.fam === famNow);
+    const rows = [{ id: 'overlay', icon: '✨', label: 'Running overlay', note: 'Bug, frame, news crawl, leaks', whole: 'span' }, ...ELEMENTS.filter((d) => d.bulletin), ...ELEMENTS.filter((d) => !d.bulletin && !d.hidden)].filter(showRow).map((d) => {
       const on = isWhole(ctx.project, d.id);
       const chip = h('button.th-elchip', { type: 'button', draggable: 'true', title: `${d.label} — drag onto the timeline at any time, or click ＋ to add it at the playhead`, dataset: { el: d.id }, on: { dragstart: drag(d.id), click: () => add(d.id) } }, h('span', d.icon), h('span', h('b', d.label), h('small', d.note || '')));
       hoverPreview(chip, elementSpec(th.id, d.id, {}));
@@ -166,13 +171,13 @@ export function mountPanel(el, ctx) {
       const row = h('div.th-place' + (on ? '.on' : ''), { dataset: { place: d.id } }, chip,
         h('button.th-add', { type: 'button', title: 'Add at the playhead', dataset: { add: d.id }, on: { click: () => add(d.id) } }, '＋'),
         h('label', { title: `${wl}: one tick puts it ${d.whole === 'span' ? 'over the whole reel (it follows every trim)' : d.whole === 'cuts' ? 'on every cut' : d.whole === 'start' ? 'at the start of the reel' : 'at the end of the reel'}` }, h('input', { type: 'checkbox', checked: on, dataset: { whole: d.id }, on: { change: (e) => whole(d.id, e.target.checked) } }), wl));
-      if (d.variants && !d.hidden) row.append(h('div.th-stickers', d.variants.map((v) => { const c = h('button.chip', { type: 'button', draggable: 'true', title: `${STICKER_LABELS[v]} — drag onto the timeline or click to add at the playhead`, dataset: { sticker: v }, on: { dragstart: drag('sticker', v), click: () => add('sticker', v) } }, STICKER_LABELS[v]); hoverPreview(c, elementSpec(th.id, 'sticker', { variant: v })); return c; })));
+      if (d.variants && !d.hidden) row.append(h('div.th-stickers', d.variants.map((v) => { const lab = d.variantLabels?.[v] || STICKER_LABELS[v]; const c = h('button.chip', { type: 'button', draggable: 'true', title: `${lab} — drag onto the timeline or click to add at the playhead`, dataset: d.fam ? { famVariant: d.id + ':' + v } : { sticker: v }, on: { dragstart: drag(d.id, v), click: () => add(d.id, v) } }, lab); hoverPreview(c, elementSpec(th.id, d.id, { variant: v })); return c; })));
       return row;
     });
     clear(placeBox).append(h('div.th-card', { dataset: { placeBox: '1' } }, h('b', '🧩 Place elements'),
       h('p.th-note', 'Every piece of the theme is a clip: drag it onto the timeline at any time, then move, trim or delete it like any clip — or tick it to run for the whole video.'),
       overlayOf(ctx.project) ? h('p.th-note', `Drawn in ${th.name} (the theme on this reel).`) : sel,
-      h('h4', 'Bulletin templates & elements'), ...rows,
+      famChips, h('h4', famNow === 'all' ? 'Templates & elements' : famNow === 'broadcast' ? 'Bulletin templates & elements' : FAMILY_LABELS[famNow] + ' · templates & elements'), ...rows,
       h('h4', 'Transitions between clips'), h('p.th-note', nCuts ? `${nCuts} cut${nCuts > 1 ? 's' : ''} on the timeline. Both clips show through the switch.` : 'Put two clips end to end to make a cut first.'), ...trows));
   }
 
