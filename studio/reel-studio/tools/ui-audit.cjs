@@ -272,7 +272,11 @@ function measure() {
     await tryStep('configure', async () => {
       await page.click('#configure-btn'); await page.waitForSelector('.cfg-back [data-sec]');
       const secs = await page.$$eval('.cfg-nav [data-sec]', (b) => b.map((x) => x.dataset.sec));
-      for (const s of secs) { await page.click(`.cfg-nav [data-sec="${s}"]`); await page.waitForTimeout(400); await audit('configure:' + s, wsId === 'kbb' && s === 'companies' ? 'configure' : null); }
+      for (const s of secs) {
+        await page.click(`.cfg-nav [data-sec="${s}"]`); await page.waitForTimeout(400); await audit('configure:' + s, wsId === 'kbb' && s === 'companies' ? 'configure' : null);
+        // the "How to get this key →" steps (from GUIDE - keys and what to send.html), opened
+        if (await page.$('.cfg-how')) { await page.$$eval('.cfg-how', (d) => d.forEach((x) => { x.open = true; })); await page.waitForTimeout(150); await audit('configure:' + s + ':how-to', wsId === 'kbb' && s === 'photos' ? 'configure-howto' : null); }
+      }
       await page.keyboard.press('Escape'); await page.waitForSelector('.cfg-back', { state: 'detached' });
     });
     // 5 · Designs (a brief through the offline reader), every left tab, then the design editor + its export
@@ -333,6 +337,17 @@ function measure() {
     await tryStep('editor-configure', async () => { await page.click('#configure-btn'); await page.waitForSelector('.cfg-back'); await audit('editor-configure'); await page.keyboard.press('Escape'); });
     // 7 · home again, now with reels in Recent (the empty state was measured first)
     await tryStep('home-recent', async () => { await page.goto(e.url + '/app/'); await page.waitForSelector('.recent'); await page.waitForTimeout(300); await audit('home-recent'); });
+    // 8 · the stop screens main.js draws before anything else: an engine that does not answer, and an older engine
+    //     (api < 3, the integrator's handshake) — provoked by answering /api/info for the page
+    for (const [screen, fake] of [['stopped-no-engine', null], ['stopped-older-engine', 2]]) await tryStep(screen, async () => {
+      await page.route('**/api/info*', async (route) => {
+        if (fake == null) return route.fulfill({ status: 200, contentType: 'text/plain', body: 'not the engine' });
+        const res = await route.fetch(); const j = await res.json(); j.api = fake; return route.fulfill({ response: res, json: j });
+      });
+      await page.goto(e.url + '/app/'); await page.waitForSelector('.stopped h1'); await page.waitForTimeout(200);
+      await audit(screen, wsId === 'kbb' && fake ? 'stopped-older-engine' : null);
+      await page.unroute('**/api/info*');
+    });
     void where;
     await context.close();
   }

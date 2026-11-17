@@ -40,12 +40,56 @@ p.cfg-muted{margin:0;line-height:1.55}
 .cfg-model:first-child{border-top:0}
 .cfg-tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--panel3);color:var(--muted);font-weight:600}
 .cfg-tag.on{background:rgba(60,207,145,.15);color:var(--ok)}
+.cfg-how{border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);padding:0 12px}
+.cfg-how>summary{cursor:pointer;list-style:none;color:var(--accent-text);font-weight:650;font-size:13px;padding:9px 0;display:flex;align-items:center;gap:6px}
+.cfg-how>summary::-webkit-details-marker{display:none}
+.cfg-how>summary:hover{text-decoration:underline}
+.cfg-how[open]>summary{border-bottom:1px solid var(--line);margin-bottom:8px}
+.cfg-how ol{margin:0 0 8px;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5}
+.cfg-how p.cfg-muted{margin:0 0 10px}
 .cfg-bar{height:8px;border-radius:5px;background:var(--panel3);overflow:hidden}.cfg-bar i{display:block;height:100%;background:var(--accent)}
 `;
 let styled = false;
 const SECTIONS = [['companies', '🏢 Companies'], ['contact', '☎ Contact & social'], ['claude', '✦ Connect Claude'], ['photos', '📷 Photo sources'], ['models', '🧠 Models'], ['folders', '📁 Folders & storage'], ['languages', '🌐 Languages'], ['about', 'ℹ About']];
 const tokenH = () => ({ 'X-RS-Token': document.querySelector('meta[name="rs-token"]')?.content || '', 'Content-Type': 'application/json' });
 async function api(path, body) { const r = await fetch(path, { method: body ? 'POST' : 'GET', cache: 'no-store', headers: tokenH(), body: body ? JSON.stringify(body) : undefined }); const j = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(j.error || r.status + ''), { status: r.status }); return j; }
+
+// "How to get this key →": the steps from "GUIDE - keys and what to send.html" (studio root), shown in place. The engine
+// serves only app/, vendor/, models/, library/, brands/ and workspaces/ (engine/main.go readRoots), so the guide file
+// itself is not reachable from this page; keep these steps in step with it.
+const GUIDE = {
+  pexels: { label: 'How to get this key →', steps: [
+    ['Go to ', ['pexels.com'], ' and click ', ['Join'], ' to make a free account (or log in).'],
+    ['Open ', ['pexels.com/api'], ' and click ', ['Your API Key'], ' (or ', ['Get Started'], ').'],
+    ['Fill the short form: project “KBB Studio: photos for our own ads and reels”, website kbeautybliss.com, tick the terms, submit.'],
+    ['Your key appears on the same page straight away. Click ', ['Copy'], ', paste it here, then ', ['Save'], ' → ', ['Test'], '.']],
+    note: 'Free: 200 requests an hour, 20,000 a month.' },
+  unsplash: { label: 'How to get this key →', steps: [
+    ['Go to ', ['unsplash.com'], ', click ', ['Join'], ' and confirm your email.'],
+    ['Open ', ['unsplash.com/developers'], ' → ', ['Your apps'], ' → ', ['New Application'], '.'],
+    ['Tick all the guideline boxes → ', ['Accept terms'], '.'],
+    ['Name: KBB Studio. Description: “Offline ad and reel editor for our own company posts”. ', ['Create application'], '.'],
+    ['Under ', ['Keys'], ', copy the ', ['Access Key'], ' (not the Secret key), paste it here, then ', ['Save'], ' → ', ['Test'], '.']],
+    note: 'A new app starts in Demo mode (50 requests an hour); “Apply for production” on the app page raises it later.' },
+  claude: { label: 'How to get this key →', steps: [
+    ['Go to ', ['console.anthropic.com'], ' and sign up (email and phone).'],
+    ['Open ', ['Settings → Billing'], ', add a card and a small credit (e.g. US$10); optionally set a monthly limit in ', ['Limits'], '.'],
+    ['Open ', ['Settings → API Keys'], ' → ', ['Create Key'], ', name it KBB Studio and copy it (it starts with sk-ant- and is shown once).'],
+    ['Paste it here, then ', ['Save'], ' → ', ['Test'], '. ', ['Disconnect'], ' deletes it from this Mac.']],
+    note: 'Optional. A brief or a page of captions usually costs a few US cents.' },
+  contact: { label: 'What to fill in →', steps: [
+    ['Phone and WhatsApp number to show on ads, plus email and website.'],
+    ['Instagram, TikTok, Snapchat and YouTube handles.'],
+    ['The call to action you like, e.g. “Shop now on kbeautybliss.com”, “Book a free consultation”, “WhatsApp us now”.'],
+    ['For Planet Careers: a comment keyword for reels (e.g. comment VISA) and only real facts per country — the studio never invents visa rules or salaries.']],
+    note: 'None of this is secret. The full list is in “GUIDE - keys and what to send” in the KBB Studio folder.' },
+};
+function howTo(id) {
+  const g = GUIDE[id]; if (!g) return null;
+  return h('details.cfg-how', { dataset: { guide: id } }, h('summary', g.label),
+    h('ol', g.steps.map((parts) => h('li', parts.map((x) => (Array.isArray(x) ? h('b', x[0]) : x))))),
+    g.note ? h('p.cfg-muted', g.note) : null);
+}
 
 /** a key field: password input with 👁 show/hide */
 function keyInput(placeholder, label) {
@@ -116,7 +160,7 @@ const RENDER = {
         nw.modified = new Date().toISOString();
         try { await engine.writeFile(`${wsDir(w.id)}/workspace.json`, nw); Object.assign(w, nw); out.className = 'cfg-ok'; out.textContent = '✓ Saved'; } catch (e) { out.className = 'cfg-bad'; out.textContent = 'Not saved: ' + e.message; }
       } } }, 'Save');
-      sec.appendChild(h('div.cfg-card', { dataset: { contact: w.id } }, h('div.cfg-co', wsBadge(w), h('h3', w.fullName || w.name)), h('div.cfg-row', h('label', 'Contact line'), line), h('div.cfg-row', h('label', 'Button (English)'), ctaEn), h('div.cfg-row', h('label', 'Button (Arabic)'), ctaAr), ...rows, h('div.cfg-row', save, out)));
+      sec.appendChild(h('div.cfg-card', { dataset: { contact: w.id } }, h('div.cfg-co', wsBadge(w), h('h3', w.fullName || w.name)), h('div.cfg-row', h('label', 'Contact line'), line), h('div.cfg-row', h('label', 'Button (English)'), ctaEn), h('div.cfg-row', h('label', 'Button (Arabic)'), ctaAr), ...rows, h('div.cfg-row', save, out), howTo('contact')));
     }
   },
 
@@ -147,6 +191,7 @@ const RENDER = {
     const smart = h('input#cl-smart', { type: 'checkbox', checked: !!prefs.smartBrief, on: { change: async () => { const p = await api('/api/prefs').catch(() => ({})); p.smartBrief = smart.checked; await api('/api/prefs', p); toast(smart.checked ? 'Smart brief on (asks once per session)' : 'Smart brief off', 'ok'); } } });
     ap(sec, h('div.cfg-card', status,
       h('div.cfg-row', h('label', 'API key'), key.el),
+      howTo('claude'),
       h('div.cfg-row', h('label', 'Model'), model, custom),
       h('div.cfg-row', saveBtn, testBtn, discBtn, out),
       h('p.cfg-muted', 'Get a key: console.anthropic.com → Settings → API keys (billing is on your Anthropic account). The key is kept by the studio engine in the settings folder (only this Mac’s user can read it), never in a project, a design, an export or a log; this page only shows its last four characters. Default model: Claude Sonnet 5.5.')),
@@ -175,7 +220,7 @@ const RENDER = {
       } } }, 'Test');
       const rm = h('button.btn.small', { on: { click: async () => { keys = await api('/api/photo-keys', { source: k, key: '' }); paint(); msg('cfg-muted', 'Removed'); } } }, 'Remove');
       paint();
-      sec.appendChild(h('div.cfg-card', { dataset: { photo: k } }, h('div.cfg-row', h('h3', S.name), st), h('div.cfg-row', h('label', 'Access key'), key.el), h('div.cfg-row', save, test, rm, out), h('p.cfg-muted', 'Free key: ', h('a', { href: S.keysUrl, target: '_blank', rel: 'noopener' }, S.keysUrl.replace('https://', '')), k === 'unsplash' ? ' (the “Access Key”).' : '. ', `Licence: ${S.licence}.`)));
+      sec.appendChild(h('div.cfg-card', { dataset: { photo: k } }, h('div.cfg-row', h('h3', S.name), st), h('div.cfg-row', h('label', 'Access key'), key.el), howTo(k), h('div.cfg-row', save, test, rm, out), h('p.cfg-muted', 'Free key: ', h('a', { href: S.keysUrl, target: '_blank', rel: 'noopener' }, S.keysUrl.replace('https://', '')), k === 'unsplash' ? ' (the “Access Key”).' : '. ', `Licence: ${S.licence}.`)));
     }
   },
 

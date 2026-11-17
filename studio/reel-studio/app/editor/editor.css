@@ -48,7 +48,14 @@ code { background: var(--panel3); border-radius: 5px; padding: 1px 5px; font-siz
 .muted { color: var(--muted); }
 .small, small { font-size: 12px; }
 .boot, .stopped { display: grid; place-content: center; height: 100vh; text-align: center; color: var(--muted); padding: 24px; }
-.stopped h1 { color: var(--text); font-size: 28px; margin: 0 0 8px; }
+/* "needs its engine", "An older engine is running", "Something went wrong": one calm card, not bare text */
+.stopped { justify-items: center; align-content: center; gap: 0; background: radial-gradient(900px 480px at 50% 0%, color-mix(in srgb, var(--accent) 16%, var(--bg)), var(--bg)); }
+.stopped::before { content: '⏻'; width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center; font-size: 30px; color: var(--accent-text);
+  background: var(--accent-soft); border: 1px solid var(--accent-line); box-shadow: 0 12px 40px var(--accent-soft); margin-bottom: 22px; }
+.stopped > * { max-width: 560px; }
+.stopped h1 { color: var(--text); font-size: 28px; letter-spacing: -.02em; margin: 0 0 12px; }
+.stopped p { margin: 0 0 10px; line-height: 1.6; font-size: 15px; }
+.stopped p:not(.muted) { color: #d5d8e3; }
 /* thin, quiet scrollbars */
 * { scrollbar-width: thin; scrollbar-color: var(--line2) transparent; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
