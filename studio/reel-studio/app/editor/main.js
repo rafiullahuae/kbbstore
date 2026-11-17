@@ -9,6 +9,7 @@ import { loadWorkspaces, switchWorkspace, state as ws } from './workspaces.js';
 import { renderHome } from './home.js';
 import { Editor } from './editor.js';
 import { needsSetup, setupScreen } from './setup.js';
+import { restorePrefs } from '../core/prefs.js';
 
 const root = document.getElementById('app');
 document.title = APP_NAME;
@@ -18,7 +19,7 @@ let editor = null;
 engine.setPermissionUI(({ what, size, host }) => new Promise((res) => {
   modal({
     title: 'Allow a one-time download?',
-    body: h('div.perm', h('p', h('b', what)), h('p.muted', `${size ? fmtBytes(size) + ' from ' : 'From '}${host}. It is saved in the models folder inside ${APP_NAME} and never downloaded again.`)),
+    body: h('div.perm', h('p', h('b', what)), h('p.muted', `${size ? fmtBytes(size) + ' from ' : 'From '}${host}. ${engine.info?.dataSeparate ? 'It is saved in KBB Studio Data and never downloaded again, not even after an update.' : `It is saved in the models folder inside ${APP_NAME} and never downloaded again.`}`)),
     actions: [{ label: 'Not now', value: false }, { label: 'Allow', primary: true, value: true }],
     onClose: (v) => res(v === true),
   });
@@ -49,7 +50,7 @@ function openProject(p, files) {
   if (files?.length) editor.importFiles(files);
 }
 
-const ENGINE_API = 3; // engine/main.go apiLevel
+const ENGINE_API = 4; // engine/main.go apiLevel
 
 async function boot() {
   if (!(await engine.connect())) {
@@ -61,9 +62,10 @@ async function boot() {
   if ((engine.info?.api || 0) < ENGINE_API) {
     root.replaceChildren(h('div.stopped', h('h1', 'An older engine is running'),
       h('p', `This ${APP_NAME} is newer than the engine that opened it. Close every Terminal window of ${APP_NAME}, then double-click "Start ${APP_NAME}" inside the NEW ${APP_NAME} folder.`),
-      h('p.muted', 'If you copied folders from the old version, copy only models, workspaces, settings and library — never the engine folder.')));
+      h('p.muted', 'There is nothing to copy from the old folder: your models, companies and keys are kept in KBB Studio Data in your home folder.')));
     return;
   }
+  await restorePrefs(); // the owner's preferences from KBB Studio Data, before any screen reads them (core/prefs.js)
   await loadWorkspaces();
   await loadModules();
   // first run: the Setup screen (models download through the engine) comes before anything else

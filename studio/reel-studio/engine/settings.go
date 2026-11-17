@@ -65,7 +65,7 @@ type claudeConf struct {
 	LastTest  string `json:"lastTest,omitempty"`  // "ok <time>" or "fail <time> <reason>"
 }
 
-func (s *server) settingsDir() string { return filepath.Join(s.root, "settings") }
+func (s *server) settingsDir() string { return filepath.Join(s.dataDir(), "settings") }
 func (s *server) claudeFile() string  { return filepath.Join(s.settingsDir(), "claude.json") }
 func (s *server) prefsFile() string   { return filepath.Join(s.settingsDir(), "prefs.json") }
 func (s *server) claudeConfig() claudeConf {
@@ -193,6 +193,46 @@ func (s *server) settingsAPI(w http.ResponseWriter, r *http.Request, p string) b
 					return true
 				}
 			}
+			s.mu.Lock()
+			defer s.mu.Unlock()
+			if r.URL.Query().Get("merge") == "1" {
+				// ?merge=1 (app/core/prefs.js): change only the keys sent, one level deep (an object merges into the
+				// object already there; null removes), so two screens saving different preferences never undo each other
+				var cur map[string]any
+				if b, err := os.ReadFile(s.prefsFile()); err != nil || json.Unmarshal(b, &cur) != nil || cur == nil {
+					cur = map[string]any{}
+				}
+				for k, v := range m {
+					old, oldObj := cur[k].(map[string]any)
+					nv, newObj := v.(map[string]any)
+					switch {
+					case v == nil:
+						delete(cur, k)
+					case oldObj && newObj:
+						for kk, vv := range nv {
+							if vv == nil {
+								delete(old, kk)
+							} else {
+								old[kk] = vv
+							}
+						}
+					case newObj:
+						for kk, vv := range nv {
+							if vv == nil {
+								delete(nv, kk)
+							}
+						}
+						cur[k] = nv
+					default:
+						cur[k] = v
+					}
+				}
+				if b, _ := json.Marshal(cur); len(b) > 16<<10 {
+					jsonErr(w, 400, "preferences must stay under 16 KB")
+					return true
+				}
+				m = cur
+			}
 			if err := s.writePrivate(s.prefsFile(), m); err != nil {
 				jsonErr(w, 500, err.Error())
 				return true
@@ -207,14 +247,14 @@ func (s *server) settingsAPI(w http.ResponseWriter, r *http.Request, p string) b
 		out := []map[string]any{}
 		for _, f := range []struct{ id, rel, label string }{
 			{"workspaces", "workspaces", "Companies: projects, exports and designs"},
-			{"library", "library", "Library: music, sound effects, people photos, occupations"},
-			{"brands", "brands", "Brand kits: logos, colours, fonts"},
+			{"library", "library", "Your library: your own music and saved people photos (the built-in music and sound effects ship with the app)"},
+			{"brands", "brands", "Your brand kits: logos, colours, fonts"},
 			{"models", "models", "AI models (downloaded once)"},
 		} {
-			n, size := dirSize(filepath.Join(s.root, f.rel))
+			n, size := dirSize(filepath.Join(s.dataDir(), f.rel))
 			out = append(out, map[string]any{"id": f.id, "path": f.rel, "label": f.label, "files": n, "size": size})
 		}
-		writeJSON(w, map[string]any{"root": s.root, "free": freeBytes(s.root), "folders": out})
+		writeJSON(w, map[string]any{"root": s.dataShow, "app": s.root, "separate": s.separateData(), "free": freeBytes(s.dataDir()), "folders": out})
 		return true
 
 	case "/api/open":

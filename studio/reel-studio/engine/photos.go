@@ -39,7 +39,7 @@ func init() {
 	}
 }
 
-func (s *server) keyFile() string { return filepath.Join(s.root, "settings", "photo-sources.json") }
+func (s *server) keyFile() string { return filepath.Join(s.settingsDir(), "photo-sources.json") }
 
 func (s *server) photoKeys() map[string]string {
 	out := map[string]string{}

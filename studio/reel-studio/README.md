@@ -147,19 +147,30 @@ preview plays at a time, and the keyboard works too: move to a tile with **Tab**
 
 ## 5. Where your things are
 
-| Folder inside KBB Studio | What is in it |
+Your own things live in **`KBB Studio Data`** in your home folder (Finder → Go → Home), **not** in the KBB Studio
+folder. Updating is just replacing the KBB Studio folder with the new one: nothing to copy, and the models are never
+downloaded again. The first start of a new version moves anything of yours still inside the KBB Studio folder into
+`KBB Studio Data` by itself (it never overwrites what is already there), and picks up the models of an older KBB Studio
+folder left in Downloads, Desktop, Documents or Applications. What moved is listed in `KBB Studio Data/migration.log`.
+To back up everything, copy `KBB Studio Data`.
+
+| In `KBB Studio Data` | What is in it |
 |---|---|
 | `workspaces/<company>/projects/` | your saved projects, one folder each (the videos you add are copied in). Projects save themselves. |
 | `workspaces/<company>/exports/` | your finished MP4s |
-| `library/music/` | the starter music (27 tracks, made for the studio, free to use) |
-| `library/music/user/` | **your own music** — see below |
-| `library/sfx/` | sound effects (28, free to use) |
-| `library/people/<occupation>/` | worker photos you saved from the 📷 Photos tab, each with a `.json` beside it (photographer, licence, source link) |
-| `library/occupations/` | the 100 occupations (English / Arabic, uniforms, tools, search words) the Photos tab and the Ad Studio use |
-| `settings/` | your Pexels / Unsplash / Claude keys and preferences (only the engine reads this; never put it in a shared folder) |
 | `workspaces/<company>/designs/` | saved designs, AI pictures (`images/`, each with its prompt and licence) and saved colour schemes |
-| `brands/` | the brand kits: colours, fonts, logos, end cards (KBB, Planet Careers, and any company you add) |
-| `models/` | the speech models, downloaded once by the setup |
+| `library/music/user/` | **your own music** — see below |
+| `library/people/<occupation>/` | worker photos you saved from the 📷 Photos tab, each with a `.json` beside it (photographer, licence, source link) |
+| `brands/<company>/` | the brand kit of any company you add |
+| `settings/` | your Pexels / Unsplash / Claude keys and preferences (only your Mac user can read it; never put it in a shared folder) |
+| `models/` | the AI models, downloaded once by the setup |
+
+| In the KBB Studio folder (replaced by each update) | What is in it |
+|---|---|
+| `library/music/` | the starter music (27 tracks, made for the studio, free to use) |
+| `library/sfx/` | sound effects (28, free to use) |
+| `library/occupations/` | the 100 occupations (English / Arabic, uniforms, tools, search words) the Photos tab and the Ad Studio use |
+| `brands/` | the built-in brand kits: KBB and Planet Careers |
 
 `<company>` is `kbb`, `planet-careers`, or the short name of a company you added.
 
@@ -276,8 +287,8 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
 ## For developers
 
 * `engine/` — Go 1.24, no dependencies (`engine/build.sh` builds `kbbstudio-mac-arm64`, `kbbstudio-mac-amd64` and a
-  Linux one for tests; `go test ./engine`). 127.0.0.1 only, random port, COOP/COEP; the file API is locked to the
-  folder; `/models/` is served read-only without the session token (workers); `/net/*` and the model installer only
+  Linux one for tests; `go test ./engine`). 127.0.0.1 only, port 41917 (random only when it is busy, so the page keeps one origin), COOP/COEP;
+  the owner's data in `-data` (`~/KBB Studio Data`, `engine/data.go`); the file API is locked to the two folders; `/models/` is served read-only without the session token (workers); `/net/*` and the model installer only
   after the app's Allow, only to huggingface.co, its redirects only to `*.hf.co` / `*.huggingface.co`.
 * `app/` — vanilla ES modules, no build step. `app/core/` is the contract; `app/editor/` the editor;
   `app/captions/` (R2) and `app/auto/` (R3) register through `app/core/modules.js` and `core/render.js`.

@@ -1,5 +1,5 @@
 // KBB Studio — first-run setup: every model the studio uses (models/manifest.json), total size, free space,
-// ONE "Allow" downloads them into models/ inside the studio folder. The engine resumes, retries and verifies.
+// ONE "Allow" downloads them into models/ of KBB Studio Data (outside the app folder, so updates keep them). The engine resumes, retries and verifies.
 //
 // The list is grouped by the manifest's `group` (total size + licence per group; "Download group" on optional ones).
 // First run: a full Setup SCREEN (before home): welcome → Allow and download → progress → "Open the studio" → home.
@@ -79,8 +79,11 @@ function setupView(initial, { onFinish }) {
   const prog = h('div.setup-progress');
   const later = h('button.btn#su-later', { on: { click: () => { try { localStorage.setItem(LATER, String(Date.now())); } catch {} onFinish(); } } }, 'Later');
   const go = h('button.btn.primary#su-go', { on: { click: () => act() } }, 'Allow and download');
+  // the models live in KBB Studio Data (engine -data), outside the app folder an update replaces (engine/data.go)
+  const data = engine.info?.dataSeparate ? engine.info.data : '';
   const el = h('div.setup-form',
-    h('p', `${APP_NAME} works offline. For captions it needs its speech models. They are downloaded `, h('b', 'once'), ' from Hugging Face (huggingface.co) into the ', h('code', 'models'), ` folder inside ${APP_NAME} — nothing is uploaded and nothing else goes online.`),
+    h('p', `${APP_NAME} works offline. For captions it needs its speech models. They are downloaded `, h('b', 'once'), ' from Hugging Face (huggingface.co) into the ', h('code', 'models'), ` folder ${data ? 'of KBB Studio Data' : `inside ${APP_NAME}`} — nothing is uploaded and nothing else goes online.`),
+    data ? h('p.setup-data', h('b', 'Your models are kept in KBB Studio Data and survive updates.'), h('br'), 'They are in ', h('code', data + '/models'), ' — replacing the KBB Studio folder with a new version never asks for them again.') : null,
     list, summary, prog, h('div.setup-actions', later, go));
   const off = bus.on('engine:models', (s) => { st = s; paint(); });
 
