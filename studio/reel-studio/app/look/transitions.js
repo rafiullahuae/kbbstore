@@ -33,7 +33,7 @@ function edges(project, tr) {
 const needs = (project) => {
   const out = [];
   for (const tr of project.tracks) for (const it of tr.items) {
-    if (it.type !== 'look.transition') continue;
+    if (it.type !== 'look.transition' && it.type !== 'theme.trans') continue;   // themes/transitions.js uses the same freeze handles
     const e = edges(project, it); if (!e) continue;
     for (const [x, s] of [[e.A, e.sA], [e.B, e.sB]]) if (x.media) out.push({ media: x.media, t: s });
   }
@@ -166,3 +166,28 @@ export async function matchCutCommand(project, cut, { search = 1, step = 1 / 15 
 }
 
 export { uid };
+
+/**
+ * For a transition item of any kind (themes/transitions.js): progress p (0..1, the cut at 0.5), which side is live, and
+ * the OTHER side drawn into its own offscreen canvas at the frame's device size — A's last frame after the cut, B's first
+ * frame before it (freeze handles, decoded ahead like look.transition's). A clip without media (the drawn sample in the
+ * hover previews) is drawn through env.source. Returns null when the item has lost its clips.
+ */
+const sides = new Map();
+export function transitionSides(ctx, item, t, project, env) {
+  const e = edges(project, item); if (!e) return null;
+  const dur = Math.max(0.05, (item.out - item.in) / (item.speed || 1)), p = Math.max(0, Math.min(1, 0.5 + (t - e.cut) / dur));
+  const before = t < e.cut, other = before ? e.B : e.A, oT = before ? e.tB : e.tA, oS = before ? e.sB : e.sA;
+  const cv = ctx.canvas, CW = cv.width, CH = cv.height, key = item.id;
+  let o = sides.get(key);
+  if (!o) { o = document.createElement('canvas'); sides.set(key, o); if (sides.size > 6) sides.delete(sides.keys().next().value); }
+  if (o.width !== CW || o.height !== CH) { o.width = CW; o.height = CH; }
+  const g = o.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.filter = 'none'; g.fillStyle = project.canvas.bg || '#000'; g.fillRect(0, 0, CW, CH);
+  const track = project.tracks.find((tr) => tr.items.includes(other)), frozen = other.media ? FROZEN.get(fkey(other.media, oS)) : null;
+  g.setTransform(env.scale, 0, 0, env.scale, 0, 0);
+  if (frozen) drawItem(g, other, oT, project, Object.assign({}, env, { track, source: () => frozen }));
+  else if (!other.media) drawItem(g, other, oT, project, Object.assign({}, env, { track }));
+  else if (env.preview) requestFreeze(project);
+  return { p, before, other: o, cut: e.cut, ready: !!frozen || !other.media };
+}

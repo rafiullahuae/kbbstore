@@ -13,7 +13,9 @@
 import { renderFrame } from '../core/render.js';
 import { createItem } from '../core/project.js';
 import { themeById } from './themes.js';
-import { themeStyle, TAG } from './apply.js';
+import { themeStyle, TAG, signatureOf } from './apply.js';
+import { boxFor, elementStyle, elementById } from './elements.js';
+import { transItem, transitionById } from './transitions.js';
 import { loadAssets } from './draw.js';
 
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v === '1'; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v ? '1' : '0'); } catch {} } };
@@ -224,12 +226,43 @@ export function themeSpec(id, { canvas, aspect = '9:16', opts = {}, ws = null, o
   const th = themeById(id); if (!th) return null;
   const p = miniProject(aspect), dur = 3.6, W = p.canvas.w, H = p.canvas.h;
   const style = themeStyle(th, { intensity: 'normal', ...opts, beats: Array.from({ length: 16 }, (_, i) => +(0.25 + i * 0.5).toFixed(2)), faces: [sampleFace(W, H)] }, ws);
+  // the complete package in 3.6 s: grade + overlay throughout, the intro sting, the title card, the signature moment
+  const es = (el) => elementStyle(th.id, el, { colors: style.colors });
   p.tracks[0].items.push(clipItem(p, 0, dur + 1));
+  if (opts.grade !== false) p.tracks[1].items.push(createItem('theme.el', { t0: 0, in: 0, out: dur + 1, ...boxFor('grade', W, H), auto: TAG, style: { ...es('grade'), whole: 'span' } }));
   p.tracks[1].items.push(createItem('theme.overlay', { t0: 0, in: 0, out: dur + 1, x: 0, y: 0, w: W, h: H, auto: TAG, style }));
-  if (opts.sting !== false) p.tracks[1].items.push(createItem('theme.sting', { t0: 0, in: 0, out: 0.9, x: 0, y: 0, w: W, h: H, style: { colors: style.colors, hero: th.sting?.hero, icons: (th.layers.find((l) => l.kind === 'icons')?.icons || []).slice(0, 1) } }));
-  let ready = null;   // flags / maps / icons are fetched on the first hover or thumbnail, never for the whole gallery at once
-  const prepare = () => (ready ||= Promise.all([loadAssets(style), loadAssets({ icons: (th.layers.find((l) => l.kind === 'icons')?.icons || []).slice(0, 1) })]));
+  if (opts.package !== false) {
+    p.tracks[2].items.push(createItem('theme.el', { t0: 0.75, in: 0, out: 1.65, ...boxFor('title', W, H), style: es('title') }));
+    const sig = signatureOf(th);
+    if (sig) { const b = boxFor(sig, W, H); if (elementById(sig)?.box !== 'full' && W < H) { const s2 = Math.min(1, (H * 0.27) / b.h); b.w *= s2; b.h *= s2; b.x = elementById(sig).box === 'counter' || elementById(sig).box === 'map' ? b.x : W - b.w - W * 0.04; } p.tracks[2].items.push(createItem('theme.el', { t0: 2.25, in: 0, out: 1.5, ...b, style: es(sig) })); }
+  }
+  if (opts.sting !== false) p.tracks[2].items.push(createItem('theme.sting', { t0: 0, in: 0, out: 0.9, x: 0, y: 0, w: W, h: H, style: es('intro') }));
+  let ready = null;   // flags / maps / fonts are fetched on the first hover or thumbnail, never for the whole gallery at once
+  const prepare = () => (ready ||= Promise.all([loadAssets(style), loadAssets(es('intro'))]));
   return { id: 'theme:' + id, label: th.name, aspect, canvas, dur, onStop, prepare, draw: (g, w, h, t) => drawMini(g, w, h, p, t), project: p, style };
+}
+
+/** hover spec for one package element on the sample clip (the Place-elements chips) */
+export function elementSpec(themeId, el, { variant, canvas, onStop } = {}) {
+  const th = themeById(themeId); if (!th) return null;
+  const p = miniProject('9:16'), W = p.canvas.w, H = p.canvas.h, def = elementById(el), dur = el === 'overlay' ? 3 : Math.max(1.6, Math.min(3.4, (def?.dur || 2) + 0.5));
+  p.tracks[0].items.push(clipItem(p, 0, dur + 1));
+  let style;
+  if (el === 'overlay') { style = themeStyle(th, { intensity: 'bold', faces: [sampleFace(W, H)] }); p.tracks[1].items.push(createItem('theme.overlay', { t0: 0, in: 0, out: dur + 1, x: 0, y: 0, w: W, h: H, style })); }
+  else { style = { ...elementStyle(th.id, el, { variant }), colors: null }; p.tracks[2].items.push(createItem('theme.el', { t0: 0.1, in: 0, out: Math.min(def.dur, dur - 0.2), ...boxFor(el, W, H), style })); }
+  let ready = null;
+  return { id: 'el:' + themeId + ':' + el + (variant || ''), label: def?.label || 'Theme overlay', aspect: '9:16', canvas, dur, onStop, prepare: () => (ready ||= loadAssets(style)), draw: (g, w, h, t) => drawMini(g, w, h, p, t), project: p };
+}
+
+/** hover spec for a country transition: sample clip A, the switch, sample clip B (cut at 1.2 s) */
+export function transSpec(themeId, kind, { canvas, onStop, dur: td } = {}) {
+  const th = themeById(themeId); if (!th) return null;
+  const p = miniProject('9:16'), dur = 2.6, A = clipItem(p, 0, 1.2, 0), B = clipItem(p, 1.2, 1.6, 1);
+  p.tracks[0].items.push(A, B);
+  const it = transItem(p, { a: A, b: B, t: 1.2 }, kind, { theme: th.id, dur: td });
+  p.tracks[1].items.push(it);
+  let ready = null;
+  return { id: 'trans:' + themeId + ':' + kind, label: transitionById(kind)?.label || kind, aspect: '9:16', canvas, dur, onStop, prepare: () => (ready ||= loadAssets({ theme: th.id })), draw: (g, w, h, t) => drawMini(g, w, h, p, t), project: p, item: it };
 }
 
 /** hover spec for a recipe row: sample clips cut on a transition, the recipe's caption style, its theme, price tag */

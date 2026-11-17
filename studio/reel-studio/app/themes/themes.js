@@ -8,6 +8,7 @@
 // Nothing here is a copyrighted asset: flags, maps and landmark silhouettes come from the country packs
 // (brands/planet-careers/countries, app/auto/countries), icons from library/occupations, everything else is drawn.
 import { COUNTRIES } from '../auto/countries/countries.js';
+import { HERO, HERO_OF, SECONDARY } from './landmarks2.js';
 
 export const GROUPS = ['Countries', 'Travel & study', 'Work abroad', 'Beauty', 'Luxury', 'Offers', 'Seasonal', 'Business', 'Food', 'Fitness', 'Real estate'];
 
@@ -85,15 +86,18 @@ function countryTheme(c) {
   // the strongest non-white flag colour leads; white flags keep a soft white accent
   const strong = flagCols.filter((x) => lum(x) < 0.85);
   const primary = strong[0] || '#1d3557', accent = strong.find((x) => x !== primary) || '#ffd166';
+  // broadcast overlay: the channel bug (waving flag + name, EN/AR), flag-colour frame bars, the hero landmark illustrated,
+  // the country's own motif, passport-stamp pops, light leaks + lens glints, the beat glow
+  const lm = HERO_OF[c.code] || c.landmark;
   const layers = [
-    L('flag', 'flag', 'Waving flag', { code: c.code, corner: 'tr', size: 0.15 }),
-    L('map', 'map', 'Map outline + pulse', { code: c.code, corner: 'tl', size: 0.2 }),
+    L('bug', 'bug', 'Channel bug (flag + name)', { code: c.code, text: c.name, textAr: c.nameAr }),
+    L('frame', 'frame', 'Flag-colour frame bars', {}),
   ];
-  if (fx.ribbons) layers.push(L('ribbons', 'ribbons', 'Flag ribbons', { colors: ['c0', 'c1', 'c2'], edge: 'top', count: 3 }));
-  if (c.landmark) layers.push(L('landmark', 'landmark', 'Landmark parallax', { lm: c.landmark, side: 'both', height: 0.2 }));
-  if (fx.con) layers.push(L('stars', 'constellation', 'Southern Cross', { preset: fx.con, corner: 'tl', size: 0.18 }));
+  if (lm) layers.push(L('landmark', 'landmark', `Landmark · ${(HERO[lm]?.name || lm).split(',')[0]}`, { lm, second: SECONDARY[c.code] || null, height: 0.2, side: 'right' }));
+  if (fx.con) layers.push(L('stars', 'constellation', 'Southern Cross', { preset: fx.con, corner: 'tr', size: 0.16 }));
   if (fx.p) layers.push(L('particles', 'particles', { maple: 'Falling maple leaves', sakura: 'Sakura petals', snow: 'Snowflakes', shamrock: 'Shamrocks', tulip: 'Tulips', petal: 'Petals', leaf: 'Leaves', star5: 'Stars', star4: 'Sparkle glints', dust: 'Gold dust', bokeh: 'Warm bokeh' }[fx.p.shape] || 'Particles', fx.p));
   layers.push(L('stamps', 'stamps', 'Passport-stamp pops', { texts: fx.stamps || [c.name.toUpperCase()], every: 3.2 }));
+  layers.push(L('leaks', 'leaks', 'Light leaks + lens glints', { colors: ['accent', '#ff8a3d'] }));
   layers.push(L('glow', 'glow', 'Edge glow (beat)', { color: 'primary' }));
   return T({
     id: 'country-' + c.code, name: c.name, nameAr: c.nameAr, group: 'Countries', icon: '🏳️', country: c.code, region: c.region,
@@ -122,9 +126,8 @@ export const THEMES = [
     keywords: { en: ['europe', 'european', 'schengen', 'eu', 'erasmus', 'blue card', 'chancenkarte'], ar: ['اوروبا', 'أوروبا', 'الاوروبي', 'شنغن', 'الاتحاد'] },
     industries: ['immigration', 'education', 'travel', 'consultancy'], recipes: ['pc-country-spotlight', 'pc-study-visa-steps', 'pc-intake-deadline', 'pc-scholarship-alert'],
     layers: [
-      L('ring', 'starRing', 'EU star ring (orbiting)', { corner: 'tr', size: 0.24 }),
       L('drift', 'particles', 'Gentle star drift', { shape: 'star5', colors: ['accent', 'soft'], count: 18, dir: 'float', size: [0.005, 0.011], spin: 0.3 }),
-      L('routes', 'routes', 'Routes between capitals', { map: 'europe', corner: 'tl', size: 0.42 }),
+      L('routes', 'routes', 'Routes between capitals', { map: 'europe', corner: 'tr', size: 0.42 }),
       L('stamps', 'stamps', 'Passport-stamp pops', { texts: ['BERLIN', 'PARIS', 'MADRID', 'ROMA', 'WIEN', 'DUBLIN', 'WARSZAWA'], every: 2.8 }),
       L('glow', 'glow', 'Edge glow (beat)', { color: 'primary' }),
     ],
@@ -137,7 +140,6 @@ export const THEMES = [
     industries: ['travel', 'tourism', 'immigration'], recipes: ['travel-vlog'],
     layers: [
       L('plane', 'plane', 'Plane path across the frame', { every: 6 }),
-      L('ticker', 'ticker', 'Boarding-pass ticker', { text: 'DXB ✈ LHR · GATE 12 · BOARDING NOW · SEAT 14A · DXB ✈ CDG · GATE 7 · ON TIME ·' }),
       L('clouds', 'clouds', 'Cloud drift', { count: 4 }),
       L('globe', 'globe', 'Globe spin', { corner: 'br', size: 0.13 }),
       L('glow', 'glow', 'Edge glow (beat)', { color: 'primary' }),
@@ -151,7 +153,6 @@ export const THEMES = [
     layers: [
       L('stamps', 'stamps', 'Passport-stamp pops', { texts: ['ARRIVED', 'WELCOME', 'ENTRY', 'DEPARTED', 'TRANSIT'], every: 2.4 }),
       L('plane', 'plane', 'Plane path', { every: 7 }),
-      L('ticker', 'ticker', 'Boarding-pass ticker', { text: 'PASSENGER · YOUR NAME · FROM DXB · TO YOUR DREAM · GATE OPEN ·' }),
       L('drift', 'particles', 'Paper dust', { shape: 'dust', colors: ['accent', 'soft'], count: 18, dir: 'float', size: [0.003, 0.006] }),
       L('glow', 'glow', 'Edge glow (beat)', { color: 'accent' }),
     ],
@@ -416,6 +417,30 @@ export const THEMES = [
     sting: { hero: 'dot' }, transition: 'slide', text: { preset: 'lowerthird', title: '3 BR · Sea view' },
     sfx: { intro: 'swoosh', outro: 'success-chime', transition: 'swipe', accent: 'click' } }),
 ];
+
+// every theme reads as a broadcast package: the travel / study / work themes get the channel bug and the colour frame,
+// work themes swap drifting outline icons for drawn job-role badges, and every theme gets light leaks + lens glints
+const BUG = { europe: { text: 'EUROPE', stars: true, flag: ['#003399', '#FFCC00'] } };
+const ROLE_LIST = { 'work-trades': ['welder', 'electrician', 'builder', 'driver', 'warehouse'], 'work-care': ['nurse', 'caregiver'], 'work-hospitality': ['chef', 'waiter', 'driver'], 'work-abroad': ['nurse', 'driver', 'welder', 'chef', 'caregiver'] };
+for (const th of THEMES) {
+  const has = (k) => th.layers.some((l) => l.kind === k), glowAt = () => { const i = th.layers.findIndex((l) => l.kind === 'glow'); return i < 0 ? th.layers.length : i; };
+  if ((th.group === 'Travel & study' || th.group === 'Work abroad') && !has('bug')) {
+    const b = BUG[th.id] || {};
+    th.layers.unshift(L('bug', 'bug', 'Channel bug', { text: b.text || th.name.replace(/^Work abroad · /, '').toUpperCase(), textAr: th.nameAr, stars: !!b.stars, emblem: b.stars ? null : th.id, flag: b.flag || [th.palette.primary, th.palette.soft || '#ffffff', th.palette.accent] }),
+      L('frame', 'frame', 'Colour frame bars', { flag: b.flag ? [b.flag[0], b.flag[1], b.flag[0]] : [th.palette.primary, th.palette.accent, th.palette.primary] }));
+  }
+  if (ROLE_LIST[th.id]) { const i = th.layers.findIndex((l) => l.kind === 'icons'); const r = L('roles', 'roles', 'Job-role badges', { roles: ROLE_LIST[th.id], count: 4 }); if (i >= 0) th.layers.splice(i, 1, r); else th.layers.splice(glowAt(), 0, r); }
+  if (!has('leaks')) th.layers.splice(glowAt(), 0, L('leaks', 'leaks', 'Light leaks + lens glints', { colors: ['accent', '#ff8a3d'], count: 2 }));
+  // the owner, 17 Nov: "i don't like the small icons etc, it should be proper templates like bulletin". The travel,
+  // study, work and country overlays keep only broadcast-size pieces (the channel bug, the colour frame, a news crawl,
+  // light leaks, the beat glow); small sprinkles, drifting icons, corner globes and stamp pops are dropped. Their big
+  // versions are package elements now (bulletin card, breaking band, flight globe, passport stamp, boarding pass ...).
+  if (th.group === 'Countries' || th.group === 'Travel & study' || th.group === 'Work abroad') {
+    const nm = (th.country ? th.name : th.name.replace(/^Work abroad · /, 'Work abroad: ')).toUpperCase();
+    th.layers = th.layers.filter((l) => ['bug', 'frame', 'leaks', 'glow'].includes(l.kind));
+    th.layers.splice(glowAt(), 0, L('crawl', 'crawl', 'News crawl', { label: th.group === 'Work abroad' ? 'JOBS' : 'UPDATE', text: `${nm} · YOUR HEADLINE HERE · BOOK A FREE CONSULTATION · PLACEHOLDER: VERIFY ON THE OFFICIAL WEBSITE` }));
+  }
+}
 
 export const themeById = (id) => THEMES.find((t) => t.id === id) || null;
 export const themesIn = (group) => THEMES.filter((t) => !group || group === 'All' || t.group === group);

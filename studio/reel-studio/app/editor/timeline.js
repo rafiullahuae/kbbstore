@@ -351,7 +351,19 @@ export class Timeline {
     if (e.dataTransfer.files?.length) { e.preventDefault(); ed.importFiles([...e.dataTransfer.files], { trackId: row?.track.id, t0 }); return; }
     const mid = e.dataTransfer.getData('application/x-kbb-media');
     const lib = e.dataTransfer.getData('application/x-kbb-lib');
+    const tel = e.dataTransfer.getData('application/x-kbb-theme-el');
+    const ttr = e.dataTransfer.getData('application/x-kbb-theme-trans');
+    if (ttr) {   // a country transition: lands on the cut nearest the drop
+      e.preventDefault(); let spec = null; try { spec = JSON.parse(ttr); } catch { return; }
+      import('../themes/transitions.js').then((T) => { const [it] = T.placeTransition(ed.context(), spec.kind, { at: t0, theme: spec.theme }); ed.select([it.id]); }).catch((err) => { console.warn('[timeline] transition', err); import('./ui.js').then((u) => u.toast(err.message, 'error')); });
+      return;
+    }
     e.preventDefault();
+    if (tel) {   // a theme element from Themes → Place elements: lands at the drop time, on the row under the pointer when it fits
+      let spec = null; try { spec = JSON.parse(tel); } catch { return; }
+      import('../themes/apply.js').then((A) => { const it = A.placeElement(ed.context(), spec.el, { theme: spec.theme, variant: spec.variant, t0, trackId: row && !row.track.locked && /^(overlay|text)$/.test(row.track.kind) && !row.track.theme ? row.track.id : null }); ed.select([it.id]); }).catch((err) => console.warn('[timeline] theme element', err));
+      return;
+    }
     if (mid) {
       const m = findMedia(ed.project, mid); if (!m) return;
       const type = m.kind === 'audio' ? 'audio' : 'clip';
