@@ -10,7 +10,11 @@
 //     Test against tools/d-claude-mock.cjs, Smart brief through the engine (only brief + catalogue names sent),
 //     Disconnect clears; photo keys; models; folders; languages
 //   - no request leaves the engine's origin; no console errors
-//   - screenshots 1920×1080 + 1280×800 -> shots/d/
+//   - 📺 the broadcast ad templates (ads.js): every template × 1:1 / 4:5 / 9:16 / 16:9 × EN / AR passes every rule,
+//     Arabic mirrors, facts are placeholders, company details fill contact / button / logo / photo slots, export =
+//     preview (PNG and the MP4's frame at the still), save → reload, an older saved design still opens; renders of
+//     every template (4:5 PNG + 9:16 MP4) -> tools/out/ads2/
+//   - screenshots 1920×1080 + 1280×800 -> shots/d/ (the ad-template screen -> tools/out/d/)
 // node tools/d-check.cjs [--no-ai]
 'use strict';
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
@@ -58,6 +62,7 @@ const SDXS = 'creador/sdxs-512-dreamshaper-onnx', SWIN = 'Xenova/swin2SR-classic
   let neg = false; // during the deliberate refusals (bad key 400, settings read 403, call after Disconnect 409) Chrome logs the failed resource
   page.on('console', (m) => { if (m.type() === 'error' && !(neg && /status of (400|403|409)/.test(m.text()))) errs.push(m.text()); });
   page.on('pageerror', (x) => errs.push(x.message));
+  page.on('response', (r) => { if (r.status() === 404) console.log('     (404 ' + r.url().replace(e.url, '') + ')'); });
   page.on('request', (r) => { if (!r.url().startsWith(e.url) && !/^(data|blob):/.test(r.url())) outside.push(r.url()); });
   await page.goto(e.url + '/app/');
   // first run: skip the model setup screen
@@ -196,6 +201,9 @@ const SDXS = 'creador/sdxs-512-dreamshaper-onnx', SWIN = 'Xenova/swin2SR-classic
     await page.setViewportSize({ width: 1920, height: 1080 });
   } else console.log('SKIP image generation (no models/' + SDXS + ' here, or --no-ai)');
 
+  // ── 📺 the broadcast ad templates (ads.js + broadcast.js on the themes' art kit) ──
+  await adTemplates(page, e, dir);
+
   // ── ⚙ Configure ──
   await page.goto(e.url + '/app/'); await page.waitForSelector('#configure-btn');
   await page.click('#configure-btn'); await page.waitForSelector('.cfg-back [data-co]');
@@ -275,3 +283,177 @@ const SDXS = 'creador/sdxs-512-dreamshaper-onnx', SWIN = 'Xenova/swin2SR-classic
   console.log(fails ? `\n${fails} FAILED` : '\nALL PASSED');
   process.exit(fails ? 1 : 0);
 })().catch((err) => { console.error(err); process.exit(1); });
+
+// ── the broadcast ad templates, every one × every format × EN/AR ──
+//   rules     every hard design rule passes as the template comes (no fixing needed) in 1:1, 4:5, 9:16 and 16:9
+//   RTL       Arabic designs mirror the English composition and their words are Arabic
+//   facts     placeholders only: no number that reads as a fee, salary, rate or date; no claim the editor would warn on
+//   company   contact, button, logo and photo slots from the company's details (⚙ Configure)
+//   export    the PNG is the preview pixel for pixel; the MP4's frame at the still is the still (ffmpeg-decoded)
+//   save      a saved template design reloads and draws the same pixels; an older saved design still opens unchanged
+//   brief     a brief now leads with broadcast templates, still 6–8 distinct designs passing every rule
+//   renders   every template in 4:5 (PNG) and 9:16 (432×768 MP4, 8 s) → tools/out/ads2/
+async function adTemplates(page, e, dir) {
+  const OUT2 = path.join(ROOT, 'tools', 'out', 'ads2');
+  fs.rmSync(OUT2, { recursive: true, force: true }); fs.mkdirSync(OUT2, { recursive: true });
+  await page.goto(e.url + '/app/'); await page.waitForSelector('#home-brief');
+  const r = await page.evaluate(async () => {
+    const W = await import('/app/editor/workspaces.js'), Ct = await import('/app/designs/catalogue.js'), Ad = await import('/app/designs/ads.js'), Ru = await import('/app/designs/rules.js'), R = await import('/app/designs/render.js'), Cp = await import('/app/designs/lib/copy.js'), Ed = await import('/app/designs/editor.js'), Mo = await import('/app/designs/motion.js'), Gn = await import('/app/designs/generate.js');
+    const cat = await Ct.catalogueAll(), out = { cells: 0, fails: [], rtl: [], facts: [], claims: [], ids: Ad.AD_TEMPLATES.map((t) => t.id), worst: 99 };
+    const pix = (c) => c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    const diff = (a, b) => { let m = 0, s = 0; for (let i = 0; i < a.length; i++) { const d = Math.abs(a[i] - b[i]); s += d; if (d > m) m = d; } return { max: m, mean: s / a.length }; };
+    const FACT = /(\d+\s*%|\b(aed|usd|eur|gbp|€|£|\$)\s*\d|\d+\s*(days?|weeks?|months?|years?)\b|\b(approval|success)\s+rate|\b\d{3,}\b)/i;
+    const okNum = (s) => s.replace(/\+971 XX XXX XXXX|PC 0001|DD · MM · YYYY|DD MMM( YYYY)?|XX%?|‹[^›]*›/g, '');
+    for (const t of Ad.AD_TEMPLATES) {
+      W.switchWorkspace(t.co); const ws = W.state.current;
+      const sets = { en: t.slides ? Ad.makeCarousel(t.id, ws, cat, { lang: 'en' }) : [Ad.makeAd(t.id, ws, cat, { lang: 'en' })], ar: t.slides ? Ad.makeCarousel(t.id, ws, cat, { lang: 'ar' }) : [Ad.makeAd(t.id, ws, cat, { lang: 'ar' })] };
+      for (const [lang, Ds] of Object.entries(sets)) for (const [k, D] of Ds.entries()) {
+        await R.prepare(D);
+        for (const s of Ad.AD_SIZES) {
+          out.cells++;
+          if (!D.sizes.includes(s)) { out.fails.push(`${t.id} ${lang} ${s}: size missing`); continue; }
+          const c = Ru.check(D, s);
+          if (!c.pass) out.fails.push(`${t.id} ${lang}#${k} ${s}: ` + c.checks.filter((x) => !x.ok && !['grid', 'words'].includes(x.id)).map((x) => x.msg).join('; '));
+          for (const it of c.items) if (it.contrast) out.worst = Math.min(out.worst, it.contrast);
+        }
+        // RTL: the Arabic design mirrors the English one, its words are Arabic and right-aligned
+        if (lang === 'ar') {
+          const E = sets.en[k];
+          for (const s of Ad.AD_SIZES) {
+            const [Wd] = R.PX[s];
+            for (const el of D.els) {
+              const ga = D.geo[s][el.id], ge = E.geo[s][el.id];
+              if (!ga || !ge || ga.hd) continue;
+              if (Math.abs(ga.x - (Wd - ge.x - ge.w)) > 1) out.rtl.push(`${t.id} ${s} ${el.id} not mirrored`);
+              if ((el.t === 'text' || el.t === 'btn') && ge.al === 'l' && ga.al !== 'r') out.rtl.push(`${t.id} ${s} ${el.id} not right-aligned`);
+            }
+          }
+          for (const el of D.els) if (['headline', 'kicker', 'cta'].includes(el.role) && el.txt && !/[؀-ۿ]/.test(el.txt) && !/^\{?[A-Z0-9 &%‹›]+$/.test(el.txt) && !/^[A-Z][A-Za-z0-9 .'-]+$/.test(el.txt)) out.rtl.push(`${t.id} ${el.id} "${el.txt}" is not Arabic`);
+        }
+        // facts: placeholders only, and nothing the editor's claim checker would warn about
+        for (const el of D.els) {
+          const words = [el.txt, ...Object.values(el.words || {})].filter(Boolean);
+          for (const w of words) {
+            if (FACT.test(okNum(w))) out.facts.push(`${t.id} ${el.id}: "${w}"`);
+            const cw = Cp.claimWarnings(w); if (cw.length) out.claims.push(`${t.id} ${el.id}: "${w}" ${cw.join(' ')}`);
+          }
+        }
+      }
+    }
+    // the company's details (⚙ Configure) reach every ad
+    W.switchWorkspace('planet-careers'); const pc = W.state.current, keep = structuredClone(pc);
+    Object.assign(pc, { contactInfo: { whatsapp: '+971 50 123 4567', website: 'planet-example.com' }, endCard: { ...pc.endCard, cta: 'Talk to an adviser', ctaAr: 'تحدّث مع مستشار' }, adPhotos: { worker: 'brands/planet-careers/preview.png' } });
+    const Dc = Ad.makeAd('pc-split', pc, cat, { lang: 'en' }), Dca = Ad.makeAd('pc-hiring', pc, cat, { lang: 'ar' });
+    const txt = (D, id) => D.els.find((x) => x.id === id)?.txt;
+    out.company = { contact: txt(Dc, 'contact'), cta: txt(Dc, 'cta'), ctaAr: txt(Dca, 'cta'), contactAr: txt(Dca, 'contact'), photo: Dc.els.find((x) => x.id === 'photo')?.src, logo: Dc.brand.logo, kitLogo: Gn.brandOf(pc).logo, hasLogo: Dc.els.some((x) => x.t === 'logo') };
+    Object.keys(pc).forEach((k) => delete pc[k]); Object.assign(pc, keep);
+    // export = preview (PNG), the still = the frame at t = still, the MP4 frame at the still (checked in node)
+    W.switchWorkspace('planet-careers');
+    const D1 = Ad.makeAd('pc-hiring', W.state.current, cat, { lang: 'en' }); await R.prepare(D1);
+    const [png] = await Ed.exportDesign(D1, { sizes: ['post'], scale: 1, type: 'png' });
+    const bm = await createImageBitmap(await (await fetch('/' + png.path)).blob()), cv = document.createElement('canvas'); cv.width = bm.width; cv.height = bm.height; cv.getContext('2d').drawImage(bm, 0, 0);
+    out.exportVsPreview = diff(pix(cv), pix(R.renderCanvas(D1, 'post', 1)));
+    const mo = Mo.motionOf(D1);
+    out.stillVsT = diff(pix(R.renderCanvas(D1, 'story', 0.4)), pix(R.renderCanvas(D1, 'story', 0.4, { t: mo.still })));
+    out.early = diff(pix(R.renderCanvas(D1, 'story', 0.4)), pix(R.renderCanvas(D1, 'story', 0.4, { t: 0.5 }))).mean;
+    const [mp4] = await Ed.exportDesign(D1, { sizes: ['story'], type: 'mp4', width: 432 });
+    out.mp4 = mp4; out.still = mo.still;
+    const sc = document.createElement('canvas'); sc.width = 108; sc.height = 192; sc.getContext('2d').drawImage(R.renderCanvas(D1, 'story', 0.4), 0, 0, 108, 192);
+    const sd = sc.getContext('2d').getImageData(0, 0, 108, 192).data; out.stillRGB = []; for (let i = 0; i < sd.length; i += 4) out.stillRGB.push(sd[i], sd[i + 1], sd[i + 2]);
+    // save → reload draws the same pixels
+    const D2 = Ad.makeAd('kbb-offer', (W.switchWorkspace('kbb'), W.state.current), cat, { lang: 'ar' });
+    const sp = await Ed.saveDesign(D2), back = await (await import('/app/core/engine.js')).engine.readFile(sp, 'json'); await R.prepare(back);
+    out.reload = diff(pix(R.renderCanvas(D2, 'story', 0.5)), pix(R.renderCanvas(back, 'story', 0.5))); out.reloadPath = sp;
+    // the brief now leads with broadcast templates
+    const B = await import('/app/designs/lib/brief.js'); W.switchWorkspace('planet-careers');
+    const spec = B.parseBrief('Work abroad: welders wanted for Poland, apply on WhatsApp. Story, post and 16:9 wide.', W.state.current, cat);
+    const g = await Gn.generate(spec, W.state.current, cat, { count: 8 });
+    out.brief = { n: g.designs.length, ads: g.designs.filter((D) => D.ad).map((D) => D.family), distinct: new Set(g.designs.map((D) => D.family)).size, pass: g.designs.every((D) => D.sizes.every((s) => Ru.check(D, s).pass)), sizes: spec.sizes, wide: g.designs.filter((D) => D.sizes.includes('wide')).length };
+    return out;
+  });
+  ok(!r.fails.length, `${r.ids.length} broadcast templates (${r.ids.join(', ')}) × 1:1 / 4:5 / 9:16 / 16:9 × EN / AR (${r.cells} design-sizes, carousel slides included): every hard rule passes as made · lowest text contrast ${r.worst.toFixed(1)}:1` + (r.fails.length ? '\n     ' + r.fails.slice(0, 8).join('\n     ') : ''));
+  ok(!r.rtl.length, 'Arabic: every element mirrored, every text right-aligned where the English is left-aligned, headline / kicker / button in Arabic' + (r.rtl.length ? ': ' + r.rtl.slice(0, 6).join(' | ') : ''));
+  ok(!r.facts.length, 'facts are placeholders only (no fee, salary, rate, duration or date in any default word)' + (r.facts.length ? ': ' + r.facts.slice(0, 6).join(' | ') : ''));
+  ok(!r.claims.length, 'no default word trips the claim checker (guaranteed / 100% / medical)' + (r.claims.length ? ': ' + r.claims.slice(0, 4).join(' | ') : ''));
+  const C = r.company;
+  ok(/\+971 50 123 4567/.test(C.contact) && /planet-example\.com/.test(C.contact) && /\+971 50 123 4567/.test(C.contactAr) && /واتساب/.test(C.contactAr) && C.cta === 'Talk to an adviser' && C.ctaAr === 'تحدّث مع مستشار' && C.photo === 'brands/planet-careers/preview.png' && C.logo === C.kitLogo && C.hasLogo, `contact, button (EN + AR), logo and the worker photo slot come from the company's details ("${C.contact}")`);
+  ok(r.exportVsPreview.max === 0, `export = preview: the exported PNG equals the preview pixel for pixel (max difference ${r.exportVsPreview.max})`);
+  ok(r.stillVsT.max === 0 && r.early > 1, `the still is the animation's frame at t = ${r.still} s exactly; at 0.5 s the entrances are still running (mean difference ${r.early.toFixed(1)})`);
+  const mp4 = path.join(dir, r.mp4.path);
+  const pr = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=codec_name,width,height,nb_frames', '-of', 'json', mp4]).toString());
+  const fr = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(r.still + 0.017), '-i', mp4, '-frames:v', '1', '-vf', 'scale=108:192', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 1 << 24 });
+  let dsum = 0; for (let i = 0; i < fr.length; i++) dsum += Math.abs(fr[i] - r.stillRGB[i]);
+  const vdiff = dsum / fr.length;
+  ok(pr.streams[0].codec_name === 'h264' && pr.streams[0].width === 432 && pr.streams[0].height === 768 && Math.abs(+pr.format.duration - 8) < 0.2 && vdiff < 8, `animated export: H.264 MP4 432×768, ${(+pr.format.duration).toFixed(2)} s; its frame at the still matches the still PNG (mean difference ${vdiff.toFixed(1)} of 255, compression only)`);
+  ok(r.reload.max === 0, `save → reload: ${r.reloadPath.split('/').pop()} draws the same pixels after reading it back`);
+  ok(r.brief.n >= 6 && r.brief.n <= 8 && r.brief.distinct === r.brief.n && r.brief.pass && r.brief.ads.length >= 3 && r.brief.sizes.includes('wide') && r.brief.wide >= 3, `a brief leads with broadcast templates: ${r.brief.n} distinct designs (${r.brief.ads.join(', ')} first), all passing every rule, ${r.brief.wide} of them also in 16:9`);
+  // an older saved design (before the broadcast templates) still opens and draws as it did
+  const legacy = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'fixtures', 'legacy-design.json'), 'utf8'));
+  fs.mkdirSync(path.join(dir, 'workspaces', 'planet-careers', 'designs'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'workspaces', 'planet-careers', 'designs', legacy.id + '.json'), JSON.stringify(legacy));
+  fs.copyFileSync(path.join(ROOT, 'tools', 'fixtures', 'legacy-design.png'), path.join(dir, 'workspaces', 'planet-careers', 'designs', legacy.id + '.png'));   // its thumbnail, as saveDesign writes one
+  const lg = await page.evaluate(async ({ id }) => {
+    const R = await import('/app/designs/render.js'), Ru = await import('/app/designs/rules.js'), { engine } = await import('/app/core/engine.js');
+    const D = await engine.readFile(`workspaces/planet-careers/designs/${id}.json`, 'json'); await R.prepare(D);
+    return { pass: D.sizes.every((s) => Ru.check(D, s).pass), url: R.renderCanvas(D, D.sizes[0], 0.5).toDataURL('image/png') };
+  }, { id: legacy.id }).catch((x) => ({ err: x.message }));
+  let ldiff = 99;
+  if (lg.url) {
+    const now = await page.evaluate(async ({ a, b }) => {
+      const load = async (u) => { const bm = await createImageBitmap(await (await fetch(u)).blob()); const c = document.createElement('canvas'); c.width = bm.width; c.height = bm.height; c.getContext('2d').drawImage(bm, 0, 0); return c.getContext('2d').getImageData(0, 0, c.width, c.height).data; };
+      const x = await load(a), y = await load(b); if (x.length !== y.length) return 99; let s = 0; for (let i = 0; i < x.length; i++) s += Math.abs(x[i] - y[i]); return s / x.length;
+    }, { a: lg.url, b: 'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, 'tools', 'fixtures', 'legacy-design.png')).toString('base64') });
+    ldiff = now;
+  }
+  ok(lg.pass && ldiff < 1.5, `an older saved design (tools/fixtures/legacy-design.json, "${legacy.name}") still passes and draws as before (mean pixel difference ${ldiff.toFixed(2)})`);
+  // the screen: 📺 Ad templates, open one, edit a piece's words, play, export
+  await page.evaluate(async () => { const W = await import('/app/editor/workspaces.js'); W.switchWorkspace('planet-careers'); });
+  await page.goto(e.url + '/app/'); await page.waitForSelector('#home-brief');
+  await page.click('[data-mod-home="designs"] .tile-actions .btn:not(.primary)');
+  await page.waitForSelector('#dz-mode'); await page.click('#dz-mode [data-mode="templates"]');
+  await page.waitForFunction(() => document.querySelectorAll('#dz-templates .dz-card canvas').length >= 13, null, { timeout: 120000 });
+  const nT = await page.$$eval('#dz-templates .dz-card', (x) => x.length);
+  ok(nT === 10, `Designs → 📺 Ad templates lists the company's ${nT} broadcast templates (carousels as one strip of slides)`);
+  const SH = path.join(ROOT, 'tools', 'out', 'd');
+  await page.screenshot({ path: path.join(SH, 'ad-templates-1920.png') });
+  await page.setViewportSize({ width: 1280, height: 800 }); await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(SH, 'ad-templates-1280.png') });
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.selectOption('#dz-t-lang', 'ar'); await page.waitForFunction(() => document.querySelectorAll('#dz-templates .dz-card canvas').length >= 13, null, { timeout: 120000 });
+  await page.click('#dz-templates [data-tpl="pc-stamp"] canvas');
+  await page.waitForSelector('#de-canvas'); await page.waitForTimeout(800);
+  await page.click('[data-el="passport"]'); await page.waitForSelector('.de-word');
+  const words = await page.$$eval('.de-word', (x) => x.map((i) => i.dataset.word));
+  await page.fill('[data-word="date"]', '01 · 01 · 2027'); await page.$eval('[data-word="date"]', (i) => i.dispatchEvent(new Event('change')));
+  await page.waitForTimeout(400);
+  const sizesSeg = await page.$$eval('#de-sizes button', (x) => x.map((b) => b.dataset.v));
+  await page.click('#de-play'); await page.waitForFunction(() => document.querySelector('.de')?.dataset.played, null, { timeout: 20000 });
+  await page.screenshot({ path: path.join(SH, 'ad-editor-ar-1920.png') });
+  const ed = await page.evaluate(() => { const c = document.querySelector('#de-canvas'); return { w: c.width, played: document.querySelector('.de').dataset.played }; });
+  ok(words.includes('approved') && words.includes('date') && sizesSeg.join() === 'story,post,square,wide' && +ed.played >= 7.9, `editor: a template opens in all four formats (${sizesSeg.join(', ')}); the passport piece's words (${words.join(', ')}) are editable; ▶ Play ran the ${ed.played} s animation once and stopped`);
+  await page.click('#de-back');
+  // the renders: every template in 4:5 (PNG) and 9:16 (MP4 432×768, 8 s)
+  const list = await page.evaluate(async () => (await import('/app/designs/ads.js')).AD_TEMPLATES.map((t) => [t.id, t.co, t.slides || 0]));
+  let nPng = 0, nMp4 = 0, bad = [];
+  for (const [id, co, slides] of list) {
+    const res = await page.evaluate(async ({ id, co, slides }) => {
+      const W = await import('/app/editor/workspaces.js'), Ct = await import('/app/designs/catalogue.js'), Ad = await import('/app/designs/ads.js'), Ed = await import('/app/designs/editor.js');
+      W.switchWorkspace(co); const ws = W.state.current, cat = await Ct.catalogueAll();
+      const Ds = slides ? Ad.makeCarousel(id, ws, cat, {}) : [Ad.makeAd(id, ws, cat, {})], out = [];
+      for (const [k, D] of Ds.entries()) {
+        D.name = id + (slides ? '-slide' + (k + 1) : '');
+        const [p] = await Ed.exportDesign(D, { sizes: ['post'], type: 'png' });
+        const [v] = await Ed.exportDesign(D, { sizes: ['story'], type: 'mp4', width: 432 });
+        out.push({ png: p.path, mp4: v.path, name: D.name });
+      }
+      return out;
+    }, { id, co, slides });
+    for (const x of res) {
+      fs.copyFileSync(path.join(dir, x.png), path.join(OUT2, x.name + '-4x5.png')); nPng++;
+      const mp = path.join(OUT2, x.name + '-9x16.mp4'); fs.copyFileSync(path.join(dir, x.mp4), mp);
+      const q = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=width,height', '-of', 'json', mp]).toString());
+      if (q.streams[0].width !== 432 || q.streams[0].height !== 768 || Math.abs(+q.format.duration - 8) > 0.2) bad.push(x.name); else nMp4++;
+    }
+  }
+  ok(!bad.length && nMp4 === nPng, `renders: ${nPng} stills (4:5, 1080×1350 PNG) and ${nMp4} animated 9:16 MP4s (432×768, 8 s) in tools/out/ads2/` + (bad.length ? ' bad: ' + bad.join(', ') : ''));
+}

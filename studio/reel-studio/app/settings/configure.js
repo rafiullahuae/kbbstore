@@ -122,6 +122,29 @@ export function openConfigure(section = 'companies', { onClose } = {}) {
   return { close, go };
 }
 
+// the photos the broadcast ad templates put in their photo slots (Designs → 📺 Ad templates): a worker, a client (with
+// their permission), a product. Saved in the company's designs/images and named in workspace.json (adPhotos).
+const SLOTS = [['worker', 'Worker photo'], ['person', 'Client photo (with permission)'], ['product', 'Product photo']];
+function adPhotos(w) {
+  const box = h('div.cfg-photos', { dataset: { photos: w.id } }, h('label', 'Photos for ad slots'));
+  for (const [k, l] of SLOTS) {
+    const cur = w.adPhotos?.[k];
+    const inp = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', 'aria-label': `${w.name} ${l}`, dataset: { slot: k } });
+    const st = h('span.cfg-muted', cur ? '✓ ' + cur.split('/').pop() : 'not set — a drawn stand-in shows');
+    inp.addEventListener('change', async () => {
+      const f = inp.files[0]; if (!f) return;
+      const ext = (f.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z]/g, '') || 'png', p = `${wsDir(w.id)}/designs/images/slot-${k}.${ext}`;
+      try {
+        await engine.writeFile(p, f);
+        const nw = structuredClone(w); nw.adPhotos = Object.assign({}, nw.adPhotos, { [k]: p }); nw.modified = new Date().toISOString();
+        await engine.writeFile(`${wsDir(w.id)}/workspace.json`, nw); Object.assign(w, nw); st.className = 'cfg-ok'; st.textContent = '✓ ' + p.split('/').pop();
+      } catch (e) { st.className = 'cfg-bad'; st.textContent = 'Not saved: ' + e.message; }
+    });
+    box.appendChild(h('div.cfg-row', h('span', l), inp, st));
+  }
+  return box;
+}
+
 const RENDER = {
   async companies(sec, { refresh }) {
     ap(sec, h('h2', 'Companies'), h('p.cfg-muted', 'Each company has its own brand kit (logo, colours, fonts, contact line, button wording), projects, exports and designs. Switch companies from the top-left menu.'));
@@ -160,7 +183,7 @@ const RENDER = {
         nw.modified = new Date().toISOString();
         try { await engine.writeFile(`${wsDir(w.id)}/workspace.json`, nw); Object.assign(w, nw); out.className = 'cfg-ok'; out.textContent = '✓ Saved'; } catch (e) { out.className = 'cfg-bad'; out.textContent = 'Not saved: ' + e.message; }
       } } }, 'Save');
-      sec.appendChild(h('div.cfg-card', { dataset: { contact: w.id } }, h('div.cfg-co', wsBadge(w), h('h3', w.fullName || w.name)), h('div.cfg-row', h('label', 'Contact line'), line), h('div.cfg-row', h('label', 'Button (English)'), ctaEn), h('div.cfg-row', h('label', 'Button (Arabic)'), ctaAr), ...rows, h('div.cfg-row', save, out), howTo('contact')));
+      sec.appendChild(h('div.cfg-card', { dataset: { contact: w.id } }, h('div.cfg-co', wsBadge(w), h('h3', w.fullName || w.name)), h('div.cfg-row', h('label', 'Contact line'), line), h('div.cfg-row', h('label', 'Button (English)'), ctaEn), h('div.cfg-row', h('label', 'Button (Arabic)'), ctaAr), ...rows, h('div.cfg-row', save, out), adPhotos(w), howTo('contact')));
     }
   },
 

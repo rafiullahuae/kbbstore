@@ -1,6 +1,8 @@
 // KBB Studio · BRIEF → DESIGNS, the screen: type a brief (English or Arabic, in his own words) → the reading (editable
 // chips) → 6–8 distinct designs that pass every design rule, in each size he asked for → open one in the design editor.
 // Right column: the generated visuals -- AI pictures (offline model), colour schemes, icons, artwork.
+// 📺 Ad templates: the company's broadcast templates (ads.js) in every size, English or Arabic, any country, carousels
+// as one strip of slides -- click one to open it in the design editor.
 import { engine } from '../core/engine.js';
 import { APP_NAME } from '../core/config.js';
 import { h, clear, toast } from '../editor/ui.js';
@@ -16,6 +18,7 @@ import { drawArt, artFor, ART_KINDS } from './art.js';
 import { promptsFor, sanitize } from './imagegen/prompts.js';
 import * as IG from './imagegen/index.js';
 import { openDesignEditor, saveDesign, listSaved } from './editor.js';
+import { adTemplatesFor, makeAd, makeCarousel, AD_NAMES, AD_SIZES } from './ads.js';
 import { claudeStatus } from '../settings/claude.js';
 const ap = (el, ...k) => { el.append(...k.flat(Infinity).filter((x) => x != null && x !== false)); return el; };
 
@@ -44,6 +47,42 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
   const saved = h('div.dz-saved#dz-saved');
   const right = h('aside.dz-col.dz-right#dz-visuals');
   const goBtn = h('button.btn.primary.big.dz-go#dz-go', { on: { click: () => run() } }, '✨ Make designs');
+  const tplBox = h('div.dz-tpl#dz-templates', { hidden: true });
+  const modeTabs = h('div.dz-tabs#dz-mode', h('button.chip.on', { dataset: { mode: 'designs' }, on: { click: () => mode('designs') } }, '🖼 Designs'), h('button.chip', { dataset: { mode: 'templates' }, on: { click: () => mode('templates') } }, '📺 Ad templates'));
+  function mode(m) {
+    for (const b of modeTabs.children) b.classList.toggle('on', b.dataset.mode === m);
+    grid.hidden = m !== 'designs'; tplBox.hidden = m !== 'templates'; sizeTabs.hidden = m !== 'designs';
+    if (m === 'templates' && !tplBox.childElementCount) paintTemplates();
+  }
+  // ── the broadcast ad templates ──
+  const T = { lang: 'en', size: 'post', cc: '' };
+  async function paintTemplates() {
+    clear(tplBox);
+    const pc = /planet|consult|visa|immigra/i.test(ws.id + ' ' + (ws.industry || ''));
+    const langSel = h('select#dz-t-lang', { 'aria-label': 'Language' }, h('option', { value: 'en', selected: T.lang === 'en' }, 'English'), h('option', { value: 'ar', selected: T.lang === 'ar' }, 'العربية'));
+    const sizeSel = h('div.dz-tabs#dz-t-sizes', AD_SIZES.map((s) => h('button.chip' + (s === T.size ? '.on' : ''), { dataset: { size: s }, on: { click: () => { T.size = s; paintTemplates(); } } }, `${s} ${PX[s].join('×')}`)));
+    const ccSel = pc ? h('select#dz-t-cc', { 'aria-label': 'Country' }, h('option', { value: '' }, 'Each template’s own country'), cat.countries.map((c) => h('option', { value: c.code, selected: c.code === T.cc }, c.name))) : null;
+    langSel.addEventListener('change', () => { T.lang = langSel.value; paintTemplates(); });
+    ccSel?.addEventListener('change', () => { T.cc = ccSel.value; paintTemplates(); });
+    const list = h('div.dz-grid.dz-tgrid');
+    ap(tplBox, h('p.dz-small', 'Broadcast templates in your kit — the themes’ flags, landmarks, stamps and passes. Every word is editable (English or Arabic), facts are placeholders, contact and button come from ⚙ Configure. Each opens in the editor; export PNG, JPG or an animated MP4.'),
+      h('div.dz-row', langSel, ccSel, h('div.grow'), sizeSel), list);
+    for (const t of adTemplatesFor(ws)) {
+      const opts = { lang: T.lang, cc: T.cc || undefined, ccs: T.cc && t.ccs ? [T.cc, ...t.ccs.filter((x) => x !== T.cc)].slice(0, t.ccs.length) : undefined };
+      const Ds = t.slides ? makeCarousel(t.id, ws, cat, opts) : [makeAd(t.id, ws, cat, opts)];
+      const strip = h('div.dz-strip');
+      const card = h('div.dz-card' + (t.slides ? '.dz-wide' : ''), { dataset: { tpl: t.id } }, strip,
+        h('div.dz-card-foot', h('b', (T.lang === 'ar' ? t.nameAr : t.name) + (t.slides ? ` · ${t.slides} slides` : '')), h('span.dz-score', T.size)));
+      list.appendChild(card);
+      for (const D of Ds) {
+        await prepare(D);
+        const cv = renderCanvas(D, T.size, 0.24);
+        cv.dataset.design = D.id;
+        cv.addEventListener('click', () => edit(D, T.size));
+        strip.appendChild(cv);
+      }
+    }
+  }
 
   root.replaceChildren(h('div.dz',
     h('header.topbar',
@@ -60,7 +99,7 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
         h('label.dz-row', smart, h('span', h('b', 'Smart brief (Claude)'), h('span.dz-small', cl.set ? ' — asks once per session' : ' — connect Claude in ⚙ Configure'))),
         goBtn, prog, specBox,
         h('h3', 'Saved designs'), saved),
-      h('main.dz-col.dz-main', h('div.dz-row', h('h2', 'Designs'), h('div.grow'), sizeTabs), grid),
+      h('main.dz-col.dz-main', h('div.dz-row', modeTabs, h('div.grow'), sizeTabs), grid, tplBox),
       right)));
 
   // ── the reading ──
@@ -96,7 +135,7 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
       const size = D.sizes.includes(S.size) ? S.size : D.sizes[0];
       const cv = renderCanvas(D, size, 0.24);
       const card = h('div.dz-card', { dataset: { design: D.id, family: D.family }, on: { click: () => edit(D) } }, cv,
-        h('div.dz-card-foot', h('b', FAMILY_NAMES[D.family] + ' · ' + (D.lang === 'ar' ? 'عربي' : 'EN')), h('span.dz-score', { title: 'Design rules: every hard rule passed in every size' }, '✓ ' + D.score)),
+        h('div.dz-card-foot', h('b', (FAMILY_NAMES[D.family] || AD_NAMES[D.family] || D.family) + ' · ' + (D.lang === 'ar' ? 'عربي' : 'EN')), h('span.dz-score', { title: 'Design rules: every hard rule passed in every size' }, '✓ ' + D.score)),
         h('div.dz-sizes', D.sizes.map((s) => h('span.dz-chip', s)), h('div.grow'),
           h('button.btn.small', { on: { click: (e) => { e.stopPropagation(); quickExport(D); } } }, '⬇ PNG')));
       grid.appendChild(card);
@@ -137,8 +176,8 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
     const path = `workspaces/${ws.id}/exports/designs/${D.family}-${size}-${D.id}.png`;
     try { await engine.writeFile(path, blob); toast('Saved ' + path.split('/').pop() + ' in exports/designs', 'ok'); } catch (e) { toast('Not saved: ' + e.message, 'error'); }
   }
-  function edit(D) {
-    openDesignEditor(D, { ws, cat, spec: S.spec, size: S.size, home, onSaved: () => paintSaved() });
+  function edit(D, size) {
+    openDesignEditor(D, { ws, cat, spec: S.spec, size: size || S.size, home, onSaved: () => paintSaved() });
   }
   async function paintSaved() {
     clear(saved);
@@ -233,5 +272,5 @@ export async function openDesigns(root, { home, brief: initial = '', auto = fals
   paintSaved();
   paintVisuals();
   if (auto && briefIn.value.trim()) run();
-  return { run, state: S };
+  return { run, state: S, mode, paintTemplates };
 }

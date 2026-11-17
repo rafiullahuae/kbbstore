@@ -7,12 +7,17 @@
 //     fonts:{head, body, ar, display}, els:[El], geo:{story:{id:G}, post:{...}, square:{...}} }
 //   El: {id, t:'text'|'btn'|'shape'|'icon'|'prod'|'img'|'logo', role, name, txt, font:'head'|'body'|'ar'|'display'|'serif',
 //        fw, lh, ls, up, al, pc (palette key) | col (hex), plate:{pc|col, op, rad, pad}, fill(pc key|hex), sh, rad, op,
-//        ic, style, src, fit, mask, tint, maxLines, deco (true = decoration: may sit under/over others)}
+//        ic, style, src, fit, mask, tint, maxLines, deco (true = decoration: may sit under/over others),
+//        anim:{k, at, d} (its entrance, motion.js), slot:'worker'|'person'|'product' (a photo slot: drawn stand-in until
+//        a photo is set)}   t:'art' = a broadcast art piece (broadcast.js: kind, cc, words, ...)
+//   D.motion = {dur, still} (motion.js): draw(..., {t}) is the frame at t; without t, the still (= the PNG/JPG export)
 //   G : {x, y, w, h, fs, al, r, hd}  -- canvas px for that size (1080 wide); text boxes grow downwards from y
 import { SIZES } from './lib/brief.js';
 import { drawArt } from './art.js';
 import { iconImage } from './icons.js';
 import { rgba, contrast } from './lib/color.js';
+import { drawPiece, drawSlot, preparePieces } from './broadcast.js';
+import { motionOf, entrances, enter } from './motion.js';
 
 export const PX = Object.fromEntries(Object.entries(SIZES).map(([k, v]) => [k, [v.w, v.h]]));
 
@@ -88,6 +93,7 @@ export async function prepare(D) {
     if (el.t === 'logo') { const s = logoSrc(D, el); if (s) jobs.push(want(s).catch(() => {})); }
     if (el.t === 'icon') jobs.push(iconImage(el.ic, el.style, { fg: colorOf(D, el.pc, el.col), bg: colorOf(D, el.bgPc || 'acc', el.bgCol), accent: colorOf(D, 'acc') }).then((im) => ready.set('icon:' + iconKey(el, D), im)));
   }
+  if (D.els.some((el) => el.t === 'art' || el.slot)) jobs.push(preparePieces(D));
   await Promise.all(jobs);
 }
 export const colorOf = (D, pc, col) => (col && /^#[0-9a-f]{6}/i.test(col) ? col.slice(0, 7) : (pc && D.palette[pc]) || D.palette.ink);
@@ -146,9 +152,10 @@ export function layoutText(D, el, g) {
 export function layout(D, size) {
   const geo = D.geo[size] || {};
   const out = [];
-  for (const el of D.els) {
-    const g = geo[el.id];
-    if (!g || g.hd || el.hide) continue;
+  for (const el0 of D.els) {
+    const g = geo[el0.id];
+    if (!g || g.hd || el0.hide) continue;
+    const el = g.o ? Object.assign({}, el0, g.o) : el0;   // what differs in this size (a broadcast template's shade, path ...)
     let box = { x: g.x, y: g.y, w: g.w, h: g.h || 0 }, text = null;
     if (el.t === 'text' || el.t === 'btn') {
       if (el.t === 'btn') { text = layoutText(D, { ...el, plate: null }, { ...g, w: g.w - (g.fs || 40) * 1.4 }); box = { x: g.x, y: g.y, w: g.w, h: g.h }; text.box = { ...box }; }
@@ -203,19 +210,25 @@ export function draw(ctx, D, size, opts = {}) {
     }
   }
   const items = opts.items || layout(D, size);
+  // the frame at t: entrances still running are applied; at or after the still every element draws as in the still
+  const mo = motionOf(D), t = opts.t ?? mo.still, ent = opts.t != null && opts.t < mo.still ? entrances(D, items) : null;
+  const o2 = { ...opts, t, ent, ar: D.lang === 'ar' };
   for (const it of items) {
     if (opts.under && it.el.id === opts.under) break;
     if (opts.only && !opts.only(it)) continue;
-    drawItem(ctx, D, it, opts);
+    drawItem(ctx, D, it, o2);
   }
   ctx.restore();
 }
 
+const it0Box = (el, g, box, text) => (text ? text.box : el.t === 'shape' || el.t === 'art' ? { x: g.x, y: g.y, w: g.w, h: g.h } : box);
 export function drawItem(ctx, D, { el, g, box, text }, opts = {}) {
   ctx.save();
   ctx.globalAlpha = (el.op ?? 100) / 100;
+  if (opts.ent && !enter(ctx, opts.ent.get(el.id), it0Box(el, g, box, text), opts.t, opts.ar)) { ctx.restore(); return; }
   if (g.r) { const cx = box.x + box.w / 2, cy = box.y + box.h / 2; ctx.translate(cx, cy); ctx.rotate((g.r * Math.PI) / 180); ctx.translate(-cx, -cy); }
-  if (el.t === 'shape') {
+  if (el.t === 'art') drawPiece(ctx, D, el, g, opts.t ?? motionOf(D).still);
+  else if (el.t === 'shape') {
     shapePath(ctx, el.sh, g.x, g.y, g.w, g.h, el.rad);
     if (el.shadow) { ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14; }
     if (el.fill !== 'none') { ctx.fillStyle = fillFor(ctx, D, el, g.x, g.y, g.w, g.h); ctx.fill(); }
@@ -246,7 +259,8 @@ export function drawItem(ctx, D, { el, g, box, text }, opts = {}) {
         ctx.restore();
         if (el.ring) { shapePath(ctx, el.mask || 'rect', g.x, g.y, g.w, g.h, el.rad || 0); ctx.strokeStyle = colorOf(D, el.ring); ctx.lineWidth = el.ringW || 10; ctx.stroke(); }
       } else ctx.drawImage(im, box.x, box.y, box.w, box.h);
-    } else if (el.t === 'logo') {
+    } else if (el.slot) drawSlot(ctx, D, el, g, opts.t ?? 0);
+    else if (el.t === 'logo') {
       const t = { ...el, txt: D.brand.name || '', font: 'head', fw: 700 };
       const L = layoutText(D, t, { ...g, fs: g.h * 0.6 }); drawLines(ctx, D, t, L, L.box);
     }

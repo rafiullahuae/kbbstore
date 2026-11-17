@@ -1,0 +1,428 @@
+{
+ "v": 1,
+ "id": "dmwkkdufkvaxk9",
+ "name": "Poster · Brand · light",
+ "workspace": "planet-careers",
+ "family": "poster",
+ "lang": "en",
+ "copyId": "c0",
+ "paletteId": "brand-light",
+ "sizes": [
+  "story",
+  "square"
+ ],
+ "palette": {
+  "id": "brand-light",
+  "name": "Brand · light",
+  "bg": "#EFF4FA",
+  "bg2": "#D2DBE8",
+  "ink": "#002768",
+  "sub": "#325186",
+  "acc": "#002768",
+  "acc2": "#00183F",
+  "onAcc": "#FFFFFF",
+  "accText": "#002768",
+  "card": "#FFFFFF",
+  "cardInk": "#161616",
+  "deco": [
+   "#002768",
+   "#BE0B32",
+   "#8093B4"
+  ],
+  "dark": false
+ },
+ "art": {
+  "base": "linear",
+  "angle": 188,
+  "seed": 1,
+  "layers": [
+   {
+    "k": "stripes",
+    "op": 0.9
+   },
+   {
+    "k": "rays",
+    "alpha": 0.05
+   }
+  ]
+ },
+ "bgImage": null,
+ "brand": {
+  "name": "Planet Careers",
+  "logo": "brands/planet-careers/logo.svg",
+  "logoLight": "brands/planet-careers/logo-white.svg",
+  "mark": "brands/planet-careers/logo-app-icon.svg"
+ },
+ "fonts": {
+  "head": "Afacad",
+  "body": "Afacad",
+  "ar": "Cairo",
+  "display": "Bebas Neue",
+  "serif": "Playfair Display"
+ },
+ "els": [
+  {
+   "id": "heroBack",
+   "t": "shape",
+   "role": "deco",
+   "deco": true,
+   "sh": "circle",
+   "fill": "card",
+   "op": 100
+  },
+  {
+   "id": "hero",
+   "t": "img",
+   "role": "hero",
+   "name": "Welder",
+   "src": "library/occupations/figures/trades.svg",
+   "fit": "contain",
+   "ay": 1
+  },
+  {
+   "id": "logo",
+   "t": "logo",
+   "role": "logo",
+   "name": "Logo",
+   "pc": "ink"
+  },
+  {
+   "id": "kicker",
+   "t": "text",
+   "role": "kicker",
+   "name": "Kicker",
+   "txt": "WE'RE HIRING",
+   "font": "body",
+   "fw": 700,
+   "ls": 16,
+   "up": true,
+   "pc": "accText",
+   "lh": 1.2,
+   "maxLines": 2
+  },
+  {
+   "id": "headline",
+   "t": "text",
+   "role": "headline",
+   "name": "Headline",
+   "txt": "Welders Wanted for Poland",
+   "font": "head",
+   "fw": 800,
+   "pc": "ink",
+   "lh": 1.04,
+   "maxLines": 3
+  },
+  {
+   "id": "offer",
+   "t": "text",
+   "role": "offer",
+   "name": "Offer",
+   "txt": "Salary ‹edit›  ·  Visa ‹edit›",
+   "font": "body",
+   "fw": 800,
+   "pc": "onAcc",
+   "lh": 1.15,
+   "plate": {
+    "pc": "acc",
+    "pad": 0.42
+   },
+   "maxLines": 2
+  },
+  {
+   "id": "second",
+   "t": "text",
+   "role": "second",
+   "name": "Arabic line",
+   "txt": "مطلوب لحّام للعمل في بولندا",
+   "font": "body",
+   "fw": 700,
+   "pc": "ink",
+   "lh": 1.3,
+   "maxLines": 2
+  },
+  {
+   "id": "cta",
+   "t": "btn",
+   "role": "cta",
+   "name": "Button",
+   "txt": "Apply on WhatsApp",
+   "font": "body",
+   "fw": 700,
+   "pc": "onAcc",
+   "fill": "acc",
+   "sh": "pill",
+   "lh": 1.1,
+   "maxLines": 1
+  },
+  {
+   "id": "trust",
+   "t": "text",
+   "role": "trust",
+   "name": "Small print",
+   "txt": "Requirements and terms confirmed at consultation.",
+   "font": "body",
+   "fw": 500,
+   "pc": "sub",
+   "lh": 1.25,
+   "maxLines": 2,
+   "col": "#111111"
+  }
+ ],
+ "geo": {
+  "story": {
+   "heroBack": {
+    "x": 194,
+    "y": 250,
+    "w": 692,
+    "h": 692
+   },
+   "hero": {
+    "x": 109,
+    "y": 278,
+    "w": 861,
+    "h": 664
+   },
+   "logo": {
+    "x": 798,
+    "y": 976,
+    "w": 210,
+    "h": 52,
+    "al": "r"
+   },
+   "kicker": {
+    "x": 80,
+    "y": 1052,
+    "w": 920,
+    "h": 0,
+    "fs": 25,
+    "al": "l"
+   },
+   "headline": {
+    "x": 80,
+    "y": 1098,
+    "w": 920,
+    "h": 0,
+    "fs": 86.6,
+    "al": "l"
+   },
+   "offer": {
+    "x": 80,
+    "y": 1294,
+    "w": 920,
+    "h": 0,
+    "fs": 36.1,
+    "al": "l"
+   },
+   "second": {
+    "x": 80,
+    "y": 1382,
+    "w": 920,
+    "h": 0,
+    "fs": 27.1,
+    "al": "l"
+   },
+   "cta": {
+    "x": 80,
+    "y": 1434,
+    "w": 460,
+    "h": 81,
+    "fs": 32.5,
+    "al": "c"
+   },
+   "trust": {
+    "x": 80,
+    "y": 1531,
+    "w": 920,
+    "h": 0,
+    "fs": 25,
+    "al": "l"
+   }
+  },
+  "square": {
+   "heroBack": {
+    "x": 319,
+    "y": 60,
+    "w": 442,
+    "h": 442
+   },
+   "hero": {
+    "x": 98,
+    "y": 78,
+    "w": 883,
+    "h": 424
+   },
+   "logo": {
+    "x": 810,
+    "y": 536,
+    "w": 210,
+    "h": 52,
+    "al": "r"
+   },
+   "kicker": {
+    "x": 68,
+    "y": 612,
+    "w": 944,
+    "h": 0,
+    "fs": 26,
+    "al": "l"
+   },
+   "headline": {
+    "x": 68,
+    "y": 655,
+    "w": 944,
+    "h": 0,
+    "fs": 72,
+    "al": "l"
+   },
+   "offer": {
+    "x": 68,
+    "y": 742,
+    "w": 944,
+    "h": 0,
+    "fs": 32,
+    "al": "l"
+   },
+   "second": {
+    "x": 68,
+    "y": 817,
+    "w": 944,
+    "h": 0,
+    "fs": 30,
+    "al": "l"
+   },
+   "cta": {
+    "x": 68,
+    "y": 868,
+    "w": 460,
+    "h": 75,
+    "fs": 30,
+    "al": "c"
+   },
+   "trust": {
+    "x": 68,
+    "y": 955,
+    "w": 944,
+    "h": 0,
+    "fs": 25,
+    "al": "l"
+   }
+  }
+ },
+ "spec": {
+  "kind": "hiring",
+  "brief": "Work abroad: welders wanted for Poland. bold, apply on WhatsApp. Square and story.",
+  "occasion": null,
+  "products": [],
+  "countries": [
+   "pl"
+  ],
+  "occupations": [
+   "welder"
+  ],
+  "languages": [
+   "en",
+   "ar"
+  ],
+  "tone": "bold",
+  "industry": "consultancy"
+ },
+ "created": "2026-11-17T10:43:26.673Z",
+ "checks": {
+  "story": [
+   {
+    "id": "safe",
+    "ok": true,
+    "msg": "Everything inside the safe area"
+   },
+   {
+    "id": "size",
+    "ok": true,
+    "msg": "Smallest text 25 px"
+   },
+   {
+    "id": "fit",
+    "ok": true,
+    "msg": "Every text fits"
+   },
+   {
+    "id": "overlap",
+    "ok": true,
+    "msg": "No overlaps"
+   },
+   {
+    "id": "crop",
+    "ok": true,
+    "msg": "0 products shown whole"
+   },
+   {
+    "id": "hierarchy",
+    "ok": true,
+    "msg": "Headline 2.40× the next text · 1 button"
+   },
+   {
+    "id": "contrast",
+    "ok": true,
+    "msg": "Lowest text contrast 8.5:1"
+   },
+   {
+    "id": "grid",
+    "ok": true,
+    "msg": "100% of text on a shared edge or axis"
+   },
+   {
+    "id": "words",
+    "ok": true,
+    "msg": "25 words"
+   }
+  ],
+  "square": [
+   {
+    "id": "safe",
+    "ok": true,
+    "msg": "Everything inside the safe area"
+   },
+   {
+    "id": "size",
+    "ok": true,
+    "msg": "Smallest text 25 px"
+   },
+   {
+    "id": "fit",
+    "ok": true,
+    "msg": "Every text fits"
+   },
+   {
+    "id": "overlap",
+    "ok": true,
+    "msg": "No overlaps"
+   },
+   {
+    "id": "crop",
+    "ok": true,
+    "msg": "0 products shown whole"
+   },
+   {
+    "id": "hierarchy",
+    "ok": true,
+    "msg": "Headline 2.25× the next text · 1 button"
+   },
+   {
+    "id": "contrast",
+    "ok": true,
+    "msg": "Lowest text contrast 8.5:1"
+   },
+   {
+    "id": "grid",
+    "ok": true,
+    "msg": "100% of text on a shared edge or axis"
+   },
+   {
+    "id": "words",
+    "ok": true,
+    "msg": "25 words"
+   }
+  ]
+ },
+ "score": 100,
+ "fixes": 2
+}

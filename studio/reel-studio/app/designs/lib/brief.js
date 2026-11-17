@@ -43,7 +43,7 @@ const ADJ = { gb: ['uk', 'britain', 'british', 'england', 'english universities'
 const MONTHS = [['Jan', 'january', 'يناير'], ['Feb', 'february', 'فبراير'], ['Mar', 'march', 'مارس'], ['Apr', 'april', 'أبريل'], ['May', 'may', 'مايو'], ['Jun', 'june', 'يونيو'], ['Jul', 'july', 'يوليو'], ['Aug', 'august', 'أغسطس'], ['Sep', 'september', 'سبتمبر'], ['Oct', 'october', 'أكتوبر'], ['Nov', 'november', 'نوفمبر'], ['Dec', 'december', 'ديسمبر']];
 const MONTH_AR = Object.fromEntries(MONTHS.map((m) => [m[0], m[2]]));
 
-export const SIZES = { story: { w: 1080, h: 1920, label: 'Story 9:16' }, post: { w: 1080, h: 1350, label: 'Post 4:5' }, square: { w: 1080, h: 1080, label: 'Square 1:1' } };
+export const SIZES = { story: { w: 1080, h: 1920, label: 'Story 9:16' }, post: { w: 1080, h: 1350, label: 'Post 4:5' }, square: { w: 1080, h: 1080, label: 'Square 1:1' }, wide: { w: 1920, h: 1080, label: 'Wide 16:9' } };
 
 /** the catalogue the reader matches against: {products:[{id,brand,name,keywords}], countries:[{code,name,nameAr}], occupations:[{id,name:{en,ar},plural,keywords}]} */
 export function parseBrief(text, ws = {}, cat = {}) {
@@ -136,6 +136,7 @@ export function parseBrief(text, ws = {}, cat = {}) {
   if (/\b(stor(y|ies)|reels?|9\s*[:x]\s*16|status|tiktok)\b|ستوري|قصة/.test(t)) spec.sizes.push('story');
   if (/\b(posts?|feed|4\s*[:x]\s*5|portrait)\b|منشور|بوست/.test(t)) spec.sizes.push('post');
   if (/\b(square|1\s*[:x]\s*1)\b|مربع/.test(t)) spec.sizes.push('square');
+  if (/\b(wide|landscape|youtube|16\s*[:x]\s*9|banner)\b|عريض|أفقي/.test(t)) spec.sizes.push('wide');
   if (!spec.sizes.length) spec.sizes = ['story', 'post', 'square'];
 
   // CTA: written ("CTA: …" / "call to action …") or the kind's default

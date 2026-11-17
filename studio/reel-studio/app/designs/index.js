@@ -32,7 +32,7 @@ registerModule({
         const add = h('button.btn.small', { on: { click: async () => {
           try {
             const D = await engine.readFile(d.path, 'json');
-            const size = ctx.project.canvas.aspect === '1:1' ? 'square' : ctx.project.canvas.aspect === '4:5' ? 'post' : 'story';
+            const size = ctx.project.canvas.aspect === '1:1' ? 'square' : ctx.project.canvas.aspect === '4:5' ? 'post' : ctx.project.canvas.aspect === '16:9' ? 'wide' : 'story';
             const [x] = await exportDesign(D, { sizes: [D.sizes.includes(size) ? size : D.sizes[0]] });
             const { ops } = await import('../core/history.js'), { createTrack } = await import('../core/project.js'), { clipFromMedia } = await import('../editor/items.js');
             const m = await ctx.media.importPath(x.path, D.name || 'Design');

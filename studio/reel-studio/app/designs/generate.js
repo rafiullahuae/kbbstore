@@ -10,6 +10,7 @@ import { prepare, loadFont, layout } from './render.js';
 import { check } from './rules.js';
 import { iconsFor, loadIcons, BENEFITS } from './icons.js';
 import { contrast, ink as inkOn } from './lib/color.js';
+import { adTemplatesFor, makeAd, broadcastPalettes } from './ads.js';
 
 const uid = () => 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 export const fontsFor = (ws) => ({ head: ws.fonts?.heading || 'Playfair Display', body: ws.fonts?.body || 'Poppins', ar: ws.fonts?.arabic || 'Cairo', display: 'Bebas Neue', serif: 'Playfair Display' });
@@ -87,12 +88,44 @@ function fixColours(D, size, res) {
 }
 
 /**
+ * check a design in every size and fix what can be fixed in place (colours, plates): {ok, worst, reasons, colourFixes}.
+ * The one rule loop for the layout families and the broadcast ad templates alike.
+ */
+export async function settle(D, sizes = D.sizes) {
+  await prepare(D);
+  let ok = true, worst = 100, colourFixes = 0, reasons = [];
+  for (const size of sizes) {
+    let res = check(D, size);
+    while (!res.pass && colourFixes < 8 && res.checks.filter((c) => !c.ok && ['safe', 'size', 'fit', 'overlap', 'crop', 'hierarchy'].includes(c.id)).length === 0 && fixColours(D, size, res)) { colourFixes++; await prepare(D); res = check(D, size); }
+    if (!res.pass) { ok = false; reasons = res.checks.filter((c) => !c.ok && c.id !== 'grid' && c.id !== 'words').map((c) => `${size}: ${c.msg}`); break; }
+    worst = Math.min(worst, res.score);
+    D.checks = D.checks || {}; D.checks[size] = res.checks.map(({ id, ok: o, msg }) => ({ id, ok: o, msg }));
+  }
+  if (ok) for (const el of D.els) delete el._tried;
+  return { ok, worst, reasons, colourFixes };
+}
+
+/** a broadcast ad template made to pass every rule: smaller text a step at a time when something does not fit */
+export async function settleAd(make, sizes) {
+  let textK = 1, last = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const D = make(textK), st = await settle(D, sizes);
+    if (st.ok) { D.score = st.worst; D.fixes = st.colourFixes + (textK < 1 ? 1 : 0); return { D, reasons: [] }; }
+    last = st.reasons;
+    if (last.some((r) => /overlap|fit|outside|cropped/.test(r))) textK *= 0.9; else if (last.some((r) => /too small/.test(r))) textK *= 1.06; else if (!last.some((r) => /contrast/.test(r))) break;
+  }
+  return { D: null, reasons: last || [] };
+}
+
+/**
  * spec + company -> designs. opts: {count (6–8), sizes, seed, image (an AI picture to use as hero in some designs),
  * onProgress(f, label)}. Returns {designs:[D], rejected:[{family, reasons}], tried}
  */
 export async function generate(spec, ws, cat, opts = {}) {
   await loadIcons();
-  const sizes = (opts.sizes || spec.sizes || ['story', 'post', 'square']).filter((s) => ['story', 'post', 'square'].includes(s));
+  const allSizes = (opts.sizes || spec.sizes || ['story', 'post', 'square']).filter((s) => ['story', 'post', 'square', 'wide'].includes(s));
+  // the layout families draw 9:16, 4:5 and 1:1; the broadcast templates also 16:9
+  const sizes = allSizes.filter((s) => s !== 'wide').length ? allSizes.filter((s) => s !== 'wide') : ['story'];
   const count = Math.max(6, Math.min(8, opts.count || 8));
   const fonts = fontsFor(ws);
   await Promise.all(Object.values(fonts).map(loadFont));
@@ -104,6 +137,17 @@ export async function generate(spec, ws, cat, opts = {}) {
   const designs = [], rejected = [];
   let tried = 0;
   const seed0 = opts.seed || 1;
+  // the broadcast ad templates that fit the brief come first (the themes' art kit: flags, landmarks, stamps, passes ...)
+  if (opts.ads !== false) {
+    const tpls = adTemplatesFor(ws, spec).filter((t) => t.kinds.includes(spec.kind) || (spec.industry === 'beauty') === (t.co === 'kbb')).slice(0, Math.min(5, count - 2));
+    const pals = broadcastPalettes(ws);
+    for (let i = 0; i < tpls.length; i++) {
+      const lang = langs.length > 1 && i % 3 === 2 ? langs[1] : langs[0], cp = copies[i % copies.length];
+      const r = await settleAd((textK) => makeAd(tpls[i].id, ws, cat, { lang, sizes: allSizes, spec, copy: lang === 'ar' ? { ...cp.ar, id: cp.id } : { ...cp.en, id: cp.id }, palette: pals[tpls[i].pal || 'deep'], seed: seed0 + i, textK }), allSizes);
+      tried++;
+      if (r.D) { designs.push(r.D); opts.onProgress?.(designs.length / count, `${designs.length} of ${count} designs`); } else rejected.push({ family: tpls[i].id, reasons: r.reasons });
+    }
+  }
   for (let i = 0; i < families.length && designs.length < count; i++) {
     const family = families[i];
     const lang = langs.length > 1 && i % 3 === 2 ? langs[1] : langs[0];
@@ -124,16 +168,9 @@ export async function generate(spec, ws, cat, opts = {}) {
         const D = assemble(spec, ws, cat, { family, palette, copy: copies[i % copies.length], lang, sizes, hero, icons, seed: seed0 + i * 31 + pj, textK, heroK });
         if (asBg) D.bgImage = { src: opts.image, op: 1 };
         if (opts.keepEls) for (const [id, v] of Object.entries(opts.keepEls)) { const el = D.els.find((e) => e.id === id); if (el) Object.assign(el, v); }
-        await prepare(D);
-        let ok = true, worst = 100, colourFixes = 0;
-        for (const size of sizes) {
-          let res = check(D, size);
-          while (!res.pass && colourFixes < 8 && res.checks.filter((c) => !c.ok && ['safe', 'size', 'fit', 'overlap', 'crop', 'hierarchy'].includes(c.id)).length === 0 && fixColours(D, size, res)) { colourFixes++; await prepare(D); res = check(D, size); }
-          if (!res.pass) { ok = false; reasons = res.checks.filter((c) => !c.ok && c.id !== 'grid' && c.id !== 'words').map((c) => `${size}: ${c.msg}`); break; }
-          worst = Math.min(worst, res.score);
-          D.checks = D.checks || {}; D.checks[size] = res.checks.map(({ id, ok: o, msg }) => ({ id, ok: o, msg }));
-        }
-        if (ok) { D.score = worst; D.fixes = colourFixes + (textK < 1 ? 1 : 0) + (heroK < 1 ? 1 : 0); for (const el of D.els) delete el._tried; accepted = D; break; }
+        const st = await settle(D, sizes);
+        reasons = st.reasons;
+        if (st.ok) { D.score = st.worst; D.fixes = st.colourFixes + (textK < 1 ? 1 : 0) + (heroK < 1 ? 1 : 0); accepted = D; break; }
         // geometry fixes: overlaps / fit / size -> smaller text and hero, a step at a time
         if (reasons.some((r) => /overlap|fit|outside|cropped/.test(r))) { textK *= 0.92; heroK *= 0.9; }
         else if (reasons.some((r) => /too small/.test(r))) textK *= 1.06;
@@ -144,7 +181,7 @@ export async function generate(spec, ws, cat, opts = {}) {
     if (accepted) { designs.push(accepted); opts.onProgress?.(designs.length / count, `${designs.length} of ${count} designs`); }
     else rejected.push({ family, reasons });
   }
-  designs.sort((a, b) => b.score - a.score);
+  designs.sort((a, b) => !!b.ad - !!a.ad || b.score - a.score);   // the broadcast templates first
   return { designs, rejected, tried, palettes, copies };
 }
 

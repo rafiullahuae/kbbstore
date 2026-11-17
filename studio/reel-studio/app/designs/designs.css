@@ -68,3 +68,9 @@
 label.dz-row { flex-wrap: nowrap; align-items: flex-start; gap: 10px; cursor: pointer; }
 label.dz-row > input { margin-top: 2px; flex: none; }
 label.dz-row > span { min-width: 0; }
+
+/* 📺 ad templates: a card per template; a carousel's slides side by side as one strip */
+.dz-tgrid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin-top: 10px; }
+.dz-tgrid .dz-wide { grid-column: span 2; }
+.dz-strip { display: flex; gap: 2px; background: #111; }
+.dz-strip canvas { flex: 1 1 0; min-width: 0; width: 100%; height: auto; display: block; }

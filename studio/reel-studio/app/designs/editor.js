@@ -4,6 +4,9 @@
 //   picture swap (catalogue product, saved AI picture, his own file), hide / delete; colour scheme and artwork for the
 //   whole design; the design rules re-checked live after every change; undo / redo (⌘Z / ⇧⌘Z)
 //   ⬇ Export: PNG or JPG, Full HD (1080 wide) or 4K (2160 wide), this size or every size → workspaces/<co>/exports/designs/
+//     or MP4 (animated, the themes' motion, 8 s): the same drawing at time t, the still is its frame at t = still
+//   ▶ Play: the animation on the canvas, once (the same frames the MP4 writes); broadcast art pieces (flags, stamps,
+//     boarding passes, crawls) show their words and their country in the inspector
 //   🎬 Make a matching reel: a new reel with the brief's spec, the matching recipe and this design as its cover/end card
 import { engine } from '../core/engine.js';
 import { createProject } from '../core/project.js';
@@ -15,6 +18,9 @@ import { schemesFor } from './lib/palette.js';
 import { artFor, ART_KINDS } from './art.js';
 import { claimWarnings } from './lib/copy.js';
 import { searchIcons, loadIcons } from './icons.js';
+import { exportDesignVideo } from './video.js';
+import { motionOf } from './motion.js';
+import { PIECE_NAMES } from './broadcast.js';
 const ap = (el, ...k) => { el.append(...k.flat(Infinity).filter((x) => x != null && x !== false)); return el; };
 
 const PKEYS = [['ink', 'Text'], ['sub', 'Soft text'], ['accText', 'Accent text'], ['acc', 'Accent'], ['acc2', 'Accent 2'], ['onAcc', 'On accent'], ['card', 'Card'], ['cardInk', 'Card text'], ['bg', 'Background'], ['bg2', 'Background 2']];
@@ -35,14 +41,24 @@ export async function listSaved(ws) {
   return ents.filter((e) => e.name.endsWith('.json') && !e.name.startsWith('palettes')).map((e) => ({ path: `${dir}/${e.name}`, thumb: `${dir}/${e.name.replace(/\.json$/, '.png')}`, name: e.name, mtime: e.mtime })).sort((a, b) => b.mtime - a.mtime);
 }
 
-/** export one design: sizes ('all' or one), scale 1 (full HD) | 2 (4K), type png|jpg -> [paths] */
-export async function exportDesign(D, { sizes, scale = 1, type = 'png' } = {}) {
+const slug = (D) => (D.name || D.family).replace(/[^\w-]+/g, '-').replace(/-+/g, '-').toLowerCase();
+/** export one design: sizes ('all' or one), scale 1 (full HD) | 2 (4K), type png|jpg|mp4 -> [paths] */
+export async function exportDesign(D, { sizes, scale = 1, type = 'png', width, onProgress } = {}) {
   await prepare(D);
   const out = [];
+  if (type === 'mp4') {
+    for (const s of sizes || D.sizes) {
+      const v = await exportDesignVideo(D, s, { width: width || PX[s][0] * Math.min(1, scale), onProgress });
+      const p = `workspaces/${D.workspace}/exports/designs/${slug(D)}-${s}-${v.w}x${v.h}.mp4`;
+      await engine.writeFile(p, v.blob);
+      out.push({ path: p, w: v.w, h: v.h, bytes: v.blob.size, frames: v.frames, dur: v.dur });
+    }
+    return out;
+  }
   for (const s of sizes || D.sizes) {
     const c = renderCanvas(D, s, scale);
     const blob = await toBlob(c, type === 'jpg' ? 'image/jpeg' : 'image/png', 0.95);
-    const p = `workspaces/${D.workspace}/exports/designs/${(D.name || D.family).replace(/[^\w-]+/g, '-').replace(/-+/g, '-').toLowerCase()}-${s}-${c.width}x${c.height}.${type}`;
+    const p = `workspaces/${D.workspace}/exports/designs/${slug(D)}-${s}-${c.width}x${c.height}.${type}`;
     await engine.writeFile(p, blob);
     out.push({ path: p, w: c.width, h: c.height, bytes: blob.size });
   }
@@ -73,6 +89,7 @@ export function openDesignEditor(D0, { ws, cat, spec, size, home, onSaved }) {
       h('button.btn#de-back', { on: { click: () => close() } }, '← Designs'),
       h('input.proj-name#de-name', { value: D.name, 'aria-label': 'Design name', on: { change: (e) => { snap(); D.name = e.target.value.trim() || D.name; } } }),
       sizeSeg, h('div.grow'),
+      h('button.btn#de-play', { title: 'Play the animation (the MP4 export’s frames)', on: { click: () => play() } }, '▶ Play'),
       h('button.icon-btn#de-undo', { title: 'Undo (⌘Z)', on: { click: () => doUndo() } }, '↶'), h('button.icon-btn#de-redo', { title: 'Redo (⇧⌘Z)', on: { click: () => doRedo() } }, '↷'),
       h('button.btn#de-save', { on: { click: async () => { await saveDesign(D); toast('Saved in designs/', 'ok'); onSaved?.(); } } }, '💾 Save'),
       h('button.btn#de-reel', { on: { click: () => matchingReel() } }, '🎬 Make a matching reel'),
@@ -88,7 +105,20 @@ export function openDesignEditor(D0, { ws, cat, spec, size, home, onSaved }) {
     else if (sel && e.key.startsWith('Arrow')) { e.preventDefault(); snap(); const g = D.geo[cur][sel], d = e.shiftKey ? 10 : 2; if (e.key === 'ArrowLeft') g.x -= d; if (e.key === 'ArrowRight') g.x += d; if (e.key === 'ArrowUp') g.y -= d; if (e.key === 'ArrowDown') g.y += d; changed(); }
   };
   document.addEventListener('keydown', onKey, true);
-  function close() { document.removeEventListener('keydown', onKey, true); ro.disconnect(); back.remove(); }
+  function close() { cancelAnimationFrame(playing); document.removeEventListener('keydown', onKey, true); ro.disconnect(); back.remove(); }
+  // ▶ Play: once through the animation, then back to the still (no timer is left running)
+  let playing = 0;
+  function play() {
+    cancelAnimationFrame(playing);
+    const mo = motionOf(D), t0 = performance.now(), x = cv.getContext('2d'), s = scale * devicePixelRatio, its = layout(D, cur);
+    const step = () => {
+      const t = (performance.now() - t0) / 1000;
+      if (t >= mo.dur || !back.isConnected) { playing = 0; back.dataset.played = String(Math.round(t * 10) / 10); paint(); return; }
+      x.clearRect(0, 0, cv.width, cv.height); draw(x, D, cur, { scale: s, items: its, t });
+      playing = requestAnimationFrame(step);
+    };
+    playing = requestAnimationFrame(step);
+  }
   function doUndo() { if (!undo.length) return; redo.push(JSON.stringify(D)); D = JSON.parse(undo.pop()); changed(); }
   function doRedo() { if (!redo.length) return; undo.push(JSON.stringify(D)); D = JSON.parse(redo.pop()); changed(); }
 
@@ -115,7 +145,7 @@ export function openDesignEditor(D0, { ws, cat, spec, size, home, onSaved }) {
   function paintSizes() { clear(sizeSeg); for (const s of D.sizes) sizeSeg.appendChild(h('button' + (s === cur ? '.on' : ''), { dataset: { v: s }, on: { click: () => { cur = s; fit(); paint(); } } }, s)); }
   function paintLayers() {
     clear(layers).appendChild(h('b', { style: { padding: '4px 8px' } }, 'Layers'));
-    for (const el of [...D.els].reverse()) { if (D.geo[cur]?.[el.id]?.hd) continue; layers.appendChild(h('button' + (el.id === sel ? '.on' : ''), { dataset: { el: el.id }, on: { click: () => { sel = el.id; paint(); paintInsp(); } } }, { text: '𝐓', btn: '▭', shape: '◆', icon: '✳', prod: '🧴', img: '🖼', logo: '◎' }[el.t] || '•', ' ', el.name || el.id, el.hide ? ' (hidden)' : '')); }
+    for (const el of [...D.els].reverse()) { if (D.geo[cur]?.[el.id]?.hd) continue; layers.appendChild(h('button' + (el.id === sel ? '.on' : ''), { dataset: { el: el.id }, on: { click: () => { sel = el.id; paint(); paintInsp(); } } }, { text: '𝐓', btn: '▭', shape: '◆', icon: '✳', prod: '🧴', img: '🖼', logo: '◎', art: '✦' }[el.t] || '•', ' ', el.t === 'art' && el.name === el.kind ? PIECE_NAMES[el.kind] || el.kind : el.name || el.id, el.hide ? ' (hidden)' : '')); }
   }
 
   // ── pointer: select / move / resize ──
@@ -189,11 +219,25 @@ export function openDesignEditor(D0, { ws, cat, spec, size, home, onSaved }) {
       engine.listDir(`workspaces/${ws.id}/designs/images`).then((ls) => { for (const f of ls.filter((x) => /\.(png|jpe?g|webp)$/.test(x.name)).slice(-12)) saved.appendChild(h('button.chip', { on: { click: () => { snap(); el.src = `workspaces/${ws.id}/designs/images/${f.name}`; changed(); } } }, h('img', { src: `/workspaces/${ws.id}/designs/images/${f.name}`, alt: '', style: { height: '30px' } }))); }).catch(() => {});
       ap(insp, h('div.dz-small', el.t === 'prod' ? 'Swap the product (real cut-outs only):' : 'Swap the picture:'), pick, h('div.dz-small', 'Your AI pictures and uploads:'), saved, h('label.btn.small', 'Upload a picture…', file));
     } else if (el.t === 'logo') ap(insp, colourPicker(() => el, (v) => Object.assign(el, v), 'Logo on'));
+    else if (el.t === 'art') {
+      // a broadcast piece: its words (stamp, boarding pass, crawl ...) and its country
+      for (const [k, v] of Object.entries(el.words || {})) {
+        const i = h('input.de-word', { type: 'text', value: v, dir: 'auto', 'aria-label': k, dataset: { word: k } });
+        i.addEventListener('change', () => { snap(); el.words[k] = i.value; changed(); });
+        ap(insp, h('div.row', h('span', k), i));
+      }
+      if (el.cc) ap(insp, countryPick(el.cc, (c) => { el.cc = c; }));
+    }
     const num = (k) => { const i = h('input.de-num', { type: 'number', value: Math.round(g[k] || 0), 'aria-label': k }); i.addEventListener('change', () => { snap(); g[k] = +i.value; changed(); }); return h('span', k.toUpperCase() + ' ', i); };
     const op = h('input', { type: 'range', min: 10, max: 100, value: el.op ?? 100 }); op.addEventListener('change', () => { snap(); el.op = +op.value; changed(); });
     ap(insp, h('div.row', num('x'), num('y')), h('div.row', num('w'), num('h')), h('div.row', h('span', 'Opacity'), op),
       h('div.row', h('button.btn.small', { on: { click: () => { snap(); g.hd = true; sel = null; changed(); } } }, 'Hide in this size'), h('button.btn.small.danger', { on: { click: () => { snap(); D.els = D.els.filter((x) => x !== el); sel = null; changed(); } } }, 'Delete')),
       h('h3', 'Design rules'), rules);
+  }
+  function countryPick(v, set, label = 'Country') {
+    const s = h('select.de-country', { 'aria-label': label }, (cat.countries || []).map((c) => h('option', { value: c.code, selected: c.code === v }, c.name)));
+    s.addEventListener('change', async () => { snap(); set(s.value); changed(); });
+    return h('div.row', h('span', label), s);
   }
   function paintDesignPanel() {
     const pals = schemesFor(spec || { ...D.spec, languages: D.spec.languages || ['en'], sizes: D.sizes, offer: null }, ws, cat);
@@ -201,6 +245,9 @@ export function openDesignEditor(D0, { ws, cat, spec, size, home, onSaved }) {
     for (const p of pals) box.appendChild(h('div.dz-pal', { dataset: { pal: p.id }, on: { click: () => { snap(); D.palette = { ...p }; D.paletteId = p.id; for (const el of D.els) { if (el.col && !el.keepCol) delete el.col; if (el.plate?.col) delete el.plate.col; } changed(); } } }, h('span.dz-sw', [p.bg, p.bg2, p.acc, p.ink].map((c) => h('i', { style: { background: c } }))), h('span', p.name), p.id === D.paletteId ? h('b', '✓') : null));
     const arts = h('div.dz-row', ART_KINDS.map((k) => { const on = D.art.layers.some((l) => l.k === k); return h('button.chip' + (on ? '.on' : ''), { on: { click: () => { snap(); D.art.layers = on ? D.art.layers.filter((l) => l.k !== k) : D.art.layers.concat([{ k, op: 0.85 }]); changed(); } } }, k); }));
     const base = h('div.seg', ['linear', 'radial', 'mesh', 'solid'].map((b) => h('button' + (D.art.base === b ? '.on' : ''), { on: { click: () => { snap(); D.art.base = b; changed(); } } }, b)));
+    // a broadcast template: one country for every flag, landmark, stamp and pass in it
+    const pieces = D.els.filter((e) => e.t === 'art' && e.cc);
+    if (pieces.length && cat.countries?.length) ap(insp, h('h3', 'Country'), countryPick(D.ad?.cc || pieces[0].cc, (c) => { for (const e of pieces) e.cc = c; if (D.ad) D.ad.cc = c; for (const g of Object.values(D.geo)) for (const x of Object.values(g)) if (x.o?.cc) x.o.cc = c; }, 'Every flag and landmark'));
     ap(insp, h('h3', 'Colour scheme'), box, h('h3', 'Artwork'), h('div.row', base, h('button.btn.small', { on: { click: () => { snap(); D.art.seed = (D.art.seed || 1) + 1; changed(); } } }, '↻ Shuffle')), arts,
       D.bgImage ? h('button.btn.small', { on: { click: () => { snap(); D.bgImage = null; changed(); } } }, 'Remove the background picture') : null,
       h('h3', 'Design rules'), rules, h('p.dz-small', 'Click anything on the design to change it. Drag to move; drag the yellow corner to resize; arrows nudge (Shift = 10 px).'));
@@ -211,11 +258,11 @@ export function openDesignEditor(D0, { ws, cat, spec, size, home, onSaved }) {
     const { modal } = await import('../editor/ui.js');
     const which = h('select#de-x-sizes', h('option', { value: cur }, `This size (${cur})`), h('option', { value: 'all' }, `Every size (${D.sizes.join(', ')})`));
     const q = h('select#de-x-q', h('option', { value: 1 }, 'Full HD (1080 wide)'), h('option', { value: 2 }, '4K (2160 wide)'));
-    const t = h('select#de-x-type', h('option', { value: 'png' }, 'PNG'), h('option', { value: 'jpg' }, 'JPG'));
+    const t = h('select#de-x-type', h('option', { value: 'png' }, 'PNG'), h('option', { value: 'jpg' }, 'JPG'), typeof VideoEncoder === 'function' ? h('option', { value: 'mp4' }, `MP4 · animated ${motionOf(D).dur} s`) : null);
     const r = await recheck(D);
     modal({ title: 'Export design', body: h('div', h('div.row', which), h('div.row', q, t), r.pass ? h('p.dz-small', '✓ Every design rule passes.') : h('p.dz-note', '⚠ Some design rules fail (see the list in the editor). You can still export.')),
       actions: [{ label: 'Cancel' }, { label: '⬇ Export', primary: true, id: 'de-x-go', onClick: async () => {
-        const res = await exportDesign(D, { sizes: which.value === 'all' ? D.sizes : [which.value], scale: +q.value, type: t.value });
+        const res = await exportDesign(D, { sizes: which.value === 'all' ? D.sizes : [which.value], scale: +q.value, type: t.value, onProgress: (f) => { back.dataset.progress = String(Math.round(f * 100)); } });
         toast(`Saved ${res.length} file${res.length > 1 ? 's' : ''} in exports/designs (${res.map((x) => x.w + '×' + x.h).join(', ')})`, 'ok', 4000);
         back.dataset.lastExport = JSON.stringify(res);
       } }] });

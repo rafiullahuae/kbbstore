@@ -23,7 +23,8 @@ export function check(D, size, { pixels = true } = {}) {
   const items = layout(D, size), A = SAFE[size], [W, H] = PX[size];
   const checks = [];
   const add = (id, ok, msg, ids = []) => checks.push({ id, ok, msg, ids });
-  const content = items.filter((it) => CONTENT.has(it.el.t) && !it.el.deco);
+  // a full-bleed photo (bleed: true) is the background of its half, not a block of content
+  const content = items.filter((it) => CONTENT.has(it.el.t) && !it.el.deco && !it.el.bleed);
 
   // safe area
   const out = content.filter((it) => { const b = textBox(it); return b.x < A.x0 - 2 || b.y < A.y0 - 2 || b.x + b.w > A.x1 + 2 || b.y + b.h > A.y1 + 2; });
@@ -54,7 +55,9 @@ export function check(D, size, { pixels = true } = {}) {
   const head = texts.find((x) => x.el.role === 'headline'), ctas = items.filter((x) => x.el.role === 'cta');
   const others = texts.filter((x) => x !== head && !['big', 'bigLabel', 'cta'].includes(x.el.role));
   const hr = head ? head.text.fs / Math.max(1, ...others.map((x) => x.text.fs)) : 0;
-  add('hierarchy', !!head && hr >= 1.3 && ctas.length === 1, head ? `Headline ${hr.toFixed(2)}× the next text · ${ctas.length} button` : 'No headline', head ? [head.el.id] : []);
+  // a carousel's inner slides carry no button: the last slide does
+  const btns = D.ad?.slides && D.ad.slide < D.ad.slides - 1 ? ctas.length <= 1 : ctas.length === 1;
+  add('hierarchy', !!head && hr >= 1.3 && btns, head ? `Headline ${hr.toFixed(2)}× the next text · ${ctas.length} button` : 'No headline', head ? [head.el.id] : []);
 
   // contrast, on pixels
   let worst = 99;

@@ -11,10 +11,10 @@ import { layoutText } from './render.js';
 export const FAMILIES = ['spotlight', 'split', 'bignum', 'editorial', 'band', 'card', 'tiles', 'poster', 'arch', 'badge'];
 export const FAMILY_NAMES = { spotlight: 'Spotlight', split: 'Split', bignum: 'Big number', editorial: 'Editorial frame', band: 'Diagonal band', card: 'Floating card', tiles: 'Tiles', poster: 'Poster', arch: 'Arch window', badge: 'Offer badge' };
 /** the platform-safe area per size (IG/TikTok story chrome: top 250, bottom 340) */
-export const SAFE = { story: { x0: 72, y0: 250, x1: 1008, y1: 1580 }, post: { x0: 64, y0: 64, x1: 1016, y1: 1286 }, square: { x0: 60, y0: 60, x1: 1020, y1: 1020 } };
+export const SAFE = { story: { x0: 72, y0: 250, x1: 1008, y1: 1580 }, post: { x0: 64, y0: 64, x1: 1016, y1: 1286 }, square: { x0: 60, y0: 60, x1: 1020, y1: 1020 }, wide: { x0: 96, y0: 64, x1: 1824, y1: 1016 } };
 export const MIN_TEXT = 24; // px at 1080 wide: nothing smaller (small print included)
 
-const G = (x, y, w, h, fs, al) => ({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h || 0), fs: fs ? Math.round(fs * 10) / 10 : undefined, al });
+export const G = (x, y, w, h, fs, al) => ({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h || 0), fs: fs ? Math.round(fs * 10) / 10 : undefined, al });
 
 // ── the text pieces, styled once (fonts/colours by role; sizes per family) ──
 function pieces(ctx) {
@@ -36,7 +36,7 @@ function pieces(ctx) {
 }
 
 /** place text blocks top->bottom inside [y0,y1]; when they do not fit, gaps close, then every font shrinks together */
-function stack(ctx, blocks, x, w, y0, y1, { gap = 26, align = 'center', al } = {}) {
+export function stack(ctx, blocks, x, w, y0, y1, { gap = 26, align = 'center', al } = {}) {
   blocks = blocks.filter((b) => b && b[0]).map(([el, fs, extra]) => [el, fs * (ctx.textK || 1), extra]);
   const hOf = (el, fs) => el.t === 'btn' ? fs * 2.5 : layoutText(ctx.measureD, el, { x: 0, y: 0, w, fs }).box.h;
   const floor = (el) => (el.role === 'headline' ? 58 : el.role === 'big' ? 90 : MIN_TEXT + 1);
