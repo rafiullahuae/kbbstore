@@ -4,10 +4,16 @@
 // Temporal smoothing: masks are averaged over neighbouring grid frames (1-2-1) and blended between grid points.
 import { MediaStore } from '../core/media.js';
 import { findMedia } from '../core/project.js';
+import { subjectReady, subjectMasks, SUBJECT_SIZE } from './subject.js';
 
 export const SEG_FPS = 15, FACE_FPS = 10, SEG_SIZE = 256, FACE_SIZE = 640;
 const SEG = new Map();    // mediaId -> { w, h, frames: Map(k -> Uint8Array) }
 const FACE = new Map();   // mediaId -> { frames: Map(k -> [Float32Array]) }
+// Background removal v2 (look.bg q >= 2, bg.js): its own mask tracks, so a project saved before it draws exactly as it
+// did. 'person': the selfie segmenter on a 30 fps grid (fast motion no longer smears between 15 fps samples); 'subject':
+// U²-Net-p (subject.js, optional model) on a 10 fps grid. Drawing reads them through maskAt() with the temporal filter.
+export const MASK_FPS = { person: 30, subject: 10 };
+const MASKS = new Map();  // mediaId + '|' + kind -> { w, h, fps, frames: Map(k -> Uint8Array) }
 
 let W = null, seq = 0; const pending = new Map();
 function worker() {
@@ -30,7 +36,10 @@ export function neededFrames(project, mediaId, fps, pred = () => true) {
   return [...ks].sort((x, y) => x - y);
 }
 
-const usesFx = (type) => (it) => (it.fx || []).some((f) => f.type === type && (type !== 'look.touchup' || (f.strength ?? 0.35) > 0));
+const usesFx = (type) => (it) => (it.fx || []).some((f) => f.type === type && (type !== 'look.touchup' || (f.strength ?? 0.35) > 0) && (type !== 'look.bg' || !((f.q || 1) >= 2)));
+/** which v2 mask track a clip's look.bg needs: 'person' | 'subject' | null (chroma key and v1 need none here) */
+export const maskKind = (f) => (f && f.type === 'look.bg' && (f.q || 1) >= 2 && f.key !== 'chroma' ? (f.key === 'subject' ? 'subject' : 'person') : null);
+const usesKind = (kind) => (it) => (it.fx || []).some((f) => maskKind(f) === kind);
 const usesCover = (project) => {
   const ids = new Set();
   for (const tr of project.tracks) for (const it of tr.items) if (it.type === 'look.transition' && it.style?.kind === 'cover') ids.add(it.style.a);
@@ -56,13 +65,20 @@ async function analyse(project, { onProgress, only } = {}) {
     const cover = usesCover(project);
     const segK = neededFrames(project, m.id, SEG_FPS, (it) => usesFx('look.bg')(it) || cover(it)).filter((k) => !SEG.get(m.id)?.frames.has(k));
     const faceK = neededFrames(project, m.id, FACE_FPS, usesFx('look.touchup')).filter((k) => !FACE.get(m.id)?.frames.has(k));
+    const kinds = {};
+    for (const kind of ['person', 'subject']) {
+      const rec = MASKS.get(m.id + '|' + kind), ks = neededFrames(project, m.id, MASK_FPS[kind], usesKind(kind)).filter((k) => !rec?.frames.has(k));
+      if (!ks.length || (kind === 'subject' && !(await subjectReady()))) continue;
+      if (m.kind === 'image') ks.splice(1);
+      kinds[kind] = ks;
+    }
     if (m.kind === 'image') { if (segK.length) segK.splice(1); if (faceK.length) faceK.splice(1); }
-    if (segK.length || faceK.length) jobs.push({ m, segK, faceK });
+    if (segK.length || faceK.length || Object.keys(kinds).length) jobs.push({ m, segK, faceK, kinds });
   }
   if (!jobs.length) return false;
-  const total = jobs.reduce((s, j) => s + j.segK.length + j.faceK.length, 0);
+  const total = jobs.reduce((s, j) => s + j.segK.length + j.faceK.length + Object.values(j.kinds).reduce((a, x) => a + x.length, 0), 0);
   let done = 0;
-  for (const { m, segK, faceK } of jobs) {
+  for (const { m, segK, faceK, kinds } of jobs) {
     const store = new MediaStore({ getProject: () => project, engine: null });
     const reader = await store.openReader(m.id);
     try {
@@ -70,8 +86,18 @@ async function analyse(project, { onProgress, only } = {}) {
       const times = new Map();
       for (const k of segK) times.set(+(k / SEG_FPS).toFixed(4), Object.assign(times.get(+(k / SEG_FPS).toFixed(4)) || {}, { seg: k }));
       for (const k of faceK) { const t = +(k / FACE_FPS).toFixed(4); times.set(t, Object.assign(times.get(t) || {}, { face: k })); }
+      for (const [kind, ks] of Object.entries(kinds)) for (const k of ks) { const t = +(k / MASK_FPS[kind]).toFixed(4); const e = times.get(t) || {}; (e.kinds ||= []).push([kind, k]); times.set(t, e); }
       const order = [...times.keys()].sort((a, b) => a - b);
       let segBatch = [], faceBatch = [];
+      const kBatch = { person: [], subject: [] };
+      const flushKind = async (kind, force) => {
+        const b = kBatch[kind]; if (!b.length || (!force && b.length < 8)) return;
+        kBatch[kind] = [];
+        const r = kind === 'subject' ? await subjectMasks(b.map((x) => x.bm)) : (await call('seg', b.map((x) => x.bm))).masks;
+        const key = m.id + '|' + kind, rec = MASKS.get(key) || { w: r[0].w, h: r[0].h, fps: MASK_FPS[kind], frames: new Map() }; MASKS.set(key, rec);
+        r.forEach((mk, i) => rec.frames.set(b[i].k, mk.data));
+        done += b.length; onProgress?.(kind === 'subject' ? 'Finding the main subject…' : 'Finding the person…', done / total);
+      };
       const flush = async (force) => {
         if (segBatch.length && (force || segBatch.length >= 8)) {
           const b = segBatch; segBatch = [];
@@ -94,13 +120,21 @@ async function analyse(project, { onProgress, only } = {}) {
         const sw = src.displayWidth || src.videoWidth || src.naturalWidth || src.width, sh = src.displayHeight || src.videoHeight || src.naturalHeight || src.height;
         if (need.seg != null) { const k = SEG_SIZE / Math.max(sw, sh); segBatch.push({ k: need.seg, bm: await createImageBitmap(src, { resizeWidth: Math.round(sw * k), resizeHeight: Math.round(sh * k), resizeQuality: 'medium' }) }); }
         if (need.face != null) { const k = Math.min(1, FACE_SIZE / Math.max(sw, sh)); faceBatch.push({ k: need.face, bm: await createImageBitmap(src, { resizeWidth: Math.round(sw * k), resizeHeight: Math.round(sh * k), resizeQuality: 'medium' }) }); }
+        for (const [kind, k] of need.kinds || []) {
+          // the person model keeps the picture's shape (long side 256); U²-Net-p takes its square 320 x 320 input
+          const sz = kind === 'subject' ? [SUBJECT_SIZE, SUBJECT_SIZE] : [Math.round(sw * SEG_SIZE / Math.max(sw, sh)), Math.round(sh * SEG_SIZE / Math.max(sw, sh))];
+          kBatch[kind].push({ k, bm: await createImageBitmap(src, { resizeWidth: sz[0], resizeHeight: sz[1], resizeQuality: 'high' }) });
+          await flushKind(kind, false);
+        }
         await flush(false);
       }
       await flush(true);
+      for (const kind of Object.keys(kinds)) await flushKind(kind, true);
       // an image is one frame: copy it to every grid index asked for
       if (m.kind === 'image') {
         const s = SEG.get(m.id); if (s) { const one = s.frames.values().next().value; if (one) for (const k of neededFrames(project, m.id, SEG_FPS)) s.frames.set(k, one); }
         const f = FACE.get(m.id); if (f) { const one = f.frames.values().next().value; if (one) for (const k of neededFrames(project, m.id, FACE_FPS)) f.frames.set(k, one); }
+        for (const kind of Object.keys(kinds)) { const r = MASKS.get(m.id + '|' + kind), one = r?.frames.values().next().value; if (one) for (const k of neededFrames(project, m.id, r.fps)) r.frames.set(k, one); }
       }
     } finally { reader?.close(); }
   }
@@ -143,9 +177,55 @@ export function facesAt(mediaId, t) {
   if (!A) return [];
   return A.map((a, i) => { const b = B[i]; if (!b || b.length !== a.length) return a; const o = new Float32Array(a.length); for (let j = 0; j < a.length; j++) o[j] = a[j] + (b[j] - a[j]) * u; return o; });
 }
+// ── v2 masks: temporal filter ──
+// Each grid frame is averaged with its neighbours (±R frames, R = Smoothness x 4) with a Gaussian in time AND a
+// per-pixel range weight: a neighbour that disagrees a lot (the arm really moved) counts little, one that differs a
+// little (the segmenter's frame-to-frame shimmer) counts fully. So still edges stop flickering and fast motion does
+// not ghost. Offline and cached: the export reads the very same arrays.
+const RW = new Float32Array(256);
+for (let i = 0; i < 256; i++) { const x = i / 255 / 0.3; RW[i] = Math.exp(-x * x); }
+const tCache = new Map();
+function temporal(key, rec, k, smooth) {
+  const R = Math.round(Math.max(0, Math.min(1, smooth)) * 4), ck = key + ':' + k + ':' + R;
+  if (tCache.has(ck)) { const v = tCache.get(ck); tCache.delete(ck); tCache.set(ck, v); return v; }
+  const c = nearest(rec.frames, k); if (!c) return null;
+  if (!R) return c;
+  const nb = [], sig = R / 1.6 + 0.4;
+  for (let d = -R; d <= R; d++) { if (!d) continue; const f = rec.frames.get(k + d); if (f && f.length === c.length) nb.push([f, Math.exp(-(d * d) / (2 * sig * sig))]); }
+  const out = new Uint8Array(c.length);
+  for (let i = 0; i < c.length; i++) {
+    const v = c[i]; let s = v, w = 1;
+    for (let j = 0; j < nb.length; j++) { const u = nb[j][0][i], ww = nb[j][1] * RW[u > v ? u - v : v - u]; s += u * ww; w += ww; }
+    out[i] = (s / w + 0.5) | 0;
+  }
+  if (tCache.size > 160) tCache.delete(tCache.keys().next().value);
+  tCache.set(ck, out);
+  return out;
+}
+const blend2 = new Map();
+/** v2 mask at source time t: {w, h, data, key} (kind 'person' | 'subject', smoothness 0..1), null when not analysed */
+export function maskAt(mediaId, t, kind = 'person', smooth = 0.5) {
+  const key = mediaId + '|' + kind, rec = MASKS.get(key); if (!rec) return null;
+  const f = Math.max(0, t) * rec.fps, k = Math.floor(f + 1e-6), u = f - k;
+  const a = temporal(key, rec, k, smooth); if (!a) return null;
+  const b = u > 0.02 ? temporal(key, rec, k + 1, smooth) : null;
+  if (!b || b.length !== a.length) return { w: rec.w, h: rec.h, data: a, key: key + ':' + k };
+  let out = blend2.get(key); if (!out || out.length !== a.length) { out = new Uint8Array(a.length); blend2.set(key, out); }
+  const wb = Math.round(u * 256), wa = 256 - wb;
+  for (let i = 0; i < a.length; i++) out[i] = (a[i] * wa + b[i] * wb) >> 8;
+  return { w: rec.w, h: rec.h, data: out, key: key + ':' + f.toFixed(3) };
+}
+export const hasMask = (id, kind = 'person') => MASKS.has(id + '|' + kind);
+/** share of the frame a v2 mask covers at t (0..1) */
+export function maskCoverageAt(mediaId, t, kind = 'person', smooth = 0.5) { const m = maskAt(mediaId, t, kind, smooth); if (!m) return null; let s = 0; for (let i = 0; i < m.data.length; i++) s += m.data[i] > 127 ? 1 : 0; return s / m.data.length; }
+
 export const hasSeg = (id) => SEG.has(id);
 export const hasFace = (id) => FACE.has(id);
 /** share of the frame the person covers at t (0..1), for the checks and the panel */
-export function coverageAt(mediaId, t) { const m = segAt(mediaId, t); if (!m) return null; let s = 0; for (let i = 0; i < m.data.length; i++) s += m.data[i] > 127 ? 1 : 0; return s / m.data.length; }
-export function forget(mediaId) { SEG.delete(mediaId); FACE.delete(mediaId); for (const k of [...smoothCache.keys()]) if (k.startsWith(mediaId + ':')) smoothCache.delete(k); }
+export function coverageAt(mediaId, t) { const m = segAt(mediaId, t) || maskAt(mediaId, t, 'person'); if (!m) return null; let s = 0; for (let i = 0; i < m.data.length; i++) s += m.data[i] > 127 ? 1 : 0; return s / m.data.length; }
+export function forget(mediaId) {
+  SEG.delete(mediaId); FACE.delete(mediaId); for (const k of [...smoothCache.keys()]) if (k.startsWith(mediaId + ':')) smoothCache.delete(k);
+  for (const k of [...MASKS.keys()]) if (k.startsWith(mediaId + '|')) MASKS.delete(k);
+  for (const k of [...tCache.keys()]) if (k.startsWith(mediaId + '|')) tCache.delete(k);
+}
 export { findMedia };

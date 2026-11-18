@@ -128,7 +128,8 @@ export const FILTER_PRESETS = {
 /**
  * Draw the frame at timeline time t.
  * @param ctx      CanvasRenderingContext2D (or Offscreen) sized project.canvas.w*scale × h*scale
- * @param opts     { scale=1, preview=false, source(item, srcT) -> drawable|null, skip?:Set(itemId) }
+ * @param opts     { scale=1, preview=false, source(item, srcT) -> drawable|null, skip?:Set(itemId), transparent?:bool }
+ *                 transparent: no canvas background fill (the frame keeps its alpha: transparent exports, export-alpha.js)
  */
 export function renderFrame(ctx, project, t, opts = {}) {
   const scale = opts.scale || 1;
@@ -136,8 +137,8 @@ export function renderFrame(ctx, project, t, opts = {}) {
   ctx.save();
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.globalAlpha = 1; ctx.filter = 'none';
-  ctx.fillStyle = project.canvas.bg || '#000';
-  ctx.fillRect(0, 0, w, h);
+  if (opts.transparent) ctx.clearRect(0, 0, w, h);
+  else { ctx.fillStyle = project.canvas.bg || '#000'; ctx.fillRect(0, 0, w, h); }
   const env = { w, h, scale, preview: !!opts.preview, source: opts.source || (() => null), project };
   for (const { track, item } of activeItems(project, t)) {
     if (opts.skip && opts.skip.has(item.id)) continue;

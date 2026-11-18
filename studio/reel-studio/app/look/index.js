@@ -4,7 +4,8 @@
 //
 // API (also used by tools/l-check.cjs):
 //   applyLook(ctx, lookId, {ids, amount})        autoColour(ctx, {ids})          matchTo(ctx, refId)
-//   touchUp(ctx, {ids, strength, eyes, under})   removeBackground(ctx, {ids, mode, color, colors, src, country})
+//   touchUp(ctx, {ids, strength, eyes, under})   removeBackground(ctx, {ids, mode, key, ...edges})   (bg.js: v2, transparent,
+//                                                another clip, subject cut-out, green screen, placement, alpha exports)
 //   addTransitions(ctx, kind, {at, dur})         matchCut(ctx, {at})             speedRamp(ctx, id, {curve, min, max, ease, audio})
 //   addText(ctx, presetId, {t0, text, ...})      clearFx(ctx, type, {ids})
 import { registerModule } from '../core/modules.js';
@@ -14,28 +15,25 @@ import { bus } from '../core/bus.js';
 import { findItem, itemEnd } from '../core/project.js';
 import { LOOKS, gradeFx, lookById } from './looks.js';
 import { LOOK_FX, loadBackground, processLook, bgReady } from './fx.js';
-import { ensureAnalysis, coverageAt, facesAt, hasFace } from './vision.js';
+import { ensureAnalysis, coverageAt, facesAt, hasFace, maskAt, maskCoverageAt, hasMask } from './vision.js';
 import { ensureFreezeFrames, transitionsCommand, matchCutCommand, cutsOf, KINDS } from './transitions.js';
 import { rampCommand, CURVES, EASES } from './ramp.js';
 import { PRESETS, textItem } from './text.js';
 import { samplePixels, autoCorrect, stats, matchTransfer } from './analyze.js';
 import { gl } from './gl.js';
 import { lookPanel } from './panel.js';
+import { clipTargets, removeBackground, setBg, clearBg, placeCutout, exportCutout, exportFrame, autoKeyColor, bgOf, BG_DEFAULTS, BG_MODES, BG_KEYS } from './bg.js';
+import { bgSection } from './bg-panel.js';
 import { registerInspectorSection } from '../core/modules.js';
 import { setAdjust, resetAdjust, enhanceVideo, setEnhancePart, enhanceOff, adjustAllLike, adjustOf, adjustTargets } from './enhance.js';
 import { adjustSection } from './adjust-panel.js';
 import { toggleCompare, compareOn } from './compare.js';
 import { SLIDERS, PARTS, adjustUniforms } from './adjust.js';
 
-export { LOOKS, KINDS, CURVES, EASES, PRESETS, processLook, coverageAt, facesAt, cutsOf, gl };
+export { LOOKS, KINDS, CURVES, EASES, PRESETS, processLook, coverageAt, facesAt, cutsOf, gl, maskAt, maskCoverageAt, hasMask };
 
 // ── targets and fx edits ──
-export function clipTargets(ctx, ids) {
-  const p = ctx.project, sel = ids || ctx.selection?.() || [];
-  const picked = sel.map((id) => findItem(p, id)).filter((x) => x && x.item.type === 'clip' && x.item.media);
-  if (picked.length) return picked.map((x) => x.item);
-  return p.tracks.filter((t) => t.kind === 'video').flatMap((t) => t.items.filter((i) => i.type === 'clip' && i.media));
-}
+export { clipTargets };
 const withFx = (item, type, patch) => {
   const list = (item.fx || []).slice(), i = list.findIndex((f) => f.type === type);
   if (patch == null) { if (i >= 0) list.splice(i, 1); return list; }
@@ -88,15 +86,7 @@ export async function touchUp(ctx, { ids, strength = 0.35, eyes = 0.5, under = 0
   const found = items.filter((it) => (facesAt(it.media, it.in + 0.05) || []).length).length;
   return { clips: items.length, withFaces: found };
 }
-export async function removeBackground(ctx, { ids, mode = 'blur', color, colors, src, country } = {}) {
-  const items = clipTargets(ctx, ids), ws = ctx.workspace || {};
-  const patch = { mode, color: color || ws.colors?.secondary || '#16161c', colors: colors || [ws.colors?.primary || '#C6395F', ws.colors?.secondary || '#2A2228'], src, country: country || 'gb' };
-  await loadBackground(patch);
-  applyFx(ctx, items, 'look.bg', patch, 'Remove background');
-  await ensureAnalysis(ctx.project, { onProgress: progress(ctx) });
-  redraw();
-  return { clips: items.length, coverage: items.map((it) => coverageAt(it.media, it.in + 0.05)) };
-}
+export { removeBackground, setBg, clearBg, placeCutout, exportCutout, exportFrame, autoKeyColor, BG_DEFAULTS, BG_MODES, BG_KEYS };
 export function clearFx(ctx, type, { ids } = {}) { return applyFx(ctx, clipTargets(ctx, ids).filter((i) => (i.fx || []).some((f) => f.type === type)), type, null, 'Remove effect'); }
 
 // ── transitions, ramps, text ──
@@ -179,3 +169,21 @@ registerModule({
   },
 });
 
+// ── background removal: Inspector → 🧍 Background for a clip that has it, and a "Do it for me" entry ──
+registerInspectorSection({
+  id: 'look-bg',
+  when: (item, track, m) => item.type === 'clip' && !!m && m.kind !== 'audio' && !!bgOf(item),
+  render: (ctx, item) => bgSection(ctx, item),
+});
+registerModule({
+  id: 'remove-bg', label: 'Remove background', icon: '🧍',
+  run: async (ctx) => {
+    const had = bgOf(clipTargets(ctx)[0]);
+    const r = await removeBackground(ctx, had && had.q >= 2 ? Object.assign({}, had) : { mode: 'blur', key: 'person' });
+    const sel = ctx.selection?.() || [], first = clipTargets(ctx)[0];
+    if (first && !sel.length) window.kbbEditor?.select?.([first.id]);   // show the clip's 🧍 Background section
+    window.kbbEditor?.showSide?.('inspector');
+    window.kbbEditor?.inspector?.render(true);
+    return `🧍 Background removed on ${r.clips} clip${r.clips === 1 ? '' : 's'} (blurred). Pick Colour, Picture, Another clip, Landmark or None (transparent) in 🧍 Background.`;
+  },
+});

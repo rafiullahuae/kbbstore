@@ -165,8 +165,7 @@ export async function exportMp4(project, media, opts = {}) {
   });
   const venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: (e) => { err = e; } });
   venc.configure(vc);
-  let aenc = null;
-  const readers = new Map(), streams = new Map();
+  let aenc = null, frames = null;
   try {
     if (abuf) {
       aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: (e) => { err = e; } });
@@ -183,51 +182,13 @@ export async function exportMp4(project, media, opts = {}) {
     const can = document.createElement('canvas'); can.width = W; can.height = H;
     const ctx = can.getContext('2d', { alpha: false });
     const scale = W / project.canvas.w;
-    const frames = new Map();
-    const source = (item) => frames.get(item.id) || null;
-    const readerFor = async (id) => { if (!readers.has(id)) readers.set(id, await media.openReader(id)); return readers.get(id); };
-    // one decoder stream per media for the retimed items, its frames as large as the export draws them (≤ the source)
-    const blendCans = new Map();
-    const needW = new Map();
-    for (const tr of project.tracks) for (const it of tr.items) {
-      const m = it.media && usesFrameStream(it) ? findMedia(project, it.media) : null; if (!m || !m.w || !m.h) continue;
-      const c = it.crop || { l: 0, t: 0, r: 0, b: 0 }, k = Math.max(it.w / (m.w * (1 - c.l - c.r) || 1), it.h / (m.h * (1 - c.t - c.b) || 1)) * scale * Math.max(1, it.zoom?.from || 1, it.zoom?.to || 1);
-      needW.set(m.id, Math.max(needW.get(m.id) || 0, Math.min(m.w, Math.ceil(m.w * k * 1.05))));
-    }
-    const streamFor = async (m) => {
-      if (!streams.has(m.id)) streams.set(m.id, media.openStream ? await media.openStream(m.id, { maxW: needW.get(m.id) || m.w, budgetMB: 640 }) : null);
-      return streams.get(m.id);
-    };
-    const flowInterp = project.tracks.some((tr) => tr.items.some((i) => i.smooth === 'flow')) ? (await import('./flow.js').catch(() => null))?.interpolate : null;
+    frames = await openFrames(project, media, scale);
+    const source = frames.source;
 
     for (let i = 0; i < N; i++) {
       check();
       const t = i / fps;
-      frames.clear();
-      for (const { item } of activeItems(project, t)) {
-        if (!item.media) continue;
-        const m = findMedia(project, item.media); if (!m || m.kind === 'audio') continue;
-        if (m.kind === 'video' && usesFrameStream(item)) {
-          // ramps, reverse, freeze, smooth slow motion: frames from the decoder stream, blended exactly like the preview
-          const fs = await streamFor(m);
-          if (fs) {
-            const st = srcTime(item, t), bw = blendWeight(item, t);
-            const r = await fs.frameAt(st, bw != null, item.freeze ? 0 : item.reverse ? -1 : 1, Math.max(0.05, speedAt(item, t)));
-            if (r?.a) {
-              let pic = r.a;
-              if (bw != null && r.b && r.w > 0.002) {
-                let c = blendCans.get(item.id);
-                if (!c) { c = new OffscreenCanvas(r.a.width, r.a.height); blendCans.set(item.id, c); }
-                pic = item.smooth === 'flow' && flowInterp ? (await flowInterp(r.a, r.b, r.w, c)) : blendInto(c, r.a, r.b, r.w);
-              }
-              frames.set(item.id, pic);
-              continue;
-            }
-          }
-        }
-        const r = await readerFor(m.id);
-        if (r) frames.set(item.id, await r.frame(m.kind === 'image' ? 0 : srcTime(item, t)));
-      }
+      await frames.load(t);
       renderFrame(ctx, project, t, { scale, source, preview: false });
       const vf = new VideoFrame(can, { timestamp: Math.round((i * 1e6) / fps), duration: Math.round(1e6 / fps) });
       venc.encode(vf, { keyFrame: i % (fps * 2) === 0 });
@@ -247,9 +208,61 @@ export async function exportMp4(project, media, opts = {}) {
     progress(1, 'Done');
     return { blob, note, frames: N, audio: abuf ? ac.mux : null, seconds: secs };
   } finally {
-    for (const r of readers.values()) r?.close();
-    for (const s of streams.values()) s?.close();
+    frames?.close();
     try { if (venc.state !== 'closed') venc.close(); } catch {}
     try { if (aenc && aenc.state !== 'closed') aenc.close(); } catch {}
   }
+}
+
+/**
+ * The exact source pictures for every visual item at timeline time t, as the export reads them (exact-frame readers;
+ * ramps, reverse, freeze and smooth slow motion from the decoder stream, blended like the preview). Shared by the MP4
+ * export and the transparent exports (export-alpha.js):
+ *   const f = await openFrames(project, media, scale); await f.load(t); renderFrame(ctx, project, t, { source: f.source }); f.close();
+ */
+export async function openFrames(project, media, scale) {
+  const readers = new Map(), streams = new Map(), frames = new Map();
+  const source = (item) => frames.get(item.id) || null;
+  const readerFor = async (id) => { if (!readers.has(id)) readers.set(id, await media.openReader(id)); return readers.get(id); };
+  // one decoder stream per media for the retimed items, its frames as large as the export draws them (≤ the source)
+  const blendCans = new Map();
+  const needW = new Map();
+  for (const tr of project.tracks) for (const it of tr.items) {
+    const m = it.media && usesFrameStream(it) ? findMedia(project, it.media) : null; if (!m || !m.w || !m.h) continue;
+    const c = it.crop || { l: 0, t: 0, r: 0, b: 0 }, k = Math.max(it.w / (m.w * (1 - c.l - c.r) || 1), it.h / (m.h * (1 - c.t - c.b) || 1)) * scale * Math.max(1, it.zoom?.from || 1, it.zoom?.to || 1);
+    needW.set(m.id, Math.max(needW.get(m.id) || 0, Math.min(m.w, Math.ceil(m.w * k * 1.05))));
+  }
+  const streamFor = async (m) => {
+    if (!streams.has(m.id)) streams.set(m.id, media.openStream ? await media.openStream(m.id, { maxW: needW.get(m.id) || m.w, budgetMB: 640 }) : null);
+    return streams.get(m.id);
+  };
+  const flowInterp = project.tracks.some((tr) => tr.items.some((i) => i.smooth === 'flow')) ? (await import('./flow.js').catch(() => null))?.interpolate : null;
+  async function load(t) {
+    frames.clear();
+    for (const { item } of activeItems(project, t)) {
+      if (!item.media) continue;
+      const m = findMedia(project, item.media); if (!m || m.kind === 'audio') continue;
+      if (m.kind === 'video' && usesFrameStream(item)) {
+        // ramps, reverse, freeze, smooth slow motion: frames from the decoder stream, blended exactly like the preview
+        const fs = await streamFor(m);
+        if (fs) {
+          const st = srcTime(item, t), bw = blendWeight(item, t);
+          const r = await fs.frameAt(st, bw != null, item.freeze ? 0 : item.reverse ? -1 : 1, Math.max(0.05, speedAt(item, t)));
+          if (r?.a) {
+            let pic = r.a;
+            if (bw != null && r.b && r.w > 0.002) {
+              let c = blendCans.get(item.id);
+              if (!c) { c = new OffscreenCanvas(r.a.width, r.a.height); blendCans.set(item.id, c); }
+              pic = item.smooth === 'flow' && flowInterp ? (await flowInterp(r.a, r.b, r.w, c)) : blendInto(c, r.a, r.b, r.w);
+            }
+            frames.set(item.id, pic);
+            continue;
+          }
+        }
+      }
+      const r = await readerFor(m.id);
+      if (r) frames.set(item.id, await r.frame(m.kind === 'image' ? 0 : srcTime(item, t)));
+    }
+  }
+  return { load, source, close() { for (const r of readers.values()) r?.close(); for (const s of streams.values()) s?.close(); } };
 }
