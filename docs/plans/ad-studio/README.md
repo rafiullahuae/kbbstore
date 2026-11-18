@@ -25,7 +25,32 @@ node tools/pc-shots.cjs [ids-regex]   # shots/planet-careers-{1..6}.jpg: every P
 node tools/check-occupations.cjs      # Work Abroad: 44 templates, occupation picker sweep, honest copy, photo slot + cut-out; shots/work-abroad-picker.png
 node tools/wa-shots.cjs [ids-regex]   # shots/work-abroad-{1..5}.jpg: every Work Abroad template in post / square / story
 node tools/check-layout.cjs           # the app shell at 1280×800 … 2560×1440 + 1024, Ads and Video, inside KBB Studio and standalone; PNG pixels vs tools/layout-export-baseline.json
+node tools/check-cutout.cjs           # ✂ cut-outs: photos, video background removal, transparent media, export = preview, old designs; shots/cutout/*.png
 ```
+
+## ✂ Cut-outs and background removal (18 Nov 2026)
+
+The owner: remove backgrounds *"on the video as well, in case we want to remove the background from the portrait ads
+videos"*. It is the video editor's own code, not a second copy: `build.py` reads `studio/reel-studio/app/look/` at build
+time and inlines `gl.js` (the WebGL2 'look' shader: mask refinement that follows the picture's colours, Shrink/grow,
+Feather, chroma key with spill suppression, light wrap), `looks.js`'s neutral `BASE`, `vision.js`'s v2 mask store and
+temporal filter and `bg.js`'s `BG_DEFAULTS` / `autoKeyColor` as `window.KBB_LOOK`; `src/cutlook.js` feeds them.
+
+* **Photos** (Ads → Properties of any picture layer): **✂ Cut out → 🧍 Person** (MediaPipe selfie segmenter, offline,
+  everywhere) or **📦 Main subject** (products and objects: U²-Net-p, KBB Studio's optional 4.6 MB `subject-cutout`
+  model, only inside KBB Studio — the first press downloads it once through its model installer, or KBB Studio home →
+  ⚙ Models). **Edge feather** re-cuts from the original; **↺ Restore background** puts it back. The original stays on
+  the element (`cut: {o, k, f}`), each step is one undo. Opened as a file there is no Main subject; the panel says
+  products need KBB Studio.
+* **Video mode** (Clip tab of a selected clip, or Stickers for a selected picture / video layer): **🧍 Remove
+  background** — Person, Main subject (KBB Studio) or Green screen (key colour measured from the clip). Behind it:
+  **Transparent** (the Empty-space fill and any layer ticked **Behind the video** show through), **Colour** or **Brand
+  gradient**; Edge feather, Shrink / grow, Steady edges, Light wrap, screen colour / tolerance / spill. Masks are
+  computed once per clip (person 30, subject 10 grid frames a second) and then only sampled, so the preview draws what
+  the export draws; the export seeks every frame of a cut-out clip (exact, never the fast play-through).
+* **Transparent media**: the video editor's WebM with alpha, its PNG-sequence `.zip` and transparent PNGs import into
+  Video mode (on the timeline, or **+ Layer** over it) and stay see-through in the preview and the MP4; on a still ad
+  (Ads → Image…) a WebM / zip comes in as its first frame, see-through.
 
 ## Layout (18 Nov 2026) -- fit to screen, like the video editor
 

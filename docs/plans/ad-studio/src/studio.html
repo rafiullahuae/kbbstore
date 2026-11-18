@@ -347,7 +347,7 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
             <button class="btn sm" data-add="heading" type="button">Heading</button><button class="btn sm" data-add="text" type="button">Text</button>
             <button class="btn sm" data-add="btn" type="button">Button</button><button class="btn sm" data-add="arabic" type="button">عربي</button>
             <button class="btn sm" data-add="logo" type="button">Logo</button><button class="btn sm" data-add="pay" type="button">tabby/tamara</button>
-            <label class="btn sm" for="add-img">Image…</label><input id="add-img" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <label class="btn sm" for="add-img">Image…</label><input id="add-img" type="file" accept="image/png,image/jpeg,image/webp,video/webm,.webm,application/zip,.zip" hidden>
           </div>
           <div class="g2"><div class="row"><label for="add-badge">Badge</label><select id="add-badge"><option value="">Add a badge…</option><option value="burst">Burst</option><option value="circle">Circle</option><option value="pill">Pill</option><option value="star">Star</option><option value="heart">Heart</option><option value="banner">Banner</option><option value="ribbon">Corner ribbon</option></select></div>
           <div class="row"><label for="add-shape">Shape</label><select id="add-shape"><option value="">Add a shape…</option><option value="rect">Rectangle</option><option value="circle">Circle</option><option value="ellipse">Oval</option><option value="ring">Ring</option><option value="arch">Arch</option><option value="blob">Blob</option><option value="ticket">Ticket</option><option value="petal">Petal</option><option value="silk">Silk ribbon</option><option value="glow">Soft glow</option><option value="line">Line</option></select></div></div>
@@ -439,7 +439,12 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
             <div class="row"><label for="p-lh">Line height</label><input id="p-lh" type="range" data-p="lh" min="70" max="200" step="1"></div></div>
           <div class="g2" data-show="icon"><div class="row"><label for="p-ic">Icon</label><select id="p-ic" data-p="ic"></select></div><div class="row"><span class="lbl">Colour</span><button class="sw" type="button" data-cp="col" aria-label="Icon colour" aria-expanded="false"><i></i></button></div></div>
           <div class="g2" data-show="art"><div class="row"><label for="p-art">Picture</label><select id="p-art" data-p="art"></select></div><div class="row"><span class="lbl">Colour (outlines, landmarks)</span><button class="sw" type="button" data-cp="col" aria-label="Art colour" aria-expanded="false"><i></i></button></div></div>
-          <div class="btns" id="ph-row" hidden><label class="btn sm pri" for="ph-file">Put a photo here…</label><input id="ph-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="btn sm" id="ph-cut" type="button" hidden title="Keeps the person, removes the background (offline, in this browser)">✂ Cut out the person</button><span class="note">It takes this slot's place and shape.</span></div>
+          <div class="btns" id="ph-row" hidden><label class="btn sm pri" for="ph-file">Put a photo here…</label><input id="ph-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><span class="note">It takes this slot's place and shape.</span></div>
+          <div class="in0 cutrow" id="cut-row" hidden>
+            <div class="btns"><span class="lbl">✂ Cut out</span><button class="btn sm" id="ph-cut" type="button" hidden title="Keeps the person, removes the background (offline, on this computer)">🧍 Person</button><button class="btn sm" id="ph-cut-subj" type="button" title="Keeps the product or object, removes the background (KBB Studio's cut-out model, offline)">📦 Main subject</button><button class="btn sm" id="ph-restore" type="button" hidden title="The photo as it was, background and all">↺ Restore background</button></div>
+            <div class="row" id="ph-fea-r" hidden><label for="ph-fea">Edge feather <span id="ph-feav"></span></label><input id="ph-fea" type="range" min="0" max="100" step="1"></div>
+            <p class="note" id="ph-cut-note"></p>
+          </div>
           <div class="row" data-show="pay"><label for="p-pay">Shows</label><select id="p-pay" data-p="pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
           <div class="row" data-show="text btn shape art img"><label for="p-sh">Shape behind / crop</label><select id="p-sh" data-p="sh"></select></div>
           <div class="g2" data-show="fill"><div class="row"><span class="lbl">Fill</span><div class="crow"><button class="sw" type="button" data-cp="fill" aria-label="Fill colour" aria-expanded="false"><i></i></button><button class="btn sm" id="p-fill0" type="button">None</button></div></div>
@@ -555,6 +560,8 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
 <script>/*LIB_MP4*/</script>
 <script>/*TEMPLATES*/</script>
 <script>/*KBBDISK*/</script>
+<script>/*LOOK*/</script>
+<script>/*CUTLOOK*/</script>
 <script>/*APP*/</script>
 <script>/*VIDEO*/</script>
 </body>

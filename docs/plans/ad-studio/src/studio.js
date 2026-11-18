@@ -142,6 +142,9 @@
     if (e.cr === 'acc' || e.cr === 'acc2' || e.cr === 'card') o.cr = e.cr;
     if (e.tr === 'acc') o.tr = e.tr;
     if (e.t === 'img') { if (!IMGID.test(e.img) || (imgs && !has(imgs, e.img))) return null; o.img = e.img; }
+    // ✂ a cut-out photo remembers the photo it was cut from (o), the cut (k) and the edge feather (f): Feather re-cuts from
+    // it, Restore background puts it back
+    if (e.t === 'img' && e.cut && typeof e.cut === 'object' && IMGID.test(e.cut.o) && (!imgs || has(imgs, e.cut.o))) o.cut = { o: e.cut.o, k: e.cut.k === 'subject' ? 'subject' : 'person', f: Math.round(num(e.cut.f, 0, 100, 10)) };
     if (e.t === 'art') { if (typeof e.art !== 'string' || !ARTID.test(e.art)) return null; o.art = e.art; }
     if (['c1', 'c2', 'c3', 'ca'].indexOf(e.cy) >= 0) o.cy = e.cy;                 // takes the country's flag colour
     if (typeof e.cyk === 'string' && /^[nda]{1,3}$/.test(e.cyk)) o.cyk = e.cyk;     // holds the country's name
@@ -1001,7 +1004,7 @@
     $('sel-t').textContent = e ? (e.name || TYPES[e.t]) + (e.t === 'prods' ? '' : ' · ' + TYPES[e.t]) + (e.gp && doc.groups[e.gp] ? ' (in ' + doc.groups[e.gp].name + ')' : '') : 'Nothing selected';
     $('sel-empty').hidden = !!e;
     props.querySelectorAll('[data-need]').forEach(function (n) { n.hidden = !e || (n.dataset.need === 'geo' && e.t === 'prods'); });
-    $('ph-row').hidden = true;
+    $('ph-row').hidden = true; $('cut-row').hidden = true;
     props.querySelectorAll('[data-show]').forEach(function (n) {
       var on = !!e && n.dataset.show.split(' ').indexOf(e.t) >= 0;
       if (n.dataset.show === 'fill') on = !!e && (e.t === 'shape' || e.t === 'btn' || (e.t === 'text' && e.sh && e.sh !== 'none'));
@@ -1025,7 +1028,7 @@
     $('p-al').querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String((g.al || e.al || 'c') === b.dataset.v)); });
     $('del').disabled = e.t === 'prods'; $('dup').disabled = e.t === 'prods';
     $('ph-row').hidden = !e.ph;
-    $('ph-cut').hidden = !(e.wk && e.t === 'img');
+    cutPanel(e);
     $('eres').disabled = !doc.tpl || !tplById[doc.tpl];
   }
   function propVal(n, p) {
@@ -1128,7 +1131,27 @@
   var icg = $('icg');
   Object.keys(ICONS).forEach(function (k) { if (k === 'lotus') return; var b = mk('button'); b.type = 'button'; b.title = ICONS[k][0]; b.setAttribute('aria-label', 'Add ' + ICONS[k][0]); b.innerHTML = iconSvg(k); b.onclick = function () { addEl({ t: 'icon', name: ICONS[k][0], ic: k, col: accNow() }, k === 'stars5' ? 28 : 12, k === 'stars5' ? 5.6 : 12); }; icg.appendChild(b); });
   $('add-img').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
-    readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) { var w = r.aspect >= 1 ? 40 : 40 * r.aspect; addEl({ t: 'img', name: r.name, img: r.id }, r2(w), r2(w / r.aspect)); }).catch(pictureError); };
+    stillOf(f).then(function (f) { return readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) { var w = r.aspect >= 1 ? 40 : 40 * r.aspect; addEl({ t: 'img', name: r.name, img: r.id }, r2(w), r2(w / r.aspect)); }); }).catch(pictureError); };
+  // the video editor's transparent exports on a still ad: a WebM with alpha or a PNG-sequence .zip gives its first frame
+  // as a transparent PNG (Video mode takes them whole, moving)
+  function stillOf(f) {
+    var nm = f.name.replace(/\.[a-z0-9]+$/i, '') + '.png', isZip = /zip/.test(f.type) || /\.zip$/i.test(f.name), isWebm = /webm/.test(f.type) || /\.webm$/i.test(f.name);
+    if (isZip) return JSZip.loadAsync(f).then(function (z) {
+      var n = Object.keys(z.files).filter(function (k) { return !z.files[k].dir && /\.png$/i.test(k) && !/(^|\/)(__MACOSX|\.)/.test(k); }).sort()[0];
+      if (!n) throw new Error('no PNG frames in that .zip');
+      return z.file(n).async('blob').then(function (b) { return new File([b], nm, { type: 'image/png' }); });
+    });
+    if (!isWebm) return Promise.resolve(f);
+    if (f.size > 1e9) return Promise.reject(new Error('That video is over 1 GB'));
+    return new Promise(function (res, rej) {
+      var v = document.createElement('video'), u = URL.createObjectURL(f), to = setTimeout(function () { fin(new Error('that video did not open')); }, 20000);
+      function fin(err, b) { clearTimeout(to); v.removeAttribute('src'); v.load(); URL.revokeObjectURL(u); if (err) rej(err); else res(new File([b], nm, { type: 'image/png' })); }
+      v.muted = true; v.preload = 'auto';
+      v.onloadeddata = function () { v.onseeked = function () { var c = mk('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0); c.toBlob(function (b) { b ? fin(null, b) : fin(new Error('no picture')); }, 'image/png'); }; v.currentTime = 0.001; };
+      v.onerror = function () { fin(new Error('this browser cannot open that video')); };
+      v.src = u;
+    });
+  }
   // flags, country outlines and landmark silhouettes (and the company marks) -- by name from the built-in list
   function occName(id) { return has(KT.OCC, id) ? KT.OCC[id].t[0] : id; }
   function toolName(id) { var n = ''; KT.OCCS.some(function (o) { return o.tools.some(function (t) { if (t[0] === id) { n = t[1]; return true; } }); }); return n || id; }
@@ -1899,7 +1922,7 @@
     }, Promise.resolve()).then(function () {
       function remap(raw) {
         var r = clone(raw);
-        if (r && Array.isArray(r.els)) r.els.forEach(function (e) { if (e && e.t === 'img') e.img = map[e.img] || '#'; });
+        if (r && Array.isArray(r.els)) r.els.forEach(function (e) { if (e && e.t === 'img') { e.img = map[e.img] || '#'; if (e.cut && typeof e.cut === 'object') e.cut.o = map[e.cut.o] || '#'; } });
         if (r && r.bg && r.bg.img) r.bg.img = map[r.bg.img] || '';
         if (r && r.sets) FMTS.forEach(function (f) { if (Array.isArray(r.sets[f])) r.sets[f].forEach(function (l) { if (Array.isArray(l)) l.forEach(function (it) { if (it && typeof it.p === 'string' && it.p.indexOf('u_') === 0) it.p = map[it.p.slice(2)] ? 'u_' + map[it.p.slice(2)] : '#'; }); }); });
         return r;
@@ -2142,7 +2165,7 @@
     return Store.listProjects().then(function (l) { return Promise.all(l.filter(function (p) { return p.co === c.id && IMGID.test(p.id); }).map(function (p) { return Store.getProject(p.id); })); }).then(function (ds) {
       ds = ds.filter(Boolean).map(function (d) { return d.id === doc.id ? clone(doc) : d; });
       if (doc && (doc.co || 'kbb') === c.id && !ds.some(function (d) { return d.id === doc.id; })) ds.push(clone(doc));
-      ds.forEach(function (d) { (d.els || []).forEach(function (e) { if (e.t === 'img') used[e.img] = 1; }); if (d.bg && d.bg.img) used[d.bg.img] = 1; FMTS.forEach(function (f) { ((d.sets || {})[f] || []).forEach(function (l) { l.forEach(function (it) { if (it.p.indexOf('u_') === 0) used[it.p.slice(2)] = 1; }); }); }); });
+      ds.forEach(function (d) { (d.els || []).forEach(function (e) { if (e.t === 'img') { used[e.img] = 1; if (e.cut && e.cut.o) used[e.cut.o] = 1; } }); if (d.bg && d.bg.img) used[d.bg.img] = 1; FMTS.forEach(function (f) { ((d.sets || {})[f] || []).forEach(function (l) { l.forEach(function (it) { if (it.p.indexOf('u_') === 0) used[it.p.slice(2)] = 1; }); }); }); });
       var b = c.id === co.id ? brand : c.studio.brand; if (b.logo) used[b.logo] = 1;
       return Promise.all(Object.keys(used).filter(function (id) { return images[id]; }).map(function (id) { var im = images[id]; return Store.toData(im.src).then(function (data) { return { id: id, name: im.name, aspect: im.aspect, kind: im.kind, data: data }; }).catch(function () { return null; }); })).then(function (ims) {
         var kit = clone(c); delete kit.studio; delete kit.mark;
@@ -2171,39 +2194,65 @@
   $('co-in').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return; closeCo();
     if (f.size > 200e6) { setStatus('That file is too large', 'warn'); return; }
     f.text().then(importCompany).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); }); };
-  // ✂ Cut out (worker photos): the person stays, the background goes -- MediaPipe's selfie segmenter (Apache-2.0, the
-  // same model KBB Studio's Look tab uses), run in this browser, offline. Its runtime and model (≈4 MB) live in
-  // ad-studio-cutout.js NEXT TO this file and load only on the first cut-out, so the studio itself stays light.
-  var cutP = null;
-  function cutoutLib() {
-    if (window.KBB_CUTOUT) return Promise.resolve(window.KBB_CUTOUT);
-    return cutP || (cutP = new Promise(function (res, rej) {
-      var s = document.createElement('script'); s.src = new URL('ad-studio-cutout.js', location.href).href;
-      s.onload = function () { window.KBB_CUTOUT ? res(window.KBB_CUTOUT) : rej(new Error('cut-out file is damaged')); };
-      s.onerror = function () { cutP = null; rej(new Error('Cut-out needs the file ad-studio-cutout.js next to this one (it comes in the same folder)')); };
-      document.head.appendChild(s);
-    }));
+  // ✂ Cut out (any photo on the ad; 18 Nov 2026 also products): 🧍 Person -- MediaPipe's selfie segmenter, offline, here
+  // or inside KBB Studio; 📦 Main subject -- U²-Net-p, KBB Studio's optional cut-out model, only inside KBB Studio (the
+  // engine keeps it in its models folder). The mask is refined by the video editor's own shader (src/cutlook.js): the
+  // edges follow the photo's colours, Edge feather softens them. The photo it was cut from stays on the element (e.cut),
+  // so Feather re-cuts from it and Restore background puts it back; each is one undo step.
+  var cutBusy = false, subjSt = null, subjAsk = 0;
+  function cutPanel(e) {
+    var on = !!e && e.t === 'img', C = window.KBB_CUT;
+    $('cut-row').hidden = !on || !C; if (!on || !C) return;
+    $('ph-cut').hidden = false; $('ph-restore').hidden = !e.cut; $('ph-fea-r').hidden = !e.cut;
+    var f = e.cut ? e.cut.f : 10; setV($('ph-fea'), f); $('ph-feav').textContent = f;
+    ['ph-cut', 'ph-cut-subj'].forEach(function (id) { $(id).setAttribute('aria-pressed', String(!!e.cut && e.cut.k === (id === 'ph-cut' ? 'person' : 'subject'))); });
+    var paint = function (s) {
+      subjSt = s; $('ph-cut-subj').hidden = s === 'standalone';
+      $('ph-cut-note').textContent = s === 'standalone' ? 'Products (📦 Main subject) need KBB Studio: open this design there. Person works here, offline.'
+        : s === 'missing' ? '📦 Main subject uses KBB Studio’s cut-out model (4.6 MB, downloaded once when you press it — or from KBB Studio home → ⚙ Models).'
+        : s === 'error' ? 'The main-subject cut-out could not start (is KBB Studio up to date?). Person still works.' : 'Person for people · Main subject for products and objects. Ctrl+Z undoes a cut.';
+    };
+    paint(subjSt || (C.inside() ? 'missing' : 'standalone'));
+    // asked of the engine at most every 5 s (the panel redraws often); 'ready' and 'standalone' never change
+    if (subjSt !== 'ready' && subjSt !== 'standalone' && Date.now() - subjAsk > 5000) { subjAsk = Date.now(); C.subjectState().then(function (s) { subjSt = s; if (selEl() === e) paint(s); }); }
   }
-  function cutOutPhoto(e) {
-    if (!e || e.t !== 'img' || !images[e.img]) return Promise.resolve();
-    setStatus('Cutting out the person… (the first time takes a few seconds)');
-    return Promise.all([cutoutLib(), loadImg(images[e.img].src)]).then(function (r) {
-      var img = r[1], k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)), cv = mk('canvas');
-      cv.width = Math.max(1, Math.round(img.naturalWidth * k)); cv.height = Math.max(1, Math.round(img.naturalHeight * k));
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      return r[0].cut(cv).then(function () {
+  function cutOutPhoto(e, kind, feather) {
+    var C = window.KBB_CUT; kind = kind === 'subject' ? 'subject' : 'person';
+    if (!C || !e || e.t !== 'img' || !images[e.img] || cutBusy) return Promise.resolve();
+    var orig = e.cut && images[e.cut.o] ? e.cut.o : e.img, fea = feather != null ? Math.round(num(feather, 0, 100, 10)) : e.cut ? e.cut.f : 10;
+    cutBusy = true;
+    setStatus(kind === 'subject' ? 'Cutting out the main subject…' : 'Cutting out the person… (the first time takes a few seconds)');
+    var pre = kind !== 'subject' ? Promise.resolve() : C.subjectState().then(function (s) {
+      if (s === 'standalone') throw new Error('products need KBB Studio (its cut-out model) — open this design there');
+      if (s === 'error') throw new Error('KBB Studio’s cut-out model could not start');
+      if (s === 'missing') { setStatus('Getting the cut-out model (4.6 MB, once)…'); return C.installSubject(function (f) { setStatus('Getting the cut-out model… ' + Math.round(f * 100) + '%'); }).then(function () { subjSt = 'ready'; setStatus('Cutting out the main subject…'); }); }
+    });
+    return pre.then(function () { return loadImg(images[orig].src); }).then(function (img) {
+      return C.photoMask(orig, img, kind).then(function (mask) {
+        if (C.coverage(mask) < 0.01) throw new Error(kind === 'subject' ? 'no main subject found in this photo' : 'no person found in this photo');
+        var cv = C.cutPhoto(img, mask, { key: kind, feather: fea / 100 });
         return new Promise(function (res) { cv.toBlob(res, 'image/png'); }).then(function (blob) {
-          var name = (images[e.img].name || 'Photo') + ' (cut out)';
-          return Store.putImage(blob, { name: name, aspect: +(cv.width / cv.height).toFixed(4), kind: 'img' }).then(function (q) {
-            registerImage({ id: q.id, src: q.src, name: name, aspect: +(cv.width / cv.height).toFixed(4), kind: 'img' });
-            act(function () { var i = doc.els.indexOf(e); if (i >= 0) { e.img = q.id; e.name = 'Worker photo (cut out)'; delete e.bw; } });
-            setStatus('Cut out — Ctrl+Z brings the background back', 'ok');
+          var name = (images[orig].name || 'Photo').replace(/ \(cut out\)$/, '').slice(0, 48) + ' (cut out)', asp = +(cv.width / cv.height).toFixed(4);
+          return Store.putImage(blob, { name: name, aspect: asp, kind: 'img' }).then(function (q) {
+            registerImage({ id: q.id, src: q.src, name: name, aspect: asp, kind: 'img' });
+            act(function () { if (doc.els.indexOf(e) < 0) return; e.img = q.id; e.cut = { o: orig, k: kind, f: fea }; if (!/ \(cut out\)$/.test(e.name || '')) e.name = ((e.wk ? 'Worker photo' : e.name) || 'Photo').slice(0, 30) + ' (cut out)'; delete e.bw; });
+            setStatus('Cut out — Ctrl+Z or ↺ Restore background brings the background back', 'ok');
           });
         });
       });
-    }).catch(function (x) { setStatus('Not cut out: ' + ((x && x.message) || 'try again'), 'warn'); });
+    }).catch(function (x) { setStatus('Not cut out: ' + ((x && x.message) || 'try again'), 'warn'); }).then(function () { cutBusy = false; if (selEl() === e) cutPanel(e); });
   }
-  $('ph-cut').onclick = function () { cutOutPhoto(selEl()); };
+  function restorePhoto(e) {
+    if (!e || e.t !== 'img' || !e.cut) return;
+    if (!images[e.cut.o]) { setStatus('The original photo is no longer here', 'warn'); return; }
+    act(function () { e.img = e.cut.o; delete e.cut; e.name = (e.name || 'Photo').replace(/ \(cut out\)$/, ''); });
+    setStatus('Background restored — Ctrl+Z cuts it out again', 'ok');
+  }
+  $('ph-cut').onclick = function () { cutOutPhoto(selEl(), 'person'); };
+  $('ph-cut-subj').onclick = function () { cutOutPhoto(selEl(), 'subject'); };
+  $('ph-restore').onclick = function () { restorePhoto(selEl()); };
+  $('ph-fea').addEventListener('input', function () { $('ph-feav').textContent = this.value; });
+  $('ph-fea').addEventListener('change', function () { var e = selEl(); if (e && e.cut) cutOutPhoto(e, e.cut.k, +this.value); });
   // a photo slot (success stories, testimonials, the team): pick a picture and it takes the slot's place and shape
   $('ph-file').onchange = function () { var f = this.files && this.files[0]; this.value = ''; var e = selEl(); if (!f || !e || !e.ph) return;
     readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) {
@@ -2250,6 +2299,6 @@
   // test hooks (read-only views + the same actions the buttons run)
   window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
     get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id, cty) { useTemplate(tplById[id], cty); },
-    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function () { return cutOutPhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, backupAll: backupAll, importBackup: importBackup, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
+    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function (k, f) { return cutOutPhoto(selEl(), k, f); }, restorePhoto: function () { restorePhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, backupAll: backupAll, importBackup: importBackup, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
     selKeys: selKeys, setSel: function (k) { setSel(k); afterSel(); }, itemBox: itemBox, aabb: aabb, docColours: function () { return docColours(doc); } };
 })();

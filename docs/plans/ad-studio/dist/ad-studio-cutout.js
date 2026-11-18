@@ -42,5 +42,16 @@
       return cv;
     });
   }
-  window.KBB_CUTOUT = { cut: cut, version: '0.10.21' };
+  // masks(pictures): the person confidence 0..255 per picture, {w, h, data: Uint8Array} -- exactly what KBB Studio's
+  // vision-worker.js answers for op 'seg' (the same model, the same scaling), for src/cutlook.js when it runs standalone
+  function masks(list) {
+    return segmenter().then(function (s) {
+      return list.map(function (bm) {
+        var r = s.segment(bm), m = r.confidenceMasks[r.confidenceMasks.length - 1], f = m.getAsFloat32Array(), d = new Uint8Array(f.length);
+        for (var i = 0; i < f.length; i++) d[i] = Math.round(Math.max(0, Math.min(1, f[i])) * 255);
+        var o = { w: m.width, h: m.height, data: d }; if (r.close) r.close(); if (bm.close) bm.close(); return o;
+      });
+    });
+  }
+  window.KBB_CUTOUT = { cut: cut, masks: masks, version: '0.10.21' };
 })();

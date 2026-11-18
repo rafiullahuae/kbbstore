@@ -46,8 +46,9 @@
 
         <div class="v-pane" data-vp="media" role="tabpanel">
           <label class="btn pri v-imp" for="v-file">＋ Import videos, pictures, music…</label>
-          <input id="v-file" type="file" multiple accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,image/png,image/jpeg,image/webp,audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,.mp3,.m4a,.wav" hidden>
+          <input id="v-file" type="file" multiple accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,image/png,image/jpeg,image/webp,audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,.mp3,.m4a,.wav,application/zip,.zip" hidden>
           <p class="note">Or drop files anywhere on the editor. MP4 · MOV · WebM, PNG · JPG · WebP, MP3 · M4A · WAV. Nothing leaves this computer.</p>
+          <p class="note">Cut-outs from the video editor (WebM with alpha, PNG-sequence .zip, transparent PNG) stay see-through: put them on the timeline or as a <b>layer</b> over your video.</p>
           <div class="v-bin" id="v-bin"></div>
           <details><summary>My video projects</summary><div class="in"><div class="mine" id="v-mine"></div></div></details>
           <p class="note" id="v-where"></p>
@@ -71,6 +72,23 @@
             </div>
             <p class="note">Drag the picture to move it inside the frame · mouse wheel zooms. Split, duplicate and delete are under the preview.</p>
           </div>
+          <div class="v-bgr" id="v-bgr" hidden>
+            <h3>🧍 Remove background</h3>
+            <div class="seg" id="vb-key" role="group" aria-label="Keep"><button data-v="person" type="button" title="Keeps the person (offline)">🧍 Person</button><button data-v="subject" type="button" title="Keeps the product or object (KBB Studio's cut-out model)">📦 Main subject</button><button data-v="chroma" type="button" title="Keys out a green or blue screen">🟩 Green screen</button></div>
+            <div id="vb-on" class="v-props" hidden>
+              <div class="row"><span class="lbl">Behind it</span><div class="seg" id="vb-mode" role="group" aria-label="Behind the cut-out"><button data-v="none" type="button" title="See-through: the Empty-space fill and any layer set to Behind the video show">Transparent</button><button data-v="color" type="button">Colour</button><button data-v="gradient" type="button">Brand gradient</button></div></div>
+              <div class="g2"><div class="row" id="vb-col-r"><label for="vb-col">Colour</label><input id="vb-col" type="color"></div>
+                <div class="row" id="vb-grad-r"><span class="lbl">Gradient</span><div class="crow"><input id="vb-g1" type="color" aria-label="Gradient top colour"><input id="vb-g2" type="color" aria-label="Gradient bottom colour"></div></div></div>
+              <div class="g2"><div class="row"><label for="vb-fea">Edge feather <span id="vb-feav"></span></label><input id="vb-fea" type="range" min="0" max="100" step="1"></div>
+                <div class="row"><label for="vb-grow">Shrink / grow <span id="vb-growv"></span></label><input id="vb-grow" type="range" min="-100" max="100" step="1"></div></div>
+              <div class="g2"><div class="row" id="vb-smo-r"><label for="vb-smo">Steady edges <span id="vb-smov"></span></label><input id="vb-smo" type="range" min="0" max="100" step="1"></div>
+                <div class="row" id="vb-wrap-r"><label for="vb-wrap">Light wrap <span id="vb-wrapv"></span></label><input id="vb-wrap" type="range" min="0" max="100" step="1"></div></div>
+              <div id="vb-chroma" class="g3"><div class="row"><label for="vb-kc">Screen colour</label><input id="vb-kc" type="color"></div>
+                <div class="row"><label for="vb-tol">Tolerance</label><input id="vb-tol" type="range" min="0" max="60" step="1"></div><div class="row"><label for="vb-spill">Green spill</label><input id="vb-spill" type="range" min="0" max="100" step="1"></div></div>
+              <div class="btns"><button class="btn sm" id="vb-off" type="button">↺ Restore background</button></div>
+            </div>
+            <p class="note" id="vb-note"></p>
+          </div>
         </div>
 
         <div class="v-pane" data-vp="text" role="tabpanel" hidden>
@@ -92,6 +110,7 @@
               <div class="g2"><div class="row"><label for="vt-ain">Comes in</label><select id="vt-ain"></select></div><div class="row"><label for="vt-aout">Goes out</label><select id="vt-aout"></select></div></div>
               <div class="g2"><div class="row"><label for="vt-op">Opacity</label><input id="vt-op" type="range" min="0" max="100" step="1"></div><div class="row"><label for="vt-r">Turn</label><input id="vt-r" type="range" min="-180" max="180" step="1"></div></div>
             </div>
+            <label class="ck"><input type="checkbox" id="vt-bh"> Behind the video — shows through a cut-out</label>
             <p class="note">Drag the text on the video to place it; drag its bar on the timeline to time it. Arabic runs right-to-left by itself.</p>
           </div>
         </div>
@@ -102,6 +121,7 @@
             <div class="g2"><div class="row"><label for="vs-w">Size</label><input id="vs-w" type="range" min="2" max="120" step=".5"></div>
               <div class="row" id="vs-colr"><label for="vs-col">Colour</label><input id="vs-col" type="color"></div></div>
             <div id="vs-badge" class="g3"><div class="row"><label for="vs-btxt">Badge text</label><input id="vs-btxt" type="text" maxlength="40"></div><div class="row"><label for="vs-shape">Shape</label><select id="vs-shape"></select></div><div class="row"><label for="vs-btc">Text colour</label><input id="vs-btc" type="color"></div></div>
+            <label class="ck"><input type="checkbox" id="vs-bh"> Behind the video — shows through a cut-out</label>
             <div class="row" id="vs-payr"><label for="vs-pay">Shows</label><select id="vs-pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
             <div class="v-time">
               <div class="g2"><div class="row"><label for="vs-s">Shows from (s)</label><input id="vs-s" type="number" min="0" step=".1"></div><div class="row"><label for="vs-e">Until (s)</label><input id="vs-e" type="number" min="0" step=".1"></div></div>

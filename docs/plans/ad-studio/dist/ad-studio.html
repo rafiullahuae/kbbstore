@@ -299,6 +299,9 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 .v-wave{width:100%;height:60px;border-radius:8px;background:#211B33;display:block}
 .v-prog{display:flex;gap:8px;align-items:center}
 .v-prog progress{flex:1;min-width:0;height:10px;accent-color:var(--sel)}
+/* 🧍 Remove background (clip or picture / video layer) */
+.v-bgr{display:grid;gap:9px;margin:2px 0;padding:10px;border:1px solid var(--line);border-radius:10px;min-width:0}
+.v-bgr h3{margin:0;font-size:13px}
 
 /* inside KBB Studio (18 Nov): the way back, and the move-your-designs banner */
 .kback{display:inline-flex;align-items:center;gap:4px;font-weight:700;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:13px;white-space:nowrap}
@@ -446,7 +449,7 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
             <button class="btn sm" data-add="heading" type="button">Heading</button><button class="btn sm" data-add="text" type="button">Text</button>
             <button class="btn sm" data-add="btn" type="button">Button</button><button class="btn sm" data-add="arabic" type="button">عربي</button>
             <button class="btn sm" data-add="logo" type="button">Logo</button><button class="btn sm" data-add="pay" type="button">tabby/tamara</button>
-            <label class="btn sm" for="add-img">Image…</label><input id="add-img" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <label class="btn sm" for="add-img">Image…</label><input id="add-img" type="file" accept="image/png,image/jpeg,image/webp,video/webm,.webm,application/zip,.zip" hidden>
           </div>
           <div class="g2"><div class="row"><label for="add-badge">Badge</label><select id="add-badge"><option value="">Add a badge…</option><option value="burst">Burst</option><option value="circle">Circle</option><option value="pill">Pill</option><option value="star">Star</option><option value="heart">Heart</option><option value="banner">Banner</option><option value="ribbon">Corner ribbon</option></select></div>
           <div class="row"><label for="add-shape">Shape</label><select id="add-shape"><option value="">Add a shape…</option><option value="rect">Rectangle</option><option value="circle">Circle</option><option value="ellipse">Oval</option><option value="ring">Ring</option><option value="arch">Arch</option><option value="blob">Blob</option><option value="ticket">Ticket</option><option value="petal">Petal</option><option value="silk">Silk ribbon</option><option value="glow">Soft glow</option><option value="line">Line</option></select></div></div>
@@ -538,7 +541,12 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
             <div class="row"><label for="p-lh">Line height</label><input id="p-lh" type="range" data-p="lh" min="70" max="200" step="1"></div></div>
           <div class="g2" data-show="icon"><div class="row"><label for="p-ic">Icon</label><select id="p-ic" data-p="ic"></select></div><div class="row"><span class="lbl">Colour</span><button class="sw" type="button" data-cp="col" aria-label="Icon colour" aria-expanded="false"><i></i></button></div></div>
           <div class="g2" data-show="art"><div class="row"><label for="p-art">Picture</label><select id="p-art" data-p="art"></select></div><div class="row"><span class="lbl">Colour (outlines, landmarks)</span><button class="sw" type="button" data-cp="col" aria-label="Art colour" aria-expanded="false"><i></i></button></div></div>
-          <div class="btns" id="ph-row" hidden><label class="btn sm pri" for="ph-file">Put a photo here…</label><input id="ph-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="btn sm" id="ph-cut" type="button" hidden title="Keeps the person, removes the background (offline, in this browser)">✂ Cut out the person</button><span class="note">It takes this slot's place and shape.</span></div>
+          <div class="btns" id="ph-row" hidden><label class="btn sm pri" for="ph-file">Put a photo here…</label><input id="ph-file" type="file" accept="image/png,image/jpeg,image/webp" hidden><span class="note">It takes this slot's place and shape.</span></div>
+          <div class="in0 cutrow" id="cut-row" hidden>
+            <div class="btns"><span class="lbl">✂ Cut out</span><button class="btn sm" id="ph-cut" type="button" hidden title="Keeps the person, removes the background (offline, on this computer)">🧍 Person</button><button class="btn sm" id="ph-cut-subj" type="button" title="Keeps the product or object, removes the background (KBB Studio's cut-out model, offline)">📦 Main subject</button><button class="btn sm" id="ph-restore" type="button" hidden title="The photo as it was, background and all">↺ Restore background</button></div>
+            <div class="row" id="ph-fea-r" hidden><label for="ph-fea">Edge feather <span id="ph-feav"></span></label><input id="ph-fea" type="range" min="0" max="100" step="1"></div>
+            <p class="note" id="ph-cut-note"></p>
+          </div>
           <div class="row" data-show="pay"><label for="p-pay">Shows</label><select id="p-pay" data-p="pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
           <div class="row" data-show="text btn shape art img"><label for="p-sh">Shape behind / crop</label><select id="p-sh" data-p="sh"></select></div>
           <div class="g2" data-show="fill"><div class="row"><span class="lbl">Fill</span><div class="crow"><button class="sw" type="button" data-cp="fill" aria-label="Fill colour" aria-expanded="false"><i></i></button><button class="btn sm" id="p-fill0" type="button">None</button></div></div>
@@ -671,8 +679,9 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
 
         <div class="v-pane" data-vp="media" role="tabpanel">
           <label class="btn pri v-imp" for="v-file">＋ Import videos, pictures, music…</label>
-          <input id="v-file" type="file" multiple accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,image/png,image/jpeg,image/webp,audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,.mp3,.m4a,.wav" hidden>
+          <input id="v-file" type="file" multiple accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm,image/png,image/jpeg,image/webp,audio/mpeg,audio/mp4,audio/wav,audio/x-m4a,.mp3,.m4a,.wav,application/zip,.zip" hidden>
           <p class="note">Or drop files anywhere on the editor. MP4 · MOV · WebM, PNG · JPG · WebP, MP3 · M4A · WAV. Nothing leaves this computer.</p>
+          <p class="note">Cut-outs from the video editor (WebM with alpha, PNG-sequence .zip, transparent PNG) stay see-through: put them on the timeline or as a <b>layer</b> over your video.</p>
           <div class="v-bin" id="v-bin"></div>
           <details><summary>My video projects</summary><div class="in"><div class="mine" id="v-mine"></div></div></details>
           <p class="note" id="v-where"></p>
@@ -696,6 +705,23 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
             </div>
             <p class="note">Drag the picture to move it inside the frame · mouse wheel zooms. Split, duplicate and delete are under the preview.</p>
           </div>
+          <div class="v-bgr" id="v-bgr" hidden>
+            <h3>🧍 Remove background</h3>
+            <div class="seg" id="vb-key" role="group" aria-label="Keep"><button data-v="person" type="button" title="Keeps the person (offline)">🧍 Person</button><button data-v="subject" type="button" title="Keeps the product or object (KBB Studio's cut-out model)">📦 Main subject</button><button data-v="chroma" type="button" title="Keys out a green or blue screen">🟩 Green screen</button></div>
+            <div id="vb-on" class="v-props" hidden>
+              <div class="row"><span class="lbl">Behind it</span><div class="seg" id="vb-mode" role="group" aria-label="Behind the cut-out"><button data-v="none" type="button" title="See-through: the Empty-space fill and any layer set to Behind the video show">Transparent</button><button data-v="color" type="button">Colour</button><button data-v="gradient" type="button">Brand gradient</button></div></div>
+              <div class="g2"><div class="row" id="vb-col-r"><label for="vb-col">Colour</label><input id="vb-col" type="color"></div>
+                <div class="row" id="vb-grad-r"><span class="lbl">Gradient</span><div class="crow"><input id="vb-g1" type="color" aria-label="Gradient top colour"><input id="vb-g2" type="color" aria-label="Gradient bottom colour"></div></div></div>
+              <div class="g2"><div class="row"><label for="vb-fea">Edge feather <span id="vb-feav"></span></label><input id="vb-fea" type="range" min="0" max="100" step="1"></div>
+                <div class="row"><label for="vb-grow">Shrink / grow <span id="vb-growv"></span></label><input id="vb-grow" type="range" min="-100" max="100" step="1"></div></div>
+              <div class="g2"><div class="row" id="vb-smo-r"><label for="vb-smo">Steady edges <span id="vb-smov"></span></label><input id="vb-smo" type="range" min="0" max="100" step="1"></div>
+                <div class="row" id="vb-wrap-r"><label for="vb-wrap">Light wrap <span id="vb-wrapv"></span></label><input id="vb-wrap" type="range" min="0" max="100" step="1"></div></div>
+              <div id="vb-chroma" class="g3"><div class="row"><label for="vb-kc">Screen colour</label><input id="vb-kc" type="color"></div>
+                <div class="row"><label for="vb-tol">Tolerance</label><input id="vb-tol" type="range" min="0" max="60" step="1"></div><div class="row"><label for="vb-spill">Green spill</label><input id="vb-spill" type="range" min="0" max="100" step="1"></div></div>
+              <div class="btns"><button class="btn sm" id="vb-off" type="button">↺ Restore background</button></div>
+            </div>
+            <p class="note" id="vb-note"></p>
+          </div>
         </div>
 
         <div class="v-pane" data-vp="text" role="tabpanel" hidden>
@@ -717,6 +743,7 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
               <div class="g2"><div class="row"><label for="vt-ain">Comes in</label><select id="vt-ain"></select></div><div class="row"><label for="vt-aout">Goes out</label><select id="vt-aout"></select></div></div>
               <div class="g2"><div class="row"><label for="vt-op">Opacity</label><input id="vt-op" type="range" min="0" max="100" step="1"></div><div class="row"><label for="vt-r">Turn</label><input id="vt-r" type="range" min="-180" max="180" step="1"></div></div>
             </div>
+            <label class="ck"><input type="checkbox" id="vt-bh"> Behind the video — shows through a cut-out</label>
             <p class="note">Drag the text on the video to place it; drag its bar on the timeline to time it. Arabic runs right-to-left by itself.</p>
           </div>
         </div>
@@ -727,6 +754,7 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
             <div class="g2"><div class="row"><label for="vs-w">Size</label><input id="vs-w" type="range" min="2" max="120" step=".5"></div>
               <div class="row" id="vs-colr"><label for="vs-col">Colour</label><input id="vs-col" type="color"></div></div>
             <div id="vs-badge" class="g3"><div class="row"><label for="vs-btxt">Badge text</label><input id="vs-btxt" type="text" maxlength="40"></div><div class="row"><label for="vs-shape">Shape</label><select id="vs-shape"></select></div><div class="row"><label for="vs-btc">Text colour</label><input id="vs-btc" type="color"></div></div>
+            <label class="ck"><input type="checkbox" id="vs-bh"> Behind the video — shows through a cut-out</label>
             <div class="row" id="vs-payr"><label for="vs-pay">Shows</label><select id="vs-pay"><option value="both">tabby + tamara</option><option value="tabby">tabby</option><option value="tamara">tamara</option></select></div>
             <div class="v-time">
               <div class="g2"><div class="row"><label for="vs-s">Shows from (s)</label><input id="vs-s" type="number" min="0" step=".1"></div><div class="row"><label for="vs-e">Until (s)</label><input id="vs-e" type="number" min="0" step=".1"></div></div>
@@ -3081,6 +3109,665 @@ var KBB_T = (function () {
   if (token && !document.documentElement.dataset.theme) document.documentElement.dataset.theme = 'dark';
 })();
 </script>
+<script>(function () {
+'use strict';
+// ── studio/reel-studio/app/look/gl.js ──
+// KBB Studio · look · the WebGL2 engine behind colour looks, skin touch-up, background removal and transitions.
+// ONE context for the whole app (a detached canvas), programs compiled once, textures/FBOs reused by key. Every call is
+// synchronous, so it runs inside core/render.js's synchronous frame (preview AND export draw through it identically).
+// Coordinates: texel row 0 = TOP of a picture everywhere (uploads are not flipped; FBO passes keep that orientation);
+// only the final pass to the canvas flips, so drawImage(glCanvas) shows the picture the right way up.
+
+const VS = `#version 300 es
+in vec2 p; out vec2 uv; uniform float flip;
+void main(){ uv = p; gl_Position = vec4(p.x * 2. - 1., flip > .5 ? 1. - p.y * 2. : p.y * 2. - 1., 0., 1.); }`;
+
+const COMMON = `#version 300 es
+precision highp float;
+in vec2 uv; out vec4 o;
+float luma(vec3 c){ return dot(c, vec3(.2126, .7152, .0722)); }
+float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+`;
+
+const FS = {
+  copy: COMMON + `uniform sampler2D s; uniform vec2 px;
+void main(){ o = .25 * (texture(s, uv + px * vec2(-.5,-.5)) + texture(s, uv + px * vec2(.5,-.5)) + texture(s, uv + px * vec2(-.5,.5)) + texture(s, uv + px * vec2(.5,.5))); }`,
+  blur: COMMON + `uniform sampler2D s; uniform vec2 dir;
+void main(){
+  const float w0 = .2270270270, w1 = .3162162162, w2 = .0702702703;
+  o = texture(s, uv) * w0 + (texture(s, uv + dir * 1.3846153846) + texture(s, uv - dir * 1.3846153846)) * w1 + (texture(s, uv + dir * 3.2307692308) + texture(s, uv - dir * 3.2307692308)) * w2;
+}`,
+  look: COMMON + `
+uniform sampler2D src, blurS, blurL, seg, face, bgTex;
+uniform vec2 res, segTexel; uniform float frame;
+uniform int hasSeg, hasFace, bgMode;           // bgMode 0 none · 1 blur · 2 colour · 3 gradient · 4 image · 5 transparent
+uniform vec3 mg, mo, wb; uniform float ev, amount;
+uniform float Lexp, Lcon, Lsat, Lvib, Ltemp, Ltint, Lfade, Lbw, Lglow, Lvig, Lgrain, Lcurve, Lclar, Lsplit;
+uniform vec3 Llift, Lgamma, Lgain, Lsh, Lhi, Lbwmix;
+uniform float Ts, Teye, Tunder;
+uniform vec3 bgA, bgB; uniform vec2 bgScale, bgOff;
+// background removal v2 (look.bg with q >= 2, see bg.js): bgMode 5 = transparent (alpha out); keyMode 0 = the cached
+// mask (person or main subject), 1 = chroma key (green / blue screen) computed here per pixel
+uniform int q2, keyMode, kDom; uniform vec3 keyCol; uniform float kTol, kSoft, kSpill, eFeather, eGrow, eWrap;
+// look.adjust (manual light / colour / detail sliders + Enhance video), see adjust.js for the ranges
+uniform int hasAdj, upS, cmpOn; uniform vec3 Again; uniform vec2 srcRes;
+uniform float Abri, Acon, Ahi, Ash, Awh, Abl, Asat, Avib, Asharp, Aclar, Avig, Adn, Askin, Alift, cmpU;
+float skinOf(vec3 c){                          // soft skin-tone mask (YCbCr), any skin colour
+  float y = luma(c), cb = (c.b - y) * .5389 + .5, cr = (c.r - y) * .6350 + .5;
+  vec2 d = (vec2(cb, cr) - vec2(.445, .585)) / vec2(.055, .05);
+  return exp(-dot(d, d) * .5) * smoothstep(.06, .2, y);
+}
+vec3 lanczos(vec2 p){                          // Lanczos-2 (4x4 taps) from the source's own pixel grid: upscaling
+  vec2 tc = p * srcRes - .5, f = fract(tc), b = (floor(tc) + .5) / srcRes; vec3 acc = vec3(0.); float ws = 0.;
+  for (int j = -1; j <= 2; j++) for (int i = -1; i <= 2; i++) {
+    vec2 d = vec2(float(i), float(j)) - f;
+    vec2 w = vec2(d.x == 0. ? 1. : sin(3.14159265 * d.x) * sin(1.5707963 * d.x) / (1.2337006 * d.x * d.x),
+                  d.y == 0. ? 1. : sin(3.14159265 * d.y) * sin(1.5707963 * d.y) / (1.2337006 * d.y * d.y));
+    float ww = w.x * w.y; acc += texture(src, b + vec2(float(i), float(j)) / srcRes).rgb * ww; ws += ww;
+  }
+  return clamp(acc / ws, 0., 1.);
+}
+vec3 srcAt(vec2 p){ return upS == 1 ? lanczos(p) : texture(src, p).rgb; }
+vec3 bilateral(vec2 p, vec3 c0, vec2 px){      // edge-keeping 5x5 denoise; the range kernel widens with the strength
+  float sr = mix(.025, .11, Adn), inv = 1. / (2. * sr * sr); vec3 acc = vec3(0.); float ws = 0.;
+  for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) {
+    vec3 c = texture(src, p + vec2(float(i), float(j)) * px).rgb, d = c - c0;
+    float w = exp(-dot(d, d) * inv - float(i * i + j * j) * .22); acc += c * w; ws += w;
+  }
+  return mix(c0, acc / ws, clamp(Adn * 1.6, 0., 1.));
+}
+vec3 adjust(vec3 c, vec3 bl, float skin, vec2 q){
+  c *= Again; bl *= Again;
+  float L = luma(clamp(bl, 0., 1.));
+  // low-light lift (Enhance): opens the shadows, most where the neighbourhood is dark
+  c = mix(c, pow(max(c, 0.), vec3(1. / (1. + Alift * 1.4))), 1. - smoothstep(0., .6, L));
+  // whites / blacks: the end points of the tone range
+  float bp = -Abl * .07, wp = 1. - Awh * .16; c = (c - bp) / (wp - bp);
+  // brightness: mid-tones (gamma), the ends stay put
+  c = pow(max(c, 0.), vec3(exp2(-Abri * .75)));
+  // shadows / highlights: local, from the neighbourhood's brightness (no flat grey look)
+  float ws = pow(1. - smoothstep(0., .5, L), 2.), wh = pow(smoothstep(.42, 1., L), 1.5);
+  c = Ash > 0. ? mix(c, pow(max(c, 0.), vec3(1. / (1. + Ash * .9))), ws) : c * (1. + Ash * ws * .55);
+  c = Ahi < 0. ? mix(c, c * (1. + Ahi * .42), wh) : mix(c, 1. - (1. - clamp(c, 0., 1.)) * (1. - Ahi * .45), wh);
+  // contrast about mid-grey
+  c = (c - .45) * (1. + Acon * (Acon > 0. ? .65 : .5)) + .45;
+  // clarity: local contrast in the mid-tones
+  float l = luma(clamp(c, 0., 1.));
+  c += (c - bl) * Aclar * .9 * (.35 + 2.6 * l * (1. - l));
+  // saturation / vibrance (vibrance lifts the dull colours first); skin-tone protection holds faces back
+  l = luma(c); float sat = max(max(c.r, c.g), c.b) - min(min(c.r, c.g), c.b);
+  float sk = skin * Askin, satK = 1. + Asat * (Asat > 0. ? 1. - sk * .55 : 1.);
+  float vibK = Avib * (1. - clamp(sat * 1.6, 0., 1.)) * (1. - sk * .75);
+  c = mix(vec3(l), c, max(0., satK + vibK));
+  // vignette (negative darkens the edges, positive lightens them)
+  float v = smoothstep(.25, .9, length((q - .5) * vec2(1., 1.15)));
+  c *= 1. + Avig * v * (Avig < 0. ? .85 : .5);
+  return c;
+}
+vec3 correct(vec3 c){ return max((c * mg + mo) * wb * exp2(ev), 0.); }
+vec3 grade(vec3 c, vec3 bl){
+  vec3 c0 = c;
+  float k = exp2(Lexp); c *= k; bl *= k;
+  c += (c - bl) * Lclar;
+  c *= vec3(1. + Ltemp * .12 + Ltint * .04, 1. - Ltint * .08, 1. - Ltemp * .12 + Ltint * .04);
+  c = Lgain * (c + Llift * (1. - c));
+  c = pow(max(c, 0.), 1. / Lgamma);
+  c = (c - .45) * Lcon + .45;
+  vec3 cc = clamp(c, 0., 1.); c = mix(c, cc * cc * (3. - 2. * cc), Lcurve);
+  float l = luma(clamp(c, 0., 1.));
+  c += (Lsh * (1. - smoothstep(0., .55, l)) + Lhi * smoothstep(.45, 1., l)) * Lsplit;
+  l = luma(c); float sat = max(max(c.r, c.g), c.b) - min(min(c.r, c.g), c.b);
+  c = mix(vec3(l), c, Lsat * (1. + Lvib * (1. - clamp(sat, 0., 1.))));
+  c = mix(c, vec3(dot(c, Lbwmix)), Lbw);
+  c = Lfade + c * (1. - Lfade);
+  vec3 bh = max(bl - .5, 0.) * 2.; c = 1. - (1. - clamp(c, 0., 1.)) * (1. - clamp(bh * Lglow, 0., 1.));
+  return mix(c0, c, amount);
+}
+float segAlpha(vec2 p){
+  vec3 cc = texture(src, p).rgb; float ws = 0., a = 0.;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    vec2 q = p + vec2(float(i), float(j)) * segTexel;
+    vec3 cs = texture(src, q).rgb; vec3 d = cs - cc;
+    float w = exp(-dot(d, d) * 30.) * ((i == 0 && j == 0) ? 2. : 1.);
+    a += texture(seg, q).r * w; ws += w;
+  }
+  return smoothstep(.32, .68, a / ws);
+}
+// ── matte v2 ──
+// joint-bilateral upsampling of the low-res mask (5x5 mask texels, colour-guided), the threshold moved by Shrink/grow
+// and widened by Feather, then local colour-line matting in the edge band: alpha from where the pixel's colour sits
+// between the nearby person colour F and background colour B, which recovers hair strands the 256 px mask cannot hold.
+// fgShift: the pixel's colour with the old background's share taken out (edge decontamination).
+float refineAlpha(vec2 p, out vec3 fgShift){
+  fgShift = vec3(0.);
+  float c = .5 - eGrow * .3, wd = .12 + eFeather * .45;
+  // interior / far background: the 5x5 window is all one side, skip the work
+  float m0 = texture(seg, p).r, mA = texture(seg, p + segTexel * vec2(2.5, 2.5)).r, mB = texture(seg, p + segTexel * vec2(-2.5, 2.5)).r,
+        mC = texture(seg, p + segTexel * vec2(2.5, -2.5)).r, mD = texture(seg, p + segTexel * vec2(-2.5, -2.5)).r;
+  float lo = min(min(min(m0, mA), min(mB, mC)), mD), hi = max(max(max(m0, mA), max(mB, mC)), mD);
+  if (lo > .97 || hi < .03) return smoothstep(c - wd, c + wd, m0);
+  vec3 cc = texture(src, p).rgb; float ws = 0., a = 0., wf = 0., wb = 0.; vec3 F = vec3(0.), B = vec3(0.);
+  for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) {
+    vec2 q = p + vec2(float(i), float(j)) * segTexel;
+    float m = texture(seg, q).r; vec3 cs = texture(src, q).rgb, d = cs - cc;
+    float sp = exp(-float(i * i + j * j) * .22), w = sp * exp(-dot(d, d) * 20.);
+    a += m * w; ws += w;
+    float mf = smoothstep(.75, .97, m) * sp, mb = (1. - smoothstep(.03, .25, m)) * sp;
+    F += cs * mf; wf += mf; B += cs * mb; wb += mb;
+  }
+  float alpha = smoothstep(c - wd, c + wd, a / ws);
+  if (wf > .25 && wb > .25) {
+    F /= wf; B /= wb; vec3 fb = F - B; float L = dot(fb, fb);
+    float band = 1. - abs(alpha * 2. - 1.);
+    if (L > .004 && band > 0.) {
+      float ac = clamp(dot(cc - B, fb) / L, 0., 1.);
+      alpha = mix(alpha, ac, smoothstep(.004, .04, L) * band * .85);
+    }
+    if (alpha > .002 && alpha < .998) {
+      vec3 fe = clamp((cc - (1. - alpha) * B) / max(alpha, .05), 0., 1.);
+      fe = mix(F, fe, smoothstep(.15, .6, alpha));
+      fgShift = fe - cc;
+    }
+  }
+  return alpha;
+}
+float keyDist(vec3 c){
+  float y = luma(c), yk = luma(keyCol);
+  vec2 a = vec2((c.b - y) * .5389, (c.r - y) * .635), b = vec2((keyCol.b - yk) * .5389, (keyCol.r - yk) * .635);
+  return length(a - b) + abs(y - yk) * .12;
+}
+float chromaAlpha(vec2 p){
+  vec2 t = 1. / srcRes;
+  float d = keyDist(texture(src, p).rgb) * .5 + (keyDist(texture(src, p + vec2(t.x, 0.)).rgb) + keyDist(texture(src, p - vec2(t.x, 0.)).rgb)
+          + keyDist(texture(src, p + vec2(0., t.y)).rgb) + keyDist(texture(src, p - vec2(0., t.y)).rgb)) * .125;
+  float tol = max(.005, kTol - eGrow * .06), soft = kSoft * (1. + eFeather * 3.);
+  return smoothstep(tol, tol + soft, d);
+}
+vec3 despill(vec3 c){
+  if (kDom == 1) { float l = max(c.r, c.b); if (c.g > l) c.g = mix(c.g, l, kSpill); }
+  else if (kDom == 2) { float l = max(c.r, c.g); if (c.b > l) c.b = mix(c.b, l, kSpill); }
+  else { float l = max(c.g, c.b); if (c.r > l) c.r = mix(c.r, l, kSpill); }
+  return c;
+}
+float matteAt(vec2 p){
+  if (keyMode == 1) return chromaAlpha(p);
+  return smoothstep(.3, .7, texture(seg, p).r);
+}
+vec3 bgAt(vec2 p){
+  if (bgMode == 1) { vec3 b = correct(texture(blurL, p).rgb); return grade(b, b); }
+  if (bgMode == 2) return bgA;
+  if (bgMode == 3) return mix(bgA, bgB, clamp(p.y + (p.x - .5) * .35, 0., 1.));
+  return texture(bgTex, p * bgScale + bgOff).rgb;
+}
+void main(){
+  vec2 px = 1. / res;
+  bool cut2 = q2 == 1 && bgMode > 0 && (hasSeg == 1 || keyMode == 1);
+  float matte = 1.; vec3 fgShift = vec3(0.);
+  if (cut2) matte = keyMode == 1 ? chromaAlpha(uv) : refineAlpha(uv, fgShift);
+  vec3 orig = srcAt(uv);
+  if (cut2) orig = keyMode == 1 ? despill(orig) : clamp(orig + fgShift, 0., 1.);
+  vec3 c = orig;
+  vec3 low = texture(blurS, uv).rgb;
+  float skin = 0.;
+  if (hasAdj == 1) {
+    skin = skinOf(orig);
+    // denoise and sharpen work on the SOURCE's pixel grid: the same scene detail at every working size, so the small
+    // preview monitor (which reads the mipmaps, where the grain is already averaged away) is the export scaled down
+    vec2 sp = 1. / srcRes;
+    if (Adn > 0.) { c = bilateral(uv, orig, sp); orig = c; }
+    if (Asharp > 0.) {                                                   // unsharp mask with noise coring, gentler on skin
+      vec3 m4 = .25 * (texture(src, uv + vec2(sp.x, 0.)).rgb + texture(src, uv - vec2(sp.x, 0.)).rgb + texture(src, uv + vec2(0., sp.y)).rgb + texture(src, uv - vec2(0., sp.y)).rgb);
+      vec3 m8 = .5 * (m4 + texture(blurS, uv).rgb);
+      vec3 d = c - mix(m4, m8, .35); float a = length(d);
+      d *= smoothstep(.004 + Adn * .03, .02 + Adn * .06, a);
+      c += d * Asharp * 1.6 * (1. - skin * Askin * .6); orig = c;
+    }
+  }
+  if (hasFace == 1 && Ts > 0.) {
+    vec4 fm = texture(face, uv);
+    float skin = fm.r * Ts, eye = fm.g, under = fm.b;
+    vec3 d = orig - low; float edge = exp(-dot(d, d) * 40.);
+    c = orig - d * skin * .9 * edge;                                   // smooth the skin's mid detail (edges stay)
+    vec3 m4 = .25 * (texture(src, uv + vec2(px.x, 0.)).rgb + texture(src, uv - vec2(px.x, 0.)).rgb + texture(src, uv + vec2(0., px.y)).rgb + texture(src, uv - vec2(0., px.y)).rgb);
+    c += (orig - m4) * skin * .25;                                     // ...but give some fine texture (pores) back
+    c = mix(c, max(c, low * 1.05 + .012), clamp(under * Tunder * 1.4, 0., 1.)); // soften the under-eye shadow
+    c += (orig - low) * eye * Teye * .6 + eye * Teye * .035;             // brighter, crisper eyes
+  }
+  c = correct(c);
+  vec3 bl = correct(low);
+  if (hasAdj == 1) { c = adjust(c, bl, skin, uv); bl *= Again; }
+  vec3 g = grade(c, bl);
+  if (cut2 && bgMode != 5) {
+    vec3 bgc = bgAt(uv);
+    if (eWrap > 0. && matte > .002) {
+      // light wrap: the new background's light spills over the person's edge (a ring of 8 taps, ~1.5 % of the frame)
+      vec2 r = vec2(.016 * res.y / res.x, .016) * (1. + eFeather);
+      float wide = 0.; vec3 wc = vec3(0.);
+      for (int i = 0; i < 8; i++) { float an = float(i) * .785398; vec2 q = uv + vec2(cos(an), sin(an)) * r; wide += matteAt(q); wc += bgAt(q); }
+      wide /= 8.; wc /= 8.;
+      float wa = eWrap * matte * clamp((1. - wide) * 1.8, 0., 1.);
+      g = mix(g, 1. - (1. - clamp(g, 0., 1.)) * (1. - wc), wa * .85);
+    }
+    g = mix(bgc, g, matte);
+  } else if (q2 == 0 && bgMode > 0 && hasSeg == 1) {
+    float a = segAlpha(uv);
+    vec3 bgc;
+    if (bgMode == 1) { vec3 b = correct(texture(blurL, uv).rgb); bgc = grade(b, b); }
+    else if (bgMode == 2) bgc = bgA;
+    else if (bgMode == 3) bgc = mix(bgA, bgB, clamp(uv.y + (uv.x - .5) * .35, 0., 1.));
+    else bgc = texture(bgTex, uv * bgScale + bgOff).rgb;
+    g = mix(bgc, g, a);
+  }
+  float vig = smoothstep(.85, .25, length((uv - .5) * vec2(1., 1.15)));
+  g *= mix(1., vig, Lvig * amount);
+  g += (hash(floor(uv * res) + frame) - .5) * Lgrain * .09 * amount;
+  float oa = cut2 && bgMode == 5 ? matte : 1.;                           // transparent: the matte is the picture's alpha
+  if (cmpOn == 1 && uv.x < cmpU) { g = texture(src, uv).rgb; oa = 1.; }  // before / after: the untouched source on the left
+  o = vec4(clamp(g, 0., 1.), oa);
+}`,
+  // two pictures A (outgoing) and B (incoming), p 0..1 across the transition, the cut at p = .5
+  trans: COMMON + `
+uniform sampler2D A, B, M; uniform float p, seed, hasM; uniform int kind; uniform vec2 res, mc; uniform vec3 col;
+vec3 a(vec2 q){ return texture(A, clamp(q, 0., 1.)).rgb; }
+vec3 b(vec2 q){ return texture(B, clamp(q, 0., 1.)).rgb; }
+float ease(float x){ return x < .5 ? 4. * x * x * x : 1. - pow(-2. * x + 2., 3.) / 2.; }
+vec3 side(vec2 q, bool useB){ return useB ? b(q) : a(q); }
+void main(){
+  vec2 q = uv; vec3 c; float e = ease(p); float peak = 1. - abs(2. * p - 1.);
+  if (kind == 0) {                     // whip: both pictures fly sideways with a motion blur that peaks on the cut
+    float off = e; vec3 acc = vec3(0.); float bl = .12 * peak;
+    for (int i = 0; i < 16; i++) { float t = (float(i) / 15. - .5) * bl; float x = q.x + off + t;
+      acc += x < 1. ? a(vec2(x, q.y)) : b(vec2(x - 1., q.y)); }
+    c = acc / 16.;
+  } else if (kind == 1) {              // zoom-through: punch into A, come out of B, radial blur on the way
+    bool useB = p >= .5; float z = useB ? mix(3., 1., ease((p - .5) * 2.)) : mix(1., 3., ease(p * 2.));
+    vec3 acc = vec3(0.);
+    for (int i = 0; i < 12; i++) { float s = 1. / (z * (1. + float(i) * .018 * peak * 4.)); acc += side(.5 + (q - .5) * s, useB); }
+    c = acc / 12.;
+  } else if (kind == 2) {              // flash to white (or a colour) on the cut
+    c = mix(p < .5 ? a(q) : b(q), col, pow(peak, 1.4));
+  } else if (kind == 3) {              // glitch: RGB split, displaced blocks, flicker between the two
+    float t = floor(p * 24.); float blk = floor(q.y * 18. + hash(vec2(t, 1.)) * 4.);
+    float r = hash(vec2(blk, t + seed)); float dx = (r - .5) * .18 * peak * step(.45, r);
+    bool useB = p > .5 ? hash(vec2(t, 7.)) > .15 * peak : hash(vec2(t, 9.)) < .25 * peak;
+    vec2 qq = vec2(q.x + dx, q.y); float sp = .015 * peak;
+    c = vec3(side(qq + vec2(sp, 0.), useB).r, side(qq, useB).g, side(qq - vec2(sp, 0.), useB).b);
+    c *= 1. - .25 * peak * step(.5, fract(q.y * res.y * .25));
+  } else if (kind == 4) {              // slide (push): B pushes A out to the left
+    float x = q.x + e; vec3 acc = vec3(0.); float bl = .04 * peak;
+    for (int i = 0; i < 8; i++) { float xx = x + (float(i) / 7. - .5) * bl; acc += xx < 1. ? a(vec2(xx, q.y)) : b(vec2(xx - 1., q.y)); }
+    c = acc / 8.;
+  } else if (kind == 5) {              // spin: A spins away and B spins in, with a rotational blur
+    bool useB = p >= .5; float ang = useB ? (1. - ease((p - .5) * 2.)) * -3.14159 : ease(p * 2.) * 3.14159;
+    float sc = 1. + peak * .6; vec3 acc = vec3(0.);
+    for (int i = 0; i < 12; i++) { float aa = ang + (float(i) / 11. - .5) * .5 * peak; vec2 d = (q - .5) * vec2(res.x / res.y, 1.) * sc;
+      vec2 r = vec2(d.x * cos(aa) - d.y * sin(aa), d.x * sin(aa) + d.y * cos(aa)) / vec2(res.x / res.y, 1.) + .5;
+      acc += side(fract(r), useB); }
+    c = acc / 12.;
+  } else if (kind == 6) {              // luma fade: B appears through A's darkest areas first
+    float l = luma(a(q));
+    c = mix(a(q), b(q), smoothstep(l - .12, l + .12, p * 1.24 - .12));
+  } else if (kind == 7) {              // film burn: a hot orange burn sweeps over the cut
+    float n = hash(floor(q * 40.) + floor(p * 12.)) * .25 + .75 * smoothstep(0., 1., 1. - length(q - vec2(.2 + p * .6, .4)) * 1.4);
+    vec3 burn = vec3(1., .55, .15) * n * 2.2 + vec3(1., .9, .6) * pow(n, 6.) * 2.;
+    vec3 base = mix(a(q), b(q), smoothstep(.4, .6, p));
+    c = 1. - (1. - base) * (1. - clamp(burn * pow(peak, 1.3), 0., 1.));
+  } else if (kind == 8) {              // object cover: the subject grows to cover the lens, then reveals B
+    float s = p < .5 ? 1. + 7. * pow(p * 2., 2.) : 1. + 7. * pow((1. - p) * 2., 2.);
+    vec2 mq = mc + (q - mc) / s;
+    float m = hasM > .5 ? texture(M, clamp(mq, 0., 1.)).r : 1. - smoothstep(.1, .5, length((mq - .5) * vec2(1., res.y / res.x)));
+    float cov = smoothstep(.35, .65, m) * step(.02, peak);
+    vec3 dark = mix(a(mq), b(mq), step(.5, p)) * .35;
+    c = mix(p < .5 ? a(q) : b(q), dark, cov);
+  } else {                             // dissolve
+    c = mix(a(q), b(q), e);
+  }
+  o = vec4(c, 1.);
+}`,
+};
+
+const TRANSITION_KINDS = ['whip', 'zoom', 'flash', 'glitch', 'slide', 'spin', 'luma', 'burn', 'cover', 'dissolve'];
+
+class GL {
+  constructor() {
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = 16; this.canvas.height = 16;
+    const gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false, alpha: true, depth: false, stencil: false });
+    if (!gl) throw new Error('WebGL2 is not available in this browser');
+    this.gl = gl;
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    this.progs = {}; this.texs = new Map(); this.fbos = new Map();
+    const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW);
+    this.vao = gl.createVertexArray(); gl.bindVertexArray(this.vao);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    this.lost = false;
+    this.canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.lost = true; });
+  }
+  prog(name) {
+    if (this.progs[name]) return this.progs[name];
+    const gl = this.gl, sh = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(name + ': ' + gl.getShaderInfoLog(x)); return x; };
+    const p = gl.createProgram();
+    gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS[name]));
+    gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(name + ': ' + gl.getProgramInfoLog(p));
+    const u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) { const a = gl.getActiveUniform(p, i); u[a.name] = { loc: gl.getUniformLocation(p, a.name), type: a.type }; }
+    return (this.progs[name] = { p, u });
+  }
+  tex(key, filter = 'linear') {
+    let t = this.texs.get(key);
+    if (!t) {
+      const gl = this.gl; t = { t: gl.createTexture(), w: 0, h: 0, src: null };
+      gl.bindTexture(gl.TEXTURE_2D, t.t);
+      const f = filter === 'nearest' ? gl.NEAREST : gl.LINEAR;
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this.texs.set(key, t);
+    }
+    return t;
+  }
+  /** upload a picture (video element, VideoFrame, ImageBitmap, canvas, image) */
+  upload(key, source, w, h, mips = false) {
+    const gl = this.gl, t = this.tex(key);
+    gl.bindTexture(gl.TEXTURE_2D, t.t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    // strong downscales (the preview monitor) read from mipmaps, so detail averages instead of aliasing
+    if (mips) gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+    t.w = w; t.h = h; return t;
+  }
+  /** upload one byte per pixel (masks) */
+  uploadR8(key, data, w, h) {
+    const gl = this.gl, t = this.tex(key);
+    gl.bindTexture(gl.TEXTURE_2D, t.t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, w, h, 0, gl.RED, gl.UNSIGNED_BYTE, data);
+    t.w = w; t.h = h; return t;
+  }
+  target(key, w, h) {
+    const gl = this.gl; w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
+    let f = this.fbos.get(key);
+    if (!f || f.w !== w || f.h !== h) {
+      if (!f) f = { fb: gl.createFramebuffer(), tex: this.tex('fbo:' + key) };
+      gl.bindTexture(gl.TEXTURE_2D, f.tex.t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, f.fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, f.tex.t, 0);
+      f.w = w; f.h = h; f.tex.w = w; f.tex.h = h;
+      this.fbos.set(key, f);
+    }
+    return f;
+  }
+  /** run program `name` into target (null = the canvas, flipped right way up) */
+  run(name, target, uniforms = {}, textures = {}) {
+    const gl = this.gl, P = this.prog(name);
+    gl.useProgram(P.p);
+    if (target) { gl.bindFramebuffer(gl.FRAMEBUFFER, target.fb); gl.viewport(0, 0, target.w, target.h); }
+    else { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, this.canvas.width, this.canvas.height); }
+    gl.uniform1f(P.u.flip.loc, target ? 0 : 1);
+    let unit = 0;
+    for (const [k, t] of Object.entries(textures)) {
+      if (!P.u[k]) continue;
+      gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t.t); gl.uniform1i(P.u[k].loc, unit); unit++;
+    }
+    for (const [k, v] of Object.entries(uniforms)) {
+      const u = P.u[k]; if (!u) continue;
+      if (u.type === gl.INT || u.type === gl.BOOL) gl.uniform1i(u.loc, v);
+      else if (typeof v === 'number') gl.uniform1f(u.loc, v);
+      else if (v.length === 2) gl.uniform2f(u.loc, v[0], v[1]);
+      else if (v.length === 3) gl.uniform3f(u.loc, v[0], v[1], v[2]);
+    }
+    gl.bindVertexArray(this.vao);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+  size(w, h) { if (this.canvas.width !== w || this.canvas.height !== h) { this.canvas.width = w; this.canvas.height = h; } }
+}
+
+let G = null, failed = null;
+/** the shared GL engine, or null when WebGL2 is missing (effects then simply do not draw) */
+function gl() {
+  if (G && !G.lost) return G;
+  if (failed) return null;
+  try { G = new GL(); return G; } catch (e) { failed = e; console.warn('[look] WebGL2 unavailable:', e.message); return null; }
+}
+
+/** blur pyramid of a texture: small (1/4) and large (1/16) gaussian blurs */
+function blurs(g, srcTex, w, h, { large = false } = {}) {
+  const w4 = Math.max(2, w / 4), h4 = Math.max(2, h / 4);
+  const d1 = g.target('d1', w / 2, h / 2); g.run('copy', d1, { px: [1 / w, 1 / h] }, { s: srcTex });
+  const d2 = g.target('d2', w4, h4); g.run('copy', d2, { px: [2 / w, 2 / h] }, { s: d1.tex });
+  const b1 = g.target('b1', w4, h4); g.run('blur', b1, { dir: [1 / d2.w, 0] }, { s: d2.tex });
+  const bs = g.target('bs', w4, h4); g.run('blur', bs, { dir: [0, 1 / b1.h] }, { s: b1.tex });
+  if (!large) return { small: bs.tex, large: bs.tex };
+  // the large blur lives on a FIXED grid (96 px on the long side), halving down to it, so the preview monitor and
+  // the full-size export blur the background identically
+  let cur = bs, i = 0;
+  const L = 96 / Math.max(w, h), tw = Math.max(2, Math.round(w * L)), th = Math.max(2, Math.round(h * L));
+  while (cur.w > tw * 2 + 1) { const nx = g.target('hv' + (i++ % 2), cur.w / 2, cur.h / 2); g.run('copy', nx, { px: [1 / cur.w, 1 / cur.h] }, { s: cur.tex }); cur = nx; }
+  const d3 = g.target('d3', tw, th); g.run('copy', d3, { px: [1 / cur.w, 1 / cur.h] }, { s: cur.tex });
+  const l1 = g.target('l1', d3.w, d3.h), l2 = g.target('l2', d3.w, d3.h);
+  g.run('blur', l1, { dir: [1 / d3.w, 0] }, { s: d3.tex }); g.run('blur', l2, { dir: [0, 1 / d3.h] }, { s: l1.tex });
+  g.run('blur', l1, { dir: [2 / d3.w, 0] }, { s: l2.tex }); g.run('blur', l2, { dir: [0, 2 / d3.h] }, { s: l1.tex });
+  return { small: bs.tex, large: l2.tex };
+}
+
+// ── looks.js: BASE ──
+const BASE = {
+  exp: 0, con: 1, sat: 1, vib: 0, temp: 0, tint: 0, fade: 0, bw: 0, glow: 0, vig: 0, grain: 0, curve: 0, clar: 0, split: 0,
+  lift: [0, 0, 0], gamma: [1, 1, 1], gain: [1, 1, 1], sh: [0, 0, 0], hi: [0, 0, 0], bwmix: [0.2126, 0.7152, 0.0722],
+};
+// ── vision.js: v2 masks ──
+const MASK_FPS = { person: 30, subject: 10 };
+const MASKS = new Map();  // mediaId + '|' + kind -> { w, h, fps, frames: Map(k -> Uint8Array) }
+const nearest = (frames, k) => { if (frames.has(k)) return frames.get(k); for (let d = 1; d < 6; d++) { if (frames.has(k - d)) return frames.get(k - d); if (frames.has(k + d)) return frames.get(k + d); } return null; };
+// ── v2 masks: temporal filter ──
+// Each grid frame is averaged with its neighbours (±R frames, R = Smoothness x 4) with a Gaussian in time AND a
+// per-pixel range weight: a neighbour that disagrees a lot (the arm really moved) counts little, one that differs a
+// little (the segmenter's frame-to-frame shimmer) counts fully. So still edges stop flickering and fast motion does
+// not ghost. Offline and cached: the export reads the very same arrays.
+const RW = new Float32Array(256);
+for (let i = 0; i < 256; i++) { const x = i / 255 / 0.3; RW[i] = Math.exp(-x * x); }
+const tCache = new Map();
+function temporal(key, rec, k, smooth) {
+  const R = Math.round(Math.max(0, Math.min(1, smooth)) * 4), ck = key + ':' + k + ':' + R;
+  if (tCache.has(ck)) { const v = tCache.get(ck); tCache.delete(ck); tCache.set(ck, v); return v; }
+  const c = nearest(rec.frames, k); if (!c) return null;
+  if (!R) return c;
+  const nb = [], sig = R / 1.6 + 0.4;
+  for (let d = -R; d <= R; d++) { if (!d) continue; const f = rec.frames.get(k + d); if (f && f.length === c.length) nb.push([f, Math.exp(-(d * d) / (2 * sig * sig))]); }
+  const out = new Uint8Array(c.length);
+  for (let i = 0; i < c.length; i++) {
+    const v = c[i]; let s = v, w = 1;
+    for (let j = 0; j < nb.length; j++) { const u = nb[j][0][i], ww = nb[j][1] * RW[u > v ? u - v : v - u]; s += u * ww; w += ww; }
+    out[i] = (s / w + 0.5) | 0;
+  }
+  if (tCache.size > 160) tCache.delete(tCache.keys().next().value);
+  tCache.set(ck, out);
+  return out;
+}
+const blend2 = new Map();
+/** v2 mask at source time t: {w, h, data, key} (kind 'person' | 'subject', smoothness 0..1), null when not analysed */
+function maskAt(mediaId, t, kind = 'person', smooth = 0.5) {
+  const key = mediaId + '|' + kind, rec = MASKS.get(key); if (!rec) return null;
+  const f = Math.max(0, t) * rec.fps, k = Math.floor(f + 1e-6), u = f - k;
+  const a = temporal(key, rec, k, smooth); if (!a) return null;
+  const b = u > 0.02 ? temporal(key, rec, k + 1, smooth) : null;
+  if (!b || b.length !== a.length) return { w: rec.w, h: rec.h, data: a, key: key + ':' + k };
+  let out = blend2.get(key); if (!out || out.length !== a.length) { out = new Uint8Array(a.length); blend2.set(key, out); }
+  const wb = Math.round(u * 256), wa = 256 - wb;
+  for (let i = 0; i < a.length; i++) out[i] = (a[i] * wa + b[i] * wb) >> 8;
+  return { w: rec.w, h: rec.h, data: out, key: key + ':' + f.toFixed(3) };
+}
+
+// ── bg.js ──
+const BG_DEFAULTS = { feather: 0.1, grow: 0, smooth: 0.5, wrap: 0.3, tol: 0.1, soft: 0.08, spill: 0.6 };
+const BG_KEYS = [['person', '🧍 Person'], ['subject', '📦 Main subject'], ['chroma', '🟩 Green screen']];
+function autoKeyColor(px, size = 64) {
+  const acc = [[0, 0, 0, 0], [0, 0, 0, 0]];          // green, blue
+  const per = size * size * 3, frames = Math.max(1, Math.floor(px.length / per));
+  for (let f = 0; f < frames; f++) for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    if (x > 5 && x < size - 6 && y > 5 && y < size - 6) continue;
+    const i = f * per + (y * size + x) * 3, r = px[i], g = px[i + 1], b = px[i + 2];
+    const k = g > r * 1.15 && g > b * 1.1 ? 0 : b > r * 1.15 && b > g * 1.05 ? 1 : -1;
+    if (k < 0) continue;
+    acc[k][0] += r; acc[k][1] += g; acc[k][2] += b; acc[k][3]++;
+  }
+  const best = acc[0][3] >= acc[1][3] ? acc[0] : acc[1];
+  if (best[3] < 20) return '#20c040';
+  const hx = (v) => Math.round(Math.max(0, Math.min(1, v / best[3])) * 255).toString(16).padStart(2, '0');
+  return '#' + hx(best[0]) + hx(best[1]) + hx(best[2]);
+}
+function drop(key) { MASKS.delete(key); for (const k of [...tCache.keys()]) if (k.startsWith(key + ':')) tCache.delete(k); blend2.delete(key); }
+window.KBB_LOOK = { gl, blurs, BASE, MASKS, MASK_FPS, maskAt, drop, BG_DEFAULTS, BG_KEYS, autoKeyColor };
+})();</script>
+<script>/* KBB Ad Studio · cut-out engine (18 Nov 2026). The owner: remove backgrounds "on the video as well, in case we want to
+ * remove the background from the portrait ads videos" -- and in the Ad Studio, photos and video ads alike.
+ *
+ * It is the video editor's code, not a second implementation. build.py inlines, from studio/reel-studio/app/look/:
+ *   gl.js      the WebGL2 engine and its 'look' shader -- matte refinement (colour-guided upsampling of the low-res mask,
+ *              colour-line matting for hair), Shrink/grow and Feather, chroma key with spill suppression, light wrap
+ *   vision.js  the v2 mask store and its temporal filter (MASK_FPS, maskAt: Gaussian in time x per-pixel range weight)
+ *   bg.js      BG_DEFAULTS, BG_KEYS, autoKeyColor (the green / blue screen colour measured from the frame's border)
+ * as window.KBB_LOOK. This file only feeds them: which frames to analyse, which segmenter to ask, and the uniforms
+ * fx.js's processLook() would set for a clip whose only effect is the background (grade, touch-up, adjust neutral).
+ *
+ * The segmenters:
+ *   person   MediaPipe's selfie segmenter. Inside KBB Studio: its own vision-worker.js (off the main thread); opened as a
+ *            file: ad-studio-cutout.js (the same model and runtime, packed next to this file, loaded on first use).
+ *   subject  U²-Net-p, the optional 4.6 MB model (models/manifest.json 'subject-cutout', Apache-2.0): ONLY inside KBB
+ *            Studio, through its subject.js -- the engine's checked installer downloads it once on one Allow, and its
+ *            module worker runs it. Standalone there is no engine and no model folder, so it is not offered.
+ *   chroma   no model: the shader keys the colour.
+ *
+ *   KBB_CUT.inside()                         running inside KBB Studio (the engine served this page)?
+ *   KBB_CUT.cutoutLib()                      ad-studio-cutout.js (MediaPipe), loaded once
+ *   KBB_CUT.subjectState() -> 'standalone' | 'missing' | 'ready' | 'error'
+ *   KBB_CUT.installSubject(onProgress)       the one-click download through KBB Studio's model installer
+ *   KBB_CUT.masksFor(kind, pictures)         [{w, h, data}] (person: long side 256; subject: 320 x 320)
+ *   KBB_CUT.analyse({mid, kind, ks, grab, progress})   fills KBB_LOOK.MASKS[mid|kind] for grid frames ks
+ *   KBB_CUT.pass(src, sw, sh, o)             the look pass; returns the GL canvas (RGBA) or null
+ *   KBB_CUT.cutPhoto(img, mask, o)           a cut-out photo as a canvas (transparent where the background was)
+ */
+(function () {
+  'use strict';
+  var L = window.KBB_LOOK; if (!L) return;
+  function inside() { return !!(window.KBB_DISK && window.KBB_DISK.inside); }
+  var lookURL = function (f) { return new URL('../look/' + f, location.href).href; };
+
+  var cutP = null;
+  function cutoutLib() {
+    if (window.KBB_CUTOUT) return Promise.resolve(window.KBB_CUTOUT);
+    return cutP || (cutP = new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = new URL('ad-studio-cutout.js', location.href).href;
+      s.onload = function () { window.KBB_CUTOUT ? res(window.KBB_CUTOUT) : rej(new Error('cut-out file is damaged')); };
+      s.onerror = function () { cutP = null; rej(new Error('Cut-out needs the file ad-studio-cutout.js next to this one (it comes in the same folder)')); };
+      document.head.appendChild(s);
+    }));
+  }
+
+  // ── inside KBB Studio: the video editor's own modules, served by the engine next to this page (/app/look/) ──
+  var subjP = null;
+  function subject() { if (!inside()) return Promise.reject(new Error('The main-subject cut-out needs KBB Studio')); return subjP || (subjP = import(lookURL('subject.js')).catch(function (e) { subjP = null; throw e; })); }
+  function subjectState() {
+    if (!inside()) return Promise.resolve('standalone');
+    return subject().then(function (S) { return S.subjectReady().then(function (r) { return r ? 'ready' : 'missing'; }); }, function () { return 'error'; });
+  }
+  function installSubject(onProgress) { return subject().then(function (S) { return S.installSubjectModel(onProgress || function () {}); }); }
+
+  var VW = null, vseq = 0, vpend = Object.create(null);
+  function vision() {
+    if (VW) return VW;
+    VW = new Worker(lookURL('vision-worker.js'));
+    VW.onmessage = function (e) { var p = vpend[e.data.id]; if (!p) return; delete vpend[e.data.id]; if (e.data.error) p.rej(new Error(e.data.error)); else p.res(e.data.masks); };
+    VW.onerror = function (e) { if (e.preventDefault) e.preventDefault(); Object.keys(vpend).forEach(function (k) { vpend[k].rej(new Error(e.message || 'the person finder stopped')); }); vpend = Object.create(null); VW = null; };
+    return VW;
+  }
+  function masksFor(kind, bms) {
+    if (kind === 'subject') return subject().then(function (S) { return S.subjectMasks(bms); });
+    if (inside()) return new Promise(function (res, rej) { var id = ++vseq; vpend[id] = { res: res, rej: rej }; vision().postMessage({ id: id, op: 'seg', bitmaps: bms }, bms); });
+    return cutoutLib().then(function (C) { return C.masks(bms); });
+  }
+  // the picture the segmenter sees: as vision.js sizes it (person: the shape kept, long side 256; subject: its 320 x 320)
+  function dims(src) { return [src.naturalWidth || src.videoWidth || src.width, src.naturalHeight || src.videoHeight || src.height]; }
+  function bitmapFor(kind, src) {
+    var d = dims(src), k = 256 / Math.max(d[0], d[1]);
+    var sz = kind === 'subject' ? [320, 320] : [Math.max(1, Math.round(d[0] * k)), Math.max(1, Math.round(d[1] * k))];
+    return createImageBitmap(src, { resizeWidth: sz[0], resizeHeight: sz[1], resizeQuality: 'high' });
+  }
+  // analyse grid frames ks (at MASK_FPS[kind]) of one media: one decode per frame, batches of 8, then the cache of
+  // filtered frames is dropped so nothing drawn while it ran survives
+  function analyse(o) {
+    var key = o.mid + '|' + o.kind, fps = L.MASK_FPS[o.kind], rec0 = L.MASKS.get(key);
+    var need = o.ks.filter(function (k) { return !rec0 || !rec0.frames.has(k); }), done = 0, batch = [];
+    if (!need.length) return Promise.resolve(0);
+    function flush() {
+      var b = batch; batch = []; if (!b.length) return Promise.resolve();
+      return masksFor(o.kind, b.map(function (x) { return x.bm; })).then(function (r) {
+        var rec = L.MASKS.get(key) || { w: r[0].w, h: r[0].h, fps: fps, frames: new Map() }; L.MASKS.set(key, rec);
+        r.forEach(function (m, i) { rec.frames.set(b[i].k, m.data); });
+        done += b.length; if (o.progress) o.progress(done / need.length);
+      });
+    }
+    return need.reduce(function (p, k) {
+      return p.then(function () { return o.grab(k / fps); }).then(function (src) { return bitmapFor(o.kind, src); })
+        .then(function (bm) { batch.push({ k: k, bm: bm }); if (batch.length >= 8) return flush(); });
+    }, Promise.resolve()).then(flush).then(function () { var r = L.MASKS.get(key); L.drop(key); if (r) L.MASKS.set(key, r); return need.length; });
+  }
+
+  // ── the look pass: fx.js processLook()'s uniforms for a clip whose only look.* effect is the background (v2) ──
+  var BGMODE = { color: 2, gradient: 3, none: 5 };
+  function rgb(c, d) { var m = /^#?([0-9a-f]{6})$/i.exec(c || ''); if (!m) return d; var n = parseInt(m[1], 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; }
+  function domOf(c) { return c[1] >= c[0] && c[1] >= c[2] ? 1 : c[2] >= c[0] ? 2 : 0; }
+  // o: {key, mode, mask {w,h,data}|null, color, colors[2], feather, grow, wrap, keyColor, tol, soft, spill, work (px on the long side)}
+  function pass(src, sw, sh, o) {
+    var g = L.gl(); if (!g || !sw || !sh) return null;
+    var chroma = o.key === 'chroma'; if (!chroma && !o.mask) return null;
+    var D = L.BG_DEFAULTS, B = L.BASE, mode = BGMODE[o.mode] || 5;
+    var want = Math.max(256, Math.min(2160, o.work || Math.max(sw, sh))), k = Math.min(1, want / Math.max(sw, sh));
+    var W = Math.max(2, Math.round(sw * k)), H = Math.max(2, Math.round(sh * k));
+    var srcTex = g.upload('src', src, sw, sh, k < 0.6), kc = rgb(o.keyColor, [0.1, 0.75, 0.25]);
+    var f = function (v, d) { return typeof v === 'number' && isFinite(v) ? v : d; };
+    var u = {
+      res: [W, H], frame: 0, amount: 0, mg: [1, 1, 1], mo: [0, 0, 0], wb: [1, 1, 1], ev: 0,
+      Lexp: B.exp, Lcon: B.con, Lsat: B.sat, Lvib: B.vib, Ltemp: B.temp, Ltint: B.tint, Lfade: B.fade, Lbw: B.bw, Lglow: B.glow,
+      Lvig: B.vig, Lgrain: B.grain, Lcurve: B.curve, Lclar: B.clar, Lsplit: B.split, Llift: B.lift, Lgamma: B.gamma, Lgain: B.gain, Lsh: B.sh, Lhi: B.hi, Lbwmix: B.bwmix,
+      hasFace: 0, hasSeg: 0, bgMode: mode, Ts: 0, Teye: 0, Tunder: 0, hasAdj: 0, upS: 0, cmpOn: 0, cmpU: 0, srcRes: [sw, sh],
+      q2: 1, keyMode: chroma ? 1 : 0, keyCol: kc, kDom: domOf(kc), kTol: f(o.tol, D.tol), kSoft: f(o.soft, D.soft), kSpill: f(o.spill, D.spill),
+      eFeather: f(o.feather, D.feather), eGrow: f(o.grow, D.grow), eWrap: mode === 5 ? 0 : f(o.wrap, D.wrap),
+      bgA: mode === 3 ? rgb(o.colors && o.colors[0], [0.78, 0.22, 0.37]) : rgb(o.color, [0.07, 0.07, 0.1]), bgB: rgb(o.colors && o.colors[1], [0.16, 0.13, 0.16]), bgScale: [1, 1], bgOff: [0, 0]
+    };
+    var tex = { src: srcTex, blurS: srcTex, blurL: srcTex };
+    if (o.mask) { tex.seg = g.uploadR8('seg', o.mask.data, o.mask.w, o.mask.h); u.hasSeg = 1; u.segTexel = [1 / o.mask.w, 1 / o.mask.h]; }
+    g.size(W, H); g.run('look', null, u, tex);
+    return g.canvas;
+  }
+  function coverage(m) { var s = 0; for (var i = 0; i < m.data.length; i++) if (m.data[i] > 127) s++; return s / m.data.length; }
+
+  // a photo: the picture (long side up to 1600) with the background made transparent. Without WebGL2: the mask alone,
+  // the same threshold and feather as the shader's interior (smoothstep round .5), drawn over the photo
+  function cutPhoto(img, mask, o) {
+    var d = dims(img), k = Math.min(1, 1600 / Math.max(d[0], d[1])), W = Math.max(1, Math.round(d[0] * k)), H = Math.max(1, Math.round(d[1] * k));
+    var out = document.createElement('canvas'); out.width = W; out.height = H; var x = out.getContext('2d');
+    var g = pass(img, d[0], d[1], { key: o.key, mode: 'none', mask: mask, feather: o.feather, grow: o.grow, work: Math.max(W, H) });
+    if (g) { x.drawImage(g, 0, 0, W, H); return out; }
+    x.drawImage(img, 0, 0, W, H);
+    var mc = document.createElement('canvas'); mc.width = mask.w; mc.height = mask.h; var mx = mc.getContext('2d'), id = mx.createImageData(mask.w, mask.h);
+    var c = 0.5 - (o.grow || 0) * 0.3, wd = 0.12 + (o.feather == null ? L.BG_DEFAULTS.feather : o.feather) * 0.45;
+    for (var i = 0; i < mask.data.length; i++) { var t = Math.max(0, Math.min(1, (mask.data[i] / 255 - (c - wd)) / (2 * wd))); id.data[i * 4 + 3] = Math.round(t * t * (3 - 2 * t) * 255); }
+    mx.putImageData(id, 0, 0); x.save(); x.globalCompositeOperation = 'destination-in'; x.imageSmoothingQuality = 'high'; x.drawImage(mc, 0, 0, W, H); x.restore();
+    return out;
+  }
+  // the photo's mask, once per picture and kind (Feather and a second cut reuse it)
+  var pm = Object.create(null);
+  function photoMask(id, img, kind) {
+    var key = id + '|' + kind; if (pm[key]) return pm[key];
+    return (pm[key] = bitmapFor(kind, img).then(function (bm) { return masksFor(kind, [bm]); }).then(function (r) { return r[0]; }).catch(function (e) { delete pm[key]; throw e; }));
+  }
+
+  window.KBB_CUT = { inside: inside, cutoutLib: cutoutLib, subjectState: subjectState, installSubject: installSubject, masksFor: masksFor, analyse: analyse, pass: pass, cutPhoto: cutPhoto, photoMask: photoMask, coverage: coverage, gl: function () { return !!L.gl(); } };
+})();
+</script>
 <script>/* KBB Ad Studio -- the editor. One file, no network: fonts, libraries, product pictures and templates
  * are inline. Storage is an adapter: the claude.ai artifact runtime (db / assets / downloads) when the
  * page is published there, IndexedDB (then localStorage, then memory) when the file is opened offline.
@@ -3225,6 +3912,9 @@ var KBB_T = (function () {
     if (e.cr === 'acc' || e.cr === 'acc2' || e.cr === 'card') o.cr = e.cr;
     if (e.tr === 'acc') o.tr = e.tr;
     if (e.t === 'img') { if (!IMGID.test(e.img) || (imgs && !has(imgs, e.img))) return null; o.img = e.img; }
+    // ✂ a cut-out photo remembers the photo it was cut from (o), the cut (k) and the edge feather (f): Feather re-cuts from
+    // it, Restore background puts it back
+    if (e.t === 'img' && e.cut && typeof e.cut === 'object' && IMGID.test(e.cut.o) && (!imgs || has(imgs, e.cut.o))) o.cut = { o: e.cut.o, k: e.cut.k === 'subject' ? 'subject' : 'person', f: Math.round(num(e.cut.f, 0, 100, 10)) };
     if (e.t === 'art') { if (typeof e.art !== 'string' || !ARTID.test(e.art)) return null; o.art = e.art; }
     if (['c1', 'c2', 'c3', 'ca'].indexOf(e.cy) >= 0) o.cy = e.cy;                 // takes the country's flag colour
     if (typeof e.cyk === 'string' && /^[nda]{1,3}$/.test(e.cyk)) o.cyk = e.cyk;     // holds the country's name
@@ -4084,7 +4774,7 @@ var KBB_T = (function () {
     $('sel-t').textContent = e ? (e.name || TYPES[e.t]) + (e.t === 'prods' ? '' : ' · ' + TYPES[e.t]) + (e.gp && doc.groups[e.gp] ? ' (in ' + doc.groups[e.gp].name + ')' : '') : 'Nothing selected';
     $('sel-empty').hidden = !!e;
     props.querySelectorAll('[data-need]').forEach(function (n) { n.hidden = !e || (n.dataset.need === 'geo' && e.t === 'prods'); });
-    $('ph-row').hidden = true;
+    $('ph-row').hidden = true; $('cut-row').hidden = true;
     props.querySelectorAll('[data-show]').forEach(function (n) {
       var on = !!e && n.dataset.show.split(' ').indexOf(e.t) >= 0;
       if (n.dataset.show === 'fill') on = !!e && (e.t === 'shape' || e.t === 'btn' || (e.t === 'text' && e.sh && e.sh !== 'none'));
@@ -4108,7 +4798,7 @@ var KBB_T = (function () {
     $('p-al').querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String((g.al || e.al || 'c') === b.dataset.v)); });
     $('del').disabled = e.t === 'prods'; $('dup').disabled = e.t === 'prods';
     $('ph-row').hidden = !e.ph;
-    $('ph-cut').hidden = !(e.wk && e.t === 'img');
+    cutPanel(e);
     $('eres').disabled = !doc.tpl || !tplById[doc.tpl];
   }
   function propVal(n, p) {
@@ -4211,7 +4901,27 @@ var KBB_T = (function () {
   var icg = $('icg');
   Object.keys(ICONS).forEach(function (k) { if (k === 'lotus') return; var b = mk('button'); b.type = 'button'; b.title = ICONS[k][0]; b.setAttribute('aria-label', 'Add ' + ICONS[k][0]); b.innerHTML = iconSvg(k); b.onclick = function () { addEl({ t: 'icon', name: ICONS[k][0], ic: k, col: accNow() }, k === 'stars5' ? 28 : 12, k === 'stars5' ? 5.6 : 12); }; icg.appendChild(b); });
   $('add-img').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
-    readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) { var w = r.aspect >= 1 ? 40 : 40 * r.aspect; addEl({ t: 'img', name: r.name, img: r.id }, r2(w), r2(w / r.aspect)); }).catch(pictureError); };
+    stillOf(f).then(function (f) { return readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) { var w = r.aspect >= 1 ? 40 : 40 * r.aspect; addEl({ t: 'img', name: r.name, img: r.id }, r2(w), r2(w / r.aspect)); }); }).catch(pictureError); };
+  // the video editor's transparent exports on a still ad: a WebM with alpha or a PNG-sequence .zip gives its first frame
+  // as a transparent PNG (Video mode takes them whole, moving)
+  function stillOf(f) {
+    var nm = f.name.replace(/\.[a-z0-9]+$/i, '') + '.png', isZip = /zip/.test(f.type) || /\.zip$/i.test(f.name), isWebm = /webm/.test(f.type) || /\.webm$/i.test(f.name);
+    if (isZip) return JSZip.loadAsync(f).then(function (z) {
+      var n = Object.keys(z.files).filter(function (k) { return !z.files[k].dir && /\.png$/i.test(k) && !/(^|\/)(__MACOSX|\.)/.test(k); }).sort()[0];
+      if (!n) throw new Error('no PNG frames in that .zip');
+      return z.file(n).async('blob').then(function (b) { return new File([b], nm, { type: 'image/png' }); });
+    });
+    if (!isWebm) return Promise.resolve(f);
+    if (f.size > 1e9) return Promise.reject(new Error('That video is over 1 GB'));
+    return new Promise(function (res, rej) {
+      var v = document.createElement('video'), u = URL.createObjectURL(f), to = setTimeout(function () { fin(new Error('that video did not open')); }, 20000);
+      function fin(err, b) { clearTimeout(to); v.removeAttribute('src'); v.load(); URL.revokeObjectURL(u); if (err) rej(err); else res(new File([b], nm, { type: 'image/png' })); }
+      v.muted = true; v.preload = 'auto';
+      v.onloadeddata = function () { v.onseeked = function () { var c = mk('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0); c.toBlob(function (b) { b ? fin(null, b) : fin(new Error('no picture')); }, 'image/png'); }; v.currentTime = 0.001; };
+      v.onerror = function () { fin(new Error('this browser cannot open that video')); };
+      v.src = u;
+    });
+  }
   // flags, country outlines and landmark silhouettes (and the company marks) -- by name from the built-in list
   function occName(id) { return has(KT.OCC, id) ? KT.OCC[id].t[0] : id; }
   function toolName(id) { var n = ''; KT.OCCS.some(function (o) { return o.tools.some(function (t) { if (t[0] === id) { n = t[1]; return true; } }); }); return n || id; }
@@ -4982,7 +5692,7 @@ var KBB_T = (function () {
     }, Promise.resolve()).then(function () {
       function remap(raw) {
         var r = clone(raw);
-        if (r && Array.isArray(r.els)) r.els.forEach(function (e) { if (e && e.t === 'img') e.img = map[e.img] || '#'; });
+        if (r && Array.isArray(r.els)) r.els.forEach(function (e) { if (e && e.t === 'img') { e.img = map[e.img] || '#'; if (e.cut && typeof e.cut === 'object') e.cut.o = map[e.cut.o] || '#'; } });
         if (r && r.bg && r.bg.img) r.bg.img = map[r.bg.img] || '';
         if (r && r.sets) FMTS.forEach(function (f) { if (Array.isArray(r.sets[f])) r.sets[f].forEach(function (l) { if (Array.isArray(l)) l.forEach(function (it) { if (it && typeof it.p === 'string' && it.p.indexOf('u_') === 0) it.p = map[it.p.slice(2)] ? 'u_' + map[it.p.slice(2)] : '#'; }); }); });
         return r;
@@ -5225,7 +5935,7 @@ var KBB_T = (function () {
     return Store.listProjects().then(function (l) { return Promise.all(l.filter(function (p) { return p.co === c.id && IMGID.test(p.id); }).map(function (p) { return Store.getProject(p.id); })); }).then(function (ds) {
       ds = ds.filter(Boolean).map(function (d) { return d.id === doc.id ? clone(doc) : d; });
       if (doc && (doc.co || 'kbb') === c.id && !ds.some(function (d) { return d.id === doc.id; })) ds.push(clone(doc));
-      ds.forEach(function (d) { (d.els || []).forEach(function (e) { if (e.t === 'img') used[e.img] = 1; }); if (d.bg && d.bg.img) used[d.bg.img] = 1; FMTS.forEach(function (f) { ((d.sets || {})[f] || []).forEach(function (l) { l.forEach(function (it) { if (it.p.indexOf('u_') === 0) used[it.p.slice(2)] = 1; }); }); }); });
+      ds.forEach(function (d) { (d.els || []).forEach(function (e) { if (e.t === 'img') { used[e.img] = 1; if (e.cut && e.cut.o) used[e.cut.o] = 1; } }); if (d.bg && d.bg.img) used[d.bg.img] = 1; FMTS.forEach(function (f) { ((d.sets || {})[f] || []).forEach(function (l) { l.forEach(function (it) { if (it.p.indexOf('u_') === 0) used[it.p.slice(2)] = 1; }); }); }); });
       var b = c.id === co.id ? brand : c.studio.brand; if (b.logo) used[b.logo] = 1;
       return Promise.all(Object.keys(used).filter(function (id) { return images[id]; }).map(function (id) { var im = images[id]; return Store.toData(im.src).then(function (data) { return { id: id, name: im.name, aspect: im.aspect, kind: im.kind, data: data }; }).catch(function () { return null; }); })).then(function (ims) {
         var kit = clone(c); delete kit.studio; delete kit.mark;
@@ -5254,39 +5964,65 @@ var KBB_T = (function () {
   $('co-in').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return; closeCo();
     if (f.size > 200e6) { setStatus('That file is too large', 'warn'); return; }
     f.text().then(importCompany).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); }); };
-  // ✂ Cut out (worker photos): the person stays, the background goes -- MediaPipe's selfie segmenter (Apache-2.0, the
-  // same model KBB Studio's Look tab uses), run in this browser, offline. Its runtime and model (≈4 MB) live in
-  // ad-studio-cutout.js NEXT TO this file and load only on the first cut-out, so the studio itself stays light.
-  var cutP = null;
-  function cutoutLib() {
-    if (window.KBB_CUTOUT) return Promise.resolve(window.KBB_CUTOUT);
-    return cutP || (cutP = new Promise(function (res, rej) {
-      var s = document.createElement('script'); s.src = new URL('ad-studio-cutout.js', location.href).href;
-      s.onload = function () { window.KBB_CUTOUT ? res(window.KBB_CUTOUT) : rej(new Error('cut-out file is damaged')); };
-      s.onerror = function () { cutP = null; rej(new Error('Cut-out needs the file ad-studio-cutout.js next to this one (it comes in the same folder)')); };
-      document.head.appendChild(s);
-    }));
+  // ✂ Cut out (any photo on the ad; 18 Nov 2026 also products): 🧍 Person -- MediaPipe's selfie segmenter, offline, here
+  // or inside KBB Studio; 📦 Main subject -- U²-Net-p, KBB Studio's optional cut-out model, only inside KBB Studio (the
+  // engine keeps it in its models folder). The mask is refined by the video editor's own shader (src/cutlook.js): the
+  // edges follow the photo's colours, Edge feather softens them. The photo it was cut from stays on the element (e.cut),
+  // so Feather re-cuts from it and Restore background puts it back; each is one undo step.
+  var cutBusy = false, subjSt = null, subjAsk = 0;
+  function cutPanel(e) {
+    var on = !!e && e.t === 'img', C = window.KBB_CUT;
+    $('cut-row').hidden = !on || !C; if (!on || !C) return;
+    $('ph-cut').hidden = false; $('ph-restore').hidden = !e.cut; $('ph-fea-r').hidden = !e.cut;
+    var f = e.cut ? e.cut.f : 10; setV($('ph-fea'), f); $('ph-feav').textContent = f;
+    ['ph-cut', 'ph-cut-subj'].forEach(function (id) { $(id).setAttribute('aria-pressed', String(!!e.cut && e.cut.k === (id === 'ph-cut' ? 'person' : 'subject'))); });
+    var paint = function (s) {
+      subjSt = s; $('ph-cut-subj').hidden = s === 'standalone';
+      $('ph-cut-note').textContent = s === 'standalone' ? 'Products (📦 Main subject) need KBB Studio: open this design there. Person works here, offline.'
+        : s === 'missing' ? '📦 Main subject uses KBB Studio’s cut-out model (4.6 MB, downloaded once when you press it — or from KBB Studio home → ⚙ Models).'
+        : s === 'error' ? 'The main-subject cut-out could not start (is KBB Studio up to date?). Person still works.' : 'Person for people · Main subject for products and objects. Ctrl+Z undoes a cut.';
+    };
+    paint(subjSt || (C.inside() ? 'missing' : 'standalone'));
+    // asked of the engine at most every 5 s (the panel redraws often); 'ready' and 'standalone' never change
+    if (subjSt !== 'ready' && subjSt !== 'standalone' && Date.now() - subjAsk > 5000) { subjAsk = Date.now(); C.subjectState().then(function (s) { subjSt = s; if (selEl() === e) paint(s); }); }
   }
-  function cutOutPhoto(e) {
-    if (!e || e.t !== 'img' || !images[e.img]) return Promise.resolve();
-    setStatus('Cutting out the person… (the first time takes a few seconds)');
-    return Promise.all([cutoutLib(), loadImg(images[e.img].src)]).then(function (r) {
-      var img = r[1], k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)), cv = mk('canvas');
-      cv.width = Math.max(1, Math.round(img.naturalWidth * k)); cv.height = Math.max(1, Math.round(img.naturalHeight * k));
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      return r[0].cut(cv).then(function () {
+  function cutOutPhoto(e, kind, feather) {
+    var C = window.KBB_CUT; kind = kind === 'subject' ? 'subject' : 'person';
+    if (!C || !e || e.t !== 'img' || !images[e.img] || cutBusy) return Promise.resolve();
+    var orig = e.cut && images[e.cut.o] ? e.cut.o : e.img, fea = feather != null ? Math.round(num(feather, 0, 100, 10)) : e.cut ? e.cut.f : 10;
+    cutBusy = true;
+    setStatus(kind === 'subject' ? 'Cutting out the main subject…' : 'Cutting out the person… (the first time takes a few seconds)');
+    var pre = kind !== 'subject' ? Promise.resolve() : C.subjectState().then(function (s) {
+      if (s === 'standalone') throw new Error('products need KBB Studio (its cut-out model) — open this design there');
+      if (s === 'error') throw new Error('KBB Studio’s cut-out model could not start');
+      if (s === 'missing') { setStatus('Getting the cut-out model (4.6 MB, once)…'); return C.installSubject(function (f) { setStatus('Getting the cut-out model… ' + Math.round(f * 100) + '%'); }).then(function () { subjSt = 'ready'; setStatus('Cutting out the main subject…'); }); }
+    });
+    return pre.then(function () { return loadImg(images[orig].src); }).then(function (img) {
+      return C.photoMask(orig, img, kind).then(function (mask) {
+        if (C.coverage(mask) < 0.01) throw new Error(kind === 'subject' ? 'no main subject found in this photo' : 'no person found in this photo');
+        var cv = C.cutPhoto(img, mask, { key: kind, feather: fea / 100 });
         return new Promise(function (res) { cv.toBlob(res, 'image/png'); }).then(function (blob) {
-          var name = (images[e.img].name || 'Photo') + ' (cut out)';
-          return Store.putImage(blob, { name: name, aspect: +(cv.width / cv.height).toFixed(4), kind: 'img' }).then(function (q) {
-            registerImage({ id: q.id, src: q.src, name: name, aspect: +(cv.width / cv.height).toFixed(4), kind: 'img' });
-            act(function () { var i = doc.els.indexOf(e); if (i >= 0) { e.img = q.id; e.name = 'Worker photo (cut out)'; delete e.bw; } });
-            setStatus('Cut out — Ctrl+Z brings the background back', 'ok');
+          var name = (images[orig].name || 'Photo').replace(/ \(cut out\)$/, '').slice(0, 48) + ' (cut out)', asp = +(cv.width / cv.height).toFixed(4);
+          return Store.putImage(blob, { name: name, aspect: asp, kind: 'img' }).then(function (q) {
+            registerImage({ id: q.id, src: q.src, name: name, aspect: asp, kind: 'img' });
+            act(function () { if (doc.els.indexOf(e) < 0) return; e.img = q.id; e.cut = { o: orig, k: kind, f: fea }; if (!/ \(cut out\)$/.test(e.name || '')) e.name = ((e.wk ? 'Worker photo' : e.name) || 'Photo').slice(0, 30) + ' (cut out)'; delete e.bw; });
+            setStatus('Cut out — Ctrl+Z or ↺ Restore background brings the background back', 'ok');
           });
         });
       });
-    }).catch(function (x) { setStatus('Not cut out: ' + ((x && x.message) || 'try again'), 'warn'); });
+    }).catch(function (x) { setStatus('Not cut out: ' + ((x && x.message) || 'try again'), 'warn'); }).then(function () { cutBusy = false; if (selEl() === e) cutPanel(e); });
   }
-  $('ph-cut').onclick = function () { cutOutPhoto(selEl()); };
+  function restorePhoto(e) {
+    if (!e || e.t !== 'img' || !e.cut) return;
+    if (!images[e.cut.o]) { setStatus('The original photo is no longer here', 'warn'); return; }
+    act(function () { e.img = e.cut.o; delete e.cut; e.name = (e.name || 'Photo').replace(/ \(cut out\)$/, ''); });
+    setStatus('Background restored — Ctrl+Z cuts it out again', 'ok');
+  }
+  $('ph-cut').onclick = function () { cutOutPhoto(selEl(), 'person'); };
+  $('ph-cut-subj').onclick = function () { cutOutPhoto(selEl(), 'subject'); };
+  $('ph-restore').onclick = function () { restorePhoto(selEl()); };
+  $('ph-fea').addEventListener('input', function () { $('ph-feav').textContent = this.value; });
+  $('ph-fea').addEventListener('change', function () { var e = selEl(); if (e && e.cut) cutOutPhoto(e, e.cut.k, +this.value); });
   // a photo slot (success stories, testimonials, the team): pick a picture and it takes the slot's place and shape
   $('ph-file').onchange = function () { var f = this.files && this.files[0]; this.value = ''; var e = selEl(); if (!f || !e || !e.ph) return;
     readPicture(f, { cut: false, max: 1400, kind: 'img' }).then(function (r) {
@@ -5333,7 +6069,7 @@ var KBB_T = (function () {
   // test hooks (read-only views + the same actions the buttons run)
   window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
     get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id, cty) { useTemplate(tplById[id], cty); },
-    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function () { return cutOutPhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, backupAll: backupAll, importBackup: importBackup, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
+    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function (k, f) { return cutOutPhoto(selEl(), k, f); }, restorePhoto: function () { restorePhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, backupAll: backupAll, importBackup: importBackup, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
     selKeys: selKeys, setSel: function (k) { setSel(k); afterSel(); }, itemBox: itemBox, aabb: aabb, docColours: function () { return docColours(doc); } };
 })();
 </script>
@@ -5373,9 +6109,10 @@ var KBB_T = (function () {
   // accepted files: type -> kind. Extension is the fallback when the browser gives no type (common for .mov / .m4a).
   var TYPES = { 'video/mp4': 'video', 'video/quicktime': 'video', 'video/webm': 'video', 'video/x-m4v': 'video',
     'image/png': 'image', 'image/jpeg': 'image', 'image/webp': 'image',
+    'application/zip': 'seq', 'application/x-zip-compressed': 'seq',
     'audio/mpeg': 'audio', 'audio/mp3': 'audio', 'audio/mp4': 'audio', 'audio/x-m4a': 'audio', 'audio/m4a': 'audio', 'audio/aac': 'audio', 'audio/wav': 'audio', 'audio/x-wav': 'audio', 'audio/wave': 'audio', 'audio/webm': 'audio', 'audio/ogg': 'audio' };
-  var EXT = { mp4: 'video/mp4', m4v: 'video/x-m4v', mov: 'video/quicktime', webm: 'video/webm', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', ogg: 'audio/ogg' };
-  var MAXB = { video: 1024 * 1048576, image: 30 * 1048576, audio: 200 * 1048576 }, MAXDUR = 1800;
+  var EXT = { mp4: 'video/mp4', m4v: 'video/x-m4v', mov: 'video/quicktime', webm: 'video/webm', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', ogg: 'audio/ogg', zip: 'application/zip' };
+  var MAXB = { video: 1024 * 1048576, image: 30 * 1048576, audio: 200 * 1048576, seq: 1024 * 1048576 }, MAXDUR = 1800;
   function extOf(type) { for (var k in EXT) if (EXT[k] === type) return k; return 'bin'; }
 
   // ── state ──
@@ -5447,7 +6184,8 @@ var KBB_T = (function () {
     if (o.t === 'logo') { c.col = hex(o.col, '#FFFFFF'); }
     if (o.t === 'prod') { if (!has(D.prods, o.p)) return null; c.p = o.p; c.sh = num(o.sh, 0, 100, 50); }
     if (o.t === 'pay') c.pay = has({ both: 1, tabby: 1, tamara: 1 }, o.pay) ? o.pay : 'both';
-    if (o.t === 'img') { if (typeof o.im !== 'string') return null; var mm = /^m:(.*)$/.exec(o.im), ss = /^s:(.*)$/.exec(o.im); if (!(mm && MID.test(mm[1])) && !(ss && SIMG.test(ss[1]))) return null; c.im = o.im; }
+    if (o.t === 'img') { if (typeof o.im !== 'string') return null; var mm = /^m:(.*)$/.exec(o.im), ss = /^s:(.*)$/.exec(o.im); if (!(mm && MID.test(mm[1])) && !(ss && SIMG.test(ss[1]))) return null; c.im = o.im; var bq = mm && cleanBgr(o.bgr); if (bq) c.bgr = bq; }
+    if (o.bh === true) c.bh = true;          // drawn behind the video (shows through a cut-out or a see-through clip)
     return c;
   }
   function cleanVP(r) {
@@ -5457,9 +6195,11 @@ var KBB_T = (function () {
       fps: FPS_LIST.indexOf(+r.fps) >= 0 ? +r.fps : 30, clips: [], ovs: [], au: null };
     (Array.isArray(r.clips) ? r.clips.slice(0, 400) : []).forEach(function (c) {
       if (!c || !MID.test(c.m) || !media[c.m] || media[c.m].k === 'audio') return;
-      var m = media[c.m], hi = m.k === 'video' ? m.dur : 600, a = num(c.a, 0, hi, 0), b = num(c.b, 0, hi, m.k === 'video' ? m.dur : IMG_DEFAULT);
+      var m = media[c.m], hi = isTimed(m) ? m.dur : 600, a = num(c.a, 0, hi, 0), b = num(c.b, 0, hi, isTimed(m) ? m.dur : IMG_DEFAULT);
       if (b - a < MIN) return;
-      o.clips.push({ id: EID.test(c.id) && c.id[0] === 'c' ? c.id : uid('c'), m: c.m, a: r3(a), b: r3(b), fit: c.fit === 'fit' ? 'fit' : 'fill', z: num(c.z, .2, 5, 1), px: num(c.px, -100, 100, 0), py: num(c.py, -100, 100, 0), r: num(c.r, -180, 180, 0), mute: c.mute === true, vol: num(c.vol, 0, 200, 100) });
+      var q = { id: EID.test(c.id) && c.id[0] === 'c' ? c.id : uid('c'), m: c.m, a: r3(a), b: r3(b), fit: c.fit === 'fit' ? 'fit' : 'fill', z: num(c.z, .2, 5, 1), px: num(c.px, -100, 100, 0), py: num(c.py, -100, 100, 0), r: num(c.r, -180, 180, 0), mute: c.mute === true, vol: num(c.vol, 0, 200, 100) };
+      var bq = m.k !== 'seq' && cleanBgr(c.bgr); if (bq) q.bgr = bq;
+      o.clips.push(q);
     });
     (Array.isArray(r.ovs) ? r.ovs.slice(0, 200) : []).forEach(function (x) { var c = cleanOv(x); if (c) o.ovs.push(c); });
     var u = r.au;
@@ -5467,6 +6207,16 @@ var KBB_T = (function () {
       var md = media[u.m].dur, a2 = num(u.a, 0, md, 0), b2 = num(u.b, 0, md, md);
       if (b2 - a2 >= MIN) o.au = { m: u.m, a: r3(a2), b: r3(b2), o: r3(num(u.o, -3600, 3600, 0)), vol: num(u.vol, 0, 200, 100), fi: num(u.fi, 0, 10, 0), fo: num(u.fo, 0, 10, 0) };
     }
+    return o;
+  }
+  // 🧍 background removal on a clip or a picture / video layer (absent = untouched, so every older project draws as it did):
+  //   key person | subject | chroma, mode none (transparent) | color | gradient, the edge settings of the video editor's bg.js
+  function cleanBgr(b) {
+    if (!b || typeof b !== 'object' || !has({ person: 1, subject: 1, chroma: 1 }, b.key)) return null;
+    var o = { key: b.key, mode: has({ none: 1, color: 1, gradient: 1 }, b.mode) ? b.mode : 'none', color: hex(b.color, '#16161C'),
+      colors: [hex(b.colors && b.colors[0], '#E8306F'), hex(b.colors && b.colors[1], '#1F1B1E')],
+      feather: r3(num(b.feather, 0, 1, BGD.feather)), grow: r3(num(b.grow, -1, 1, BGD.grow)), smooth: r3(num(b.smooth, 0, 1, BGD.smooth)), wrap: r3(num(b.wrap, 0, 1, BGD.wrap)) };
+    if (b.key === 'chroma') { o.keyColor = hex(b.keyColor, '#20C040'); o.tol = r3(num(b.tol, 0, 1, BGD.tol)); o.soft = r3(num(b.soft, 0, 1, BGD.soft)); o.spill = r3(num(b.spill, 0, 1, BGD.spill)); }
     return o;
   }
   function cleanMeta(r) {
@@ -5501,6 +6251,7 @@ var KBB_T = (function () {
     });
   }
   function makeThumbs(m) {
+    if (m.k === 'seq') return seqThumbs(m);
     if (m.k === 'image') { var c = mk('canvas'); c.height = 64; c.width = Math.max(8, Math.round(64 * m.w / m.h)); c.getContext('2d').drawImage(m.el, 0, 0, c.width, c.height); m.thumbs = [{ t: 0, c: c }]; return Promise.resolve(); }
     if (m.k !== 'video') return Promise.resolve();
     var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = m.url; var n = Math.max(2, Math.min(40, Math.ceil(m.dur))), out = [];
@@ -5518,7 +6269,7 @@ var KBB_T = (function () {
     }).catch(function () { return null; });
   }
   function makePeaks(m) {
-    if (m.k === 'image') { m.peaks = null; return Promise.resolve(); }
+    if (m.k === 'image' || m.k === 'seq') { m.peaks = null; return Promise.resolve(); }
     return decodeAudio(m).then(function (buf) {
       if (!buf) { m.peaks = null; m.silent = true; return; }
       var per = 50, n = Math.ceil(buf.duration * per), d0 = buf.getChannelData(0), d1 = buf.numberOfChannels > 1 ? buf.getChannelData(1) : d0, step = buf.sampleRate / per, pk = new Float32Array(n), mx = 0;
@@ -5528,7 +6279,8 @@ var KBB_T = (function () {
   }
   function register(rec, blob) {
     var m = { id: rec.id, name: rec.name, k: rec.k, type: rec.type, size: blob.size, blob: blob, url: URL.createObjectURL(blob), thumbs: [], peaks: null };
-    return probe(m).then(function (el) { m.el = el; if (el.tagName === 'VIDEO' || el.tagName === 'AUDIO') { el.preload = 'auto'; el.addEventListener('seeked', function () { if (!playing) drawPreview(); }); } media[m.id] = m; return m; },
+    if (m.k === 'seq') return openSeq(m).then(function () { m.alpha = true; media[m.id] = m; return m; }, function (e) { URL.revokeObjectURL(m.url); throw e; });
+    return probe(m).then(function (el) { m.el = el; if (el.tagName === 'VIDEO' || el.tagName === 'AUDIO') { el.preload = 'auto'; el.addEventListener('seeked', function () { if (!playing) drawPreview(); }); } if (m.k !== 'audio') m.alpha = seeThrough(m, el); media[m.id] = m; return m; },
       function (e) { URL.revokeObjectURL(m.url); throw e; });
   }
   function importFiles(list) {
@@ -5565,7 +6317,7 @@ var KBB_T = (function () {
   function selOv() { return sel && sel.k === 'ov' ? vp.ovs.filter(function (o) { return o.id === sel.id; })[0] : null; }
   function addClip(mid, quiet) {
     var m = media[mid]; if (!m || m.k === 'audio') return;
-    var c = cleanVP({ clips: [{ id: uid('c'), m: mid, a: 0, b: m.k === 'video' ? m.dur : IMG_DEFAULT }] }).clips[0]; if (!c) return;
+    var c = cleanVP({ clips: [{ id: uid('c'), m: mid, a: 0, b: isTimed(m) ? m.dur : IMG_DEFAULT }] }).clips[0]; if (!c) return;
     vp.clips.push(c); sel = { k: 'clip', id: c.id }; if (!quiet) changed('add');
   }
   function setMusic(mid, quiet) { var m = media[mid]; if (!m) return; vp.au = { m: mid, a: 0, b: r3(m.dur), o: 0, vol: 100, fi: 0, fo: 0 }; sel = { k: 'au' }; if (!quiet) changed('music'); }
@@ -5606,8 +6358,128 @@ var KBB_T = (function () {
   }
   function openVP(d) { stop(); vp = d; lastJSON = JSON.stringify(vp); hist = []; fut = []; sel = null; ph = 0; $('v-name').value = vp.name; lsSet('vlast', vp.id); renderAll(); seekPreview(); }
 
+  // ── 18 Nov 2026: cut-outs and see-through media ──
+  // 🧍 Remove background reuses the video editor's own code (src/cutlook.js: KBB_LOOK = app/look's shader and mask filter):
+  // the masks are computed ONCE per media (person 30 / subject 10 grid frames a second, as vision.js), offline, then every
+  // frame -- preview, still and export alike -- only samples them through maskAt()'s temporal filter and runs the shader.
+  // See-through media (the video editor's WebM with alpha, its PNG-sequence .zip, a transparent PNG) are drawn as they
+  // are: Chrome decodes VP9 alpha (WebM AlphaMode 1 + BlockAdditional) in a <video>, and drawImage keeps the alpha.
+  var LK = window.KBB_LOOK, CUT = window.KBB_CUT;
+  var BGD = LK ? LK.BG_DEFAULTS : { feather: .1, grow: 0, smooth: .5, wrap: .3, tol: .1, soft: .08, spill: .6 };
+  function isTimed(m) { return !!m && (m.k === 'video' || m.k === 'seq'); }
+  // can it be see-through? Only a WebM (VP8/VP9 alpha), a PNG or a WebP can; an MP4 / MOV / JPEG never is. Then the first
+  // frame is looked at (32 x 32 is enough); a frame not painted yet reads as all-transparent and counts as see-through,
+  // which only means the Empty-space fill is drawn behind it
+  function seeThrough(m, el) {
+    if (!/webm|png|webp/.test(m.type)) return false;
+    try { var c = mk('canvas'); c.width = 32; c.height = 32; var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(el, 0, 0, 32, 32); var d = x.getImageData(0, 0, 32, 32).data; for (var i = 3; i < d.length; i += 4) if (d[i] < 250) return true; } catch (e) {}
+    return false;
+  }
+  // PNG sequence (.zip of RGBA frames, the video editor's "PNG sequence" export, 30 fps): the PNGs stay compressed in
+  // memory; the preview decodes them at its own size a few frames ahead (90 kept), the export at full size, one at a time
+  var SEQ_FPS = 30, SEQ_MAX = 9000;
+  function seqNames(z) { return Object.keys(z.files).filter(function (k) { return !z.files[k].dir && /\.png$/i.test(k) && !/(^|\/)(__MACOSX|\.)/.test(k); }).sort(); }
+  function openSeq(m) {
+    if (!window.JSZip) return Promise.reject(new Error('this file has no zip reader'));
+    return JSZip.loadAsync(m.blob).then(function (z) {
+      var names = seqNames(z); if (!names.length) throw new Error('no PNG frames in that .zip');
+      if (names.length > SEQ_MAX) throw new Error('more than ' + SEQ_MAX + ' frames');
+      return Promise.all(names.map(function (n) { return z.file(n).async('arraybuffer').then(function (b) { return new Blob([b], { type: 'image/png' }); }); }));
+    }).then(function (bl) {
+      return createImageBitmap(bl[0]).then(function (bm) {
+        var w = bm.width, h = bm.height; bm.close();
+        if (!w || !h || w > 4096 || h > 4096) throw new Error('frames larger than 4096 px');
+        m.frames = bl; m.fps = SEQ_FPS; m.dur = bl.length / SEQ_FPS; m.w = w; m.h = h; m.pv = new Map(); m.pend = Object.create(null);
+      }, function () { throw new Error('its first frame is not a picture'); });
+    });
+  }
+  function seqThumbs(m) {
+    var n = Math.max(1, Math.min(12, m.frames.length)), out = [];
+    return Array.from({ length: n }).reduce(function (p, _, i) {
+      return p.then(function () { var k = Math.floor((i + .5) * m.frames.length / n); return createImageBitmap(m.frames[k], { resizeHeight: 64, resizeWidth: Math.max(8, Math.round(64 * m.w / m.h)) }).then(function (bm) { var c = mk('canvas'); c.width = bm.width; c.height = 64; c.getContext('2d').drawImage(bm, 0, 0); bm.close(); out.push({ t: k / m.fps, c: c }); }); });
+    }, Promise.resolve()).then(function () { m.thumbs = out; }).catch(function () {});
+  }
+  function seqIdx(m, local) { return Math.max(0, Math.min(m.frames.length - 1, Math.floor(local * m.fps + 1e-6))); }
+  function seqLoad(m, i) {
+    if (m.pv.has(i)) return Promise.resolve(m.pv.get(i)); if (m.pend[i]) return m.pend[i];
+    var L = vp ? Math.max(vp.ab.w, vp.ab.h) * Math.min(1, 960 / Math.max(vp.ab.w, vp.ab.h)) : 960, k = Math.min(1, L / Math.max(m.w, m.h));
+    return (m.pend[i] = createImageBitmap(m.frames[i], { resizeWidth: Math.max(1, Math.round(m.w * k)), resizeHeight: Math.max(1, Math.round(m.h * k)), resizeQuality: 'medium' }).then(function (bm) {
+      delete m.pend[i]; m.pv.set(i, bm);
+      if (m.pv.size > 90) { var old = m.pv.keys().next().value, ob = m.pv.get(old); m.pv.delete(old); if (ob && ob.close) ob.close(); }
+      if (!playing) drawPreview(); return bm;
+    }, function () { delete m.pend[i]; return null; }));
+  }
+  function seqPreview(m, local) {
+    var i = seqIdx(m, local); if (m.pv.has(i)) return m.pv.get(i);
+    seqLoad(m, i); for (var d = 1; d < 15; d++) if (m.pv.has(i - d)) return m.pv.get(i - d);
+    return null;
+  }
+  function seqAhead(m, local) { var i = seqIdx(m, local); for (var d = 1; d <= 10 && i + d < m.frames.length; d++) if (!m.pv.has(i + d) && !m.pend[i + d] && Object.keys(m.pend).length < 6) seqLoad(m, i + d); }
+  // a layer: a picture, a video or a sequence from the media bin over the clips; a moving one loops
+  function ovMedia(o) { var mm = o.t === 'img' && /^m:(.*)$/.exec(o.im); return mm ? media[mm[1]] || null : null; }
+  function layerLocal(o, m, t) { var d = isTimed(m) ? Math.max(.04, m.dur) : 0; return d ? Math.max(0, t - o.s) % d : 0; }
+  function layerEl(m) { if (!m.lel) { var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url; v.addEventListener('seeked', function () { if (!playing) drawPreview(); }); m.lel = v; } return m.lel; }
+  function hasMoving() { return vp.clips.some(function (c) { return media[c.m] && media[c.m].k === 'seq'; }) || vp.ovs.some(function (o) { return isTimed(ovMedia(o)); }); }
+
+  // the picture of a clip / layer with its background removed (the shared GL canvas) or, without a mask yet, as it is
+  var skipMask = Object.create(null), drawK = 1;
+  function cutSrc(it, m, src, local, dw, dh, x) {
+    var b = it.bgr; if (!b || !CUT || !LK) return src;
+    var mask = null;
+    // the mask of the very frame on show (a <video>'s own time), so a picture that lags or leads the playhead while it
+    // plays never gets another instant's outline; the export seeks every frame of a cut-out clip, so there they are equal
+    var mt = m.k === 'image' ? 0 : src.tagName === 'VIDEO' ? src.currentTime : local;
+    if (b.key !== 'chroma') { mask = LK.maskAt(m.id, mt, b.key, b.smooth); if (!mask) { wantMasks(); return src; } }
+    var tr = x.getTransform(), sc = Math.hypot(tr.a, tr.b) || 1;
+    return CUT.pass(src, m.w, m.h, { key: b.key, mode: b.mode, mask: mask, color: b.color, colors: b.colors, feather: b.feather, grow: b.grow, wrap: b.wrap,
+      keyColor: b.keyColor, tol: b.tol, soft: b.soft, spill: b.spill, work: Math.max(dw, dh) * sc * drawK }) || src;
+  }
+  // the grid frames each (media, kind) needs: a clip's trimmed span (± 0.2 s), a layer's whole media, a picture's one frame
+  function maskNeeds() {
+    var need = Object.create(null), F = LK ? LK.MASK_FPS : {};
+    function add(m, kind, a, b) {
+      var key = m.id + '|' + kind, n = need[key] || (need[key] = { key: key, mid: m.id, kind: kind, ks: {} }), fps = F[kind];
+      if (m.k === 'image') { n.ks[0] = 1; return; }
+      var k1 = Math.min(Math.floor(m.dur * fps), Math.ceil((b + .2) * fps)); for (var k = Math.max(0, Math.floor((a - .2) * fps)); k <= k1; k++) n.ks[k] = 1;
+    }
+    vp.clips.forEach(function (c) { var m = media[c.m]; if (c.bgr && c.bgr.key !== 'chroma' && m && m.k !== 'seq') add(m, c.bgr.key, c.a, c.b); });
+    vp.ovs.forEach(function (o) { var m = ovMedia(o); if (o.bgr && o.bgr.key !== 'chroma' && m && m.k !== 'seq') add(m, o.bgr.key, 0, m.dur || 0); });
+    return Object.keys(need).map(function (k) { var n = need[k], rec = LK.MASKS.get(k); n.ks = Object.keys(n.ks).map(Number).filter(function (q) { return !rec || !rec.frames.has(q); }).sort(function (a, b) { return a - b; }); return n; })
+      .filter(function (n) { return n.ks.length && !skipMask[n.key]; });
+  }
+  function grabber(m) {
+    if (m.k === 'image') return { get: function () { return Promise.resolve(m.el); }, free: function () {} };
+    var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url;
+    var ready = new Promise(function (r) { if (v.readyState >= 2) r(); else { v.onloadeddata = r; v.onerror = r; } });
+    return { get: function (t) { return ready.then(function () { return seekTo(v, Math.min(t, m.dur - .02)); }).then(function () { return v; }); }, free: function () { v.removeAttribute('src'); v.load(); } };
+  }
+  var maskJob = null, maskAsk = false, maskStats = null;
+  function wantMasks() { if (maskJob || maskAsk || !vp || !CUT) return; maskAsk = true; setTimeout(function () { maskAsk = false; if (maskNeeds().length) ensureMasks(true); }, 0); }
+  // analyse what the project's cut-outs need and is not cached (one at a time; the export waits for it)
+  function ensureMasks(quiet) {
+    if (!CUT || !LK || !vp) return Promise.resolve();
+    if (maskJob) return maskJob.then(function () { return maskNeeds().length ? ensureMasks(quiet) : null; });
+    var jobs = maskNeeds(); if (!jobs.length) return Promise.resolve();
+    var t0 = performance.now(), frames = 0;
+    var run = jobs.reduce(function (p, j) {
+      return p.then(function () {
+        var m = media[j.mid]; if (!m) return;
+        return (j.kind === 'subject' ? CUT.subjectState() : Promise.resolve('ready')).then(function (s) {
+          if (s !== 'ready') { skipMask[j.key] = 1; status(s === 'standalone' ? 'Main subject (products) needs KBB Studio — that clip shows uncut here. Person and Green screen work offline.' : 'The main-subject model is not installed: 🧍 Remove background → 📦 Main subject downloads it.', 'warn'); return; }
+          var g = grabber(m), label = j.kind === 'subject' ? 'Finding the main subject… ' : 'Finding the person… ';
+          status(label + '0%');
+          return CUT.analyse({ mid: j.mid, kind: j.kind, ks: j.ks, grab: g.get, progress: function (f) { status(label + Math.round(f * 100) + '%'); } })
+            .then(function (n) { g.free(); frames += n; }, function (e) { g.free(); skipMask[j.key] = 1; throw e; });
+        });
+      });
+    }, Promise.resolve());
+    maskJob = run.then(function () { maskJob = null; maskStats = { frames: frames, ms: Math.round(performance.now() - t0) }; if (frames) status('Background removed — ' + frames + ' frames analysed in ' + (maskStats.ms / 1000).toFixed(1) + ' s · Ctrl+Z undoes it', 'ok'); if (!playing) drawPreview(); },
+      function (e) { maskJob = null; status('Background removal stopped: ' + ((e && e.message) || 'try again'), 'warn'); if (!playing) drawPreview(); });
+    return maskJob;
+  }
+
   // ── drawing: one function for preview, still frame and export ──
-  var imgCache = Object.create(null);
+  var imgCache = Object.create(null), curLayer = null, curT = 0;
   function imgFor(key, src) { var c = imgCache[key]; if (c) return c.ok ? c.im : null; c = imgCache[key] = { im: new Image(), ok: false }; c.im.onload = function () { c.ok = true; if (!playing) drawPreview(); }; c.im.src = src; return null; }
   function svgImg(ic, col, vb) {
     var e = ICONS[ic]; if (!e) return null;
@@ -5617,7 +6489,7 @@ var KBB_T = (function () {
   function ovImage(o) {
     if (o.t === 'prod') return imgFor('p:' + o.p, D.prods[o.p].src);
     if (o.t === 'icon') return svgImg(o.ic, o.col);
-    if (o.t === 'img') { var mm = /^m:(.*)$/.exec(o.im); if (mm) { var m = media[mm[1]]; return m && m.k === 'image' ? m.el : null; } var s = studioImgs[o.im.slice(2)]; return s ? imgFor('s:' + o.im, s.src) : null; }
+    if (o.t === 'img') { var mm = /^m:(.*)$/.exec(o.im); if (mm) { var m = media[mm[1]]; if (!m) return null; return curLayer ? curLayer(o, m, layerLocal(o, m, curT)) : m.k === 'image' ? m.el : null; } var s = studioImgs[o.im.slice(2)]; return s ? imgFor('s:' + o.im, s.src) : null; }
     return null;
   }
   function ease(p) { return 1 - Math.pow(1 - p, 3); }
@@ -5686,7 +6558,9 @@ var KBB_T = (function () {
       x.fillStyle = o.col; x.textBaseline = 'middle'; x.textAlign = 'left'; x.direction = 'ltr'; x.fillText('K-Beauty Bliss', l0 + lw + fpx2 * .4, fpx2 * .05); x.restore();
       return [w, lh3 * sc2];
     }
-    var im2 = ovImage(o), ar = im2 && im2.naturalWidth ? im2.naturalHeight / im2.naturalWidth : (o.t === 'prod' ? 1 / D.prods[o.p].a : 1), h2 = w * ar;
+    var im2 = ovImage(o), m2 = ovMedia(o), iw = m2 && m2.w ? m2.w : im2 && (im2.naturalWidth || im2.videoWidth || im2.width), ih = m2 && m2.h ? m2.h : im2 && (im2.naturalHeight || im2.videoHeight || im2.height);
+    var ar = im2 && iw ? ih / iw : (o.t === 'prod' ? 1 / D.prods[o.p].a : 1), h2 = w * ar;
+    if (im2 && m2 && o.bgr) im2 = cutSrc(o, m2, im2, layerLocal(o, m2, curT), w, h2, x);
     if (o.t === 'prod' && o.sh) { x.shadowColor = 'rgba(0,0,0,' + (.45 * o.sh / 100).toFixed(3) + ')'; x.shadowBlur = w * .08 * o.sh / 100; x.shadowOffsetY = w * .03 * o.sh / 100; }
     if (im2) x.drawImage(im2, -w / 2, -h2 / 2, w, h2);
     x.shadowColor = 'transparent';
@@ -5696,33 +6570,42 @@ var KBB_T = (function () {
   function drawFrame(x, W, H, t, srcOf, boxes) {
     x.save(); x.globalAlpha = 1;                     // drawn in artboard pixels: the caller's transform scales it (preview) or not (export) x.shadowColor = 'transparent'; x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'low';
     var h = vp.clips.length ? clipAt(Math.min(t, total() - 1e-4)) : null, c = h && h.c, m = c && media[c.m], src = m && srcOf(c, h.local), sw = m && m.w, sh = m && m.h;
+    curLayer = srcOf.layer || null; curT = t;
     if (src && sw) {
       var s = (c.fit === 'fit' ? Math.min(W / sw, H / sh) : Math.max(W / sw, H / sh)) * c.z, dw = sw * s, dh = sh * s, cx0 = W / 2 + c.px / 100 * W, cy0 = H / 2 + c.py / 100 * H;
-      var covers = c.r % 360 === 0 && cx0 - dw / 2 <= .5 && cy0 - dh / 2 <= .5 && cx0 + dw / 2 >= W - .5 && cy0 + dh / 2 >= H - .5;   // nothing shows behind: skip the background
+      var covers = !m.alpha && !(c.bgr && c.bgr.mode === 'none') && c.r % 360 === 0 && cx0 - dw / 2 <= .5 && cy0 - dh / 2 <= .5 && cx0 + dw / 2 >= W - .5 && cy0 + dh / 2 >= H - .5;   // nothing shows behind: skip the background
       if (!covers && vp.bg.k === 'blur') {          // blur fill: the frame squeezed to a few pixels (darkened there) and stretched back -- the same in every browser
         tiny = tiny || mk('canvas'); tiny.width = 24; tiny.height = Math.max(8, Math.round(24 * H / W)); var tx = tiny.getContext('2d');
         var cs = Math.max(tiny.width / sw, tiny.height / sh); tx.drawImage(src, (tiny.width - sw * cs) / 2, (tiny.height - sh * cs) / 2, sw * cs, sh * cs); tx.fillStyle = 'rgba(0,0,0,.28)'; tx.fillRect(0, 0, tiny.width, tiny.height);
         x.drawImage(tiny, 1, 1, tiny.width - 2, tiny.height - 2, -W * .02, -H * .02, W * 1.04, H * 1.04);
       } else if (!covers) { x.fillStyle = vp.bg.c; x.fillRect(0, 0, W, H); }
-      if (c.r % 360 === 0) x.drawImage(src, cx0 - dw / 2, cy0 - dh / 2, dw, dh);
-      else { x.save(); x.translate(cx0, cy0); x.rotate(c.r * Math.PI / 180); x.drawImage(src, -dw / 2, -dh / 2, dw, dh); x.restore(); }
-    } else { x.fillStyle = vp.bg.k === 'color' ? vp.bg.c : '#000000'; x.fillRect(0, 0, W, H); }
+      drawOvs(x, W, H, t, boxes, true);              // the layers set to "Behind the video"
+      var cs = cutSrc(c, m, src, h.local, dw, dh, x);
+      if (c.r % 360 === 0) x.drawImage(cs, cx0 - dw / 2, cy0 - dh / 2, dw, dh);
+      else { x.save(); x.translate(cx0, cy0); x.rotate(c.r * Math.PI / 180); x.drawImage(cs, -dw / 2, -dh / 2, dw, dh); x.restore(); }
+    } else { x.fillStyle = vp.bg.k === 'color' ? vp.bg.c : '#000000'; x.fillRect(0, 0, W, H); drawOvs(x, W, H, t, boxes, true); }
+    drawOvs(x, W, H, t, boxes, false);
+    x.restore(); curLayer = null;
+  }
+  function drawOvs(x, W, H, t, boxes, behind) {
     vp.ovs.forEach(function (o) {
-      if (t < o.s || t >= o.e) return; var a = animAt(o, t);
+      if (t < o.s || t >= o.e || !o.bh !== !behind) return; var a = animAt(o, t);
       x.save(); x.globalAlpha = Math.max(0, Math.min(1, a.a * o.op / 100)); x.translate(o.x / 100 * W, (o.y / 100 + a.dy) * H); x.rotate(o.r * Math.PI / 180); x.scale(a.sc, a.sc);
       var bx = drawOv(x, o, W, H); x.restore();
       if (boxes) boxes.push({ id: o.id, x: o.x / 100 * W, y: o.y / 100 * H, w: bx[0], h: bx[1], r: o.r });
     });
-    x.restore();
   }
 
   // ── preview + playback ──
   var cv, cx, boxes = [], raf = 0, playWall = 0, playT0 = 0, activeClip = null, pvScale = 1;
   function previewSize() { var W = vp.ab.w, H = vp.ab.h, s = Math.min(1, 960 / Math.max(W, H)); pvScale = s; cv.style.setProperty('--var', String(W / H)); /* the CSS fit (#v-cv width) reads the artboard's shape */ if (cv.width !== Math.round(W * s) || cv.height !== Math.round(H * s)) { cv.width = Math.round(W * s); cv.height = Math.round(H * s); } }
-  function previewSrc(c) { var m = media[c.m]; return m ? m.el : null; }
+  function previewSrc(c, local) { var m = media[c.m]; return !m ? null : m.k === 'seq' ? seqPreview(m, local) : m.el; }
+  previewSrc.layer = function (o, m, local) { return m.k === 'video' ? layerEl(m) : m.k === 'seq' ? seqPreview(m, local) : m.el; };
   function drawPreview() {
     if (!vp || !cv) return; previewSize(); boxes = [];
-    cx.save(); cx.scale(pvScale, pvScale); drawFrame(cx, vp.ab.w, vp.ab.h, ph, previewSrc, boxes); cx.restore();
+    // a cut-out is worked at the size the monitor really shows (less while playing), never above the export's
+    var r = cv.getBoundingClientRect(); drawK = r.width ? Math.min(1, r.width * (window.devicePixelRatio || 1) / cv.width) : 1; if (playing) drawK = Math.min(drawK, .75);
+    cx.save(); cx.scale(pvScale, pvScale); drawFrame(cx, vp.ab.w, vp.ab.h, ph, previewSrc, boxes); cx.restore(); drawK = 1;
     var o = selOv(), b = o && boxes.filter(function (q) { return q.id === o.id; })[0];
     if (b) { cx.save(); cx.scale(pvScale, pvScale); cx.translate(b.x, b.y); cx.rotate(b.r * Math.PI / 180); cx.strokeStyle = '#2F7BFF'; cx.setLineDash([12, 8]); cx.lineWidth = 3 / pvScale; cx.strokeRect(-b.w / 2 - 6, -b.h / 2 - 6, b.w + 12, b.h + 12); cx.restore(); }
     $('v-tc').textContent = tc(ph) + ' / ' + tc(total());
@@ -5736,6 +6619,17 @@ var KBB_T = (function () {
       if (play) { want.muted = c.mute; want.volume = Math.min(1, c.vol / 100); if (clipChanged || Math.abs(want.currentTime - h.local) > .25) want.currentTime = h.local; if (want.paused) want.play().catch(function () {}); }
       else if (Math.abs(want.currentTime - h.local) > .001) want.currentTime = h.local;
     }
+    if (m && m.k === 'seq' && play) seqAhead(m, h.local);
+    // layers: a video layer has its own element, kept in step with the playhead (looping); a sequence decodes ahead
+    var inUse = {};
+    vp.ovs.forEach(function (o) {
+      var lm = ovMedia(o); if (!isTimed(lm) || t < o.s || t >= o.e) return; var lt = layerLocal(o, lm, t);
+      if (lm.k === 'seq') { if (play) seqAhead(lm, lt); return; }
+      var e = layerEl(lm); inUse[lm.id] = 1;
+      if (play) { if (Math.abs(e.currentTime - lt) > .25) e.currentTime = lt; if (e.paused) e.play().catch(function () {}); }
+      else if (Math.abs(e.currentTime - lt) > .001) { if (!e.paused) e.pause(); e.currentTime = lt; }
+    });
+    Object.keys(media).forEach(function (k) { var e = media[k].lel; if (e && !inUse[k] && !e.paused) e.pause(); });
     var u = vp.au, ae = u && media[u.m] && media[u.m].el;
     if (ae) {
       var at = t - u.o + u.a, len = u.b - u.a, rel = t - u.o;
@@ -5752,7 +6646,7 @@ var KBB_T = (function () {
     ph = t; syncMedia(t, true); drawPreview(); raf = requestAnimationFrame(tick);
   }
   function play() { if (playing || !vp || total() <= 0) return; if (ph >= total() - .05) ph = 0; playing = true; activeClip = null; playT0 = ph; playWall = performance.now(); $('v-play').textContent = '❚❚'; $('v-play').setAttribute('aria-label', 'Pause'); raf = requestAnimationFrame(tick); }
-  function stop() { playing = false; cancelAnimationFrame(raf); Object.keys(media).forEach(function (k) { var e = media[k].el; if (e && e.pause && !e.paused) e.pause(); }); var b = $('v-play'); if (b) { b.textContent = '▶'; b.setAttribute('aria-label', 'Play'); } }
+  function stop() { playing = false; cancelAnimationFrame(raf); Object.keys(media).forEach(function (k) { [media[k].el, media[k].lel].forEach(function (e) { if (e && e.pause && !e.paused) e.pause(); }); }); var b = $('v-play'); if (b) { b.textContent = '▶'; b.setAttribute('aria-label', 'Play'); } }
   function seekPreview(t) { if (t != null) ph = Math.max(0, Math.min(total(), t)); if (playing) { playT0 = ph; playWall = performance.now(); activeClip = null; } else syncMedia(ph, false); drawPreview(); }
   function tc(t) { t = Math.max(0, t || 0); var m = Math.floor(t / 60), s = t - m * 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); }
   function step(n) { stop(); var f = 1 / vp.fps; seekPreview(Math.round(ph / f) * f + n * f); }
@@ -5796,7 +6690,7 @@ var KBB_T = (function () {
       el.dataset.id = c.id; el.dataset.drag = 'clip'; el.style.left = (OFF + st[i] * pps) + 'px'; el.style.width = Math.max(4, (c.b - c.a) * pps) + 'px';
       el.title = m.name + ' · ' + tc(c.b - c.a);
       var w = Math.min(4000, Math.max(4, Math.round((c.b - c.a) * pps))), can = mk('canvas', 'v-th'); can.width = w; can.height = 46; paintClip(can, c, m); el.appendChild(can);
-      var nm = mk('span', 'v-cn', (c.mute && m.k === 'video' ? '🔇 ' : '') + m.name); el.appendChild(nm);
+      var nm = mk('span', 'v-cn', (c.mute && m.k === 'video' ? '🔇 ' : '') + (c.bgr ? '✂ ' : '') + m.name); el.appendChild(nm);
       var l = mk('i', 'v-ed l'); l.dataset.drag = 'trimL'; var r = mk('i', 'v-ed r'); r.dataset.drag = 'trimR'; el.appendChild(l); el.appendChild(r);
       vt.appendChild(el);
     });
@@ -5824,7 +6718,7 @@ var KBB_T = (function () {
     var p = mk('div', 'v-ph'); p.id = 'v-ph'; tlIn.appendChild(p); movePlayhead();
     $('v-zoomv').textContent = Math.round(pps) + ' px/s';
   }
-  function ovLabel(o) { return o.t === 'text' || o.t === 'badge' ? (o.txt || '…').replace(/\n/g, ' ') : o.t === 'prod' ? D.prods[o.p].n : o.t === 'icon' ? ICONS[o.ic][0] : o.t === 'pay' ? 'tabby / tamara' : o.t === 'logo' ? 'Logo' : 'Picture'; }
+  function ovLabel(o) { var lm = ovMedia(o); return o.t === 'text' || o.t === 'badge' ? (o.txt || '…').replace(/\n/g, ' ') : o.t === 'prod' ? D.prods[o.p].n : o.t === 'icon' ? ICONS[o.ic][0] : o.t === 'pay' ? 'tabby / tamara' : o.t === 'logo' ? 'Logo' : lm ? (o.bgr ? '✂ ' : '') + lm.name : 'Picture'; }
   function paintClip(can, c, m) {
     var x = can.getContext('2d'), H = can.height, th = m.thumbs || [];
     x.fillStyle = m.k === 'image' ? '#3A3340' : '#2B2630'; x.fillRect(0, 0, can.width, H);
@@ -5920,7 +6814,8 @@ var KBB_T = (function () {
       $('vs-badge').hidden = o.t !== 'badge'; if (o.t === 'badge') { setv('vs-btxt', o.txt); setv('vs-shape', o.shape); setv('vs-btc', o.tc); }
       $('vs-payr').hidden = o.t !== 'pay'; if (o.t === 'pay') setv('vs-pay', o.pay);
     }
-    ['vt', 'vs'].forEach(function (p) { if (!o) return; setv(p + '-s', o.s); setv(p + '-e', o.e); setv(p + '-ain', o.ain); setv(p + '-aout', o.aout); setv(p + '-op', o.op); setv(p + '-r', o.r); });
+    renderBgr();
+    ['vt', 'vs'].forEach(function (p) { if (!o) return; setv(p + '-bh', !!o.bh); setv(p + '-s', o.s); setv(p + '-e', o.e); setv(p + '-ain', o.ain); setv(p + '-aout', o.aout); setv(p + '-op', o.op); setv(p + '-r', o.r); });
     $('va-none').hidden = !!u; $('va-props').hidden = !u;
     if (u) { $('va-name').textContent = media[u.m].name; setv('va-vol', u.vol); setv('va-fi', u.fi); setv('va-fo', u.fo); setv('va-o', u.o); setv('va-a', u.a); setv('va-b', u.b); $('va-volv').textContent = u.vol + '%';
       var wc = $('va-wave'); wc.width = 600; wc.height = 60; var x = wc.getContext('2d'); x.clearRect(0, 0, 600, 60); paintWave(wc, media[u.m], 0, media[u.m].dur, '#7C5CFF'); x.fillStyle = 'rgba(124,92,255,.15)'; x.fillRect(u.a / media[u.m].dur * 600, 0, (u.b - u.a) / media[u.m].dur * 600, 60); }
@@ -5938,11 +6833,12 @@ var KBB_T = (function () {
       var m = media[id], it = mk('div', 'v-bi'), th = mk('div', 'v-bt');
       if (m.thumbs && m.thumbs[0]) { var c = mk('canvas'); c.width = m.thumbs[0].c.width; c.height = 64; c.getContext('2d').drawImage(m.thumbs[0].c, 0, 0); th.appendChild(c); } else th.textContent = m.k === 'audio' ? '♪' : m.k === 'image' ? '🖼' : '🎬';
       it.appendChild(th); var nm = mk('span', 'v-bn', m.name); nm.title = m.name; it.appendChild(nm);
-      it.appendChild(mk('span', 'v-bd', m.k === 'image' ? m.w + '×' + m.h : tc(m.dur) + (m.k === 'video' ? ' · ' + m.w + '×' + m.h : '')));
+      it.appendChild(mk('span', 'v-bd', (m.k === 'image' ? m.w + '×' + m.h : tc(m.dur) + (m.k !== 'audio' ? ' · ' + m.w + '×' + m.h : '')) + (m.k === 'seq' ? ' · PNG sequence' : '') + (m.alpha ? ' · see-through' : '')));
       var bs = mk('div', 'v-bb');
       if (m.k === 'audio') { var u = mk('button', 'btn sm', 'Use as music'); u.type = 'button'; u.onclick = function () { setMusic(id); showTab('audio'); }; bs.appendChild(u); }
       else { var a = mk('button', 'btn sm', '+ Timeline'); a.type = 'button'; a.onclick = function () { addClip(id); }; bs.appendChild(a); }
       if (m.k === 'image') { var ov = mk('button', 'btn sm', 'Overlay'); ov.type = 'button'; ov.onclick = function () { addOv({ t: 'img', im: 'm:' + id, w: 30 }); }; bs.appendChild(ov); }
+      if (isTimed(m)) { var ly = mk('button', 'btn sm', '+ Layer'); ly.type = 'button'; ly.title = 'Over the clips, from the playhead (a see-through cut-out stays see-through)'; ly.onclick = function () { addLayer(id); }; bs.appendChild(ly); }
       var x = mk('button', 'btn sm', '✕'); x.type = 'button'; x.title = 'Remove from the media bin'; x.setAttribute('aria-label', 'Remove ' + m.name); x.onclick = function () { removeMedia(id); }; bs.appendChild(x);
       it.appendChild(bs); bin.appendChild(it);
     });
@@ -5951,11 +6847,17 @@ var KBB_T = (function () {
     var used = vp.clips.some(function (c) { return c.m === id; }) || (vp.au && vp.au.m === id) || vp.ovs.some(function (o) { return o.im === 'm:' + id; });
     if (used && !confirm('This file is used in the video. Remove it and its clips?')) return;
     stop(); vp.clips = vp.clips.filter(function (c) { return c.m !== id; }); if (vp.au && vp.au.m === id) vp.au = null; vp.ovs = vp.ovs.filter(function (o) { return o.im !== 'm:' + id; });
-    var m = media[id]; delete media[id]; if (m) { if (m.el && m.el.pause) m.el.pause(); URL.revokeObjectURL(m.url); }
+    var m = media[id]; delete media[id]; if (m) { if (m.el && m.el.pause) m.el.pause(); if (m.lel) { m.lel.pause(); m.lel.removeAttribute('src'); m.lel.load(); } if (m.pv) m.pv.forEach(function (b) { if (b.close) b.close(); }); if (LK) { LK.drop(id + '|person'); LK.drop(id + '|subject'); } URL.revokeObjectURL(m.url); }
     VS.delMedia(id).catch(function () {}); sel = null; ph = Math.min(ph, total()); changed('rm');
+  }
+  function addLayer(id) {     // a moving layer: its own length from the playhead, as large as the frame allows
+    var m = media[id]; if (!m) return; var a = m.w / m.h, fw = vp.ab.w / vp.ab.h, w = a >= fw ? 100 : r3(100 * a / fw);
+    var t0 = ph, T = total(), e = vp.clips.length ? Math.min(T, t0 + m.dur) : t0 + m.dur; if (e - t0 < MIN) e = t0 + m.dur;
+    addOv({ t: 'img', im: 'm:' + id, w: w, s: r3(t0), e: r3(e), ain: 'none', aout: 'none' }); showTab('stick');
   }
   function addOv(o) {
     var t0 = ph, T = total(), base = { id: uid('o'), s: r3(t0), e: r3(t0 + (T - t0 >= 1 ? Math.min(4, T - t0) : 4)), x: 50, y: 50 };
+    if (o.s != null) { base.s = o.s; base.e = o.e; }
     var c = cleanOv(Object.assign(base, o)); if (!c) return; vp.ovs.push(c); sel = { k: 'ov', id: c.id }; changed('addov');
   }
   function listProjects() {
@@ -6014,8 +6916,29 @@ var KBB_T = (function () {
   function xui(on) { xbusy = on; $('vx-go').disabled = on; $('vx-png').disabled = on; $('vx-cancel').hidden = !on; $('vx-bar').hidden = !on; }
   function exportSources() {   // export-only elements: the preview's own stay where they are
     var els = {};
-    vp.clips.forEach(function (c) { var m = media[c.m]; if (els[c.m]) return; if (m.k === 'image') els[c.m] = m.el; else { var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url; els[c.m] = v; } });
+    function vid(m) { var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url; return v; }
+    vp.clips.forEach(function (c) { var m = media[c.m]; if (els[c.m] || m.k === 'seq') return; if (m.k === 'image') els[c.m] = m.el; else els[c.m] = vid(m); });
+    vp.ovs.forEach(function (o) { var m = ovMedia(o); if (m && m.k === 'video') els['o:' + o.id] = vid(m); });     // each video layer its own
     return Promise.all(Object.keys(els).map(function (id) { var v = els[id]; return v.tagName === 'VIDEO' ? new Promise(function (r) { if (v.readyState >= 2) r(); else { v.onloadeddata = r; v.onerror = r; } }) : 0; })).then(function () { return els; });
+  }
+  // the export's frame at t: the clip's and every layer's video seeked there, sequence frames decoded at full size
+  function exportSrc(els, cur) {
+    var f = function (c) { var m = media[c.m]; return m && m.k === 'seq' ? cur.c : els[c.m]; };
+    f.layer = function (o, m) { return m.k === 'video' ? els['o:' + o.id] : m.k === 'seq' ? cur[o.id] : m.el; };
+    return f;
+  }
+  function prepAt(t, els, cur) {
+    Object.keys(cur).forEach(function (k) { if (cur[k] && cur[k].close) cur[k].close(); delete cur[k]; });
+    if (t < 0) return Promise.resolve();
+    var ps = [], h = vp.clips.length ? clipAt(Math.min(t, total() - 1e-4)) : null, m = h && media[h.c.m];
+    if (m && m.k === 'video') ps.push(seekTo(els[h.c.m], h.local + .001));
+    if (m && m.k === 'seq') ps.push(createImageBitmap(m.frames[seqIdx(m, h.local)]).then(function (b) { cur.c = b; }, function () {}));
+    vp.ovs.forEach(function (o) {
+      var lm = ovMedia(o); if (!isTimed(lm) || t < o.s || t >= o.e) return; var lt = layerLocal(o, lm, t);
+      if (lm.k === 'video') ps.push(seekTo(els['o:' + o.id], lt + .001));
+      else ps.push(createImageBitmap(lm.frames[seqIdx(lm, lt)]).then(function (b) { cur[o.id] = b; }, function () {}));
+    });
+    return Promise.all(ps);
   }
   function freeSources(els) { Object.keys(els).forEach(function (id) { var v = els[id]; if (v.tagName === 'VIDEO') { v.removeAttribute('src'); v.load(); } }); }
   function fontsReady() { var fams = {}; vp.ovs.forEach(function (o) { if (o.fn) fams[(o.fi ? 'italic ' : '') + o.fw + ' 40px "' + FONTS[o.fn] + '"'] = 1; }); fams['700 40px Poppins'] = 1; return Promise.all(Object.keys(fams).map(function (f) { return document.fonts.load(f, 'Aa ب').catch(function () {}); })).then(function () { return document.fonts.ready; }); }
@@ -6033,7 +6956,8 @@ var KBB_T = (function () {
   function exportWC(T) {
     var W = vp.ab.w, H = vp.ab.h, fps = vp.fps, N = Math.max(1, Math.round(T * fps)), br = Math.round(Math.min(40e6, W * H * fps * ($('vx-q').value === 'high' ? .26 : .14))), t0 = performance.now(), audioOn = wantAudio();
     var muxer, venc, aenc, err = null, els, tm = {};
-    return Promise.all([pickCodecs(W, H, fps, br, audioOn), fontsReady(), exportSources()]).then(function (r) {
+    var cur = {};
+    return Promise.all([pickCodecs(W, H, fps, br, audioOn), fontsReady(), exportSources(), ensureMasks()]).then(function (r) {
       var vc = r[0][0], ac = r[0][1], noSound = false; els = r[2]; if (!vc) throw new Error('this browser has no H.264 encoder for ' + W + '×' + H);
       if (audioOn && !ac) { if (recType()) { freeSources(els); els = null; return exportRec(T); } noSound = true; }   // never drop the sound quietly
       progress(.01, audioOn ? 'Mixing the sound…' : 'Encoding…'); tm.prep = performance.now() - t0;
@@ -6047,7 +6971,7 @@ var KBB_T = (function () {
         }
         var can = mk('canvas'); can.width = W; can.height = H; var x = can.getContext('2d', { alpha: false }), i = 0, st = starts(), seeks = 0;
         var note = (abuf ? (ac.mux === 'aac' ? 'H.264 + AAC' : 'H.264 + Opus (no AAC encoder in this browser)') : 'H.264, no sound') + (noSound ? ' — this browser cannot encode sound' : '');
-        function srcOf(c) { return els[c.m]; }
+        var srcOf = exportSrc(els, cur), moving = hasMoving();
         function check() { if (err) throw err; if (xcancel) throw cancelled(); }
         tm.emit = 0; tm.draw = 0; tm.cbs = 0; tm.pauses = 0;
         function emit(t) {
@@ -6064,7 +6988,7 @@ var KBB_T = (function () {
             check(); if (i >= upto) return Promise.resolve();
             var t = i / fps, h = vp.clips.length ? clipAt(Math.min(t, T - 1e-4)) : null, m = h && media[h.c.m];
             if (m && m.k === 'video') seeks++;
-            return (m && m.k === 'video' ? seekTo(els[h.c.m], h.local + .001) : Promise.resolve()).then(function () { emit(t); return drain(); }).then(loop);
+            return prepAt(t, els, cur).then(function () { emit(t); return drain(); }).then(loop);
           })();
         }
         // fast: the clip PLAYS (muted, 0.2x-2x, as fast as this computer keeps up without dropping a frame) and each decoded frame is caught with requestVideoFrameCallback
@@ -6098,7 +7022,8 @@ var KBB_T = (function () {
         function clips(k) {
           check(); if (k >= vp.clips.length) return seekFrames(N);
           var c = vp.clips[k], m = media[c.m], upto = k === vp.clips.length - 1 ? N : Math.min(N, Math.ceil((st[k] + c.b - c.a) * fps - 1e-6));
-          return (m.k === 'video' && canPlay && upto - i > 3 ? playFrames(c, st[k], upto) : seekFrames(upto)).then(function () { return clips(k + 1); });
+          // exact seeks (no fast play-through) where a frame must be the very frame: a cut-out clip, moving layers
+          return (m.k === 'video' && canPlay && !moving && !c.bgr && upto - i > 3 ? playFrames(c, st[k], upto) : seekFrames(upto)).then(function () { return clips(k + 1); });
         }
         return clips(0).then(function () {
           tm.frames = performance.now() - t0; check(); return venc.flush().then(function () { return aenc ? aenc.flush() : 0; }).then(function () {
@@ -6107,11 +7032,11 @@ var KBB_T = (function () {
           });
         });
       });
-    }).then(function (r) { if (els) freeSources(els); return r; }, function (e) { if (els) freeSources(els); try { if (venc && venc.state !== 'closed') venc.close(); if (aenc && aenc.state !== 'closed') aenc.close(); } catch (x) {} throw e; });
+    }).then(function (r) { if (els) freeSources(els); prepAt(-1, {}, cur); return r; }, function (e) { if (els) freeSources(els); prepAt(-1, {}, cur); try { if (venc && venc.state !== 'closed') venc.close(); if (aenc && aenc.state !== 'closed') aenc.close(); } catch (x) {} throw e; });
   }
   function exportRec(T) {     // fallback: MediaRecorder, real time
     var W = vp.ab.w, H = vp.ab.h, type = recType(), els, actx, audioOn = wantAudio();
-    return Promise.all([fontsReady(), exportSources(), audioOn ? mixAudio(T) : null]).then(function (r) {
+    return Promise.all([fontsReady(), exportSources(), audioOn ? mixAudio(T) : null, ensureMasks()]).then(function (r) {
       els = r[1]; var abuf = r[2], can = mk('canvas'); can.width = W; can.height = H; var x = can.getContext('2d'), stream = can.captureStream(vp.fps);
       if (abuf) { actx = new (window.AudioContext || window.webkitAudioContext)(); var dst = actx.createMediaStreamDestination(), s = actx.createBufferSource(); s.buffer = abuf; s.connect(dst); dst.stream.getAudioTracks().forEach(function (t) { stream.addTrack(t); }); s.start(); }
       var rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: Math.min(16e6, W * H * 4) }), chunks = [];
@@ -6124,7 +7049,9 @@ var KBB_T = (function () {
           if (xcancel || t >= T) { Object.keys(els).forEach(function (k) { if (els[k].pause) els[k].pause(); }); rec.stop(); return; }
           var h = clipAt(Math.min(t, T - 1e-4)), v = h && els[h.c.m];
           if (v && v.tagName === 'VIDEO') { if (active !== h.c.id || Math.abs(v.currentTime - h.local) > .25) { v.currentTime = h.local; active = h.c.id; } if (v.paused) v.play().catch(function () {}); }
-          drawFrame(x, W, H, t, function (c) { return els[c.m]; }, null); progress(t / T, 'Recording ' + t.toFixed(1) + ' / ' + T.toFixed(1) + ' s — keep this tab open');
+          vp.ovs.forEach(function (o) { var lm = ovMedia(o), le = els['o:' + o.id]; if (!lm || t < o.s || t >= o.e) return; var lt = layerLocal(o, lm, t); if (lm.k === 'seq') seqAhead(lm, lt); else if (le) { if (Math.abs(le.currentTime - lt) > .25) le.currentTime = lt; if (le.paused) le.play().catch(function () {}); } });
+          var rs = function (c, local) { var cm = media[c.m]; return cm && cm.k === 'seq' ? seqPreview(cm, local) : els[c.m]; }; rs.layer = function (o, lm, lt) { return lm.k === 'video' ? els['o:' + o.id] : lm.k === 'seq' ? seqPreview(lm, lt) : lm.el; };
+          drawFrame(x, W, H, t, rs, null); progress(t / T, 'Recording ' + t.toFixed(1) + ' / ' + T.toFixed(1) + ' s — keep this tab open');
           requestAnimationFrame(frame);
         }
         rec.start(250); requestAnimationFrame(frame);
@@ -6134,10 +7061,11 @@ var KBB_T = (function () {
   function exportStill() {
     if (xbusy) return Promise.resolve(null); stop(); var W = vp.ab.w, H = vp.ab.h, t = ph, els;
     xui(true); progress(.2, 'Drawing the frame…');
-    return Promise.all([fontsReady(), exportSources()]).then(function (r) {
-      els = r[1]; var h = vp.clips.length ? clipAt(Math.min(t, total() - 1e-4)) : null;
-      return (h && media[h.c.m].k === 'video' ? seekTo(els[h.c.m], h.local + .001) : Promise.resolve()).then(function () {
-        var can = mk('canvas'); can.width = W; can.height = H; drawFrame(can.getContext('2d'), W, H, t, function (c) { return els[c.m]; }, null);
+    var cur = {};
+    return Promise.all([fontsReady(), exportSources(), ensureMasks()]).then(function (r) {
+      els = r[1];
+      return prepAt(t, els, cur).then(function () {
+        var can = mk('canvas'); can.width = W; can.height = H; drawFrame(can.getContext('2d'), W, H, t, exportSrc(els, cur), null); prepAt(-1, {}, cur);
         return new Promise(function (res) { can.toBlob(res, 'image/png'); });
       });
     }).then(function (b) { freeSources(els); return S.Store.save(fileBase() + '-frame-' + tc(t).replace(/[:.]/g, '-') + '.png', b).then(function () { progress(1, 'Frame saved · PNG ' + W + '×' + H); return b; }); })
@@ -6254,6 +7182,7 @@ var KBB_T = (function () {
     onOv('vs', '-w', function (o, e) { o.w = num(e.value, 2, 200, 30); }); onOv('vs', '-col', function (o, e) { o.col = hex(e.value, o.col); });
     onOv('vs', '-btxt', function (o, e) { o.txt = str(e.value, 300); }); onOv('vs', '-shape', function (o, e) { if (has(BADGES, e.value)) o.shape = e.value; }, 'change'); onOv('vs', '-btc', function (o, e) { o.tc = hex(e.value, o.tc); });
     onOv('vs', '-pay', function (o, e) { o.pay = has({ both: 1, tabby: 1, tamara: 1 }, e.value) ? e.value : 'both'; }, 'change');
+    ['vt', 'vs'].forEach(function (p) { onOv(p, '-bh', function (o, e) { if (e.checked) o.bh = true; else delete o.bh; }, 'change'); });
     $('vt-presets').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (!b) return; var o = selOv(); var P = TSTYLE[b.dataset.k]; if (o && o.t === 'text') { Object.assign(o, P); changed('preset'); } else addText(Object.assign({}, P)); });
     $('vt-add-en').onclick = function () { addText({ txt: 'Glow Week · up to 50% off' }); };
     $('vt-add-ar').onclick = function () { addText({ txt: 'تخفيضات الجمعة البيضاء', fn: 'cairo', fw: 900 }); };
@@ -6264,6 +7193,71 @@ var KBB_T = (function () {
     onAu('va-a', function (u, e) { u.a = r3(num(e.value, 0, u.b - MIN, u.a)); }, 'change'); onAu('va-b', function (u, e) { u.b = r3(num(e.value, u.a + MIN, media[u.m].dur, u.b)); }, 'change');
     $('va-rm').onclick = function () { vp.au = null; sel = null; changed('aurm'); };
     $('va-allmute').onclick = function () { var all = vp.clips.every(function (q) { return q.mute || media[q.m].k !== 'video'; }); vp.clips.forEach(function (q) { q.mute = !all; }); changed('allmute'); status(all ? 'Clip sound is back on' : 'Sound removed from every clip', 'ok'); };
+  }
+  // what the panel works on: the selected clip, or the selected picture / video layer (a PNG sequence is a cut-out already)
+  function bgrTarget() {
+    var c = selClip(); if (c) { var m = media[c.m]; return m && m.k !== 'seq' ? { it: c, m: m, clip: true } : null; }
+    var o = selOv(), lm = o && ovMedia(o); return lm && lm.k !== 'seq' ? { it: o, m: lm, clip: false } : null;
+  }
+  function brandCols() { var b = S.brand() || {}; return [hex(b.c1, '#E8306F'), hex(b.c2, '#1F1B1E')]; }
+  // the green / blue screen colour, measured from a frame's border by the video editor's autoKeyColor (bg.js)
+  function measureKey(T) {
+    var g = grabber(T.m);
+    return g.get(T.clip ? T.it.a + .05 : .05).then(function (src) {
+      var c = mk('canvas'); c.width = 64; c.height = 64; var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(src, 0, 0, 64, 64);
+      var d = x.getImageData(0, 0, 64, 64).data, px = new Float32Array(64 * 64 * 3); for (var i = 0, j = 0; i < d.length; i += 4, j += 3) { px[j] = d[i] / 255; px[j + 1] = d[i + 1] / 255; px[j + 2] = d[i + 2] / 255; }   // 0..1, as analyze.js samples
+      g.free(); return LK.autoKeyColor(px, 64).toUpperCase();
+    }, function (e) { g.free(); throw e; });
+  }
+  function removeBg(key) {
+    var T = bgrTarget(); if (!T || !CUT || !LK) return Promise.resolve(null);
+    key = has({ person: 1, subject: 1, chroma: 1 }, key) ? key : 'person';
+    var it = T.it, prev = it.bgr;
+    var pre = key !== 'subject' ? Promise.resolve() : CUT.subjectState().then(function (s) {
+      if (s === 'standalone') throw new Error('Main subject (products) needs KBB Studio — open this video there. Person and Green screen work here, offline.');
+      if (s === 'error') throw new Error('KBB Studio’s cut-out model could not start');
+      if (s === 'missing') { status('Getting the cut-out model (4.6 MB, once)…'); return CUT.installSubject(function (f) { status('Getting the cut-out model… ' + Math.round(f * 100) + '%'); }); }
+    });
+    return pre.then(function () { return key === 'chroma' && !(prev && prev.key === 'chroma') ? measureKey(T) : null; }).then(function (kc) {
+      var b = cleanBgr(Object.assign({ mode: 'none', colors: brandCols(), color: brandCols()[1] }, prev || {}, { key: key }, kc ? { keyColor: kc } : {}));
+      delete skipMask[T.m.id + '|' + key];
+      it.bgr = b; changed('bgr-key');
+      status(key === 'chroma' ? 'Green screen keyed (' + b.keyColor + ') — Ctrl+Z undoes it' : 'Removing the background…');
+      return ensureMasks().then(function () { return b; });
+    }).catch(function (e) { status('Background not removed: ' + ((e && e.message) || 'try again'), 'warn'); return null; });
+  }
+  function setBgr(patch, key) { var T = bgrTarget(); if (!T || !T.it.bgr) return; T.it.bgr = cleanBgr(Object.assign({}, T.it.bgr, patch)); changed(key || 'bgr'); }
+  function renderBgr() {
+    var box = $('v-bgr'); if (!box) return; var T = bgrTarget();
+    box.hidden = !T || !CUT; if (!T || !CUT) return;
+    // right under the clip's / layer's name, where it is seen first
+    var home = T.clip ? $('vc-props') : $('vs-props'), at = home.firstElementChild && home.firstElementChild.nextElementSibling; if (box.parentNode !== home) home.insertBefore(box, at);
+    var b = T.it.bgr, st = CUT.inside() ? null : 'standalone';
+    document.querySelectorAll('#vb-key button').forEach(function (x) { x.setAttribute('aria-pressed', String(!!b && b.key === x.dataset.v)); if (x.dataset.v === 'subject') x.hidden = st === 'standalone'; });
+    $('vb-on').hidden = !b;
+    $('vb-note').textContent = st === 'standalone' ? 'Products (📦 Main subject) need KBB Studio. Person and Green screen work here, offline. ' + (b ? 'Transparent shows the Empty-space fill and any layer set to “Behind the video”.' : '')
+      : b ? (b.mode === 'none' ? 'Transparent: the Empty-space fill (top bar) and any layer set to “Behind the video” show through.' : 'Ctrl+Z undoes · ↺ Restore background brings it back.')
+      : 'Keeps the person, the product or what is in front of a green screen. Analysed once per clip, on this computer.';
+    if (!b) return;
+    document.querySelectorAll('#vb-mode button').forEach(function (x) { x.setAttribute('aria-pressed', String(b.mode === x.dataset.v)); });
+    $('vb-col-r').hidden = b.mode !== 'color'; $('vb-grad-r').hidden = b.mode !== 'gradient';
+    setv('vb-col', b.color); setv('vb-g1', b.colors[0]); setv('vb-g2', b.colors[1]);
+    setv('vb-fea', Math.round(b.feather * 100)); setv('vb-grow', Math.round(b.grow * 100)); setv('vb-smo', Math.round(b.smooth * 100)); setv('vb-wrap', Math.round(b.wrap * 100));
+    $('vb-feav').textContent = Math.round(b.feather * 100); $('vb-growv').textContent = Math.round(b.grow * 100); $('vb-smov').textContent = Math.round(b.smooth * 100); $('vb-wrapv').textContent = Math.round(b.wrap * 100);
+    $('vb-wrap-r').hidden = b.mode === 'none'; $('vb-smo-r').hidden = b.key === 'chroma'; $('vb-chroma').hidden = b.key !== 'chroma';
+    if (b.key === 'chroma') { setv('vb-kc', b.keyColor); setv('vb-tol', Math.round(b.tol * 100)); setv('vb-spill', Math.round(b.spill * 100)); }
+  }
+  function bindBgr() {
+    $('vb-key').addEventListener('click', function (ev) { var x = ev.target.closest('button'); if (x) removeBg(x.dataset.v); });
+    $('vb-mode').addEventListener('click', function (ev) { var x = ev.target.closest('button'); if (x) setBgr({ mode: x.dataset.v }, 'bgr-mode'); });
+    $('vb-off').onclick = function () { var T = bgrTarget(); if (!T || !T.it.bgr) return; delete T.it.bgr; changed('bgr-off'); status('Background restored — Ctrl+Z removes it again', 'ok'); };
+    [['vb-fea', 'feather', 100], ['vb-grow', 'grow', 100], ['vb-smo', 'smooth', 100], ['vb-wrap', 'wrap', 100], ['vb-tol', 'tol', 100], ['vb-spill', 'spill', 100]].forEach(function (q) {
+      $(q[0]).addEventListener('input', function () { var o = {}; o[q[1]] = +this.value / q[2]; setBgr(o, q[0]); });
+    });
+    $('vb-col').addEventListener('input', function () { setBgr({ color: this.value }, 'vb-col'); });
+    $('vb-g1').addEventListener('input', function () { var T = bgrTarget(); if (T && T.it.bgr) setBgr({ colors: [this.value, T.it.bgr.colors[1]] }, 'vb-g1'); });
+    $('vb-g2').addEventListener('input', function () { var T = bgrTarget(); if (T && T.it.bgr) setBgr({ colors: [T.it.bgr.colors[0], this.value] }, 'vb-g2'); });
+    $('vb-kc').addEventListener('input', function () { setBgr({ keyColor: this.value }, 'vb-kc'); });
   }
   var TSTYLE = {
     bold: { fn: 'poppins', fw: 900, tc: '#FFFFFF', pill: false, ol: 0, sh: 60, fi: false, up: true },
@@ -6314,7 +7308,7 @@ var KBB_T = (function () {
     $('vx-go').onclick = function () { exportVideo(); }; $('vx-png').onclick = function () { exportStill(); }; $('vx-cancel').onclick = function () { xcancel = true; };
     $('vx-fps').onchange = function () { vp.fps = FPS_LIST.indexOf(+this.value) >= 0 ? +this.value : 30; changed('fps'); };
     $('vx-noaudio').onchange = function () { renderPanels(); };
-    bindProps(); buildStickers(); bindPreview(); bindTimeline();
+    bindProps(); bindBgr(); buildStickers(); bindPreview(); bindTimeline();
     document.addEventListener('keydown', function (ev) {
       if (document.body.dataset.mode !== 'video') return;
       var inField = /input|select|textarea/i.test((document.activeElement || {}).tagName || ''), mod = ev.ctrlKey || ev.metaKey, k = ev.key.toLowerCase();
@@ -6361,6 +7355,7 @@ var KBB_T = (function () {
     get vp() { return vp; }, get media() { return media; }, get ph() { return ph; }, get sel() { return sel; },
     select: function (k, id) { sel = { k: k, id: id }; renderAll(); }, seek: function (t) { stop(); seekPreview(t); }, split: split, removeSel: removeSel, duplicate: duplicate, changed: changed, undo: undo, redo: redo,
     addText: addText, addOv: addOv, exportVideo: exportVideo, exportStill: exportStill, saveNow: saveNow, total: total, setZoom: setZoom, showTab: showTab, cleanVP: cleanVP,
+    removeBg: removeBg, setBgr: setBgr, ensureMasks: ensureMasks, get maskStats() { return maskStats; }, drawFrame: function (x, W, H, t) { drawFrame(x, W, H, t, previewSrc, null); }, preview: function () { return cv; }, redraw: function () { drawPreview(); },
     set forceFallback(v) { forceFallback = !!v; renderPanels(); }, set forceSeek(v) { forceSeek = !!v; }, hasWC: hasWC, importFiles: importFiles, play: play, stop: stop
   };
   var start = lsGet('mode'); if (start === 'video' || /[?#&]video\b/.test(location.search + location.hash)) {
