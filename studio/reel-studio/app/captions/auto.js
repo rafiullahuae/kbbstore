@@ -187,7 +187,7 @@ export async function autoCaptions(ctx, opts = {}) {
     : `Captions for the whole video (${plural(targets.length, 'clip')})`;
   const extra = [r.dropped.length ? `${r.dropped.length} invented words removed` : '', r.fixes.length ? `${r.fixes.length} names spelled right` : '',
     r.speakers > 1 ? `${r.speakers} speakers` : ''].filter(Boolean).join(', ');
-  ctx.toast?.(`${head}: ${words.length} words (${r.lang})${extra ? ' · ' + extra : ''}.`, 'ok', 4500);
+  if (words.length || !quiet.length) ctx.toast?.(`${head}: ${words.length} words (${r.lang})${extra ? ' · ' + extra : ''}.`, 'ok', 4500);
   if (skipped.length || quiet.length) ctx.toast?.(`No captions for ${why([...skipped, ...quiet])}.`, 'warn', 8000);
   return `${words.length} words`;
 }
