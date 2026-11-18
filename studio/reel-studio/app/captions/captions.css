@@ -20,6 +20,8 @@
 .rs-cap-btn.danger { color: #ff8a8a; }
 .rs-cap-progress { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; margin-top: 8px; }
 .rs-cap-progress[hidden] { display: none; }
+.rs-cap-new[hidden] { display: none; }
+.rs-cap-new { font-size: 12px; }
 .rs-cap-barlabel { grid-column: 1; color: var(--c-mute); }
 .rs-cap-bar { grid-column: 1; height: 6px; background: var(--c-bg2); border-radius: 3px; overflow: hidden; }
 .rs-cap-bar i { display: block; height: 100%; width: 0; background: var(--c-acc); transition: width .2s; }
