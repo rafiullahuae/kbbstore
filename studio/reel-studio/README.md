@@ -57,7 +57,20 @@ are for features coming in the next update, so you can leave them unticked for n
   ramping**. The same on the timeline: **right-click a clip → Speed**, and **Shift-drag a clip's edge** to stretch it
   instead of trimming. Captions, stickers, theme elements and transitions on the clip stay on the same moment of the
   footage; the clips after it move up or along. iPhone slo-mo (120/240 fps) shows every real frame when slowed.
-* **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 30 or 60 fps; also 1:1, 4:5 or 16:9 if you tick them).
+* **🎙 Enhance voice** (in **Do it for me**, and **🔊 Audio → ✨ Enhance voice**): background noise (fans, air-con,
+  traffic, wind, music beds), mains hum (50/60 Hz, found by itself), room echo, voice EQ, de-ess, compression and
+  −14 LUFS social loudness with a true-peak limiter at −1 dBTP. **Strength** goes from *Light* (noise −14 dB) to
+  *Strong* (all of it, plus a voice gate); **Listen: A · Before / B · After** compares in the preview; **Advanced**
+  switches each stage. Rendered once offline: the preview plays exactly what the export carries, at any speed.
+  **🎵 Duck music under speech** dips the music while someone talks (Enhance voice does it for new music).
+* **✨ Enhance video** (in **Do it for me**, and **Inspector → 🎚 Adjust** for the selected clip): measures each clip and
+  fixes exposure and white balance, lifts dark footage, removes grain, sharpens and keeps skin tones natural — each
+  part has its own switch. Below it: **Light** (exposure, brightness, contrast, highlights, shadows, whites, blacks),
+  **Colour** (temperature, tint, saturation, vibrance) and **Detail** (sharpness, clarity, denoise, vignette), for
+  *This clip* or *All clips*; double-click a slider (or ↺) to zero it. **◧ Before / after** splits the preview — drag
+  the divider. **Upscale low-res clip on export** enlarges small clips with a sharp Lanczos filter.
+* **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 720p to 4K; 30 or 60 fps; quality up to *Max*; also 1:1,
+  4:5 or 16:9 if you tick them).
 
 * **⏱ Sync (word-perfect captions):** after **Auto captions** every word is moved to the exact moment it is said
   (a speech model finds each word in the sound, then its start snaps to where the voice begins it) — one undo step,

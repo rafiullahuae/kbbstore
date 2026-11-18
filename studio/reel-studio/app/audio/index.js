@@ -15,6 +15,10 @@ import { findItem, findMedia, createItem, itemEnd, projectDuration, tlTime } fro
 import { EQ_PRESETS, wav } from './dsp.js';
 import { cleanVoice as cleanInWorker, master, measure } from './client.js';
 import { audioPanel } from './panel.js';
+import { DEFAULT_VOICE, STAGES, strengthLabel, strengthDb, speechRanges } from './voice.js';
+import { MediaStore } from '../core/media.js';
+import { duckKeys } from '../auto/lib/music.js';
+import { speechOnTimeline } from '../auto/commands.js';
 
 export const PLATFORMS = {
   instagram: { label: 'Instagram Reels', lufs: -14, tp: -1 },
@@ -36,7 +40,8 @@ export function voiceMedia(ctx, ids) {
 export async function cleanVoice(ctx, opt = {}) {
   const p = ctx.project, list = opt.mediaIds ? opt.mediaIds.map((id) => findMedia(p, id)).filter(Boolean) : voiceMedia(ctx);
   if (!list.length) throw new Error('No clip with sound to clean');
-  const settings = { denoise: opt.denoise ?? 1, eq: opt.eq || 'clear', deess: opt.deess ?? 0.5, level: opt.level !== false, compress: opt.compress !== false, dehum: opt.dehum !== false };
+  const settings = opt.v === 2 ? { v: 2, strength: opt.strength, stages: opt.stages, eq: opt.eq, deess: opt.deess, reverb: opt.reverb, lufs: opt.lufs, tp: opt.tp }
+    : { denoise: opt.denoise ?? 1, eq: opt.eq || 'clear', deess: opt.deess ?? 0.5, level: opt.level !== false, compress: opt.compress !== false, dehum: opt.dehum !== false };
   const cmds = [], report = [];
   for (const m of list) {
     ctx.progress?.(`Cleaning the voice in ${m.name}…`, null);
@@ -48,6 +53,7 @@ export async function cleanVoice(ctx, opt = {}) {
     let src = path;
     if (ctx.engine?.available) await ctx.engine.writeFile(path, blob); else src = URL.createObjectURL(blob);
     const r = { floorBefore: +stats.floorBefore.toFixed(1), floorAfter: +stats.floorAfter.toFixed(1), lufs: +stats.lufs.toFixed(1), hum: stats.hum };
+    if (settings.v === 2) Object.assign(r, { tp: +(+stats.tp).toFixed(1), stages: stats.stages, humDb: stats.humDb });
     cmds.push(ops.setMedia(m.id, { audio: { src, settings, stats: r } }, 'Clean voice'));
     report.push({ media: m.id, name: m.name, ...r });
   }
@@ -59,6 +65,39 @@ export function undoVoice(ctx, { mediaIds } = {}) {
   const list = (mediaIds ? mediaIds.map((id) => findMedia(ctx.project, id)) : ctx.project.media).filter((m) => m?.audio);
   if (list.length) ctx.history.apply(ops.batch('Original sound', list.map((m) => ops.setMedia(m.id, { audio: null }))));
   return list.length;
+}
+
+// ── ✨ Enhance voice: the switchable chain (voice.js), rendered once into a WAV the preview plays and the export mixes ──
+export { DEFAULT_VOICE, STAGES, strengthLabel, strengthDb };
+export async function enhanceVoice(ctx, opt = {}) {
+  const settings = Object.assign({}, DEFAULT_VOICE, opt, { v: 2, stages: Object.assign({}, DEFAULT_VOICE.stages, opt.stages || {}) });
+  delete settings.mediaIds;
+  const report = await cleanVoice(ctx, Object.assign({ mediaIds: opt.mediaIds }, settings));
+  // music under the voice dips while he speaks (only music that has no ducking of its own yet)
+  let ducked = 0;
+  if (opt.duck !== false) { try { ducked = await duckMusic(ctx, { onlyNew: true }); } catch (e) { console.warn('[audio] ducking', e); } }
+  return Object.assign(report, { ducked });
+}
+/** A/B: hear the original sound (true) or the enhanced one (false) in the preview; nothing in the project changes */
+export function hearOriginal(on) { MediaStore.hearOriginal = !!on; bus.emit('audio:ab', { original: !!on }); window.kbbEditor?.preview?.draw?.(); return !!on; }
+export const hearingOriginal = () => !!MediaStore.hearOriginal;
+
+/** music dips under speech: volume keyframes on every music item (one undo step). onlyNew: skip music already ducked */
+export async function duckMusic(ctx, { onlyNew = false, depth = 0.3 } = {}) {
+  const p = ctx.project, music = p.tracks.filter((t) => t.kind === 'music').flatMap((t) => t.items).filter((i) => i.media && !(onlyNew && i.kf?.volume?.length));
+  if (!music.length) return 0;
+  let speech = [];
+  for (const m of voiceMedia(ctx, [])) {
+    const a = await ctx.media.decodeAudio(m.id); if (!a) continue;
+    speech = speech.concat(speechOnTimeline(p, m.id, speechRanges(a.mono16k, 16000)));
+  }
+  if (!speech.length) return 0;
+  speech.sort((x, y) => x[0] - y[0]);
+  ctx.history.apply(ops.batch('Duck music under speech', music.map((it) => {
+    const base = it.volume ?? 1;   // the keyframes carry the volume itself (as Auto music writes them)
+    return ops.setItems([{ id: it.id, props: { kf: Object.assign({}, it.kf, { volume: duckKeys(speech, it, { base, duck: base * depth }) }) } }], 'Duck music');
+  })));
+  return music.length;
 }
 
 // ── platform loudness, on export ──
@@ -186,5 +225,14 @@ export async function riserBeforeReveal(ctx, { at = null, hit = true } = {}) {
 registerModule({
   id: 'audio', label: 'Audio', icon: '🔊',
   tab: { label: '🔊 Audio', order: 20 },
-  panel: (el, ctx) => audioPanel(el, ctx, { cleanVoice, undoVoice, setLoudness, measureMix, loudnessReport, sfxOnCuts, beatSync, riserBeforeReveal, voiceMedia, PLATFORMS }),
+  panel: (el, ctx) => audioPanel(el, ctx, { cleanVoice, undoVoice, setLoudness, measureMix, loudnessReport, sfxOnCuts, beatSync, riserBeforeReveal, voiceMedia, PLATFORMS, enhanceVoice, hearOriginal, hearingOriginal, duckMusic }),
+});
+// in the editor's "Do it for me" bar
+registerModule({
+  id: 'enhance-voice', label: 'Enhance voice', icon: '🎙',
+  run: async (ctx) => {
+    const r = await enhanceVoice(ctx, {});
+    window.kbbEditor?.showSide?.('mod:audio');
+    return r.map((x) => `🎙 ${x.name}: noise ${x.floorBefore} → ${x.floorAfter} dB, ${x.lufs} LUFS`).join(' · ') + (r.ducked ? ` · music ducked under speech` : '') + '. A/B and every stage: 🔊 Audio.';
+  },
 });

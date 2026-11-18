@@ -18,6 +18,7 @@ export const QUALITY = {
   small: { label: 'Small file', bpp: 0.07 },
   standard: { label: 'Standard', bpp: 0.12 },
   high: { label: 'High', bpp: 0.2 },
+  max: { label: 'Max', bpp: 0.32, cap: 100e6 },     // near-transparent: for upscaled / 4K masters
 };
 
 function avcLevel(W, H, fps) {
@@ -136,7 +137,7 @@ export async function exportMp4(project, media, opts = {}) {
   const T = opts.duration || projectDuration(project);
   if (T <= 0) throw new Error('The timeline is empty');
   const N = Math.max(1, Math.round(T * fps));
-  const bitrate = Math.round(Math.min(50e6, W * H * fps * q.bpp));
+  const bitrate = Math.round(Math.min(q.cap || 50e6, W * H * fps * q.bpp));
   const progress = opts.onProgress || (() => {});
   const signal = opts.signal;
   const check = () => { if (signal?.aborted) throw cancelled(); if (err) throw err; };

@@ -120,7 +120,7 @@ export class MediaStore {
   }
   /** the <audio> element playing a media's replacement sound (media.audio.src), or null */
   audioElement(m) {
-    if (!m?.audio?.src) return null;
+    if (!m?.audio?.src || MediaStore.hearOriginal) return null;   // A/B in the Audio tab: the original sound for a moment
     const key = 'audio:' + m.audio.src;
     let el = this.els.get(key);
     if (!el) { el = document.createElement('audio'); el.preload = 'auto'; el.src = this.url({ src: m.audio.src }); this.els.set(key, el); }

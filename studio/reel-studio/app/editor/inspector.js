@@ -8,6 +8,7 @@ import { h, clear, slider, field, select, seg, fmtDur } from './ui.js';
 import { STICKERS } from './items.js';
 import { bounds } from './preview.js';
 import { speedSection } from './speed.js';
+import { inspectorSections } from '../core/modules.js';
 // the design-family elements (their placeholder words and trades), read once the themes module has loaded
 let FAM_ELS = null; import('../themes/elements.js').then((m) => { FAM_ELS = m.ELEMENTS.filter((d) => d.fam); }).catch(() => {});
 
@@ -122,6 +123,7 @@ export class Inspector {
     if (/^theme\./.test(item.type)) this.themePanel(item, track);
     if (item.type === 'clip' || item.type === 'audio') this.timingPanel(item, m);
     if (m?.hasAudio && (item.type === 'clip' || item.type === 'audio')) this.audioPanel(item);
+    for (const sec of inspectorSections(item, track, m)) { try { const el = sec.render(ed.context(), item, track, m); if (el) this.el.append(el); } catch (e) { console.warn('[inspector]', sec.id, e); } }
     if (item.type === 'clip') { this.lookPanel(item); this.cropZoomPanel(item, m); }
     if (item.type !== 'audio' && item.type !== 'caption') this.transformPanel(item, m);
     if (item.type !== 'audio' && !(m?.hasAudio)) this.fadePanel(item);
@@ -205,14 +207,19 @@ export class Inspector {
       // a filter preset replaces only the colour filters: other effects on the clip (punch-ins, GPU looks) stay
       on: { click: () => { const keep = (item.fx || []).filter((f) => !['brightness', 'contrast', 'saturate', 'hue', 'blur', 'grayscale', 'sepia', 'warmth'].includes(f.type)); this.set(item, { fx: [...keep, ...structuredClone(FILTER_PRESETS[name])], look: name }, 'Filter'); this.seal(); this.render(true); } },
     }, name[0].toUpperCase() + name.slice(1))));
-    this.el.append(this.section('Look',
+    // the quick CSS filters (older projects use them); the GPU sliders live in 🎚 Adjust above, so this stays folded
+    // unless the clip already uses one
+    const used = (item.fx || []).some((f) => ['brightness', 'contrast', 'saturate', 'hue', 'blur', 'grayscale', 'sepia', 'warmth'].includes(f.type));
+    const sec = this.section('Quick filters',
       chips,
       slider({ label: 'Brightness', min: 0.5, max: 1.5, value: get('brightness', 1), fmt: pct, onInput: (v) => setFx('brightness', v, 1), onDone: this.seal }),
       slider({ label: 'Contrast', min: 0.5, max: 1.5, value: get('contrast', 1), fmt: pct, onInput: (v) => setFx('contrast', v, 1), onDone: this.seal }),
       slider({ label: 'Saturation', min: 0, max: 2, value: get('saturate', 1), fmt: pct, onInput: (v) => setFx('saturate', v, 1), onDone: this.seal }),
       slider({ label: 'Warmth', min: -1, max: 1, value: get('warmth', 0), fmt: (v) => (v > 0 ? '+' : '') + Math.round(v * 100), onInput: (v) => setFx('warmth', v, 0), onDone: this.seal }),
       slider({ label: 'Blur', min: 0, max: 30, step: 0.5, value: get('blur', 0), fmt: (v) => v + ' px', onInput: (v) => setFx('blur', v, 0), onDone: this.seal }),
-    ));
+    );
+    sec.open = used;
+    this.el.append(sec);
   }
 
   cropZoomPanel(item, m) {

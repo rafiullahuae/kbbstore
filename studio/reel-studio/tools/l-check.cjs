@@ -189,7 +189,7 @@ function makeClips() {
   await tab('audio'); await page.waitForTimeout(300);
   await shot('l-01-audio-before');
   let t = Date.now();
-  await page.click('.lk-btns .btn.primary:has-text("Clean up voice")');
+  await page.click('.lk-btns .btn.primary:has-text("Enhance voice")');
   await page.waitForFunction(() => window.kbbEditor.project.media[0].audio?.src, null, { timeout: 120000 });
   const clean = await ev(() => window.kbbEditor.project.media[0].audio);
   ok(clean.src.endsWith('.wav') && fs.existsSync(path.join(STUDIO, clean.src)), `Clean up voice (one click) → ${clean.src.split('/').pop()} in ${secs(t)}; in-app stats ${JSON.stringify(clean.stats)}`);

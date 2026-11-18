@@ -112,5 +112,11 @@ export function registerKey(k) { keys.set(String(k.key).toLowerCase(), k); }
 export const keyBinding = (key) => keys.get(String(key).toLowerCase()) || null;
 export const listKeys = () => [...keys.values()];
 
+// A section a module adds to the inspector for ONE selected item (e.g. Look's "🎚 Adjust" on a clip):
+// registerInspectorSection({ id, when(item, track, media) -> bool, render(ctx, item, track, media) -> Element }).
+const inspSecs = new Map();
+export function registerInspectorSection(s) { inspSecs.set(s.id, s); }
+export const inspectorSections = (item, track, media) => [...inspSecs.values()].filter((s) => { try { return !!s.when(item, track, media); } catch { return false; } });
+
 /** module entry files the editor tries to import at start (missing files are fine) */
 export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js', '../stock/index.js', '../designs/index.js', '../themes/index.js', '../sync/index.js', '../cutaways/index.js'];
