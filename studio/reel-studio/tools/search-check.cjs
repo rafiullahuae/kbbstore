@@ -158,7 +158,7 @@ const TYPO = [
   ['trimm', /^Trim a clip$/], ['slowmo', /^Speed$/], ['captoin', /[Cc]aption/], ['enhanse voice', /^Enhance voice$/], ['transitons', /^Transitions$/],
   ['dupliacte', /^Duplicate$/], ['exprot', /^Export$/], ['bigger text', /size|Text: words/i], ['slow mo', /^Speed$/], ['noise', /Enhance voice|Noise strength/],
   ['logo', /brand kit|Companies/], ['arabic', /Arabic|Translate/], ['remove background', /^Remove background$/], ['cutout', /^Remove background$/],
-  ['subtitles', /[Cc]aption/], ['color grade', /Colour|Look/], ['fps', /Frame rate|fps/], ['green screen', /^Remove background$/], ['make it faster', /^Speed/],
+  ['subtitles', /[Cc]aption/], ['color grade', /Colour|Look/], ['fps', /Frame rate|fps/], ['green screen', /^(Remove background|Green screen)/], ['transparent background', /^Transparent background/], ['remove background', /^Remove background/], ['make it faster', /^Speed/],
   ['ترجمة', /Translate|Arabic/], ['قص', /^Split$|Trim/], ['تصدير', /^Export$/], ['موسيقى', /Music/], ['عربي', /Arabic|عربي|Translate/],
   ['older engine', /older engine/i], ['where are my files', /Where are my files|Folders/], ['4k', /4K/], ['lufs', /Loudness/],
 ];
