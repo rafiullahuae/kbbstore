@@ -16,7 +16,7 @@ import { Bin } from './bin.js';
 import { exportDialog } from './exportdlg.js';
 import { clipFromMedia, trackEnd, reflowTo } from './items.js';
 import { prepareRender } from '../core/render.js';
-import { splitCmd } from './edit-ops.js';
+import { splitCmd } from './edit-ops.js';   // splits through core/retime.js splitProps (ramps, reverse, freeze)
 import { timelineKey } from './tl-drag.js';
 
 /** a right-column tab label "🎨 Look" as an icon over a word (editor.css .side-tab); textContent stays "🎨 Look" */

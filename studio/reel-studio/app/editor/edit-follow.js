@@ -14,7 +14,8 @@
 // worked out from the layout BEFORE each command, so old projects need nothing stored and open unchanged.
 
 import { registerHistoryHook } from '../core/history.js';
-import { itemDur, itemEnd, clone } from '../core/project.js';
+import { itemDur, itemEnd, clone, srcTime } from '../core/project.js';
+import { retimeSig } from '../core/retime.js';
 import { mainTrack, cutsOf, isTransition, transitionOnCut, tlOf } from './edit-ops.js';
 
 const FOLLOW_TYPES = new Set(['theme.el', 'text', 'sticker', 'shape']);
@@ -22,7 +23,7 @@ const EPS = 0.02;
 
 /** clips on the main track, as plain snapshots */
 const mainClips = (p) => (mainTrack(p)?.items || []).filter((c) => c.type === 'clip');
-const sigOf = (clips) => clips.map((c) => `${c.id}:${c.media}:${c.t0.toFixed(4)}:${c.in.toFixed(4)}:${c.out.toFixed(4)}:${c.speed || 1}`).join(';');
+const sigOf = (clips) => clips.map((c) => `${c.id}:${c.t0.toFixed(4)}:${retimeSig(c)}`).join(';');
 // theme-placed items (auto 'theme') are re-derived by themes/followReel; a sound effect rides its moment like an element
 const followsClip = (tr, it) => !tr.locked && it.auto !== 'theme' && !it.style?.whole &&
   ((FOLLOW_TYPES.has(it.type) && tr.kind !== 'video') || (it.type === 'audio' && tr.kind === 'sfx' && !tr.voice && !it.unlinkedFrom));
@@ -32,13 +33,13 @@ function picturesEnd(p) { let e = 0; for (const tr of p.tracks) if (tr.kind === 
 function state(p) {
   const clips = mainClips(p);
   if (!clips.length) return null;
-  const snap = clips.map((c) => ({ id: c.id, media: c.media, t0: c.t0, in: c.in, out: c.out, speed: c.speed || 1, dur: itemDur(c) }));
+  const snap = clips.map((c) => ({ ...c, dur: itemDur(c) }));   // shallow: a curve object is replaced by edits, never mutated
   const els = new Map(), trans = new Map();
   for (const tr of p.tracks) for (const it of tr.items) {
     if (isTransition(it)) { trans.set(it.id, { t0: it.t0, dur: itemDur(it) }); continue; }
     if (!followsClip(tr, it)) continue;
     const c = snap.find((x) => it.t0 >= x.t0 - 1e-6 && it.t0 < x.t0 + x.dur - 1e-6);
-    els.set(it.id, { t0: it.t0, dur: itemDur(it), c: c?.id || null, cT0: c?.t0, m: c?.media || null, s: c ? c.in + (it.t0 - c.t0) * c.speed : null });
+    els.set(it.id, { t0: it.t0, dur: itemDur(it), c: c?.id || null, cT0: c?.t0, m: c?.media || null, s: c && !c.freeze ? srcTime(c, it.t0) : null });
   }
   const caps = captionItems(p), pics = picturesEnd(p);
   // music that ends with the reel (or runs past it): when a cut shortens the pictures it is trimmed to end with them

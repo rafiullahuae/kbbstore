@@ -15,7 +15,7 @@ import { ops } from '../core/history.js';
 import { MediaStore } from '../core/media.js';
 import { exportMp4 } from '../core/export.js';
 import { projectDir, exportsDir } from '../core/config.js';
-import { findMedia, srcTime, itemEnd, projectDuration, clone, findItem } from '../core/project.js';
+import { findMedia, srcTime, tlTime, itemEnd, projectDuration, clone, findItem } from '../core/project.js';
 import { bus } from '../core/bus.js';
 import { resolveStyle } from '../captions/styles.js';
 import * as auto from '../auto/index.js';
@@ -67,7 +67,7 @@ export function faceAt(p, a, t) {
 function speechTimeline(p, a) {
   const id = firstVideo(p), out = [];
   for (const c of mainClips(p)) if (c.media === id) for (const [x, y] of a?.audio?.speech || []) {
-    const s = Math.max(x, c.in), e = Math.min(y, c.out); if (e > s) out.push([c.t0 + (s - c.in) / (c.speed || 1), c.t0 + (e - c.in) / (c.speed || 1)]);
+    const s = Math.max(x, c.in), e = Math.min(y, c.out); if (e > s) { const a = tlTime(c, s), b = tlTime(c, e); out.push([Math.min(a, b), Math.max(a, b)]); }
   }
   return out.sort((u, v) => u[0] - v[0]);
 }
@@ -83,7 +83,7 @@ async function beatsOnTimeline(ctx) {
   const p = ctx.project, lib = (await auto.library(ctx)).music, out = [];
   for (const tr of p.tracks) if (tr.kind === 'music' && !tr.muted) for (const it of tr.items) {
     const m = findMedia(p, it.media); const track = m && lib.find((x) => m.src.endsWith('/' + x.file));
-    for (const b of track?.beats || []) if (b >= it.in && b <= it.out) out.push(r3(it.t0 + (b - it.in) / (it.speed || 1)));
+    for (const b of track?.beats || []) if (b >= it.in && b <= it.out) out.push(r3(tlTime(it, b)));
   }
   return out.sort((x, y) => x - y);
 }
@@ -227,7 +227,7 @@ function pacingEvents(p, a) {
     const id = firstVideo(p);
     for (const c of mainClips(p)) if (c.media === id) {
       const sp = c.speed || 1;
-      for (const f of a.video?.frames || []) if (f.t >= c.in && f.t < c.out) ev.motion.push({ t: c.t0 + (f.t - c.in) / sp, v: Math.min(1, f.motion * 25) });
+      for (const f of a.video?.frames || []) if (f.t >= c.in && f.t < c.out) ev.motion.push({ t: tlTime(c, f.t), v: Math.min(1, f.motion * 25) });
       // speech: how much of each quarter second is voice (VAD), lifted a little by how lively it is
       const en = a.audio?.energy, voice = a.audio?.speech || [];
       if (en) {
@@ -236,7 +236,7 @@ function pacingEvents(p, a) {
           const i0 = Math.floor(s / en.hop), i1 = Math.min(en.db.length, Math.floor((s + 0.25) / en.hop)); if (i1 <= i0) continue;
           let m = 0; for (let i = i0; i < i1; i++) m += en.db[i]; m /= i1 - i0;
           let cov = 0; for (const [x, y] of voice) cov += Math.max(0, Math.min(y, s + 0.25) - Math.max(x, s));
-          ev.speech.push({ t: c.t0 + (s - c.in) / sp, v: Math.min(1, (cov / 0.25) * 0.75 + 0.25 * Math.max(0, Math.min(1, (m - thr) / (top - thr)))) });
+          ev.speech.push({ t: tlTime(c, s), v: Math.min(1, (cov / 0.25) * 0.75 + 0.25 * Math.max(0, Math.min(1, (m - thr) / (top - thr)))) });
         }
       }
     }

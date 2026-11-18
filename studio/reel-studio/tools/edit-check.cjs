@@ -429,6 +429,45 @@ const W = 1440, HH = 900;
   });
   ok(Object.values(r).every((n) => n === 1), `one undo step per edit: ${JSON.stringify(r)}`);
 
+  // ── 9b. ramped, reversed and frozen clips (core/retime.js): split, ripple delete, move, captions ──
+  r = await ev(async () => {
+    const RT = await import('/app/core/retime.js');
+    while (ED.history.canUndo) ED.history.undo();
+    const wide = ED.project.tracks.flatMap((t) => t.items).filter((i) => i.media && P.findMedia(ED.project, i.media).name !== 'portrait.mp4').map((i) => i.id);
+    if (wide.length) ED.apply(ED.ops.removeItems(wide));
+    const out = {}, c0 = () => vt()[0];
+    // the timeline maps through the WHOLE clip before an edit; after it, the pieces must map every frame the same way
+    const mapErr = (whole, ts, shift = (t) => t) => Math.max(...ts.map((t) => { const pc = vt().find((c) => t >= c.t0 - 1e-9 && t < P.itemEnd(c) - 1e-9); return pc ? Math.abs(P.srcTime(pc, t) - P.srcTime(whole, shift(t))) : 99; }));
+    const sample = (a, b, n = 40) => Array.from({ length: n }, (_, k) => a + (b - a) * (k + 0.5) / n);
+    for (const kind of ['ramp', 'reverse', 'freeze']) {
+      const props = kind === 'ramp' ? RT.curveProps(c0(), RT.PRESETS['slowmo-hit'].pts, 'slowmo-hit') : kind === 'reverse' ? { reverse: true } : { freeze: true, out: c0().in + 6 };
+      ED.apply(ED.ops.setItem(c0().id, props, 'Retime ' + kind));
+      const whole = structuredClone(c0()), D = P.itemDur(whole), w0 = new Map(ED.project.captions.words.map((w) => [w.w, w.t0]));
+      // split at an arbitrary frame
+      ED.select([whole.id]); ED.seek(Math.round(D * 0.37 * 30) / 30); ED.split();
+      const splitErr = mapErr(whole, sample(0, D)), n = vt().length, wSame = ED.project.captions.words.every((w) => Math.abs(w.t0 - w0.get(w.w)) < 2e-3);
+      ED.history.undo();
+      // ripple delete a middle chunk: everything after it plays what played d seconds later
+      const a = Math.round(D * 0.3 * 30) / 30, b = Math.round(D * 0.5 * 30) / 30, d = b - a;
+      ED.apply(EO.rangeCmd(ED.project, a, b, { ripple: true }));
+      const rippleErr = Math.max(mapErr(whole, sample(0, a)), mapErr(whole, sample(a, D - d), (t) => t + d));
+      // the captions after the cut moved by exactly −d; those inside it are gone
+      const w1 = new Map(ED.project.captions.words.map((w) => [w.w, w.t0]));
+      const capErr = kind === 'freeze' ? 0 : Math.max(0, ...[...w0].filter(([, t]) => t >= b + 0.05 && t < D).map(([w, t]) => (w1.has(w) ? Math.abs(w1.get(w) - (t - d)) : 9)));
+      const capGone = kind === 'freeze' ? true : [...w0].filter(([, t]) => t > a + 0.05 && t < b - 0.4).every(([w]) => !w1.has(w));
+      ED.history.undo();
+      // move it later (insert after nothing: a free spot at 3 s): the mapping and the captions shift by 3 s
+      ED.apply(ED.ops.moveItems([{ id: whole.id, t0: 3 }]));
+      const moveErr = mapErr(whole, sample(3, 3 + D), (t) => t - 3);
+      const w2 = new Map(ED.project.captions.words.map((w) => [w.w, w.t0]));
+      const capMove = kind === 'freeze' ? 0 : Math.max(0, ...[...w0].filter(([, t]) => t < D - 0.1).map(([w, t]) => (w2.has(w) ? Math.abs(w2.get(w) - (t + 3)) : 9)));
+      ED.history.undo(); ED.history.undo();
+      out[kind] = { n, splitErr, wSame, rippleErr, capErr, capGone, moveErr, capMove };
+    }
+    return out;
+  });
+  for (const [k, x] of Object.entries(r)) ok(x.n === 2 && x.splitErr < 1e-6 && x.wSame && x.rippleErr < 1e-6 && x.capErr < 2e-3 && x.capGone && x.moveErr < 1e-6 && x.capMove < 2e-3, `${k} clip: a split at a frame keeps every frame's source (max error ${x.splitErr.toExponential(1)} s) and the captions; a ripple delete maps the rest exactly (${x.rippleErr.toExponential(1)} s) with its words gone and the later ones shifted (${(x.capErr * 1000).toFixed(2)} ms); a move carries clip and captions (${(x.capMove * 1000).toFixed(2)} ms)`);
+
   // ── 10. export = preview after the edits ──
   r = await ev(async () => {
     // a clean state: undo everything, then one ripple cut (source 4–6 s) and a blade cut

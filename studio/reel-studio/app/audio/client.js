@@ -14,3 +14,4 @@ export function cleanVoice(L, R, opt) { const l = L.slice(), r = R && R !== L ? 
 export function master(channels, target) { const ch = channels.map((c) => c.slice()); return callAudio('master', { channels: ch, target }, ch.map((c) => c.buffer)); }
 export function measure(channels) { const ch = channels.map((c) => c.slice()); return callAudio('measure', { channels: ch }, ch.map((c) => c.buffer)); }
 export function stretchPieces(channels, segs) { const ch = channels.map((c) => c.slice()); return callAudio('stretch', { channels: ch, segs }, ch.map((c) => c.buffer)); }
+export function retimeSound(channels, from, item, len) { return callAudio('retime', { channels, from, item, len }, channels.map((c) => c.buffer)); }

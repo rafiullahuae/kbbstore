@@ -15,16 +15,17 @@
 // come from itemDur() and source times from srcTime() (core/project.js), so speed curves slot in in one place.
 
 import { ops } from '../core/history.js';
-import { itemDur, itemEnd, srcTime, uid, clone, findTrack, findMedia, createTrack, createItem, VISUAL_KINDS, AUDIO_KINDS } from '../core/project.js';
+import { itemDur, itemEnd, srcTime, tlTime, uid, clone, findTrack, findMedia, createTrack, createItem, VISUAL_KINDS, AUDIO_KINDS } from '../core/project.js';
 import { fits } from './items.js';
+import { splitProps } from '../core/retime.js';
 
 const EPS = 1e-4;
 const r4 = (x) => Math.round(x * 10000) / 10000;
 export const fpsOf = (p) => p.canvas?.fps || 30;
 /** a time on the project's frame grid */
 export const snapFrame = (p, t) => Math.round(t * fpsOf(p)) / fpsOf(p);
-/** timeline time of source time s inside item it (the inverse of srcTime; the ONE place speed maths lives here) */
-export const tlOf = (it, s) => it.t0 + (s - it.in) / (it.speed || 1);
+/** timeline time of source time s inside item it (core/retime.js tlTime: speed, ramps, reverse, freeze) */
+export const tlOf = (it, s) => tlTime(it, s);
 
 /** the main (magnetic) track: the bottom video track */
 export const mainTrack = (p) => p.tracks.find((t) => t.kind === 'video') || null;
@@ -41,12 +42,14 @@ export function cutsOf(p) {
 }
 
 // ── split ──
-/** the right half of `item` split at timeline t (a new id; the left keeps the old one) */
+/** the right half of `item` split at timeline t (a new id; the left keeps the old one) — through core/retime.js, so a
+ *  ramp, a reversed clip or a hold is cut exactly: both halves play what the whole played */
 function rightHalf(item, t) {
-  const right = clone(item); right.id = uid('i'); right.t0 = (t); right.in = (srcTime(item, t)); right.fadeIn = 0; right.kf = {};
-  if (right.group) right.group = item.group;   // still linked to what it was linked to
+  const right = Object.assign(clone(item), splitProps(item, t).right); right.id = uid('i'); right.fadeIn = 0; right.kf = {};
   return right;
 }
+/** the props the left half keeps when `item` is cut at timeline t */
+const leftHalf = (item, t) => Object.assign(splitProps(item, t).left, { fadeOut: 0 });
 /**
  * Split `targets` ([{track, item}], or every unlocked item under t when empty) at frame t.
  * Returns { cmd, ids: [right halves] } or null when nothing is under t.
@@ -64,7 +67,7 @@ export function splitCmd(p, targets, t) {
     const right = rightHalf(item, t);
     // split a linked group: the right halves form their own group (they stay linked to each other)
     if (item.group) { if (!groups.has(item.group)) groups.set(item.group, uid('g')); right.group = groups.get(item.group); }
-    cmds.push(ops.setItem(item.id, { out: right.in, fadeOut: 0 }, 'Split'));
+    cmds.push(ops.setItem(item.id, leftHalf(item, t), 'Split'));
     cmds.push(ops.addItems([{ trackId: track.id, item: right, index: track.items.indexOf(item) + 1 }]));
     ids.push(right.id);
   }
@@ -91,13 +94,13 @@ export function rangeCmd(p, a, b, { ripple = true, trackIds = null } = {}) {
       touched = true;
       if (s >= a - EPS && e <= b + EPS) { rm.push(it.id); return; }   // wholly inside
       if (s < a && e > b) {                                            // over both edges: split around the hole
-        const right = rightHalf(it, b); right.t0 = (b - d);
-        set.push({ id: it.id, props: { out: (srcTime(it, a)), fadeOut: 0 } });
+        const right = rightHalf(it, b); right.t0 = b - d;
+        set.push({ id: it.id, props: leftHalf(it, a) });
         add.push({ trackId: tr.id, item: right, index: index + 1 });
         return;
       }
-      if (s < a) { set.push({ id: it.id, props: { out: (srcTime(it, a)), fadeOut: 0 } }); return; }   // over a
-      set.push({ id: it.id, props: { t0: (b - d), in: (srcTime(it, b)), fadeIn: 0, kf: {} } });   // over b
+      if (s < a) { set.push({ id: it.id, props: leftHalf(it, a) }); return; }   // over a
+      set.push({ id: it.id, props: { ...splitProps(it, b).right, t0: b - d, fadeIn: 0, kf: {} } });   // over b
     });
   }
   if (!touched) return null;
@@ -111,7 +114,9 @@ export function rangeCmd(p, a, b, { ripple = true, trackIds = null } = {}) {
 // ── rejoin ──
 /** can b be joined onto a? (same track, same recording, b continues a in source AND on the timeline, same speed) */
 export function joinable(p, a, b) {
-  if (!a || !b || a.type !== b.type || a.media !== b.media || (a.speed || 1) !== (b.speed || 1)) return false;
+  if (!a || !b || a.type !== b.type || a.media !== b.media || Math.abs((a.speed || 1) - (b.speed || 1)) > 1e-6) return false;
+  // pieces of a ramp, a reversed clip or a hold are not rejoined (each piece carries its own part of the mapping)
+  if (a.curve || b.curve || a.reverse || b.reverse || a.freeze || b.freeze) return false;
   const f = 1 / fpsOf(p) / 2;
   if (Math.abs(itemEnd(a) - b.t0) > f) return false;
   if (!a.media) return a.type !== 'clip' && a.text === b.text && JSON.stringify(a.style || null) === JSON.stringify(b.style || null);
@@ -290,9 +295,9 @@ function rangeOnTrack(p, track, a, b, skip) {
     const s = it.t0, e = itemEnd(it);
     if (e <= a + EPS || s >= b - EPS) return;
     if (s >= a - EPS && e <= b + EPS) { rm.push(it.id); return; }
-    if (s < a && e > b) { const right = rightHalf(it, b); set.push({ id: it.id, props: { out: (srcTime(it, a)), fadeOut: 0 } }); add.push({ trackId: track.id, item: right, index: index + 1 }); return; }
-    if (s < a) { set.push({ id: it.id, props: { out: (srcTime(it, a)), fadeOut: 0 } }); return; }
-    set.push({ id: it.id, props: { t0: (b), in: (srcTime(it, b)), fadeIn: 0, kf: {} } });
+    if (s < a && e > b) { const right = rightHalf(it, b); set.push({ id: it.id, props: leftHalf(it, a) }); add.push({ trackId: track.id, item: right, index: index + 1 }); return; }
+    if (s < a) { set.push({ id: it.id, props: leftHalf(it, a) }); return; }
+    set.push({ id: it.id, props: { ...splitProps(it, b).right, t0: b, fadeIn: 0, kf: {} } });
   });
   const cmds = [];
   if (set.length) cmds.push(ops.setItems(set, 'Overwrite'));

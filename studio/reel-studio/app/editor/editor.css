@@ -472,3 +472,20 @@ kbd { background: var(--panel3); border: 1px solid var(--line2); border-bottom-w
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
 }
+
+/* ── speed tool (editor/speed.js): timeline badge, right-click menu, Shift-drag tip, inspector curve editor ── */
+.sp-badge { position: absolute; left: 6px; bottom: 3px; z-index: 1; max-width: calc(100% - 14px); padding: 1px 6px; border-radius: 9px; background: rgba(10,10,14,.82); color: #ffd166; font-size: 10.5px; font-weight: 700; line-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.sp-menu { position: fixed; z-index: 1000; min-width: 210px; display: flex; flex-direction: column; padding: 5px; background: var(--panel2); color: var(--text); border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); font-size: 13px; }
+.sp-menu button { all: unset; padding: 6px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.sp-menu button:hover, .sp-menu button:focus-visible { background: var(--accent-soft); }
+.sp-menu button.on { color: #ffd166; font-weight: 700; }
+.sp-menu-h { padding: 6px 10px 3px; color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: .02em; }
+.sp-menu-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.sp-menu-row button { text-align: center; }
+.sp-menu-sep { height: 1px; margin: 4px 6px; background: var(--line2); }
+.sp-stretch-tip { position: absolute; top: 4px; left: 0; z-index: 5; padding: 2px 8px; border-radius: 8px; background: #ffd166; color: #1b1c25; font-size: 11.5px; font-weight: 700; pointer-events: none; white-space: nowrap; }
+.sp-sub { margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.sp-presets { display: flex; flex-wrap: wrap; gap: 5px; }
+.sp-curve { display: block; width: 264px; height: 112px; flex: none; border-radius: 8px; border: 1px solid var(--line2); cursor: crosshair; touch-action: none; }
+.sp-info { display: block; line-height: 1.35; }
+.tool.on { background: var(--accent-soft); border-color: var(--accent-line); }

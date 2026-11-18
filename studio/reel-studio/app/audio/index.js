@@ -11,7 +11,7 @@ import { registerMixPost, mixAudio, postMix } from '../core/export.js';
 import { ops } from '../core/history.js';
 import { bus } from '../core/bus.js';
 import { projectDir } from '../core/config.js';
-import { findItem, findMedia, createItem, itemEnd, projectDuration } from '../core/project.js';
+import { findItem, findMedia, createItem, itemEnd, projectDuration, tlTime } from '../core/project.js';
 import { EQ_PRESETS, wav } from './dsp.js';
 import { cleanVoice as cleanInWorker, master, measure } from './client.js';
 import { audioPanel } from './panel.js';
@@ -127,7 +127,7 @@ export async function timelineBeats(ctx) {
       const a = await ctx.media.decodeAudio(m.id); if (!a) continue;
       const pcm = a.mono16k.slice(); beats = (await A.call('beatGrid', { pcm, sr: 16000 }, [pcm.buffer])).beats;
     }
-    for (const b of beats) if (b >= it.in && b <= it.out) out.push(it.t0 + (b - it.in) / (it.speed || 1));
+    for (const b of beats) if (b >= it.in && b <= it.out) out.push(tlTime(it, b));
   }
   return out.sort((a, b) => a - b);
 }

@@ -26,11 +26,15 @@
 //           text?, style?, volume, muted, fadeIn, fadeOut, crop?:{l,t,r,b}, zoom?:{from,to,cx,cy}, group?, name? }
 //   type: 'clip' (video/image media on a visual track) | 'audio' (music/sfx) | 'text' | 'shape' | 'sticker' | 'caption'
 //   t0      timeline start (s).  in/out: source in/out (s).  Items without a source (text, shapes) use in=0, out=duration.
-//   speed   playback rate; on-timeline duration = (out - in) / speed.
+//   speed   playback rate; on-timeline duration = (out - in) / speed (for a speed ramp: its average rate).
+//   curve?, reverse?, freeze?, keepPitch?, rampMute?, smooth?   speed ramps, reverse, freeze frames and how slow
+//           motion and its sound behave — see core/retime.js. Map times through srcTime / tlTime, never by hand.
 //   x,y,w,h canvas px of the item's box (top-left origin), rot in degrees about the box centre, opacity 0..1.
 //   kf      keyframes, t relative to the item start (s), ease: 'linear' | 'in' | 'out' | 'inout' | 'hold'.
 //   crop    fractions 0..1 cut from each edge of the source.  zoom: Ken Burns scale from→to across the item, centred cx,cy (0..1).
 // All times are seconds (float); all geometry is canvas px.
+
+import { srcTime as retimeSrc, tlTime as retimeTl } from './retime.js';
 
 export const SCHEMA_VERSION = 1;
 
@@ -131,8 +135,11 @@ export function normalizeProject(p) {
 
 export const itemDur = (it) => Math.max(0, (it.out - it.in) / (it.speed || 1));
 export const itemEnd = (it) => it.t0 + itemDur(it);
-/** source time for timeline time t (clamped to the item's source range) */
-export const srcTime = (it, t) => Math.min(it.out, Math.max(it.in, it.in + (t - it.t0) * (it.speed || 1)));
+/** source time for timeline time t (clamped to the item's source range; speed ramps, reverse and freeze included) */
+export const srcTime = retimeSrc;
+/** timeline time at which the item shows source time s (the inverse of srcTime) */
+export const tlTime = retimeTl;
+export { speedAt, isRetimed } from './retime.js';
 export const isActive = (it, t) => t >= it.t0 && t < itemEnd(it);
 
 export function projectDuration(p) {

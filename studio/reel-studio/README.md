@@ -58,6 +58,14 @@ are for features coming in the next update, so you can leave them unticked for n
   nearest cut. It snaps to the playhead, clip edges, markers, caption lines and beats (hold **⌘** to drag free); **,** and
   **.** move the selection one frame (Shift: ten). **🔊 Unlink** gives a clip's own sound its own item. Captions, text,
   stickers, theme elements, sound effects and transitions follow every cut and move; music, b-roll and markers stay put.
+* **⏩ Speed, slow motion, reverse, freeze:** select a clip → **Inspector → Speed**: ¼× to 3× (or the *Custom* slider),
+  **Speed ramp** presets (*Slow-mo hit*, *Speed-up*, *Ramp in*, *Ramp out*, *Bullet time*, *Montage*) and a curve you
+  can shape — drag a point, double-click to add or remove one; the clip's length follows the curve. **Slow-mo**: *Frame
+  blend* (smooth while you watch and in the export) or *Optical flow* (export only). **⏪ Reverse**, **❄ Freeze frame**
+  (holds the frame under the playhead for 1–5 s), **Keep pitch** (natural voice at any speed) and **Mute sound while
+  ramping**. The same on the timeline: **right-click a clip → Speed**, and **Shift-drag a clip's edge** to stretch it
+  instead of trimming. Captions, stickers, theme elements and transitions on the clip stay on the same moment of the
+  footage; the clips after it move up or along. iPhone slo-mo (120/240 fps) shows every real frame when slowed.
 * **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 30 or 60 fps; also 1:1, 4:5 or 16:9 if you tick them).
 
 * **⏱ Sync (word-perfect captions):** after **Auto captions** every word is moved to the exact moment it is said

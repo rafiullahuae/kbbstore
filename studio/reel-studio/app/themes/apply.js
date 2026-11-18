@@ -3,7 +3,7 @@
 // sounds. Everything it places carries item.auto = 'theme', so applying another theme replaces it and never touches the
 // owner's own items (or Auto reel's).
 import { ops } from '../core/history.js';
-import { createItem, createTrack, projectDuration, itemEnd, itemDur, findMedia, clone } from '../core/project.js';
+import { createItem, createTrack, projectDuration, itemEnd, itemDur, findMedia, clone, srcTime, tlTime } from '../core/project.js';
 import { themeById } from './themes.js';
 import { textItem } from '../look/text.js';
 import { libraryMedia } from '../auto/commands.js';
@@ -32,7 +32,7 @@ export async function beatsOf(ctx) {
   for (const it of items) {
     const m = findMedia(p, it.media); const tr = m && lib.music.find((x) => (x.src || 'library/music/' + x.file) === m.src);
     if (!tr?.beats) continue;
-    for (const b of tr.beats) if (b >= it.in && b <= it.out) out.push(r3(it.t0 + (b - it.in) / (it.speed || 1)));
+    for (const b of tr.beats) if (b >= it.in && b <= it.out) out.push(r3(tlTime(it, b)));
   }
   return [...new Set(out)].sort((a, b) => a - b);
 }
@@ -65,7 +65,7 @@ export async function detectFaces(ctx, { perSec = 1, max = 40 } = {}) {
   if (!samples.length) return [];
   const frames = [];
   for (const s of samples) {
-    try { const bm = await ctx.media.frameAt(s.m.id, s.m.kind === 'image' ? 0 : s.c.in + (s.t - s.c.t0) * (s.c.speed || 1), 320); if (bm) frames.push({ t: s.t, bitmap: bm, s }); } catch { /* skip that frame */ }
+    try { const bm = await ctx.media.frameAt(s.m.id, s.m.kind === 'image' ? 0 : srcTime(s.c, s.t), 320); if (bm) frames.push({ t: s.t, bitmap: bm, s }); } catch { /* skip that frame */ }
     ctx.progress?.('Finding faces…', frames.length / samples.length * 0.5);
   }
   const dims = frames.map((f) => [f.bitmap.width, f.bitmap.height]);

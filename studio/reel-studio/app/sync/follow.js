@@ -11,7 +11,7 @@
 //     back if that part of the recording does (trim extended again, undo).
 // Runs as a core/history.js follow-up hook: the change is part of the SAME undo step as the edit that caused it.
 
-import { itemDur, findMedia, clone } from '../core/project.js';
+import { itemDur, findMedia, clone, srcTime, tlTime } from '../core/project.js';
 import { buildLines, finishTimes, carryLineOverrides, cueChars, newLineId } from '../captions/model.js';
 import { resolveStyle } from '../captions/styles.js';
 
@@ -22,7 +22,7 @@ export function speechClips(p) {
   const out = [];
   for (const tr of p.tracks) {
     if (tr.kind !== 'video') continue;
-    for (const it of tr.items) if (it.type === 'clip' && it.media) { const m = findMedia(p, it.media); if (m && m.kind !== 'image') out.push(it); }
+    for (const it of tr.items) if (it.type === 'clip' && it.media && !it.freeze) { const m = findMedia(p, it.media); if (m && m.kind !== 'image') out.push(it); }
   }
   return out;
 }
@@ -30,7 +30,7 @@ export function speechClips(p) {
 /** a signature of the speech clips' layout (changes iff some word could move) */
 export function layoutSig(p) {
   let s = '';
-  for (const c of speechClips(p)) s += `${c.id}:${c.media}:${c.t0.toFixed(4)}:${c.in.toFixed(4)}:${c.out.toFixed(4)}:${c.speed || 1};`;
+  for (const c of speechClips(p)) s += `${c.id}:${c.media}:${c.t0.toFixed(4)}:${c.in.toFixed(4)}:${c.out.toFixed(4)}:${c.speed || 1}${c.curve ? ':' + JSON.stringify(c.curve) : ''}${c.reverse ? ':r' : ''};`;
   return s;
 }
 
@@ -39,14 +39,16 @@ export function clipAt(clips, t) {
   for (const c of clips) if (t >= c.t0 - 1e-6 && t < c.t0 + itemDur(c) - 1e-6) return c;
   return null;
 }
-const toSrc = (c, t) => c.in + (t - c.t0) * (c.speed || 1);
-const toTl = (c, s) => c.t0 + (s - c.in) / (c.speed || 1);
+// through the clip's speed, ramp and direction (core/retime.js) — a constant-speed clip maps exactly as before
+const toSrc = (c, t) => (c.curve || c.reverse ? srcTime(c, t) : c.in + (t - c.t0) * (c.speed || 1));
+const toTl = (c, s) => tlTime(c, s);
 
 /** anchor for a timeline span [t0, t1]: [media, s0, s1, clip] or null (nothing under it) */
 export function anchorOf(clips, t0, t1) {
   const c = clipAt(clips, t0) || clipAt(clips, Math.min(t1, t0 + 0.05));
   if (!c) return null;
-  const s0 = toSrc(c, Math.max(t0, c.t0)), s1 = Math.min(c.out, toSrc(c, t1));
+  let s0 = toSrc(c, Math.max(t0, c.t0)), s1 = Math.min(c.out, toSrc(c, t1));
+  if (c.reverse && s1 < s0) [s0, s1] = [s1, s0];          // a reversed clip says the word backwards: same source span
   return [c.media, r4(s0), r4(Math.max(s0, s1)), c.id];
 }
 
@@ -98,9 +100,11 @@ export function placeWords(words, offcut, clips) {
     // the end through the same clip when it still holds it (a word cut in half ends where its clip ends) — or through the
     // piece that plays straight on from it (a blade cut through a word changes nothing)
     let c = p0.c;
-    for (let g = 0; g < 8 && w.src[2] > c.out + 1e-6; g++) { const nx = clips.find((x) => x !== c && continuous(c, x)); if (!nx) break; c = nx; }
+    for (let g = 0; g < 8 && !c.reverse && w.src[2] > c.out + 1e-6; g++) { const nx = clips.find((x) => x !== c && continuous(c, x)); if (!nx) break; c = nx; }
     const s1 = Math.min(c.out, w.src[2]);
-    const t0 = r3(p0.t), t1 = r3(Math.max(p0.t + 0.02, toTl(c, s1)));
+    let ta = p0.t, tb = toTl(c, s1);
+    if (c.reverse && tb < ta) [ta, tb] = [tb, ta];
+    const t0 = r3(ta), t1 = r3(Math.max(ta + 0.02, tb));
     on.push({ w: t0 === w.t0 && t1 === w.t1 ? w : { ...w, t0, t1 }, i, t: t0, c: p0.c });
   }
   on.sort((a, b) => a.t - b.t || (a.i - b.i));
@@ -118,7 +122,8 @@ export function placeWords(words, offcut, clips) {
 }
 
 /** do clips a and b play on from each other (a blade cut, nothing removed, nothing moved)? */
-const continuous = (a, b) => a === b || !a || !b || (a.media === b.media && (a.speed || 1) === (b.speed || 1) && Math.abs(a.out - b.in) < 1e-3 && Math.abs(a.t0 + itemDur(a) - b.t0) < 1e-3);
+// (speed may differ: the two pieces of a cut ramp play on from each other at different average speeds)
+const continuous = (a, b) => a === b || !a || !b || (a.media === b.media && !a.freeze && !b.freeze && !!a.reverse === !!b.reverse && Math.abs(a.reverse ? a.in - b.out : a.out - b.in) < 1e-3 && Math.abs(a.t0 + itemDur(a) - b.t0) < 1e-3);
 
 /**
  * Lines after an edit of the clips: a line whose words are no longer one continuous stretch of the recording (words cut

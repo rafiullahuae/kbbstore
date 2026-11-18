@@ -9,7 +9,8 @@
 // Only the picture changes over the range: the voice, music and captions are untouched (a cutaway is never audible
 // unless its own video's sound is mixed in on purpose, and it is drawn below the caption track).
 
-import { createItem, findMedia, itemDur, itemEnd, tracksOfKind, clone, uid } from '../core/project.js';
+import { createItem, findMedia, itemDur, itemEnd, tracksOfKind, clone, uid, tlTime } from '../core/project.js';
+import { srcRange } from '../core/retime.js';
 import { speechClips, anchorOf, layoutSig } from '../sync/follow.js';
 
 export const TYPE = 'cutaway';
@@ -31,9 +32,12 @@ export function snapRange(p, t0, t1) {
 /** link of a timeline range to the talking clip under it */
 export function linkFor(p, t0, t1) {
   const a = anchorOf(speechClips(p), t0, t1);
-  return a ? { m: a[0], s0: a[1], s1: r4(a[1] + (t1 - t0) * (speedAt(p, t0) || 1)), c: a[3] } : null;
+  if (!a) return null;
+  // the source span under [t0, t1) through the clip's speed / ramp / direction
+  const c = speechClips(p).find((x) => x.id === a[3]);
+  const s1 = c && (c.curve || c.reverse) ? Math.max(...srcRange(c, Math.max(t0, c.t0), Math.min(t1, itemEnd(c)))) : a[1] + (t1 - t0) * (c?.speed || 1);
+  return { m: a[0], s0: a[1], s1: r4(s1), c: a[3] };
 }
-const speedAt = (p, t) => { for (const c of speechClips(p)) if (t >= c.t0 && t < itemEnd(c)) return c.speed || 1; return 1; };
 
 /**
  * A new cutaway item over [t0, t1). what = { media?: Media, slide?: {...}, name? }, style overrides DEFAULT_STYLE.
@@ -66,8 +70,8 @@ export function segmentsOf(clips, m, s0, s1, fps = 30) {
     if (c.media !== m) continue;
     const a = Math.max(s0, c.in), b = Math.min(s1, c.out);
     if (b - a < 1 / fps / 2) continue;
-    const sp = c.speed || 1;
-    segs.push([c.t0 + (a - c.in) / sp, c.t0 + (b - c.in) / sp, c]);
+    const ta = tlTime(c, a), tb = tlTime(c, b);
+    segs.push([Math.min(ta, tb), Math.max(ta, tb), c]);
   }
   segs.sort((x, y) => x[0] - y[0]);
   const runs = [];
