@@ -75,7 +75,7 @@ async function staticChecks() {
 /** the e2e studio folder: fresh app/vendor/brands/library every run; models kept unless --fresh */
 function prepareStudio() {
   if (FRESH) fs.rmSync(STUDIO, { recursive: true, force: true });
-  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces']) fs.rmSync(path.join(STUDIO, d), { recursive: true, force: true });
+  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces', 'settings', 'adstudio']) fs.rmSync(path.join(STUDIO, d), { recursive: true, force: true });
   fs.mkdirSync(path.join(STUDIO, 'models'), { recursive: true });
   for (const d of ['app', 'vendor', 'brands', 'library']) fs.cpSync(path.join(ROOT, d), path.join(STUDIO, d), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'models', 'manifest.json'), path.join(STUDIO, 'models', 'manifest.json'));

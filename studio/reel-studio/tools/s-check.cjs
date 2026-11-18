@@ -64,7 +64,7 @@ const pct = (xs, p) => { const s = xs.slice().sort((a, b) => a - b); return s[Ma
   if (!fs.existsSync(talk)) ff('-f', 'lavfi', '-i', `testsrc2=size=1080x1920:rate=30:duration=${dur}`, '-i', path.join(OUT, 'sync-en-flite.wav'), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-pix_fmt', 'yuv420p', '-g', '30', '-c:a', 'aac', '-b:a', '160k', '-shortest', '-movflags', '+faststart', talk);
   if (!fs.existsSync(pic)) ff('-f', 'lavfi', '-i', 'mandelbrot=size=1080x1350:rate=1', '-frames:v', '1', pic);
   if (!fs.existsSync(broll)) ff('-f', 'lavfi', '-i', 'smptehdbars=size=1080x1920:rate=30:duration=6', '-f', 'lavfi', '-i', 'sine=frequency=550:duration=6:sample_rate=48000', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', '-movflags', '+faststart', broll);
-  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces']) fs.rmSync(path.join(STUDIO, d), { recursive: true, force: true });
+  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces', 'settings', 'adstudio']) fs.rmSync(path.join(STUDIO, d), { recursive: true, force: true });
   fs.mkdirSync(path.join(STUDIO, 'models'), { recursive: true });
   for (const d of ['app', 'vendor', 'brands', 'library']) fs.cpSync(path.join(ROOT, d), path.join(STUDIO, d), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'models', 'manifest.json'), path.join(STUDIO, 'models', 'manifest.json'));

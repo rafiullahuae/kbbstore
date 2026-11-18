@@ -53,7 +53,7 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
 (async () => {
   const T0 = Date.now();
   makeClips();
-  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces']) fs.rmSync(path.join(STUDIO, d), { recursive: true, force: true });
+  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces', 'settings', 'adstudio']) fs.rmSync(path.join(STUDIO, d), { recursive: true, force: true });
   fs.mkdirSync(path.join(STUDIO, 'models'), { recursive: true });
   for (const d of ['app', 'vendor', 'brands', 'library']) fs.cpSync(path.join(ROOT, d), path.join(STUDIO, d), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'models', 'manifest.json'), path.join(STUDIO, 'models', 'manifest.json'));

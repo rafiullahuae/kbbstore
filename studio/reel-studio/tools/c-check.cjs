@@ -74,7 +74,7 @@ async function staticChecks() {
 }
 
 function prepareStudio() {
-  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces']) fs.rmSync(S(d), { recursive: true, force: true });
+  for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces', 'settings', 'adstudio']) fs.rmSync(S(d), { recursive: true, force: true });
   fs.mkdirSync(S('models'), { recursive: true });
   for (const d of ['app', 'vendor', 'brands', 'library']) fs.cpSync(path.join(ROOT, d), S(d), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'models', 'manifest.json'), S('models/manifest.json'));
