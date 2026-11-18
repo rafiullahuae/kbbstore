@@ -457,6 +457,17 @@ kbd { background: var(--panel3); border: 1px solid var(--line2); border-bottom-w
 .empty .btn { margin-inline-start: auto; }
 .company-form .row { grid-template-columns: 120px minmax(0, 1fr); }
 
+/* timeline editing (tl-drag.js): drop indicator, marked range, blade, dragged blocks */
+.tl-item.dragging { opacity: .85; z-index: 3; box-shadow: 0 6px 18px rgba(0,0,0,.45); cursor: grabbing; will-change: transform; }
+.tl-drop { position: absolute; z-index: 6; pointer-events: none; border-radius: 4px; }
+.tl-drop.ins { background: #ffd166; box-shadow: 0 0 0 2px rgba(255,209,102,.35); }
+.tl-drop.box { border: 2px dashed #7fd1ff; background: rgba(127,209,255,.12); }
+.tl-drop.box.ow { border-color: #ff7a59; background: rgba(255,122,89,.16); }
+.tl-drop.band { background: rgba(127,209,255,.22); border: 1px dashed #7fd1ff; color: #dff3ff; font: 600 10px/12px system-ui; padding: 0 6px; white-space: nowrap; overflow: hidden; }
+.tl-range { position: absolute; top: 0; bottom: 0; z-index: 5; pointer-events: none; background: rgba(255,209,102,.13); border-inline: 2px solid #ffd166; }
+.tl-scroll.blade .tl-item, .tl-scroll.blade .tl-item .trim { cursor: crosshair; }
+.tl-tools .tool.on { background: var(--accent-soft); border-color: var(--accent-line); }
+
 /* gentle motion only for those who want it */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; scroll-behavior: auto !important; }

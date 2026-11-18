@@ -49,6 +49,15 @@ are for features coming in the next update, so you can leave them unticked for n
 * **Left panel:** **Music** and **SFX** (press ▶ to listen, drag a row onto the timeline or press **+**),
   **Templates** (recipes for the open company: **Use** sets the style for this reel, **Make reel** cuts one now),
   **Stickers** (Planet Careers also gets flags, maps and country stickers for 33 countries), **Text**.
+* **Cutting and moving on the timeline:** **S** or **⌘B** splits at the playhead; **🔪 Blade** (**B**) cuts the clip you
+  click at that frame (Shift-click: every track). Mark a range with **I** / **O** or **Shift-drag on the ruler**, then
+  **Delete** removes it and the gap closes (**Alt+Delete** keeps the gap). Deleting a piece of the main video track closes
+  its gap too (Alt keeps it). **⛓ Join** (**⌘J**) puts pieces of the same clip back together; **Alt-drag an edge** is a
+  ripple trim. Drag anything left/right and between tracks: dropping clips between clips on the main track inserts them
+  (Alt overwrites), dropping above the top track makes a new overlay track (picture-in-picture), a transition lands on the
+  nearest cut. It snaps to the playhead, clip edges, markers, caption lines and beats (hold **⌘** to drag free); **,** and
+  **.** move the selection one frame (Shift: ten). **🔊 Unlink** gives a clip's own sound its own item. Captions, text,
+  stickers, theme elements, sound effects and transitions follow every cut and move; music, b-roll and markers stay put.
 * **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 30 or 60 fps; also 1:1, 4:5 or 16:9 if you tick them).
 
 * **⏱ Sync (word-perfect captions):** after **Auto captions** every word is moved to the exact moment it is said

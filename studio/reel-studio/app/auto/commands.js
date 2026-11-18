@@ -127,24 +127,32 @@ export function removeCutsCommand(p, mediaId, cuts) {
   if (!clips.length) return null;
   const removedAt = []; // [timelineT, removedSeconds] in old-timeline terms, for rippling
   const adds = [], segs = [];
+  const shift = (t) => { let s = 0; for (const [at, d] of removedAt) if (at < t - 1e-6) s += Math.min(d, t - at); return s; };
   for (const c of clips) {
-    let t = c.t0; const sp = c.speed || 1;
+    // a later clip of the same recording closes up behind what was cut out of the clips before it (several pieces)
+    let t = c.t0 - shift(c.t0); const sp = c.speed || 1;
     const parts = keep.map(([a, b]) => [Math.max(a, c.in), Math.min(b, c.out)]).filter(([a, b]) => b - a > 0.04);
     let prevEnd = c.in;
     for (const [a, b] of parts) {
       if (a > prevEnd) removedAt.push([c.t0 + (prevEnd - c.in) / sp, (a - prevEnd) / sp]);
-      const it = clone(c); it.id = uid('i'); it.in = a; it.out = b; it.t0 = +t.toFixed(4);
+      // the first kept part keeps the clip's id (like a manual cut: what is anchored to the clip — a transition on its
+      // cut, an element on it — still finds it); later parts are new pieces
+      const it = clone(c); it.id = prevEnd === c.in && !adds.some((x) => x.item.id === c.id) ? c.id : uid('i'); it.in = a; it.out = b; it.t0 = +t.toFixed(4);
       if (it.kf) for (const k of Object.keys(it.kf)) it.kf[k] = it.kf[k].map(([kt, v, e]) => [Math.max(0, kt - (a - c.in) / sp), v, e]);
       adds.push({ trackId: vt.id, item: it }); segs.push({ in: a, out: b, t0: it.t0 }); t += (b - a) / sp; prevEnd = b;
     }
     if (c.out > prevEnd) removedAt.push([c.t0 + (prevEnd - c.in) / sp, (c.out - prevEnd) / sp]);
   }
-  const shift = (t) => { let s = 0; for (const [at, d] of removedAt) if (at < t - 1e-6) s += Math.min(d, t - at); return s; };
+  // like a manual ripple delete (editor/edit-ops.js rangeCmd): the main video track closes up; what hangs off the clips
+  // (captions, cutaways, text, stickers, theme elements, sound effects, transitions) is re-placed by the follow hooks in
+  // the same undo step; music, b-roll and markers stay where they are (a music bed that ran to the end ends with the reel)
   const moves = [];
-  for (const tr of p.tracks) for (const it of tr.items) if (!(tr.id === vt.id && it.media === mediaId)) { const d = shift(it.t0); if (d > 1e-4) moves.push({ id: it.id, t0: +(it.t0 - d).toFixed(4) }); }
+  for (const it of vt.items) if (it.media !== mediaId) { const d = shift(it.t0); if (d > 1e-4) moves.push({ id: it.id, t0: +(it.t0 - d).toFixed(4) }); }
   const cmds = [ops.removeItems(clips.map(c => c.id)), ops.addItems(adds, 'Kept parts')];
   if (moves.length) cmds.push(ops.moveItems(moves, 'Ripple'));
-  if (p.captions?.words?.length) cmds.push(ops.setCaptions(remapCaptions(p.captions, segs)));
+  // captions: the sync follow hook re-places every word from its media time and re-splits lines around each cut, exactly
+  // as for a manual ripple delete; only when following is switched off are they remapped here
+  if (p.captions?.words?.length && p.meta?.sync?.follow === false) cmds.push(ops.setCaptions(remapCaptions(p.captions, segs)));
   const removed = removedAt.reduce((a, b) => a + b[1], 0);
   // the caption item starts at 0 so the ripple never moves it: it gets shorter by what was cut before its end
   for (const tr of p.tracks) if (tr.kind === 'caption') for (const it of tr.items) if (it.type === 'caption') { const d = shift(itemEnd(it)); if (d > 1e-4) cmds.push(ops.setItem(it.id, { out: +(it.out - d).toFixed(4) }, 'Captions')); }
