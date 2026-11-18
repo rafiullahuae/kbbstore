@@ -4,6 +4,14 @@ One self-contained offline HTML file (`dist/ad-studio.html`, the owner's file): 
 texts, offers and products, download post 1080×1350, square 1080×1080 and story 1080×1920. Zero network
 requests: fonts, libraries, product cut-outs and the tabby / tamara badges are all inlined.
 
+**Inside KBB Studio (18 Nov 2026).** `build.py` also copies the build into `studio/reel-studio/app/adstudio/`, where
+KBB Studio's engine serves it (home tile and top bar → 🎨 Ad Studio). There `src/kbbdisk.js` (it sees the engine's
+`rs-token`) moves storage to `~/KBB Studio Data/adstudio/` through the engine (designs, pictures, companies, drafts,
+video projects and clips; IndexedDB stays as a cache) and shows **◀ KBB Studio**. Opened as a file nothing changes,
+except a banner when it holds designs: *Backup everything* → one `.json` (designs, pictures, companies with favourites
+and brand kits, drafts, recent colours, video projects with clips up to 300 MB), which **Import backup** merges by id
+(newer wins, nothing twice). `studio/reel-studio/tools/adstudio-check.cjs` checks all of it end to end.
+
 ```bash
 python3 build.py                      # -> ad-studio.html + dist/ad-studio.html
 node tools/check-templates.cjs        # every template × 3 sizes: inside the canvas, no overlaps, 0 errors, 0 requests

@@ -27,6 +27,19 @@ def _get(url):
     return open(f, 'rb').read()
 
 def css():
+    try:
+        return _css()
+    except Exception as e:  # offline, or Google changed its answer (18 Nov 2026: Cairo's Arabic came back as /l/font?kit=)
+        # the fonts the committed build already carries, byte for byte -- a rebuild never changes how an ad looks
+        page = open(os.path.join(D, 'dist', 'ad-studio.html'), encoding='utf-8').read()
+        m = re.search(r'<style id="fontcss">(.*?)</style>', page, re.S)
+        if not m:
+            raise
+        print('fonts: using the fonts inside dist/ad-studio.html (' + type(e).__name__ + ': ' + str(e)[:80] + ')')
+        return m.group(1)
+
+
+def _css():
     src = _get(URL).decode()
     groups = {}
     for sub, body in re.findall(r'/\* ([a-z-]+) \*/\s*@font-face \{(.*?)\}', src, re.S):

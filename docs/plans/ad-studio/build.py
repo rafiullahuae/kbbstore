@@ -1,5 +1,6 @@
 # KBB Ad Studio -- builds ONE self-contained offline HTML file:
 #   python3 build.py  ->  ad-studio.html (not committed) + dist/ad-studio.html (committed: the owner's file)
+#                     + studio/reel-studio/app/adstudio/ (the same files, inside KBB Studio)
 #
 # Inlined, so the file makes zero network requests: the fonts (fonts.py, cached in fontcache/), the three
 # vendored libraries (html-to-image 1.11.11, JSZip 3.10.1, mp4-muxer 5.2.1 for the Video mode's MP4 export), the 20 product cut-outs (assets/products: 12
@@ -102,6 +103,7 @@ parts = {
     '/*VIDEO_CSS*/': open(os.path.join(D, 'src', 'video.css')).read(),
     '/*VIDEO_HTML*/': open(os.path.join(D, 'src', 'video.html')).read(),
     '/*VIDEO*/': safe(open(os.path.join(D, 'src', 'video.js')).read(), 'the video editor'),
+    '/*KBBDISK*/': safe(open(os.path.join(D, 'src', 'kbbdisk.js')).read(), 'the KBB Studio storage'),
     '/*TEMPLATES*/': safe(open(os.path.join(D, 'src', 'templates.js')).read().replace('/*PC*/', open(os.path.join(D, 'src', 'templates-pc.js')).read() + '\n' + WA, 1), 'templates'),
     '/*APP*/': safe(app, 'the editor'),
 }
@@ -133,3 +135,12 @@ open(cout, 'w').write(cut)
 shutil.copyfile(cout, os.path.join(D, 'dist', 'ad-studio-cutout.js'))
 shutil.copyfile(os.path.join(MP, 'LICENSE.txt'), os.path.join(D, 'dist', 'ad-studio-cutout.LICENSE.txt'))
 print('ad-studio-cutout.js', os.path.getsize(cout) // 1024, 'KB')
+
+# KBB Studio ships the same two files (18 Nov 2026: "i need also the Ads studio too"): studio/reel-studio/app/adstudio/,
+# served by its engine at /app/adstudio/ad-studio.html, where src/kbbdisk.js saves to ~/KBB Studio Data/adstudio.
+# Byte-identical copies of dist/ (git stores each once); tools/package-mac.sh takes them with app/.
+KS = os.path.normpath(os.path.join(D, '..', '..', '..', 'studio', 'reel-studio', 'app', 'adstudio'))
+os.makedirs(KS, exist_ok=True)
+for f in ('ad-studio.html', 'ad-studio-cutout.js', 'ad-studio-cutout.LICENSE.txt'):
+    shutil.copyfile(os.path.join(D, 'dist', f), os.path.join(KS, f))
+print('copied into', os.path.relpath(KS, os.path.join(D, '..', '..', '..')))

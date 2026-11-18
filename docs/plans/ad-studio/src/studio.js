@@ -261,6 +261,11 @@
   // ── storage adapter ──
   var Store = (function () {
     var cdb = null, cas = null, cdl = null, idb = null, mem = { projects: {}, images: {}, kv: {} }, kind = 'memory';
+    // inside KBB Studio (src/kbbdisk.js): the owner's data folder through the engine is where things live; IndexedDB
+    // is kept as a cache (written alongside, never read while the disk answers)
+    var dk = null, dkMeta = null;   // dkMeta: the saved designs' names / dates / companies, read from disk once per visit
+    function cache(store, fn) { if (idb) tx(store, 'readwrite', fn).catch(function () {}); }
+    function dkAll(dir) { return dk.list(dir).then(function (a) { return Promise.all(a.filter(function (e) { return /\.json$/.test(e.name); }).map(function (e) { return dk.getJSON(dir, e.name).catch(function () { return null; }); })); }).then(function (a) { return a.filter(Boolean); }); }
     function withTimeout(p, ms) { return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]); }
     function useCap(n) { try { return window.claude && typeof window.claude.use === 'function' ? Promise.resolve(window.claude.use(n)).catch(function () { return null; }) : Promise.resolve(null); } catch (e) { return Promise.resolve(null); } }
     function openIdb() {
@@ -292,29 +297,36 @@
         }).then(function (r) {
           cas = r[0]; cdl = r[1]; idb = r[2];
           if (!cdb) { if (idb) kind = 'browser'; else { try { localStorage.setItem('kbbas:t', '1'); kind = 'local'; } catch (e) { kind = 'memory'; } } }
-          return kind;
+          return cdb || !window.KBB_DISK ? kind : window.KBB_DISK.init().then(function (on) { if (on) { dk = window.KBB_DISK; kind = 'disk'; } return kind; });
         });
       },
       listProjects: function () {
         if (cdb) return cdb.collection('projects').get().then(function (q) { return q.docs.map(function (s) { var v = s.data() || {}; return { id: s.id, name: str(v.name, 60), updated: +v.updated || 0, co: coOf(v.co) }; }); });
+        if (dk) {
+          dkMeta = dkMeta || dkAll('projects').then(function (a) { var m = Object.create(null); a.forEach(function (p) { if (IMGID.test(p.id)) m[p.id] = { id: p.id, name: str(p.name, 60), updated: +p.updated || 0, co: coOf(p.co || p.doc && p.doc.co) }; }); return m; }).catch(function (e) { dkMeta = null; throw e; });
+          return dkMeta.then(function (m) { return Object.keys(m).map(function (k) { return Object.assign({}, m[k]); }); });
+        }
         if (idb) return tx('projects', 'readonly', function (s) { return s.getAll(); }).then(function (a) { return (a || []).map(function (p) { return { id: p.id, name: str(p.name, 60), updated: +p.updated || 0, co: coOf(p.co || p.doc && p.doc.co) }; }); });
         var src = kind === 'local' ? (lsGet('projects') || {}) : mem.projects;
         return Promise.resolve(Object.keys(src).map(function (k) { return { id: k, name: str(src[k].name, 60), updated: +src[k].updated || 0, co: coOf(src[k].co || src[k].doc && src[k].doc.co) }; }));
       },
       getProject: function (id) {
         if (cdb) return cdb.doc('projects/' + id).get().then(function (s) { if (!s.exists) return null; try { return JSON.parse(s.data().json); } catch (e) { return null; } });
+        if (dk) return IMGID.test(id) ? dk.getJSON('projects', id + '.json').then(function (p) { return p ? p.doc : null; }) : Promise.resolve(null);
         if (idb) return tx('projects', 'readonly', function (s) { return s.get(id); }).then(function (p) { return p ? p.doc : null; });
         var src = kind === 'local' ? (lsGet('projects') || {}) : mem.projects; return Promise.resolve(src[id] ? src[id].doc : null);
       },
       putProject: function (d) {
         var rec = { id: d.id, name: d.name, updated: Date.now(), co: coOf(d.co) };
         if (cdb) return cdb.doc('projects/' + d.id).set({ name: d.name, updated: rec.updated, co: rec.co, json: JSON.stringify(d) });
+        if (dk) { if (!IMGID.test(d.id)) return Promise.reject(new Error('That design has no proper id')); Object.assign(rec, { doc: d }); return dk.put('projects', d.id + '.json', rec).then(function () { if (dkMeta) dkMeta.then(function (m) { m[d.id] = { id: d.id, name: str(d.name, 60), updated: rec.updated, co: rec.co }; }, function () {}); cache('projects', function (s) { return s.put(rec); }); }); }
         if (idb) return tx('projects', 'readwrite', function (s) { return s.put(Object.assign(rec, { doc: d })); });
         if (kind === 'local') { var all = lsGet('projects') || {}; all[d.id] = Object.assign(rec, { doc: d }); if (!lsSet('projects', all)) return Promise.reject(new Error('This browser is out of space')); return Promise.resolve(); }
         mem.projects[d.id] = Object.assign(rec, { doc: d }); return Promise.resolve();
       },
       delProject: function (id) {
         if (cdb) return cdb.doc('projects/' + id).delete();
+        if (dk) return (IMGID.test(id) ? dk.del('projects', id + '.json') : Promise.resolve()).then(function () { if (dkMeta) dkMeta.then(function (m) { delete m[id]; }, function () {}); cache('projects', function (s) { return s.delete(id); }); });
         if (idb) return tx('projects', 'readwrite', function (s) { return s.delete(id); });
         if (kind === 'local') { var all = lsGet('projects') || {}; delete all[id]; lsSet('projects', all); } else delete mem.projects[id];
         return Promise.resolve();
@@ -322,6 +334,7 @@
       listImages: function () {
         var metas;
         if (cdb && cas) return cdb.collection('images').get().then(function (q) { return q.docs.filter(function (s) { return IMGID.test(s.id); }).map(function (s) { var v = s.data() || {}; return { id: s.id, name: str(v.name, 60), aspect: num(v.aspect, .05, 20, 1), kind: v.kind, src: '/_blob/' + s.id }; }); });
+        if (dk) return dkAll('images').then(function (a) { return a.filter(function (r) { return IMGID.test(r.id) && typeof r.data === 'string' && DATAURL.test(r.data); }).map(function (r) { return { id: r.id, name: str(r.name, 60), aspect: num(r.aspect, .05, 20, 1), kind: r.kind, src: r.data }; }); });
         if (idb) return tx('images', 'readonly', function (s) { return s.getAll(); }).then(function (a) {
           return Promise.all((a || []).map(function (r) { return (r.blob instanceof Blob ? blobToData(r.blob) : Promise.resolve(r.data)).then(function (src) { return { id: r.id, name: str(r.name, 60), aspect: num(r.aspect, .05, 20, 1), kind: r.kind, src: src }; }); }));
         });
@@ -330,8 +343,9 @@
       },
       putImage: function (blob, meta) {
         if (cdb && cas) return cas.upload(blob).then(function (r) { return cdb.doc('images/' + r.id).set({ name: meta.name, aspect: meta.aspect, kind: meta.kind, added: Date.now() }).then(function () { return { id: r.id, src: '/_blob/' + r.id }; }); });
-        var id = uid('i');
+        var id = meta.id && IMGID.test(meta.id) ? meta.id : uid('i');      // a backup keeps its picture ids (no duplicates)
         return blobToData(blob).then(function (data) {
+          if (dk) return dk.put('images', id + '.json', { id: id, name: meta.name, aspect: meta.aspect, kind: meta.kind, data: data }).then(function () { cache('images', function (s) { return s.put({ id: id, name: meta.name, aspect: meta.aspect, kind: meta.kind, blob: blob }); }); return { id: id, src: data }; });
           if (idb) return tx('images', 'readwrite', function (s) { return s.put({ id: id, name: meta.name, aspect: meta.aspect, kind: meta.kind, blob: blob }); }).then(function () { return { id: id, src: data }; });
           if (kind === 'local') { var all = lsGet('images') || {}; all[id] = { name: meta.name, aspect: meta.aspect, kind: meta.kind, data: data }; if (!lsSet('images', all)) return Promise.reject(new Error('This browser is out of space')); return { id: id, src: data }; }
           mem.images[id] = { name: meta.name, aspect: meta.aspect, kind: meta.kind, data: data }; return { id: id, src: data };
@@ -339,25 +353,29 @@
       },
       delImage: function (id) {
         if (cdb && cas) return cdb.doc('images/' + id).delete().then(function () { return cas.delete(id); });
+        if (dk) return (IMGID.test(id) ? dk.del('images', id + '.json') : Promise.resolve()).then(function () { cache('images', function (s) { return s.delete(id); }); });
         if (idb) return tx('images', 'readwrite', function (s) { return s.delete(id); });
         if (kind === 'local') { var all = lsGet('images') || {}; delete all[id]; lsSet('images', all); } else delete mem.images[id];
         return Promise.resolve();
       },
       getKV: function (k) {
         if (cdb) return cdb.doc('kv/' + k).get().then(function (s) { if (!s.exists) return null; try { return JSON.parse(s.data().json); } catch (e) { return null; } });
+        if (dk) return dk.getJSON('kv', dk.key(k)).then(function (r) { return r ? r.v : null; });
         if (idb) return tx('kv', 'readonly', function (s) { return s.get(k); }).then(function (r) { return r ? r.v : null; });
         return Promise.resolve(kind === 'local' ? lsGet('kv:' + k) : mem.kv[k] || null);
       },
       putKV: function (k, v) {
         if (cdb) return cdb.doc('kv/' + k).set({ json: JSON.stringify(v) });
+        if (dk) return dk.put('kv', dk.key(k), { v: v }).then(function () { cache('kv', function (s) { return s.put({ id: k, v: v }); }); });
         if (idb) return tx('kv', 'readwrite', function (s) { return s.put({ id: k, v: v }); });
         if (kind === 'local') lsSet('kv:' + k, v); else mem.kv[k] = v; return Promise.resolve();
       },
       // a draft of the design on screen: this browser only, survives a reload before Save
       // (one draft per company: KBB keeps the original key)
-      draft: function (d, c) { var k = !c || c === 'kbb' ? 'draft' : 'draft:' + c; try { localStorage.setItem('kbbas:' + k, JSON.stringify(d)); } catch (e) { if (idb) tx('kv', 'readwrite', function (s) { return s.put({ id: k, v: d }); }).catch(function () {}); } },
+      draft: function (d, c) { var k = !c || c === 'kbb' ? 'draft' : 'draft:' + c; if (dk) dk.put('kv', dk.key(k), { v: d }).catch(function () {}); try { localStorage.setItem('kbbas:' + k, JSON.stringify(d)); } catch (e) { if (idb) tx('kv', 'readwrite', function (s) { return s.put({ id: k, v: d }); }).catch(function () {}); } },
       readDraft: function (c) {
         var k = !c || c === 'kbb' ? 'draft' : 'draft:' + c, d = null; try { d = JSON.parse(localStorage.getItem('kbbas:' + k)); } catch (e) {}
+        if (!d && dk) return dk.getJSON('kv', dk.key(k)).then(function (r) { return r ? r.v : null; }).catch(function () { return null; });
         if (d || !idb) return Promise.resolve(d);
         return tx('kv', 'readonly', function (s) { return s.get(k); }).then(function (r) { return r ? r.v : null; }).catch(function () { return null; });
       },
@@ -1805,8 +1823,11 @@
       return docs.reduce(function (p, d) { return p.then(function () { return Store.putProject(d); }); }, Promise.resolve()).then(function () { docs.imap = map; return docs; });
     });
   }
-  $('xp-in').onchange = function () {
-    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+  $('xp-in').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+    if (/\.zip$/i.test(f.name)) { importProjectFile(f); return; }
+    f.slice(0, 200).text().then(function (h) { if (/"app"\s*:\s*"kbb-ad-studio-backup"/.test(h)) importBackupFile(f); else importProjectFile(f); });
+  };
+  function importProjectFile(f) {
     var isZip = /\.zip$/i.test(f.name) || /zip/.test(f.type);
     if (f.size > (isZip ? 4e9 : 200e6)) { setStatus('That file is too large', 'warn'); return; }
     setStatus('Importing…'); var nv = 0;
@@ -1822,7 +1843,134 @@
       if (docs.length) { end(); begin(); doc = docs[0]; end(); lastSaved = JSON.stringify(doc); $('pname').value = doc.name; st.grp = null; setSel([]); draw(); }
       setStatus('Imported ' + docs.length + ' design(s)' + (nv ? ' and ' + nv + ' video project(s) — see Video' : ''), 'ok');
     }).catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); });
-  };
+  }
+
+  // ── Backup everything (.json) / Import backup (18 Nov 2026): the Ad Studio moved into KBB Studio, and the owner's
+  //    designs live in the old file's browser storage (file://), which KBB Studio's page cannot read. One file carries
+  //    all of it -- designs, pictures, companies (favourites and brand kits are in them), KBB's brand kit, the picked
+  //    company, every company's unsaved draft, recent colours and the video projects. Import keeps every id, so the
+  //    same backup imported twice adds nothing the second time; a design that exists on both sides keeps the newer. ──
+  var savedCos = {};   // companies this storage already had saved (an untouched seed takes the backup's version)
+  function backupAll() {
+    end(); setStatus('Packing everything…');
+    var out = { app: 'kbb-ad-studio-backup', v: 1, exported: new Date().toISOString(), from: location.protocol === 'file:' ? 'file' : 'kbb-studio', projects: [], images: [], kv: {}, drafts: {}, ls: {} };
+    return Store.listProjects().then(function (l) {
+      return Promise.all(l.filter(function (p) { return IMGID.test(p.id); }).map(function (p) { return Store.getProject(p.id).then(function (d) { return d ? { id: p.id, name: p.name, updated: p.updated, co: p.co, doc: d } : null; }).catch(function () { return null; }); }));
+    }).then(function (ps) {
+      out.projects = ps.filter(Boolean);
+      return Promise.all(Object.keys(images).map(function (id) { var im = images[id]; return Store.toData(im.src).then(function (data) { return { id: id, name: im.name, aspect: im.aspect, kind: im.kind, data: data }; }).catch(function () { return null; }); }));
+    }).then(function (ims) {
+      out.images = ims.filter(Boolean);
+      return Promise.all(['companies', 'company', 'brand'].map(function (k) { return Store.getKV(k).then(function (v) { if (v != null) out.kv[k] = v; }).catch(function () {}); }));
+    }).then(function () {
+      if (doc) Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }, co.id);
+      return Promise.all(cos.map(function (c) { return Store.readDraft(c.id).then(function (d) { if (d && d.doc) out.drafts[c.id] = d; }).catch(function () {}); }));
+    }).then(function () {
+      try { var r = localStorage.getItem('kbbas:recent'); if (r) out.ls.recent = JSON.parse(r); } catch (e) {}
+      return window.KBB_VIDEO && window.KBB_VIDEO.backupPart ? window.KBB_VIDEO.backupPart().catch(function () { return null; }) : null;
+    }).then(function (vx) {
+      var media = vx ? vx.media : [], day = new Date().toISOString().slice(0, 10);
+      out.counts = { designs: out.projects.length, pictures: out.images.length, companies: (out.kv.companies || []).length, drafts: Object.keys(out.drafts).length, videos: vx ? vx.projects.length : 0, clips: media.length, clipsLeftOut: vx ? vx.left : 0 };
+      if (vx) out.video = { v: 1, projects: vx.projects };
+      // the clips go in as separate pieces of the file, so no single giant string is ever built
+      var head = JSON.stringify(out), parts = [head.slice(0, -1)];
+      if (vx) { parts.push(',"videoMedia":['); media.forEach(function (m, i) { parts.push((i ? ',' : '') + JSON.stringify(m)); }); parts.push(']'); }
+      parts.push('}');
+      return Store.save('KBB-Ad-Studio-backup-' + day + '.json', new Blob(parts, { type: 'application/json' })).then(function () {
+        var c = out.counts; setStatus('Backup saved: ' + c.designs + ' design(s), ' + c.pictures + ' picture(s), ' + c.companies + ' compan' + (c.companies === 1 ? 'y' : 'ies') + (c.videos ? ', ' + c.videos + ' video(s)' : '') + (c.clipsLeftOut ? ' — ' + c.clipsLeftOut + ' large clip(s) left out: use Export project (.zip) for those' : ''), 'ok');
+        return out.counts;
+      });
+    }).catch(function (e) { setStatus('Backup not made: ' + ((e && e.message) || 'try again'), 'warn'); return null; });
+  }
+  function importBackup(text) {
+    var o; try { o = JSON.parse(text); } catch (e) { return Promise.reject(new Error('That file is not a backup')); }
+    if (!o || o.app !== 'kbb-ad-studio-backup' || !Array.isArray(o.projects)) return Promise.reject(new Error('That file is not a KBB Ad Studio backup'));
+    var res = { added: 0, same: 0, newer: 0, pictures: 0, companies: 0, videos: 0 };
+    var ims = Array.isArray(o.images) ? o.images.slice(0, 2000) : [];
+    return ims.reduce(function (p, im) {                                    // 1. pictures, ids kept: one already here is skipped
+      return p.then(function () {
+        if (!im || !IMGID.test(im.id) || images[im.id] || typeof im.data !== 'string' || im.data.length > 16e6 || !DATAURL.test(im.data)) return;
+        return loadImg(im.data).then(function (el) {
+          var kind = ['prod', 'bg', 'logo', 'img'].indexOf(im.kind) >= 0 ? im.kind : 'img', a = +(el.naturalWidth / el.naturalHeight).toFixed(4);
+          return fetch(im.data).then(function (r) { return r.blob(); }).then(function (b) { return Store.putImage(b, { id: im.id, name: str(im.name, 60) || 'Picture', aspect: a, kind: kind }); })
+            .then(function (r) { res.pictures++; registerImage({ id: r.id, src: r.src, name: str(im.name, 60), aspect: a, kind: kind }); });
+        }).catch(function () {});
+      });
+    }, Promise.resolve()).then(function () {                               // 2. companies: new ones added; favourites merged
+      var kv = o.kv && typeof o.kv === 'object' ? o.kv : {};
+      (Array.isArray(kv.companies) ? kv.companies.slice(0, 50) : []).forEach(function (r) {
+        if (!r || !SLUG.test(r.id)) return;
+        var old = coById(r.id);
+        if (old && savedCos[r.id]) {                                        // edited here too: keep it, add the favourites
+          var f = (old.studio.favs || []).slice(); ((r.studio || {}).favs || []).forEach(function (x) { if (typeof x === 'string' && f.indexOf(x) < 0 && has(tplById, x)) f.push(x); }); old.studio.favs = f.slice(0, 200); return;
+        }
+        var c = cleanCompany(r, old ? { id: old.id, builtin: true, studio: old.studio, colors: old.colors } : null);
+        c.studio.builtin = !!old; if (old) { if (old.mark) c.logos.mark = c.mark = old.mark; if (co === old) co = c; cos[cos.indexOf(old)] = c; } else { cos.push(c); res.companies++; }
+        savedCos[c.id] = 1;
+      });
+      saveCos();
+      return Store.getKV('brand').then(function (b) { if (!b && kv.brand) { var nb = cleanBrand(kv.brand); if (co.id === 'kbb') brand = nb; return Store.putKV('brand', nb); } }).catch(function () {});
+    }).then(function () { return Store.listProjects(); }).then(function (have) {   // 3. designs: ids kept, newer wins
+      var by = {}; have.forEach(function (p) { by[p.id] = p; });
+      return o.projects.slice(0, 2000).reduce(function (p, raw) {
+        return p.then(function () {
+          if (!raw || !IMGID.test(raw.id) || !raw.doc) return;
+          var d = cleanDoc(Object.assign({}, raw.doc, { id: raw.id }), images); if (!d) return;
+          if (!d.co && raw.co && SLUG.test(raw.co)) d.co = raw.co;
+          var h = by[d.id];
+          if (h && !((+raw.updated || 0) > h.updated)) { res.same++; return; }
+          return (h ? Store.getProject(d.id) : Promise.resolve(null)).then(function (cur) {
+            if (cur && JSON.stringify(cleanDoc(cur, images)) === JSON.stringify(d)) { res.same++; return; }
+            if (h) res.newer++; else res.added++; by[d.id] = { id: d.id, updated: Date.now() }; return Store.putProject(d);
+          });
+        });
+      }, Promise.resolve());
+    }).then(function () {                                                  // 4. unsaved drafts, recent colours
+      var dr = o.drafts && typeof o.drafts === 'object' ? o.drafts : {};
+      return Object.keys(dr).filter(function (k) { return SLUG.test(k) && coById(k); }).reduce(function (p, k) {
+        return p.then(function () { return Store.readDraft(k).then(function (cur) { if (!cur && dr[k] && cleanDoc(dr[k].doc, images)) Store.draft({ doc: cleanDoc(dr[k].doc, images), t: +dr[k].t || Date.now(), saved: !!dr[k].saved }, k); }); });
+      }, Promise.resolve()).then(function () {
+        try { if (o.ls && Array.isArray(o.ls.recent) && !localStorage.getItem('kbbas:recent')) localStorage.setItem('kbbas:recent', JSON.stringify(o.ls.recent.filter(function (c) { return typeof c === 'string' && HEX.test(c); }).slice(0, 18))); } catch (e) {}
+      });
+    }).then(function () {                                                  // 5. video projects and their clips
+      if (!o.video || !window.KBB_VIDEO || !window.KBB_VIDEO.restorePart) return;
+      return window.KBB_VIDEO.restorePart({ projects: o.video.projects, media: o.videoMedia }).then(function (v) { res.videos = v.added; res.same += v.same; });
+    }).then(function () {
+      buildPk(); thumbsDirty(); coBar(); listMine(); moveBanner();
+      return res;
+    });
+  }
+  function backupSummary(r) {
+    return 'Backup imported: ' + r.added + ' new design(s)' + (r.newer ? ', ' + r.newer + ' updated' : '') + (r.same ? ', ' + r.same + ' already here' : '') + (r.pictures ? ', ' + r.pictures + ' picture(s)' : '') + (r.companies ? ', ' + r.companies + ' compan' + (r.companies === 1 ? 'y' : 'ies') : '') + (r.videos ? ', ' + r.videos + ' video project(s)' : '');
+  }
+  function importBackupFile(f) {
+    if (f.size > 1500e6) { setStatus('That file is too large', 'warn'); return Promise.resolve(null); }
+    setStatus('Importing your backup…');
+    return f.text().then(importBackup).then(function (r) { setStatus(backupSummary(r), 'ok'); return r; })
+      .catch(function (e) { setStatus('Not imported: ' + ((e && e.message) || 'try again'), 'warn'); return null; });
+  }
+  $('bk-all').onclick = function () { backupAll(); };
+  $('bk-in').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (f) importBackupFile(f); };
+  // the banner: in the old standalone file (with designs in it) -> back up; inside KBB Studio with nothing yet -> import
+  function moveBanner() {
+    var b = $('mv'), inside = !!(window.KBB_DISK && window.KBB_DISK.inside);
+    try { if (localStorage.getItem('kbbas:mv-x') === (inside ? 'in' : 'out')) { b.hidden = true; return; } } catch (e) {}
+    Store.listProjects().then(function (l) {
+      var n = l.length;
+      if (inside) { b.hidden = n > 0; $('mv-t').textContent = 'Moving from the old Ad Studio file? Open it once, press Backup everything, then import that file here.'; $('mv-b').textContent = 'Import backup…'; $('mv-b').onclick = function () { $('bk-in').click(); }; }
+      else { b.hidden = n === 0; $('mv-t').textContent = 'Ad Studio now lives inside KBB Studio. Click Backup everything, then in KBB Studio → Ad Studio → Import backup.'; $('mv-b').textContent = 'Backup everything'; $('mv-b').onclick = function () { backupAll(); }; }
+    }).catch(function () {});
+  }
+  $('mv-x').onclick = function () { $('mv').hidden = true; try { localStorage.setItem('kbbas:mv-x', window.KBB_DISK && window.KBB_DISK.inside ? 'in' : 'out'); } catch (e) {} };
+  // a backup or a project .json / .zip dropped anywhere on the Ads screen imports it (the same as the buttons)
+  document.addEventListener('dragover', function (e) { if (document.body.dataset.mode === 'video' || !e.dataTransfer || [].indexOf.call(e.dataTransfer.types || [], 'Files') < 0) return; e.preventDefault(); });
+  document.addEventListener('drop', function (e) {
+    if (document.body.dataset.mode === 'video') return;
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (!f || !/\.(json|zip)$/i.test(f.name)) return;
+    e.preventDefault();
+    if (/\.zip$/i.test(f.name)) { importProjectFile(f); return; }
+    f.slice(0, 200).text().then(function (h) { if (/"app"\s*:\s*"kbb-ad-studio-backup"/.test(h)) importBackupFile(f); else importProjectFile(f); });
+  });
 
   // ── companies: the switcher in the top bar, + New company, Edit company, export / import one company as .json ──
   function firstTpl(c) { var s = c.studio.tplSet; return KT.LIST.filter(function (t) { return s === 'planet-careers' ? t.co === 'pc' : t.id === 'black-friday'; })[0] || KT.LIST[0]; }
@@ -1839,7 +1987,7 @@
     if (c === co && doc) { coBar(); return Promise.resolve(true); }
     stopPlay(); end(); clearTimeout(draftT);
     if (doc) Store.draft({ doc: doc, t: Date.now(), saved: lastSaved === JSON.stringify(doc) }, co.id);
-    co = c; Store.putKV('company', c.id).catch(function () {});
+    co = c; Store.putKV('company', c.id).catch(function () {}); if (window.KBB_DISK) window.KBB_DISK.setStudioCompany(c.id);
     var b = c.id === 'kbb' ? Store.getKV('brand').then(function (x) { brand = cleanBrand(x || {}); }).catch(function () { brand = cleanBrand({}); }) : Promise.resolve(brand = c.studio.brand);
     return b.then(function () { return Store.readDraft(c.id); }).then(function (dr) {
       var d = dr && cleanDoc(dr.doc, images); if (d && (d.co || 'kbb') !== c.id) d = null;
@@ -1986,7 +2134,9 @@
   // ── start ──
   function where() {
     var k = Store.kind();
-    $('mode').textContent = { claude: 'saved to claude.ai', browser: 'offline', local: 'offline', memory: 'not saving' }[k];
+    $('mode').textContent = { claude: 'saved to claude.ai', disk: 'in KBB Studio', browser: 'offline', local: 'offline', memory: 'not saving' }[k];
+    if (k === 'disk') { $('where').textContent = 'Saving to ' + ((window.KBB_DISK.info || {}).data || 'KBB Studio Data') + '/adstudio on this Mac: your designs stay through updates, a browser reset or a different browser.'; return; }
+    if (window.KBB_DISK && window.KBB_DISK.inside) { $('where').textContent = 'KBB Studio’s engine is older than this Ad Studio, so designs are saved in this browser only. Close every KBB Studio Terminal window and start KBB Studio again.'; return; }
     $('where').textContent = { claude: 'Saving to this artifact on claude.ai.', browser: 'Saving inside this browser on this computer (works offline). Use Export project for a backup or to move to another computer.', local: 'Saving inside this browser (small storage). Use Export project for a backup.', memory: 'This browser does not allow saving from this file. Use Export project before you close it.' }[k];
   }
   Store.init().then(function () {
@@ -1997,6 +2147,9 @@
         c.studio.builtin = !!old; if (old) { if (old.mark) c.logos.mark = c.mark = old.mark; cos[cos.indexOf(old)] = c; } else if (!coById(c.id)) cos.push(c);
       }); }).catch(function () {}); })
       .then(function () { return Store.getKV('company').then(function (id) { co = coById(id) || cos[0]; }).catch(function () {}); })
+      // inside KBB Studio: open on the company picked there (the same ids: kbb, planet-careers, …)
+      .then(function () { return window.KBB_DISK && window.KBB_DISK.on ? window.KBB_DISK.studioCompany().then(function (sc) { if (sc && coById(sc)) co = coById(sc); }) : null; })
+      .then(function () { return Store.getKV('companies').then(function (l) { savedCos = {}; (Array.isArray(l) ? l : []).forEach(function (r) { if (r && SLUG.test(r.id)) savedCos[r.id] = 1; }); }).catch(function () {}); })
       .then(function () { if (co.id !== 'kbb') { brand = co.studio.brand; return; } return Store.getKV('brand').then(function (b) { if (b) brand = cleanBrand(b); }).catch(function () {}); })
       .then(function () { return Store.readDraft(co.id); });
   }).then(function (dr) {
@@ -2004,13 +2157,13 @@
     if (d) { doc = d; lastSaved = dr.saved ? JSON.stringify(d) : ''; if (!dr.saved) setStatus('Your last session is back — press Save to keep it', 'warn'); }
     else { doc = fromTemplate(firstTpl(co)); lastSaved = ''; }
     $('pname').value = doc.name;
-    coBar(); buildPk(); buildCats(); undoBtns(); draw(); showTab('tpl'); listMine();
+    coBar(); buildPk(); buildCats(); undoBtns(); draw(); showTab('tpl'); listMine(); moveBanner();
     document.documentElement.dataset.ready = '1';
   });
 
   // test hooks (read-only views + the same actions the buttons run)
   window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
     get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id, cty) { useTemplate(tplById[id], cty); },
-    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function () { return cutOutPhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
+    setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function () { return cutOutPhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, backupAll: backupAll, importBackup: importBackup, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
     selKeys: selKeys, setSel: function (k) { setSel(k); afterSel(); }, itemBox: itemBox, aabb: aabb, docColours: function () { return docColours(doc); } };
 })();

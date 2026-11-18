@@ -48,15 +48,16 @@ const version = "0.1.0"
 // run on an older engine and says how to restart, instead of every new page failing with "no such endpoint"
 // (the owner, 17 Nov: Configure → Photo sources / Languages, after the new app ran on the previous engine).
 // 4 (17 Nov): the data folder outside the app folder (/api/info data, /api/prefs?merge=1).
-const apiLevel = 4
+// 5 (18 Nov): adstudio/ -- the Ad Studio's designs, companies and pictures in the data folder (app/adstudio).
+const apiLevel = 5
 
 // preferredPort: the page's origin is http://127.0.0.1:<port>, and everything a browser keeps (storage, permissions)
 // belongs to that origin. A random port every launch lost all of it every time; this one is kept unless it is busy.
 const preferredPort = 41917
 
 var (
-	readRoots  = map[string]bool{"app": true, "vendor": true, "models": true, "library": true, "brands": true, "workspaces": true}
-	writeRoots = map[string]bool{"workspaces": true, "library": true, "brands": true, "models": true}
+	readRoots  = map[string]bool{"app": true, "vendor": true, "models": true, "library": true, "brands": true, "workspaces": true, "adstudio": true}
+	writeRoots = map[string]bool{"workspaces": true, "library": true, "brands": true, "models": true, "adstudio": true}
 	netHosts   = map[string]bool{"huggingface.co": true, "cdn-lfs.huggingface.co": true, "cas-bridge.xethub.hf.co": true}
 	hfRepo     = regexp.MustCompile(`^https://huggingface\.co/[A-Za-z0-9][\w.-]*/[A-Za-z0-9][\w.-]*/$`)
 )
@@ -529,7 +530,7 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		rel := strings.TrimSuffix(q.Get("path"), "/")
-		abs, err := s.resolveWrite(rel, map[string]bool{"workspaces": true, "library": true})
+		abs, err := s.resolveWrite(rel, map[string]bool{"workspaces": true, "library": true, "adstudio": true})
 		// never a whole root or a whole workspace: only things inside them
 		if err != nil || strings.Count(rel, "/") < 2 && strings.HasPrefix(rel, "workspaces/") || !strings.Contains(rel, "/") {
 			jsonErr(w, 403, "path refused")

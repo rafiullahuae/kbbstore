@@ -1,6 +1,6 @@
 #!/bin/bash
 # Builds the folder the owner copies to his Mac: dist/KBB Studio/ and dist/KBB Studio.zip
-#   in:  the launcher, the engine for Apple silicon + Intel, the app (captions + automation), vendor (transformers.js,
+#   in:  the launcher, the engine for Apple silicon + Intel, the app (captions + automation, the Ad Studio), vendor (transformers.js,
 #        MediaPipe, mp4 muxer/demuxer, caption fonts), brand kits + country packs, the music/SFX libraries, the model
 #        LIST (models/manifest.json) and the README.
 #   out: the AI models themselves (downloaded once by the Setup screen on first run), projects, exports, the
@@ -17,6 +17,10 @@ chmod +x "dist/$NAME/Start $NAME.command"
 cp engine/kbbstudio-mac-arm64 engine/kbbstudio-mac-amd64 "dist/$NAME/engine/"
 chmod +x "dist/$NAME/engine/"kbbstudio-mac-*
 cp -R app vendor "dist/$NAME/"
+# the Ad Studio (app/adstudio: docs/plans/ad-studio/build.py puts it there) with its cut-out file beside it
+for f in ad-studio.html ad-studio-cutout.js entry.js; do
+  if [ ! -s "dist/$NAME/app/adstudio/$f" ]; then echo "the Ad Studio is missing app/adstudio/$f (run docs/plans/ad-studio/build.py)" >&2; exit 1; fi
+done
 rm -rf "dist/$NAME/app/captions/dev" "dist/$NAME/app/auto/dev" "dist/$NAME/app/captions/translate/dev" "dist/$NAME/app/sync/dev"
 # only the BUILT-IN brand kits and library: a kit made on this machine, its music and saved photos are user data
 mkdir -p "dist/$NAME/brands" "dist/$NAME/library"

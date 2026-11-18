@@ -50,7 +50,7 @@ function openProject(p, files) {
   if (files?.length) editor.importFiles(files);
 }
 
-const ENGINE_API = 4; // engine/main.go apiLevel
+const ENGINE_API = 5; // engine/main.go apiLevel (5: adstudio/ for the Ad Studio)
 
 async function boot() {
   if (!(await engine.connect())) {
