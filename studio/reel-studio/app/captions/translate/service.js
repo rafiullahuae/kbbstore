@@ -10,6 +10,7 @@ import { translateWithClaude } from './claude.js';
 import { glossaryFor, westernDigits } from './glossary.js';
 import { sourceLangOf, LANG, langName } from './langs.js';
 import { applyTranslation, editSentence, sourceOf } from './commands.js';
+import { nativeCaptions } from '../hinglish/script.js';
 import { requestFor } from './engines.js';
 import { createTrack, createItem, projectDuration } from '../../core/project.js';
 
@@ -111,7 +112,9 @@ export function disposeTranslators() { shared?.dispose(); sharedBack?.dispose();
 export async function translateCaptions(ctx, tgt, mode = 'replace', opts = {}) {
   const P = ctx.project, cap = P.captions;
   if (!cap?.words?.length) throw new Error('No captions to translate yet — press Auto captions first.');
-  const source = sourceOf(cap);
+  // Roman Hindi / Hinglish captions translate from their native text (kept on each word as w.orig) — the MT models
+  // read Devanagari, not casual Roman spelling. Times and lines are the same words', so the result lines up.
+  const source = nativeCaptions(sourceOf(cap));
   const src = opts.src || sourceLangOf({ ...source, lang: source.lang || cap.lang });
   if (src === tgt) throw new Error(`The captions are already in ${langName(tgt)}.`);
   const onProgress = opts.onProgress || (() => {});

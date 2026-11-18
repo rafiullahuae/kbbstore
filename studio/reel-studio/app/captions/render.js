@@ -126,6 +126,17 @@ function layoutCue(ctx, cap, L, st, k, maxW, mode) {
     for (const word of ws) {
       if (rtl) { x -= word.w; word.x = x; x -= space; } else { word.x = x; x += word.w + space; }
     }
+    // bidi: inside a right-to-left row, a run of left-to-right words (English in Urdu / Arabic: "Beauty of Joseon",
+    // "How to apply") keeps its own reading order — the run's slots are refilled left to right
+    if (rtl) {
+      const ltr = (wd) => /[A-Za-z0-9]/.test(wd.text) && !isRtlText(wd.text);
+      for (let j = 0; j < ws.length;) {
+        if (!ltr(ws[j])) { j++; continue; }
+        let k = j; while (k + 1 < ws.length && ltr(ws[k + 1])) k++;
+        if (k > j) { let lx = ws[k].x; for (let q = j; q <= k; q++) { ws[q].x = lx; lx += ws[q].w + space; } }
+        j = k + 1;
+      }
+    }
     return { words: ws, w };
   });
   const rowH = px * st.lineHeight * maxScale * (family === 'Noto Nastaliq Urdu' ? 1.45 : 1);   // Nastaliq's tall ascenders / deep descenders

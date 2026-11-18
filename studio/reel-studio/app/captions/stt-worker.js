@@ -3,7 +3,7 @@
 // from vendor/transformers/.
 //
 // in : {type:'load', id, repo, device, dtype, modelsUrl, vendorUrl, threads}
-//      {type:'detect', id, audio}                 -> {lang}
+//      {type:'detect', id, audio}                 -> {lang, probs:{code: p}} (ten likeliest + en/hi/ur/ar)
 //      {type:'run', id, audio, offset, language, task, prompt?}   -> {words:[{t0,t1,w}], text, prompted}
 //      {type:'analyse', id, audio}                -> classifyAudio() (speech / music / silence picture)
 //      {type:'speakers', id, audio, words}        -> detectSpeakers() (best-effort two-voice split)
@@ -39,7 +39,7 @@ self.onmessage = async (e) => {
       });
       post({ type: 'done', id: m.id, loadMs: performance.now() - t, threads: env.backends.onnx.wasm.numThreads });
     } else if (m.type === 'detect') {
-      post({ type: 'done', id: m.id, lang: await detectLanguage(m.audio) });
+      post({ type: 'done', id: m.id, ...(await detectLanguage(m.audio)) });
     } else if (m.type === 'run') {
       const opts = {
         return_timestamps: 'word', task: m.task || 'transcribe', language: m.language || null,
@@ -108,9 +108,19 @@ async function detectLanguage(audio) {
   const out = await model({ input_features, decoder_input_ids: new Tensor('int64', BigInt64Array.from([BigInt(sot)]), [1, 1]) });
   const logits = out.logits.data; // [1,1,vocab]
   // Language tokens sit between <|startoftranscript|> and <|translate|> in every Whisper vocabulary.
+  // A softmax over the language tokens only = Whisper's own language probabilities (what its detect_language gives).
   const first = sot + 1, last = tok.model.tokens_to_ids.get('<|translate|>') - 1;
-  let bestId = -1, bestV = -Infinity;
-  for (let id = first; id <= last; id++) if (logits[id] > bestV) { bestV = logits[id]; bestId = id; }
-  const best = bestId >= 0 ? /^<\|([a-z]+)\|>$/.exec(tok.model.vocab[bestId] || '')?.[1] : null;
-  return best || 'en';
+  let mx = -Infinity;
+  for (let id = first; id <= last; id++) if (logits[id] > mx) mx = logits[id];
+  const all = [];
+  let z = 0;
+  for (let id = first; id <= last; id++) {
+    const code = /^<\|([a-z]+)\|>$/.exec(tok.model.vocab[id] || '')?.[1];
+    if (!code) continue;
+    const e = Math.exp(logits[id] - mx); z += e; all.push([code, e]);
+  }
+  all.sort((a, b) => b[1] - a[1]);
+  const probs = {};
+  all.forEach(([code, e], k) => { if (k < 10 || ['en', 'hi', 'ur', 'ar'].includes(code)) probs[code] = +(e / z).toFixed(4); });
+  return { lang: all[0]?.[0] || 'en', probs };
 }

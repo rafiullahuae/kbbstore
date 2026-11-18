@@ -72,12 +72,13 @@ export const setCaptions = (cap, canvas) => captionsCommand('set', 'Auto caption
   return c;
 });
 
-/** Edit word i. Empty text deletes it; text with spaces becomes several words sharing its time. */
+/** Edit word i. Empty text deletes it; text with spaces becomes several words sharing its time. A word shown in
+ *  another script drops its native text (w.orig): the edit is the new truth. */
 export const editWord = (i, text) => captionsCommand('editWord', 'Edit word', (cap) => {
   const w = cap.words[i]; if (!w) return cap;
   const parts = String(text).trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return spliceWords(cap, i, i, []);
-  if (parts.length === 1) { const c = clone(cap); c.words[i] = { ...w, w: parts[0], conf: 1 }; return c; }
+  if (parts.length === 1) { const c = clone(cap); c.words[i] = { ...w, w: parts[0], conf: 1 }; delete c.words[i].orig; return c; }
   return spliceWords(cap, i, i, spread(parts, w.t0, w.t1));
 });
 

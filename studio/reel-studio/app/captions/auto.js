@@ -9,6 +9,7 @@ import { styleForWorkspace, resolveStyle } from './styles.js';
 import { createItem, itemDur, findMedia, tracksOfKind, srcTime } from '../core/project.js';
 import { cleanNonSpeech, DEFAULT_TAG_MODE } from './nonspeech.js';
 import { vocabFor, promptFor, correctTerms } from './vocab.js';
+import { heardLanguage, withHeardLanguage } from './hinglish/script.js';
 
 const SR = 16000;
 let shared = null;
@@ -181,6 +182,7 @@ export async function autoCaptions(ctx, opts = {}) {
       soundTags: p.captions?.soundTags || DEFAULT_TAG_MODE, music, dropped: r.dropped, speakers: r.speakers, heard };
     if (p.captions?.alt) cap.alt = p.captions.alt;
   }
+  Object.assign(cap, withHeardLanguage(cap, r, lang, p));   // what was heard + the Hindi / Urdu script (hinglish/)
   ctx.history.apply(captionsWithItem(p, cap, ctx.ops, { label: partial ? 'Auto captions · selected clips' : 'Auto captions', grow: partial }));
   const names = targets.map((c) => c.name);
   const head = partial ? `Captioned ${plural(targets.length, 'clip')} (${names.slice(0, 3).join(', ')}${names.length > 3 ? '…' : ''})`
@@ -212,7 +214,7 @@ export async function captureWords(tr, audio, opts = {}) {
   if (opts.speakers !== false && words.length >= 6) {
     try { const sp = await tr.speakers(audio, words); words = sp.words; speakers = sp.n; } catch { /* best effort */ }
   }
-  return { words, lang: raw.lang, music: ns.music, dropped: ns.dropped, fixes: fx.fixes, speakers, raw };
+  return { words, lang: raw.lang, music: ns.music, dropped: ns.dropped, fixes: fx.fixes, speakers, raw, ...heardLanguage(raw, words) };
 }
 
 /**

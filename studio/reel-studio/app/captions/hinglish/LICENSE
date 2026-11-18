@@ -1,0 +1,14 @@
+Hinglish / Roman Urdu transliteration data and rules (app/captions/hinglish/: dict.js, urdu.js, translit.js) and the
+test cases in tools/hindi-cases.cjs.
+
+Original work written for KBB Studio in November 2026 from general knowledge of everyday Hindi and Urdu and of how
+both are typed in Roman letters on social media. No corpus, word-frequency list, dictionary or transliteration table
+was copied.
+
+Licence: CC0-1.0 (Creative Commons Zero v1.0 Universal, public domain dedication).
+To the extent possible under law, the authors have waived all copyright and related or neighbouring rights to this
+data. You can copy, modify and distribute it, even commercially, without asking permission.
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Fonts used to draw these captions are bundled separately in vendor/caption-fonts/ under their own licences
+(Noto Sans Devanagari, Noto Nastaliq Urdu, Noto Naskh Arabic: SIL Open Font License 1.1).

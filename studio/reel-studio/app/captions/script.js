@@ -235,7 +235,7 @@ export function alignEdit(oldWords, newText) {
   let q = 0;
   while (q < ops.length) {
     const o = ops[q];
-    if (o.k === 'eq') { const w = oldWords[o.i]; out.push(nt[o.j] === w.w ? w : { ...w, w: nt[o.j], conf: 1 }); q++; continue; }
+    if (o.k === 'eq') { const w = oldWords[o.i]; out.push(nt[o.j] === w.w ? w : { ...w, w: nt[o.j], conf: 1, orig: undefined }); q++; continue; }
     const dels = [], ins = [];
     while (q < ops.length && ops[q].k !== 'eq') { (ops[q].k === 'del' ? dels : ins).push(ops[q]); q++; }
     const texts = ins.map((x) => nt[x.j]);

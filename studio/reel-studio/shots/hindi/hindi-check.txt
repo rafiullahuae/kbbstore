@@ -1,0 +1,30 @@
+PASS transliteration · schwa: 48/48
+PASS transliteration · nasal: 30/30
+PASS transliteration · nukta: 19/19
+PASS transliteration · conjunct: 22/22
+PASS transliteration · common: 43/43
+PASS transliteration · verbs: 19/19
+PASS transliteration · loan: 41/41
+PASS transliteration · marks: 6/6
+PASS transliteration · 10 sentences (sentence capitals, । -> ., English words in English)
+PASS 228 word pairs + 10 sentences (≥ 150 pairs asked)
+PASS held-out words (never tuned on): 51/57 = 89.5% spelled the common way; rules alone (no dictionary) 123/138 on the rule groups; misses: इंतज़ार→intazar (intezaar/intezar), नीला→nila (neela), पीला→pila (peela), बेहतरीन→behatreen (behtareen/behatareen), शानदार→shaandar (shandaar/shaandaar/shandar), लाजवाब→laajwab (lajawaab/lajawab)
+PASS Hinglish dictionary: 3749 Devanagari word forms (hand-written words + loanwords + generated verb forms), 3663 Urdu spellings derived from them
+PASS dictionary licence stated: app/captions/hinglish/LICENSE (original work, CC0-1.0)
+PASS Urdu script -> Roman Urdu: 20/20
+PASS Devanagari -> Urdu script: 18/18
+PASS script switch Devanagari -> Roman -> Urdu -> Devanagari: every word byte-identical (26 words incl. an English one)
+PASS word times and media anchors untouched by the switch (word sync / karaoke follow the same words)
+PASS Roman: "Doston, aaj main aapko bataunga ki work Canada mein job ke liye apply kaise karein. Yeh process bahut easy hai aur hamari team aapki madad karegi."
+PASS lines re-broken for the new text (4 -> 5 lines, valid) and the styled line kept its style
+PASS a word edited in Roman ("Main") comes back in Devanagari from the dictionary (मैं); the others from their kept native text
+PASS lines split by hand are kept as they are when the script changes
+PASS save / reload (JSON) of Roman captions, then back to Devanagari: identical
+PASS translation source of Roman captions = the original Devanagari (+ the English word as is)
+PASS Urdu captions in Roman Urdu: "Main aaj khush hoon. Canada mein job" (میں = main at a sentence start, mein after a word)
+PASS Hinglish by its words: English share 33 % in a misspelt Hinglish transcript (≥ 12 % = Hinglish), 0 % / 5 % in plain Hindi
+PASS Noto Sans Devanagari (OFL-1.1, bundled) has every one of the 70 Devanagari characters the captions use (cmap read from the woff2)
+PASS noto-nastaliq-urdu has all 34 Urdu letters used
+PASS noto-naskh has all 34 Urdu letters used
+
+ALL PASS (0 s)
