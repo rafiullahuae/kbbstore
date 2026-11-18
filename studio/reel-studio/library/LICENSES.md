@@ -11,6 +11,8 @@ Everything here works offline. Nothing is fetched at run time.
 | Face detector runtime | `vendor/mediapipe/tasks-vision-0.10.21/` | npm `@mediapipe/tasks-vision@0.10.21` (Google) | Apache-2.0. See `vendor/mediapipe/LICENSE.txt` |
 | Face detector model | `vendor/mediapipe/models/blaze_face_short_range.tflite` | MediaPipe model zoo, BlazeFace short range (float16, v1) | Apache-2.0. See `vendor/mediapipe/LICENSE.txt` |
 | Country flags, 33 | `brands/planet-careers/countries/flags/*.svg` | npm `flag-icons@7.2.3` | MIT. See `flags/LICENSE-flag-icons.txt` |
+| Country flags, all 260 (capsules carousel) | `app/themes/capsules/flags-4x3.json`, `countries.js` | npm `flag-icons@7.6.0` `flags/4x3`, bundled at build time by `tools/caps-flags.cjs` (whitespace-minified, one file) | MIT. See `app/themes/capsules/LICENSE-flag-icons.txt` |
+| Capsule line icons, 67 | `app/themes/capsules-data.js` | Drawn for KBB Studio (24-unit stroked paths) | Original work. Free to use commercially |
 | Country map outlines | `brands/planet-careers/countries/maps/*.svg` | Natural Earth 1:50m admin-0, via npm `world-atlas@2.0.2`; projected by `tools/r3-countries.cjs` with `d3-geo` (ISC, build tool only, not shipped) | Natural Earth: public domain. world-atlas: ISC |
 | Occupations, tool icons, worker figures | `library/occupations/` (`occupations.json`, `icons/`, `figures/`) | Written and drawn for KBB Studio (`build-occupations.py`, `icons.py`, `figures.py`) | Original work. Free to use commercially |
 | Landmark silhouettes, 33 | `brands/planet-careers/countries/landmarks/*.svg`, `app/auto/countries/landmarks.js` | Drawn for KBB Studio | Original work |

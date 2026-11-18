@@ -11,6 +11,8 @@ import { speedSection } from './speed.js';
 import { inspectorSections } from '../core/modules.js';
 // the design-family elements (their placeholder words and trades), read once the themes module has loaded
 let FAM_ELS = null; import('../themes/elements.js').then((m) => { FAM_ELS = m.ELEMENTS.filter((d) => d.fam); }).catch(() => {});
+// the capsules carousel's own sections (themes/capsules-panel.js), loaded with the editor so the inspector builds them in step
+let CAPS_PANEL = null; import('../themes/capsules-panel.js').then((m) => { CAPS_PANEL = m; }).catch(() => {});
 
 const FONTS = ['system-ui', 'Helvetica Neue', 'Avenir Next', 'Futura', 'Gill Sans', 'Georgia', 'Didot', 'Baskerville', 'Times New Roman', 'Courier New', 'Arial Rounded MT Bold', 'Impact', 'Geeza Pro', 'Damascus', 'Baghdad'];
 const pct = (v) => Math.round(v * 100) + '%';
@@ -187,6 +189,7 @@ export class Inspector {
     const fd = this.famDef?.(el);
     if (fd?.variants) kids.push(field('Trade', select(fd.variants.map((v) => [v, fd.variantLabels?.[v] || v]), item.style?.variant || fd.variants[0], (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.variant = v; this.set(item, { style }, 'Trade'); this.seal(); })));
     this.el.append(this.section('Theme element', ...kids));
+    if (el === 'capsules' && CAPS_PANEL) { const box = h('div', { dataset: { capsInsp: item.id } }); this.el.append(box); CAPS_PANEL.capsulesInspector(this, item, box); }
   }
 
   fadePanel(item) {
