@@ -280,8 +280,11 @@ export class Timeline {
       this.track(e, (ev) => {
         let dt = (ev.clientX - x0) / this.pps;
         const edge = side === 'l' ? s0.t0 + dt : end0 + dt, sd = this.snapT([edge], pts); dt += sd; this.showSnapLine(sd ? edge + sd : null);
-        const a = side === 'l' ? Math.max(0, Math.min(end0 - MIN, s0.t0 + dt)) : s0.t0, b = side === 'l' ? end0 : Math.max(s0.t0 + MIN, end0 + dt);
+        // Alt on the left edge (ripple): the clip keeps its start and the trimmed time comes off its end, so the edge may
+        // reach back past 0 (footage before the in point) — the props are worked out where the edge is, then moved home
+        const a = side === 'l' ? Math.min(end0 - MIN, ripple ? s0.t0 + dt : Math.max(0, s0.t0 + dt)) : s0.t0, b = side === 'l' ? end0 : Math.max(s0.t0 + MIN, end0 + dt);
         const props = trimProps(it0, a, b, it.freeze ? Infinity : (m.dur || Infinity));
+        if (ripple && side === 'l') props.t0 = s0.t0;
         // Alt (ripple): what follows on the track rides the new end
         const rip = ripple ? TD.rippleProps(followers, (props.t0 ?? a) + itemDur({ ...it0, ...props }) - end0) : [];
         ed.apply(ops.setItems([{ id, props }, ...rip], ripple ? 'Ripple trim' : 'Trim'));

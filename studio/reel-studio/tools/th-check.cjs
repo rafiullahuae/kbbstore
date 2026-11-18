@@ -34,10 +34,15 @@ function frameRGB(file, t, w, h) {
 }
 const meanDiff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; };
 
+// the two test clips: ffmpeg's gradients source picks its colour lines at RANDOM unless given a seed, so before 2026-11-18
+// every fresh tools/out/ made a different pair, and a pixel probe could pass on one pair and fail on the next. Seeded,
+// and kept under a name of their own so an old random pair is never reused.
+const CLIPS = path.join(OUT, 'clips-seeded');
 function makeClips() {
-  const a = path.join(OUT, 'a.mp4'), b = path.join(OUT, 'b.mp4');
-  if (!fs.existsSync(a)) ff('-f', 'lavfi', '-i', 'gradients=size=1080x1920:rate=30:duration=5:speed=0.02:c0=0x7a5c8f:c1=0xd9a07e:c2=0x2f4f6f:nb_colors=3', '-f', 'lavfi', '-i', 'sine=frequency=330:duration=5:sample_rate=48000', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-g', '30', '-c:a', 'aac', '-shortest', '-movflags', '+faststart', a);
-  if (!fs.existsSync(b)) ff('-f', 'lavfi', '-i', 'gradients=size=1080x1920:rate=30:duration=4:speed=0.03:c0=0x204060:c1=0x80a0c0:nb_colors=2', '-f', 'lavfi', '-i', 'sine=frequency=550:duration=4:sample_rate=48000', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-g', '30', '-c:a', 'aac', '-shortest', '-movflags', '+faststart', b);
+  fs.mkdirSync(CLIPS, { recursive: true });
+  const a = path.join(CLIPS, 'a.mp4'), b = path.join(CLIPS, 'b.mp4');
+  if (!fs.existsSync(a)) ff('-f', 'lavfi', '-i', 'gradients=size=1080x1920:rate=30:duration=5:speed=0.02:seed=11:c0=0x7a5c8f:c1=0xd9a07e:c2=0x2f4f6f:nb_colors=3', '-f', 'lavfi', '-i', 'sine=frequency=330:duration=5:sample_rate=48000', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-g', '30', '-c:a', 'aac', '-shortest', '-movflags', '+faststart', a);
+  if (!fs.existsSync(b)) ff('-f', 'lavfi', '-i', 'gradients=size=1080x1920:rate=30:duration=4:speed=0.03:seed=23:c0=0x204060:c1=0x80a0c0:nb_colors=2', '-f', 'lavfi', '-i', 'sine=frequency=550:duration=4:sample_rate=48000', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-g', '30', '-c:a', 'aac', '-shortest', '-movflags', '+faststart', b);
 }
 
 const GERMAN = 'Hi everyone. If you want to study in Germany, the German student visa starts with an admission letter from a university, for example in Berlin or Munich. Europe has great public universities and Germany is one of the best.';
@@ -53,7 +58,7 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
   for (const d of ['app', 'vendor', 'brands', 'library']) fs.cpSync(path.join(ROOT, d), path.join(STUDIO, d), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'models', 'manifest.json'), path.join(STUDIO, 'models', 'manifest.json'));
   fs.mkdirSync(path.join(STUDIO, 'library', 'th-test'), { recursive: true });
-  for (const f of ['a.mp4', 'b.mp4']) fs.copyFileSync(path.join(OUT, f), path.join(STUDIO, 'library', 'th-test', f));
+  for (const f of ['a.mp4', 'b.mp4']) fs.copyFileSync(path.join(CLIPS, f), path.join(STUDIO, 'library', 'th-test', f));
   const e = await H.startEngine(STUDIO);
   const { chromium } = require('playwright');
   const browser = await chromium.launch({ executablePath: fs.existsSync('/usr/bin/google-chrome') ? '/usr/bin/google-chrome' : undefined, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required', '--disable-features=MediaRouter'] });
@@ -81,7 +86,7 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
   };
 
   // ── the reel: two clips (one cut), music for beats, captions ──
-  await page.setInputFiles('.home-drop input[type=file]', path.join(OUT, 'a.mp4'));
+  await page.setInputFiles('.home-drop input[type=file]', path.join(CLIPS, 'a.mp4'));
   await page.waitForSelector('.tl-item', { timeout: 60000 });
   await page.waitForFunction(() => window.kbbEditor?.project.media[0]?.dur > 0);
   const setup = await ev(async ({ GERMAN }) => {
@@ -426,20 +431,51 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
     const u0 = ed.history.undoStack.length;
     const [it] = TH.placeTransition(window.CTX, 'landmark', { at: cut.t + 0.4, theme: 'country-fr' }); ed.history.seal();
     out.place = { steps: ed.history.undoStack.length - u0, onCut: all().filter((i) => i.type === 'theme.trans' && i.style.a === cut.a.id).length, mid: +(find(it.id).t0 + (find(it.id).out - find(it.id).in) / 2).toFixed(3), kind: find(it.id).style.kind };
-    // both clips show: a pixel inside the landmark silhouette before the cut is the INCOMING clip; one outside it after the
-    // cut is the OUTGOING clip
+    // both clips show: inside the landmark silhouette before the cut there is the INCOMING clip; outside it after the cut
+    // the OUTGOING clip. The silhouette is small before the cut and its white outline (with its glow) runs through it, so
+    // a fixed probe point reads the outline, not a clip: (0.5, 0.6) sat on the arch line, and whether the outline's white
+    // counted as "the incoming clip" then depended on the colours of the (unseeded, random) test clips. So the probe is
+    // FOUND: inside the transition's own mask (themes/transitions.js transitionMask), the pixel where the incoming clip
+    // shows most — the frame rendered as is vs with that clip hidden (opacity 0) — and there the colour must be the
+    // incoming clip's. After the cut: the pixel outside the mask farthest from it. The reference frames come from the
+    // exact WebCodecs reader (the export's and the freeze frames' path), not a <video> seek.
     await LK.ensureFreezeFrames(ed.project); await R.prepareRender(ed.project);
-    const W = 216, H = 384, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d', { willReadFrequently: true });
+    const W = 216, H = 384, SC = W / ed.project.canvas.w, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d', { willReadFrequently: true });
     const P = ed.project, skipAll = new Set(all().filter((i) => /^theme\./.test(i.type) || i.type === 'caption').map((i) => i.id)), skipOthers = new Set([...skipAll].filter((id) => id !== it.id));
-    const { srcTime } = await import('/app/core/project.js');
-    const bmA = await ed.media.frameAt(cut.a.media, srcTime(cut.a, cut.t - 0.06), 540), bmB = await ed.media.frameAt(cut.b.media, srcTime(cut.b, cut.t + 0.06), 540);
-    const source = (item) => (item.id === cut.a.id ? bmA : item.id === cut.b.id ? bmB : null);
-    const at = (t, skip, x, y) => { R.renderFrame(g, P, t, { scale: 0.2, skip, source }); const d = g.getImageData(Math.round(x * W) - 1, Math.round(y * H) - 1, 3, 3).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } return [r / 9, gg / 9, b / 9]; };
-    const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const { srcTime } = await import('/app/core/project.js'), TT = await import('/app/themes/transitions.js');
+    const exact = async (clip, t) => { const r = await ed.media.openReader(clip.media); try { const f = await r.frame(srcTime(clip, t)); return await createImageBitmap(f, { resizeWidth: 540, resizeHeight: 960 }); } finally { r.close(); } };
     const tb = cut.t - 0.06, ta = cut.t + 0.06;
-    const inB = at(tb, skipOthers, 0.5, 0.6), aOnly = at(tb, skipAll, 0.5, 0.6), bOnly = at(cut.t + 0.01, skipAll, 0.5, 0.6);
-    const outA = at(ta, skipOthers, 0.08, 0.08), aOnly2 = at(cut.t - 0.01, skipAll, 0.08, 0.08), bOnly2 = at(ta, skipAll, 0.08, 0.08);
-    out.both = { beforeCut: { toB: +dist(inB, bOnly).toFixed(1), toA: +dist(inB, aOnly).toFixed(1) }, afterCut: { toA: +dist(outA, aOnly2).toFixed(1), toB: +dist(outA, bOnly2).toFixed(1) } };
+    const bmA = await exact(cut.a, tb), bmB = await exact(cut.b, ta);
+    const source = (item) => (item.id === cut.a.id ? bmA : item.id === cut.b.id ? bmB : null);
+    const frame = (proj, t, skip) => { R.renderFrame(g, proj, t, { scale: SC, skip, source }); return g.getImageData(0, 0, W, H).data; };
+    const maskAt = (t) => { const mk = TT.transitionMask(find(it.id), P, t), q = document.createElement('canvas'); q.width = W; q.height = H; const c = q.getContext('2d', { willReadFrequently: true }); c.setTransform(SC, 0, 0, SC, 0, 0); c.fill(mk.path); const d = c.getImageData(0, 0, W, H).data; return { inS: (x, y) => x >= 0 && y >= 0 && x < W && y < H && d[(y * W + x) * 4 + 3] > 127, before: mk.before, p: +mk.p.toFixed(3) }; };
+    const avg = (d, x, y) => { let r = 0, gg = 0, b = 0; for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const k = ((y + j) * W + x + i) * 4; r += d[k]; gg += d[k + 1]; b += d[k + 2]; } return [r / 9, gg / 9, b / 9]; };
+    const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    // before the cut: inside the mask, which pixels change when the incoming clip is hidden (opacity 0), and which when
+    // the outgoing one is. The silhouette must hold B and only B: hiding B changes them, hiding A does not (the white
+    // outline and its glow are drawn over both, so the colour alone cannot tell, but its dependence can)
+    const mb = maskAt(tb), hide = (id) => { const q = structuredClone(P); for (const tr of q.tracks) for (const i of tr.items) if (i.id === id) i.opacity = 0; return q; };
+    const withB = frame(P, tb, skipOthers), noB = frame(hide(cut.b.id), tb, skipOthers), noA = frame(hide(cut.a.id), tb, skipOthers);
+    let best = null, shows = 0, aLeaks = 0;
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      if (!mb.inS(x, y)) continue;
+      const d = dist(avg(withB, x, y), avg(noB, x, y));
+      if (d > 40) { shows++; if (dist(avg(withB, x, y), avg(noA, x, y)) > 3) aLeaks++; }
+      if (!best || d > best.d) best = { x, y, d };
+    }
+    const inB = avg(withB, best.x, best.y), aOnly = avg(frame(P, tb, skipAll), best.x, best.y), bOnly = avg(frame(P, cut.t + 0.01, skipAll), best.x, best.y);
+    // after the cut: the pixel outside the mask with the most room to it (24 px is plenty)
+    const ma = maskAt(ta); let pa = null;
+    for (let y = 1; y < H - 1 && !(pa && pa.room >= 24); y++) for (let x = 1; x < W - 1; x++) {
+      if (ma.inS(x, y)) continue;
+      let room = 24;
+      for (let r = 1; r < room; r++) for (let k = 0; k < 16; k++) { const an = (k / 16) * Math.PI * 2; if (ma.inS(Math.round(x + r * Math.cos(an)), Math.round(y + r * Math.sin(an)))) { room = r; break; } }
+      if (!pa || room > pa.room) pa = { x, y, room };
+      if (pa.room >= 24) break;
+    }
+    const outA = avg(frame(P, ta, skipOthers), pa.x, pa.y), aOnly2 = avg(frame(P, cut.t - 0.01, skipAll), pa.x, pa.y), bOnly2 = avg(frame(P, ta, skipAll), pa.x, pa.y);
+    out.both = { probes: { before: { x: +(best.x / W).toFixed(3), y: +(best.y / H).toFixed(3), p: mb.p, before: mb.before, shows, aLeaks, showsBy: +best.d.toFixed(1) }, after: { x: +(pa.x / W).toFixed(3), y: +(pa.y / H).toFixed(3), room: pa.room, before: ma.before } },
+      beforeCut: { toB: +dist(inB, bOnly).toFixed(1), toA: +dist(inB, aOnly).toFixed(1), ab: +dist(aOnly, bOnly).toFixed(1) }, afterCut: { toA: +dist(outA, aOnly2).toFixed(1), toB: +dist(outA, bOnly2).toFixed(1), ab: +dist(aOnly2, bOnly2).toFixed(1) } };
     // duration: 1.6 s, still centred on the cut
     TH.setTransitionDuration(window.CTX, it.id, 1.6); ed.history.seal();
     out.dur = { len: +(find(it.id).out - find(it.id).in).toFixed(3), mid: +(find(it.id).t0 + 0.8).toFixed(3), cut: cut.t };
@@ -463,7 +499,14 @@ const FACE = { x: 0.5, y: 0.36, w: 0.34, h: 0.22 };
   numbers.transitions = trx;
   ok(trx.applied.length === 1 && trx.applied[0].a && trx.applied[0].b, `apply a country theme: a full-screen country transition on the cut (${trx.applied.map((x) => x.kind + ' centred on ' + x.mid + ' s').join(', ')})`);
   ok(trx.place.steps === 1 && trx.place.onCut === 1 && trx.place.kind === 'landmark', `put a transition on a cut (dropped 0.4 s after it): Landmark reveal lands centred on the cut (${trx.place.mid} s), replaces the theme's own, ONE undo step`);
-  ok(trx.both.beforeCut.toB < trx.both.beforeCut.toA && trx.both.afterCut.toA < trx.both.afterCut.toB, `both clips show through it: before the cut the silhouette holds the incoming clip (distance to B ${trx.both.beforeCut.toB} vs A ${trx.both.beforeCut.toA}); after it the outgoing clip shows outside (to A ${trx.both.afterCut.toA} vs B ${trx.both.afterCut.toB})`);
+  // before the cut the incoming clip shows inside the silhouette (hiding it changes ≥ 20 pixels of the 216×384 frame
+  // there by > 40, the most by > 60) and the outgoing one does not (hiding it changes none of those pixels); after the
+  // cut, clear of the mask, the pixel IS the outgoing clip (within 40, nearer it than the incoming one, which differs
+  // there by > 60)
+  const both = trx.both, pr = both.probes;
+  ok(pr.before.before && !pr.after.before && pr.before.shows >= 20 && pr.before.showsBy > 60 && pr.before.aLeaks === 0 &&
+    both.afterCut.ab > 60 && pr.after.room >= 12 && both.afterCut.toA < both.afterCut.toB && both.afterCut.toA < 40,
+    `both clips show through it: before the cut (p ${pr.before.p}) the incoming clip shows inside the silhouette (${pr.before.shows} px change when it is hidden, up to ${pr.before.showsBy}; ${pr.before.aLeaks} of them change when the outgoing clip is hidden); after it the outgoing clip shows outside (${pr.after.x}, ${pr.after.y}, ${pr.after.room} px clear: to A ${both.afterCut.toA} vs B ${both.afterCut.toB}, the clips differ there by ${both.afterCut.ab})`);
   ok(trx.dur.len === 1.6 && Math.abs(trx.dur.mid - trx.dur.cut) < 0.002, `duration edit: ${trx.dur.len} s, still centred on the cut (${trx.dur.mid} s = ${trx.dur.cut} s)`);
   ok(trx.allCuts.cuts === 2 && trx.allCuts.placed === 2 && trx.allCuts.steps === 1 && trx.allCuts.onReel === 2 && trx.allCuts.undo.items === 0 && trx.allCuts.undo.landmarkBack && trx.allCuts.redo === 2, `apply to all cuts: ${trx.allCuts.placed} cuts get the colour-slab push in ONE step (replacing the landmark reveal); undo brings the reel back exactly, redo puts them again`);
   ok(trx.save.same && trx.save.n === 2, `save + reload: ${trx.save.n} transitions come back identical`);

@@ -4,12 +4,16 @@
 //              start is anchored to the MEDIA time under it (clip id + source second), so a trim, split, ripple delete,
 //              re-order or move of the clips carries them to where that moment of the recording now plays. An element
 //              whose moment was cut away stays where it is (or moves with its clip's start when the clip itself moved).
-//              Not followed: b-roll clips, sound (music, voice-over, SFX), markers, whole-video theme items (themes/
-//              followReel re-derives those), cutaways and captions (their own hooks), and anything on a locked track.
+//              The elements a theme placed (auto 'theme': title, lower third, signature) ride their clip the same way.
+//              Not followed: b-roll clips, sound (music, voice-over, SFX), markers, whole-video theme items (overlay,
+//              grade, intro, end card: themes/followReel re-derives those), cutaways and captions (their own hooks),
+//              and anything on a locked track.
 //   transitions on a cut (theme.trans, look.transition: style.a / style.b = the clip ids either side) stay centred on
 //              their cut. When the cut changes they re-anchor: the incoming clip keeps its transition (it gets whatever
 //              clip now ends where it starts), else the outgoing one keeps it; when there is no cut there any more (a
-//              lift left a gap, a rejoin) or another transition already holds that cut, it goes.
+//              lift left a gap, a rejoin) or another transition already holds that cut, it goes. A wipe on a cut (the
+//              theme's own on every cut, auto 'theme', or "whole video · on every cut") does the same, found by the cut
+//              it is centred on, on any video track.
 // An item the edit itself moved or re-timed (dragged along with the clip, nudged) is left alone. Stateless: anchors are
 // worked out from the layout BEFORE each command, so old projects need nothing stored and open unchanged.
 
@@ -24,9 +28,25 @@ const EPS = 0.02;
 /** clips on the main track, as plain snapshots */
 const mainClips = (p) => (mainTrack(p)?.items || []).filter((c) => c.type === 'clip');
 const sigOf = (clips) => clips.map((c) => `${c.id}:${c.t0.toFixed(4)}:${retimeSig(c)}`).join(';');
-// theme-placed items (auto 'theme') are re-derived by themes/followReel; a sound effect rides its moment like an element
-const followsClip = (tr, it) => !tr.locked && it.auto !== 'theme' && !it.style?.whole &&
+/** every video track's clips (a wipe can sit on a cut of a second video track) */
+const videoClips = (p) => p.tracks.filter((t) => t.kind === 'video').flatMap((t) => t.items.filter((c) => c.type === 'clip'));
+// a wipe on a cut (the theme's own on every cut, or "whole video · on every cut") stays centred on its cut like a
+// transition; it is found by its centre, since it names no clips
+const isWipe = (it) => it.type === 'theme.el' && (it.style?.el === 'wipe' || it.style?.whole === 'cuts');
+// the theme's whole-reel items (overlay, grade, intro / end card, their sounds: whole or derived from the reel) are
+// re-derived by themes/followReel; the elements a theme placed on a moment (title, lower third, signature) ride their
+// clip like the owner's own; a sound effect rides its moment like an element
+const followsClip = (tr, it) => !tr.locked && !it.style?.whole && !(it.auto === 'theme' && it.type !== 'theme.el') && !isWipe(it) &&
   ((FOLLOW_TYPES.has(it.type) && tr.kind !== 'video') || (it.type === 'audio' && tr.kind === 'sfx' && !tr.voice && !it.unlinkedFrom));
+/** cuts on every video track (a theme puts a wipe on each): [{ a, b, t }] */
+function videoCuts(p) {
+  const out = [];
+  for (const tr of p.tracks) if (tr.kind === 'video') {
+    const list = tr.items.filter((i) => i.type === 'clip').slice().sort((x, y) => x.t0 - y.t0);
+    for (let i = 0; i + 1 < list.length; i++) if (Math.abs(itemEnd(list[i]) - list[i + 1].t0) < 0.08) out.push({ a: list[i], b: list[i + 1], t: list[i + 1].t0 });
+  }
+  return out;
+}
 /** where the pictures end (video, overlay, text tracks) */
 function picturesEnd(p) { let e = 0; for (const tr of p.tracks) if (tr.kind === 'video' || tr.kind === 'overlay' || tr.kind === 'text') for (const it of tr.items) e = Math.max(e, itemEnd(it)); return e; }
 
@@ -34,9 +54,14 @@ function state(p) {
   const clips = mainClips(p);
   if (!clips.length) return null;
   const snap = clips.map((c) => ({ ...c, dur: itemDur(c) }));   // shallow: a curve object is replaced by edits, never mutated
-  const els = new Map(), trans = new Map();
+  const els = new Map(), trans = new Map(), vcuts = videoCuts(p);
   for (const tr of p.tracks) for (const it of tr.items) {
     if (isTransition(it)) { trans.set(it.id, { t0: it.t0, dur: itemDur(it) }); continue; }
+    if (isWipe(it) && !tr.locked) {   // the clips either side of the cut it is centred on (none: it is left alone)
+      const mid = it.t0 + itemDur(it) / 2, c = vcuts.find((x) => Math.abs(x.t - mid) < 0.05);
+      if (c) trans.set(it.id, { t0: it.t0, dur: itemDur(it), a: c.a.id, b: c.b.id });
+      continue;
+    }
     if (!followsClip(tr, it)) continue;
     const c = snap.find((x) => it.t0 >= x.t0 - 1e-6 && it.t0 < x.t0 + x.dur - 1e-6);
     els.set(it.id, { t0: it.t0, dur: itemDur(it), c: c?.id || null, cT0: c?.t0, m: c?.media || null, s: c && !c.freeze ? srcTime(c, it.t0) : null });
@@ -46,7 +71,7 @@ function state(p) {
   const music = new Map();
   for (const tr of p.tracks) if (tr.kind === 'music' && !tr.locked) for (const it of tr.items) if (itemEnd(it) >= pics - 0.05) music.set(it.id, itemEnd(it));
   if (!els.size && !trans.size && !caps.length && !music.size) return null;
-  return { sig: sigOf(clips), els, trans, pics, music, content: contentEnd(p), caps: new Map(caps.map((c) => [c.id, itemEnd(c)])) };
+  return { sig: sigOf(videoClips(p)), els, trans, pics, music, content: contentEnd(p), caps: new Map(caps.map((c) => [c.id, itemEnd(c)])) };
 }
 /** the caption layer items (type 'caption', one per caption track, spanning 0..end) */
 const captionItems = (p) => p.tracks.filter((t) => t.kind === 'caption' && !t.locked).flatMap((t) => t.items.filter((i) => i.type === 'caption' && Math.abs(i.t0) < 1e-6));
@@ -71,7 +96,7 @@ function placeEl(clips, a) {
 
 function follow(p, st) {
   const clips = mainClips(p);
-  if (sigOf(clips) === st.sig) return null;
+  if (sigOf(videoClips(p)) === st.sig) return null;
   const ch = [];   // [{ id, before, after }]
   const byId = new Map(); for (const tr of p.tracks) for (const it of tr.items) byId.set(it.id, { tr, it });
   // elements
@@ -83,20 +108,27 @@ function follow(p, st) {
     if (t == null || Math.abs(t - it.t0) < 1e-4) continue;
     ch.push({ id, after: { ...clone(it), t0: Math.max(0, Math.round(t * 10000) / 10000) } });
   }
-  // transitions
-  const cuts = cutsOf(p), held = new Set(), list = [];
-  for (const [id] of st.trans) { const hit = byId.get(id); if (hit) list.push(hit.it); }
-  const has = (x) => clips.some((c) => c.id === x);
+  // transitions, and the wipes on cuts (theirs and the theme's): re-centred on their cut, gone with it
+  const cuts = cutsOf(p), vcuts = videoCuts(p), held = new Set(), list = [];
+  for (const [id, a] of st.trans) { const hit = byId.get(id); if (hit) list.push({ it: hit.it, wipe: !!a.a, A: a.a || hit.it.style?.a, B: a.b || hit.it.style?.b }); }
+  const vclips = new Set(vcuts.flatMap((c) => [c.a.id, c.b.id]));
+  for (const tr of p.tracks) if (tr.kind === 'video') for (const c of tr.items) vclips.add(c.id);
+  const has = (x) => vclips.has(x);
   // the ones whose cut is intact first, then incoming clip kept, then outgoing clip kept
-  const rank = (it) => (cuts.some((c) => c.a.id === it.style?.a && c.b.id === it.style?.b) ? 0 : has(it.style?.b) ? 1 : has(it.style?.a) ? 2 : 3);
+  const rank = ({ A, B, wipe }) => ((wipe ? vcuts : cuts).some((c) => c.a.id === A && c.b.id === B) ? 0 : has(B) ? 1 : has(A) ? 2 : 3);
   list.sort((x, y) => rank(x) - rank(y));
-  for (const it of list) {
+  for (const { it, wipe, A, B } of list) {
     // a transition always sits on a cut (a drag puts it on one itself), so it is re-placed even when the edit moved it
-    const A = it.style?.a, B = it.style?.b;
-    const cut = cuts.find((c) => c.a.id === A && c.b.id === B) || (has(B) && cuts.find((c) => c.b.id === B)) || (has(A) && cuts.find((c) => c.a.id === A)) || null;
-    const key = cut && `${cut.a.id}|${cut.b.id}`;
+    const cs = wipe ? vcuts : cuts;
+    const cut = cs.find((c) => c.a.id === A && c.b.id === B) || (has(B) && cs.find((c) => c.b.id === B)) || (has(A) && cs.find((c) => c.a.id === A)) || null;
+    const key = cut && `${wipe ? 'w' : 't'}|${cut.a.id}|${cut.b.id}`;
     if (!cut || held.has(key)) { ch.push({ id: it.id, after: null }); continue; }
     held.add(key);
+    if (wipe) {   // a wipe keeps its length, centred on the cut
+      const t0 = Math.max(0, Math.round((cut.t - itemDur(it) / 2) * 10000) / 10000);
+      if (Math.abs(t0 - it.t0) >= 1e-4) ch.push({ id: it.id, after: { ...clone(it), t0 } });
+      continue;
+    }
     const props = transitionOnCut(it, cut);
     if (Math.abs(props.t0 - it.t0) < 1e-4 && Math.abs(props.out - it.out) < 1e-4 && cut.a.id === A && cut.b.id === B) continue;
     ch.push({ id: it.id, after: { ...clone(it), ...props } });

@@ -272,9 +272,7 @@ class Mp4FrameReader {
     file.setExtractionOptions(track.id, null, { nbSamples: 1e7 });
     file.start(); file.flush();
     if (!samples.length) throw new Error('no samples');
-    const config = { codec: track.codec.startsWith('vp08') ? 'vp8' : track.codec, codedWidth: track.video.width, codedHeight: track.video.height, description: describeTrack(file, track.id) };
-    const sup = await VideoDecoder.isConfigSupported(config);
-    if (!sup.supported) throw new Error('decoder does not support ' + track.codec);
+    const config = await decoderConfig({ codec: track.codec.startsWith('vp08') ? 'vp8' : track.codec, codedWidth: track.video.width, codedHeight: track.video.height, description: describeTrack(file, track.id) });
     const base = Math.min(...samples.map((s) => s.cts));
     const list = samples.map((s) => ({ ts: Math.round(((s.cts - base) * 1e6) / s.timescale), dur: Math.round((s.duration * 1e6) / s.timescale), key: s.is_sync, data: s.data }));
     return new Mp4FrameReader(config, list);
@@ -282,11 +280,23 @@ class Mp4FrameReader {
   constructor(config, list) {
     this.config = config; this.list = list; this.frames = []; this.next = 0; this.flushed = false; this.wake = null; this.err = null;
     this.frameDur = list.length > 1 ? Math.max(1000, Math.round((list[list.length - 1].ts - list[0].ts) / (list.length - 1))) : 33333;
-    this.dec = new VideoDecoder({
-      output: (f) => { this.frames.push(f); this.frames.sort((a, b) => a.timestamp - b.timestamp); this.wake?.(); },
-      error: (e) => { this.err = e; this.wake?.(); },
+    this._open();
+  }
+  _open() {
+    const dec = this.dec = new VideoDecoder({
+      output: (f) => { if (dec !== this.dec) { f.close(); return; } this.frames.push(f); this.frames.sort((a, b) => a.timestamp - b.timestamp); this.wake?.(); },
+      error: (e) => { if (dec === this.dec) { this.err = e; this.wake?.(); } },
     });
-    this.dec.configure(config);
+    this.dec.configure(this.config);
+  }
+  /** the hardware decoder failed on this stream: the software one takes over from the keyframe (once) */
+  _software(target) {
+    if (this.config.hardwareAcceleration !== 'prefer-hardware') return false;
+    const { hardwareAcceleration, ...sw } = this.config; this.config = sw; this.err = null;
+    try { this.dec.close(); } catch {}
+    for (const f of this.frames) f.close();
+    this.frames = []; this._open(); this._seek(target);
+    return true;
   }
   _seek(target) {
     let k = 0;
@@ -303,6 +313,13 @@ class Mp4FrameReader {
     return null;
   }
   async frame(t) {
+    try { return await this._frame(t); } catch (e) {
+      if (!this._software(Math.round(t * 1e6) + 500)) throw e;
+      console.warn('[media] hardware decode failed, decoding in software:', e.message || e);
+      return this._frame(t);
+    }
+  }
+  async _frame(t) {
     if (this.err) throw this.err;
     const target = Math.round(t * 1e6) + 500;  // half a millisecond of slack against float rounding
     const first = this.frames[0];
@@ -324,6 +341,18 @@ class Mp4FrameReader {
     return null;
   }
   close() { for (const f of this.frames) f.close(); this.frames = []; try { this.dec.close(); } catch {} }
+}
+
+/**
+ * The decoder config to use: the hardware decoder preferred (a Mac decodes 4K H.264 / HEVC on its media engine at a
+ * fraction of the CPU), the plain config where the browser says it cannot (then the software decoder). Throws when the
+ * codec cannot be decoded at all.
+ */
+export async function decoderConfig(base) {
+  for (const cfg of [{ ...base, hardwareAcceleration: 'prefer-hardware' }, base]) {
+    try { if ((await VideoDecoder.isConfigSupported(cfg)).supported) return cfg; } catch { /* next */ }
+  }
+  throw new Error('decoder does not support ' + base.codec);
 }
 
 export function describeTrack(file, trackId) {

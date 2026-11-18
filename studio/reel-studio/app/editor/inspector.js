@@ -42,6 +42,14 @@ export class Inspector {
 
   focusText() { this.render(true); this.el.querySelector('textarea')?.focus(); }
 
+  /** the one-item header's line: name · length (· locked) */
+  headText(item, track, m) { return (m?.name || item.name || '') + ' · ' + fmtDur(itemDur(item)) + (track.locked ? ' · 🔒 locked track' : ''); }
+  /** re-read the header from the project while a control keeps the panel from rebuilding (a drag inside it) */
+  refreshHead() {
+    const hits = this.ed.selectedItems(), el = this.el.querySelector('.insp-head small'); if (hits.length !== 1 || !el) return;
+    const { item, track } = hits[0]; el.textContent = this.headText(item, track, item.media ? findMedia(this.ed.project, item.media) : null);
+  }
+
   set(item, props, label) { this.ed.apply(ops.setItems([{ id: item.id, props }], label)); }
   seal = () => this.ed.history.seal();
 
@@ -115,7 +123,7 @@ export class Inspector {
   itemPanel({ item, track }) {
     const ed = this.ed, m = item.media ? findMedia(ed.project, item.media) : null;
     const title = { clip: m?.kind === 'image' ? 'Picture' : 'Video clip', audio: track.kind === 'sfx' ? 'Sound effect' : 'Music', text: 'Text', shape: 'Shape', sticker: 'Sticker', caption: 'Captions', 'auto.transition': 'Transition', 'theme.el': 'Theme element', 'theme.sting': 'Theme intro', 'theme.outro': 'Theme end card', 'theme.overlay': 'Theme overlay', 'auto.pricetag': 'Price tag', 'auto.logo': 'Logo sting', 'auto.endcard': 'End card' }[item.type] || item.type;
-    this.el.append(h('div.insp-head', h('b', title), h('small', (m?.name || item.name || '') + ' · ' + fmtDur(itemDur(item)) + (track.locked ? ' · 🔒 locked track' : ''))));
+    this.el.append(h('div.insp-head', h('b', title), h('small', this.headText(item, track, m))));
     if (item.type === 'text') this.textPanel(item);
     if (item.type === 'shape') this.shapePanel(item);
     if (item.type === 'sticker') this.stickerPanel(item);
