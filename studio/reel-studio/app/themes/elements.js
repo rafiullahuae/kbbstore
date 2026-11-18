@@ -16,6 +16,7 @@ import { kitFor } from './kit.js';
 import { themeById } from './themes.js';
 import { drawCapsules, defaultCaps, capsHeight } from './capsules.js';
 import { FAM_PIECES, FAM_PAL, FAMILY_ICONS, FAMILY_LABELS, TRADE_IDS, TRADES, drawFam } from './fam.js';
+import { tx, textBegin, textEnd, setLastBoxes } from './text.js';
 
 const { clamp, easeOut, easeIO, easeIn, back, elastic, TAU, rnd, fr, mix, rgba, onColor } = A;
 
@@ -118,12 +119,12 @@ D.intro = (c, K, S) => {
 };
 /** the flag + kicker + kinetic name + Arabic stack used by the intro and the end card */
 function nameBlock(c, K, S, x, y, U, p, align) {
-  const W2 = K.words, txt = S.txt, name = txt.title || W2.title, nameAr = txt.titleAr ?? W2.titleAr;
+  const W2 = K.words, name = tx(S, 'title', W2.title), nameAr = tx(S, 'titleAr', W2.titleAr);
   const fh = U * 0.13, fw = fh * 1.5;
   c.save(); c.globalAlpha *= clamp(p * 2);
   A.flagCloth(c, imgOf(K), K.flag, x - fw / 2, y - U * 0.42 - (1 - easeOut(p)) * U * 0.05, fw, fh, S.t, { pole: false, strips: 16 });
   c.restore();
-  A.uiText(c, txt.kicker || W2.kicker, x, y - U * 0.2, U * 0.036, { col: rgba('#ffffff', clamp(p * 2)), align: 'center', weight: 800, track: 0.25, maxW: S.w * 0.9 });
+  A.uiText(c, tx(S, 'kicker', W2.kicker), x, y - U * 0.2, U * 0.036, { col: rgba('#ffffff', clamp(p * 2)), align: 'center', weight: 800, track: 0.25, maxW: S.w * 0.9 });
   A.kineticText(c, name, x, y, U * 0.17, p, { col: '#ffffff', maxW: S.w * 0.9 });
   c.fillStyle = K.colors.accent; c.fillRect(x - U * 0.18 * easeOut(p - 0.2), y + U * 0.03, U * 0.36 * easeOut(p - 0.2), U * 0.012);
   A.arabicText(c, nameAr, x, y + U * 0.13, U * 0.075, clamp(p - 0.25), { col: '#ffffff', maxW: S.w * 0.9 });
@@ -145,12 +146,12 @@ D.title = (c, K, S) => {
   c.save(); c.beginPath(); c.rect(h * 0.2, h * 0.06, w, h * 0.74); c.clip();
   const fh = h * 0.36, fw = fh * 1.45;
   A.flagCloth(c, imgOf(K), K.flag, h * 0.32, h * 0.24, fw, fh, S.t, { pole: false, strips: 14 });
-  const tx = h * 0.32 + fw + h * 0.16, mw = w - tx - h * 0.2;
-  A.uiText(c, txt.kicker || W2.kicker, tx, h * 0.22, h * 0.075, { col: rgba(onColor(P.primary), 0.85), weight: 800, track: 0.22, maxW: mw });
-  A.kineticText(c, txt.title || W2.title, tx, h * 0.58, h * 0.34, clamp((S.tl - 0.12) / 0.6), { col: onColor(P.primary), align: 'left', maxW: mw });
+  const tX = h * 0.32 + fw + h * 0.16, mw = w - tX - h * 0.2;
+  A.uiText(c, tx(S, 'kicker', W2.kicker), tX, h * 0.22, h * 0.075, { col: rgba(onColor(P.primary), 0.85), weight: 800, track: 0.22, maxW: mw });
+  A.kineticText(c, tx(S, 'title', W2.title), tX, h * 0.58, h * 0.34, clamp((S.tl - 0.12) / 0.6), { col: onColor(P.primary), align: 'left', maxW: mw });
   A.sheen(c, 0, 0, w, h, fr(S.tl / 2.2), 0.3);
   c.restore();
-  A.arabicText(c, txt.titleAr ?? W2.titleAr, w - h * 0.32, h * 0.93, h * 0.13, clamp((S.tl - 0.35) / 0.4), { col: onColor(P.accent), align: 'right', maxW: w * 0.5 });
+  A.arabicText(c, tx(S, 'titleAr', W2.titleAr), w - h * 0.32, h * 0.93, h * 0.13, clamp((S.tl - 0.35) / 0.4), { col: onColor(P.accent), align: 'right', maxW: w * 0.5 });
   if (S.pulse > 0.05) A.glint(c, w * 0.86, h * 0.12, h * 0.16 * S.pulse, S.pulse, '#ffffff');
   c.restore();
 };
@@ -159,7 +160,9 @@ D.title = (c, K, S) => {
 D.lower = (c, K, S) => {
   const { w, h } = S, P = K.colors, ii = S.inn(0.45), oo = S.out(0.3), txt = S.txt, W2 = K.words, k = Math.min(ii, oo);
   if (k <= 0) return;
-  const bh = h * 0.56, bw = w * easeOut(k);
+  // an added third line (Text → + Add line) splits the white bar in two; without it the bars are as they always were
+  const l3 = S.txt.line3 != null ? tx(S, 'line3', '') : '';
+  const bh = h * (l3 ? 0.46 : 0.56), bw = w * easeOut(k), rh = l3 ? (h - bh) / 2 : h - bh;
   c.save(); c.globalAlpha *= clamp(k * 3);
   c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(h * 0.08, h * 0.1, bw, h * 0.9);
   // badge
@@ -168,11 +171,13 @@ D.lower = (c, K, S) => {
   // bars
   const g = c.createLinearGradient(bs, 0, w, 0); g.addColorStop(0, P.primary); g.addColorStop(1, mix(P.primary, '#000000', 0.3));
   c.fillStyle = g; c.fillRect(bs, 0, Math.max(0, bw - bs), bh);
-  c.fillStyle = '#ffffff'; c.fillRect(bs, bh, Math.max(0, (bw - bs) * 0.78), h - bh);
+  c.fillStyle = '#ffffff'; c.fillRect(bs, bh, Math.max(0, (bw - bs) * 0.78), rh);
+  if (l3) { c.fillStyle = mix(P.primary, '#000000', 0.35); c.fillRect(bs, bh + rh, Math.max(0, (bw - bs) * 0.62), rh); }
   K.flag.slice(0, 3).forEach((col, i) => { c.fillStyle = col; c.fillRect(bs + i * h * 0.06, bh - h * 0.05, h * 0.06, h * 0.05); });
   c.save(); c.beginPath(); c.rect(bs, 0, Math.max(0, bw - bs), h); c.clip();
-  A.uiText(c, (txt.name || W2.lowerName).toUpperCase(), bs + h * 0.22, bh * 0.68, bh * 0.5, { col: onColor(P.primary), weight: 900, maxW: w - bs - h * 0.4, track: 0.04 });
-  A.uiText(c, txt.role || W2.lowerRole, bs + h * 0.22, bh + (h - bh) * 0.72, (h - bh) * 0.58, { col: '#1b1f2e', weight: 700, maxW: (w - bs) * 0.74 });
+  A.uiText(c, tx(S, 'name', W2.lowerName).toUpperCase(), bs + h * 0.22, bh * 0.68, bh * 0.5, { col: onColor(P.primary), weight: 900, maxW: w - bs - h * 0.4, track: 0.04 });
+  A.uiText(c, tx(S, 'role', W2.lowerRole), bs + h * 0.22, bh + rh * 0.72, rh * 0.58, { col: '#1b1f2e', weight: 700, maxW: (w - bs) * 0.74 });
+  if (l3) A.uiText(c, l3, bs + h * 0.22, bh + rh + rh * 0.72, rh * 0.56, { col: '#ffffff', weight: 700, maxW: (w - bs) * 0.58 });
   A.sheen(c, bs, 0, w - bs, bh, fr(S.tl / 3), 0.35);
   c.restore();
   // live dot
@@ -196,13 +201,13 @@ D.globe = (c, K, S) => {
   const prog = easeIO((S.tl - 0.35) / Math.max(0.6, S.d * 0.62));
   const mid = A.slerp(K.from, K.to, 0.5), lon0 = K.from[0] + ((mid[0] - K.from[0]) * easeIO(S.tl / Math.max(0.5, S.d * 0.7))) - 8 + S.tl * 4, lat0 = 18 + (mid[1] - 18) * 0.5;
   c.save(); c.translate(cx, cy); const z = back(ii) * (0.6 + 0.4 * oo); c.scale(z, z); c.translate(-cx, -cy);
-  A.globe(c, cx, cy, r, { lon0, lat0, pal: { ocean: mix('#1f7ae0', K.colors.primary, 0.15), ocean2: mix('#041b4d', K.colors.primary, 0.12), land: '#f4f8ff', arc: K.colors.accent === '#ffffff' ? '#ffd166' : K.colors.accent, glow: '#8fd8ff' }, from: K.from, to: K.to, prog, labels: [K.fromCode, K.iata], t: S.t });
+  A.globe(c, cx, cy, r, { lon0, lat0, pal: { ocean: mix('#1f7ae0', K.colors.primary, 0.15), ocean2: mix('#041b4d', K.colors.primary, 0.12), land: '#f4f8ff', arc: K.colors.accent === '#ffffff' ? '#ffd166' : K.colors.accent, glow: '#8fd8ff' }, from: K.from, to: K.to, prog, labels: [tx(S, 'fromCode', K.fromCode), tx(S, 'toCode', K.iata)], t: S.t });
   // route chip
   const chW = w * 0.82, chH = h * 0.1, chY = cy + r * 1.2;
   c.fillStyle = 'rgba(8,12,30,0.82)'; c.beginPath(); A.rr(c, cx - chW / 2, chY, chW, chH, chH / 2); c.fill();
   c.fillStyle = K.colors.accent; c.beginPath(); A.rr(c, cx - chW / 2, chY, chH * 1.6, chH, chH / 2); c.fill();
   A.plane(c, cx - chW / 2 + chH * 0.8, chY + chH / 2, chH * 0.32, 0, '#ffffff', false);
-  A.uiText(c, `${S.txt.from || (K.fromCode === 'DXB' ? 'Dubai' : 'Mumbai')}  →  ${S.txt.to || K.city}`, cx + chH * 0.5, chY + chH * 0.66, chH * 0.42, { col: '#ffffff', align: 'center', weight: 800, maxW: chW - chH * 2 });
+  A.uiText(c, `${tx(S, 'from', K.fromCode === 'DXB' ? 'Dubai' : 'Mumbai')}  →  ${tx(S, 'to', K.city)}`, cx + chH * 0.5, chY + chH * 0.66, chH * 0.42, { col: '#ffffff', align: 'center', weight: 800, maxW: chW - chH * 2 });
   c.restore();
 };
 
@@ -213,7 +218,7 @@ D.stamp = (c, K, S) => {
   const hit1 = 0.45, hit2 = Math.min(S.d - 0.7, 1.15);
   const shake = (t0) => { const d = S.tl - t0; return d > 0 && d < 0.18 ? Math.sin(d * 90) * (1 - d / 0.18) * h * 0.012 : 0; };
   c.save(); c.globalAlpha *= clamp(k * 2); c.translate(shake(hit1) + shake(hit2), (1 - ii) * h * 0.25);
-  A.passportPage(c, 0, 0, w, h, K);
+  A.passportPage(c, 0, 0, w, h, K, tx(S, 'visas', 'VISAS'));
   const st = (t0, x, y, r, text, sub, col, rot, kind) => {
     const d = S.tl - t0; if (d < -0.12) return;
     const a = d < 0 ? clamp(1 + d / 0.12) * 0.4 : 1, s = d < 0 ? 2.4 : 1 + 1.4 * Math.pow(1 - clamp(d / 0.12), 2) * 0;
@@ -222,8 +227,8 @@ D.stamp = (c, K, S) => {
     if (d > 0 && d < 0.4) { c.save(); c.globalAlpha *= 1 - d / 0.4; c.strokeStyle = col; c.lineWidth = r * 0.04; c.beginPath(); c.arc(x, y, r * (1 + d * 3), 0, TAU); c.stroke(); c.restore(); }
     return s;
   };
-  st(hit1, w * 0.72, h * 0.42, h * 0.24, S.txt.stamp || (K.city || K.name).toUpperCase(), K.iata || '✈', mix(K.colors.primary, '#1a1a6b', 0.3), -0.22, 'round');
-  st(hit2, w * 0.7, h * 0.76, h * 0.17, S.txt.approved || 'VISA APPROVED', S.txt.date || 'DD · MM · YYYY', '#1f9d55', 0.12, 'rect');
+  st(hit1, w * 0.72, h * 0.42, h * 0.24, tx(S, 'stamp', (K.city || K.name).toUpperCase()), tx(S, 'stampCode', K.iata || '✈'), mix(K.colors.primary, '#1a1a6b', 0.3), -0.22, 'round');
+  st(hit2, w * 0.7, h * 0.76, h * 0.17, tx(S, 'approved', 'VISA APPROVED'), tx(S, 'date', 'DD · MM · YYYY'), '#1f9d55', 0.12, 'rect');
   c.restore();
 };
 
@@ -233,7 +238,9 @@ D.ticket = (c, K, S) => {
   if (oo <= 0) return;
   const x = (1 - back(ii)) * w * 1.1 - (1 - oo) * w * 1.2, rot = (1 - ii) * 0.12 - (1 - oo) * 0.08 + Math.sin(S.t * 1.4) * 0.008;
   c.save(); c.translate(w / 2 + x, h / 2); c.rotate(rot); c.translate(-w / 2, -h / 2);
-  A.boardingPass(c, 0, 0, w, h, K, S.tl, { from: S.txt.from || K.fromCode, to: S.txt.to || K.iata, flight: S.txt.flight, gate: S.txt.gate, seat: S.txt.seat, date: S.txt.date, brand: S.txt.brand || 'BOARDING PASS' });
+  const brand = tx(S, 'brand', 'BOARDING PASS'), from = tx(S, 'from', K.fromCode), to = tx(S, 'to', K.iata);
+  const lbl = [tx(S, 'flightLbl', 'FLIGHT'), tx(S, 'flight', 'PC 0001'), tx(S, 'gateLbl', 'GATE'), tx(S, 'gate', '--'), tx(S, 'seatLbl', 'SEAT'), tx(S, 'seat', '--'), tx(S, 'dateLbl', 'DATE'), tx(S, 'date', 'DD MMM')];
+  A.boardingPass(c, 0, 0, w, h, K, S.tl, { from, to, flight: lbl[1], gate: lbl[3], seat: lbl[5], date: lbl[7], brand, lbl: [lbl[0], lbl[2], lbl[4], lbl[6]], stub: tx(S, 'stub', to + ' · ' + (K.city || '')) });
   c.restore();
   const pp = clamp((S.tl - 0.6) / 1.2); if (pp > 0 && pp < 1) A.plane(c, -w * 0.1 + pp * w * 1.2, h * (0.05 - 0.1 * Math.sin(pp * Math.PI)), h * 0.16, -0.12, '#ffffff');
 };
@@ -247,9 +254,9 @@ D.hiring = (c, K, S) => {
   const acc = P.accent === '#ffffff' || A.lum(P.accent) > 0.92 ? '#ffd166' : P.accent;
   A.slab(c, w * 0.02, yb + h * 0.03, w * 0.96, bh, 0.25, 'rgba(0,0,0,0.3)');
   A.slab(c, 0, yb, w * 0.96, bh, 0.25, acc);
-  A.kineticText(c, txt.hiring || W2.hiring, w * 0.48, yb + bh * 0.8, bh * 0.68, clamp(S.tl / 0.6), { col: onColor(acc), maxW: w * 0.82, shadow: false });
+  A.kineticText(c, tx(S, 'hiring', W2.hiring), w * 0.48, yb + bh * 0.8, bh * 0.68, clamp(S.tl / 0.6), { col: onColor(acc), maxW: w * 0.82, shadow: false });
   A.slab(c, w * 0.5, yb + bh * 0.98, w * 0.46, bh * 0.3, 0.5, P.primary);
-  A.arabicText(c, txt.hiringAr ?? W2.hiringAr, w * 0.92, yb + bh * 1.21, bh * 0.22, clamp((S.tl - 0.3) / 0.4), { col: onColor(P.primary), align: 'right', maxW: w * 0.42 });
+  A.arabicText(c, tx(S, 'hiringAr', W2.hiringAr), w * 0.92, yb + bh * 1.21, bh * 0.22, clamp((S.tl - 0.3) / 0.4), { col: onColor(P.primary), align: 'right', maxW: w * 0.42 });
   // three role badges; after 1.8 s they slide on to the next roles
   const roles = K.roles, per = 1.8, step = Math.floor(Math.max(0, S.tl - 0.6) / per), ph = clamp((Math.max(0, S.tl - 0.6) % per) / 0.35);
   const r = Math.min(w * 0.13, h * 0.2), y = h * 0.66;
@@ -262,7 +269,7 @@ D.hiring = (c, K, S) => {
     const R0 = A.ROLES[role];
     c.save(); c.globalAlpha *= clamp(s);
     const lw = r * 2.1, lh = r * 0.42; c.fillStyle = 'rgba(8,12,30,0.8)'; c.beginPath(); A.rr(c, x - lw / 2, y + r * 1.08, lw, lh, lh / 2); c.fill();
-    A.uiText(c, (txt['role' + i] || R0.en).toUpperCase(), x, y + r * 1.08 + lh * 0.72, lh * 0.55, { col: '#ffffff', align: 'center', weight: 800, maxW: lw * 0.9 });
+    A.uiText(c, tx(S, 'role' + i, R0.en).toUpperCase(), x, y + r * 1.08 + lh * 0.72, lh * 0.55, { col: '#ffffff', align: 'center', weight: 800, maxW: lw * 0.9 });
     c.restore();
   }
   c.restore();
@@ -272,17 +279,17 @@ D.hiring = (c, K, S) => {
 D.counter = (c, K, S) => {
   const { w, h } = S, P = K.colors, ii = S.inn(0.4), oo = S.out(0.3), txt = S.txt;
   if (oo <= 0) return;
-  const raw = String(txt.value ?? '100+'), m = /^(\D*)([\d.,]+)(.*)$/.exec(raw), target = m ? parseFloat(m[2].replace(/,/g, '')) : 0;
+  const raw = tx(S, 'value', '100+'), m = /^(\D*)([\d.,]+)(.*)$/.exec(raw), target = m ? parseFloat(m[2].replace(/,/g, '')) : 0;
   const k = easeOut((S.tl - 0.25) / 1.3), n = m ? Math.round(target * k) : 0, shown = m ? m[1] + n.toLocaleString('en-US') + (k > 0.98 ? m[3] : '') : raw;
   c.save(); c.globalAlpha *= clamp(oo * 2); c.translate(0, (1 - back(ii)) * h * 0.3);
   c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); A.rr(c, w * 0.02, h * 0.05, w, h * 0.95, h * 0.12); c.fill();
   const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, mix(P.primary, '#ffffff', 0.1)); g.addColorStop(1, mix(P.primary, '#000000', 0.3));
   c.fillStyle = g; c.beginPath(); A.rr(c, 0, 0, w, h * 0.92, h * 0.12); c.fill();
   c.fillStyle = P.accent; c.fillRect(0, h * 0.8, w * easeOut((S.tl - 0.2) / 0.5), h * 0.06);
-  A.coin(c, w * 0.16, h * 0.4, h * 0.2, K.sign, Math.cos(S.t * 2.2), '#f6c445');
-  c.font = `400 ${Math.round(h * 0.5)}px ${A.FONT_EN}`; c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.fillStyle = onColor(P.primary);
-  c.fillText(shown, w * 0.32, h * 0.6, w * 0.64);
-  A.uiText(c, txt.label || 'Your number · edit me', w * 0.32, h * 0.74, h * 0.09, { col: rgba(onColor(P.primary), 0.85), weight: 700, maxW: w * 0.64 });
+  const lab = tx(S, 'label', 'Your number · edit me');
+  A.coin(c, w * 0.16, h * 0.4, h * 0.2, tx(S, 'sign', K.sign), Math.cos(S.t * 2.2), '#f6c445');
+  A.rawText(c, shown, w * 0.32, h * 0.6, h * 0.5, { family: A.FONT_EN, weight: 400, col: onColor(P.primary), maxW: w * 0.64, key: 'value' });
+  A.uiText(c, lab, w * 0.32, h * 0.74, h * 0.09, { col: rgba(onColor(P.primary), 0.85), weight: 700, maxW: w * 0.64 });
   A.sheen(c, 0, 0, w, h * 0.92, fr(S.tl / 2.5), 0.25);
   c.restore();
 };
@@ -295,9 +302,9 @@ D.postcard = (c, K, S) => {
   c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(w * 0.025, h * 0.03, w, h);
   c.fillStyle = '#fffaf0'; c.fillRect(0, 0, w, h);
   const m = w * 0.04; A.scene(c, K, m, m, w - 2 * m, h * 0.78 - m, S.t, K.light);
-  A.uiText(c, (S.txt.greet || 'GREETINGS FROM').toUpperCase(), m, h * 0.87, h * 0.05, { col: '#6b6f80', weight: 800, track: 0.2 });
-  c.font = `400 ${Math.round(h * 0.11)}px ${A.FONT_EN}`; c.fillStyle = K.colors.primary === '#ffffff' ? '#222' : K.colors.primary; c.textAlign = 'left'; c.fillText((S.txt.title || K.city || K.name).toUpperCase(), m, h * 0.97, w * 0.62);
-  A.arabicText(c, S.txt.titleAr ?? K.nameAr, w - m, h * 0.96, h * 0.07, 1, { col: '#333333', align: 'right', maxW: w * 0.3 });
+  A.uiText(c, tx(S, 'greet', 'GREETINGS FROM').toUpperCase(), m, h * 0.87, h * 0.05, { col: '#6b6f80', weight: 800, track: 0.2 });
+  A.rawText(c, tx(S, 'title', K.city || K.name).toUpperCase(), m, h * 0.97, h * 0.11, { family: A.FONT_EN, weight: 400, col: K.colors.primary === '#ffffff' ? '#222' : K.colors.primary, base: c.textBaseline, maxW: w * 0.62 });
+  A.arabicText(c, tx(S, 'titleAr', K.nameAr), w - m, h * 0.96, h * 0.07, 1, { col: '#333333', align: 'right', maxW: w * 0.3 });
   // a little flag "postage stamp"
   const ps = w * 0.16; c.fillStyle = '#ffffff'; c.fillRect(w - m - ps, m * 1.5, ps, ps * 0.8); c.save(); c.beginPath(); c.rect(w - m - ps + ps * 0.08, m * 1.5 + ps * 0.08, ps * 0.84, ps * 0.64); c.clip();
   A.flagCloth(c, imgOf(K), K.flag, w - m - ps + ps * 0.08, m * 1.5 + ps * 0.08, ps * 0.84, ps * 0.64, S.t, { pole: false, strips: 8, amp: 0.04 }); c.restore();
@@ -331,7 +338,7 @@ D.map = (c, K, S) => {
   c.fillStyle = K.colors.accent === '#ffffff' ? '#ffd166' : K.colors.accent; c.beginPath(); c.arc(px, py, s * 0.025, 0, TAU); c.fill();
   c.restore();
   const lw = w * 0.86, lh = h - s - h * 0.01, ly = s + h * 0.005;
-  if (lh > 4) { c.save(); c.globalAlpha *= clamp(k * 2); c.fillStyle = 'rgba(8,12,30,0.82)'; c.beginPath(); A.rr(c, (w - lw) / 2, ly, lw, lh, lh / 2); c.fill(); A.uiText(c, (S.txt.title || K.name).toUpperCase(), w / 2, ly + lh * 0.68, lh * 0.5, { col: '#ffffff', align: 'center', weight: 900, maxW: lw * 0.86, track: 0.06 }); c.restore(); }
+  if (lh > 4) { c.save(); c.globalAlpha *= clamp(k * 2); c.fillStyle = 'rgba(8,12,30,0.82)'; c.beginPath(); A.rr(c, (w - lw) / 2, ly, lw, lh, lh / 2); c.fill(); A.uiText(c, tx(S, 'title', K.name).toUpperCase(), w / 2, ly + lh * 0.68, lh * 0.5, { col: '#ffffff', align: 'center', weight: 900, maxW: lw * 0.86, track: 0.06 }); c.restore(); }
 };
 
 // ── CONFETTI ──
@@ -354,11 +361,13 @@ D.end = (c, K, S) => {
     c.fillStyle = g; c.beginPath(); c.moveTo(0, top + U * 0.12); c.lineTo(w, top - U * 0.04); c.lineTo(w, h); c.lineTo(0, h); c.closePath(); c.fill();
     K.flag.slice(0, 3).forEach((col, i) => { c.fillStyle = col; c.beginPath(); const y0 = top + U * 0.12 - i * U * 0.018; c.moveTo(0, y0); c.lineTo(w, y0 - U * 0.16); c.lineTo(w, y0 - U * 0.16 - U * 0.016); c.lineTo(0, y0 - U * 0.016); c.closePath(); c.fill(); });
     const fh = U * 0.12; A.flagCloth(c, imgOf(K), K.flag, U * 0.08, top + U * 0.2, fh * 1.5, fh, S.t, { pole: true, strips: 14 });
-    A.uiText(c, (txt.brand || S.brand || 'YOUR COMPANY').toUpperCase(), U * 0.08 + fh * 1.75, top + U * 0.29, U * 0.05, { col: rgba('#ffffff', clamp(cp * 3)), weight: 900, track: 0.12, maxW: w - U * 0.3 - fh * 1.75 });
+    A.uiText(c, tx(S, 'brand', S.brand || 'YOUR COMPANY').toUpperCase(), U * 0.08 + fh * 1.75, top + U * 0.29, U * 0.05, { col: rgba('#ffffff', clamp(cp * 3)), weight: 900, track: 0.12, maxW: w - U * 0.3 - fh * 1.75 });
     const cy = top + U * 0.58;
-    A.kineticText(c, txt.cta || 'BOOK YOUR FREE CONSULTATION', w / 2, cy, U * 0.11, cp * 1.4, { col: '#ffffff', maxW: w * 0.9 });
-    A.arabicText(c, txt.ctaAr ?? 'احجز استشارتك المجانية', w / 2, cy + U * 0.1, U * 0.06, clamp(cp * 2 - 0.3), { col: P.accent === '#ffffff' ? '#ffd166' : mix(P.accent, '#ffffff', 0.2), maxW: w * 0.9 });
-    const rows = [['CALL', txt.phone || '+971 XX XXX XXXX'], ['WEB', txt.web || 'www.yourwebsite.com'], ['FOLLOW', txt.handle || '@yourhandle']];
+    A.kineticText(c, tx(S, 'cta', 'BOOK YOUR FREE CONSULTATION'), w / 2, cy, U * 0.11, cp * 1.4, { col: '#ffffff', maxW: w * 0.9 });
+    A.arabicText(c, tx(S, 'ctaAr', 'احجز استشارتك المجانية'), w / 2, cy + U * 0.1, U * 0.06, clamp(cp * 2 - 0.3), { col: P.accent === '#ffffff' ? '#ffd166' : mix(P.accent, '#ffffff', 0.2), maxW: w * 0.9 });
+    const rows = [[tx(S, 'callLbl', 'CALL'), tx(S, 'phone', '+971 XX XXX XXXX')], [tx(S, 'webLbl', 'WEB'), tx(S, 'web', 'www.yourwebsite.com')], [tx(S, 'followLbl', 'FOLLOW'), tx(S, 'handle', '@yourhandle')]];
+    // an added line (Text → + Add line) closes the card under the contact rows
+    const extra = txt.extra != null ? tx(S, 'extra', '') : '';
     const pw = Math.min(w * 0.86, U * 0.95), ph = U * 0.085;
     rows.forEach(([k, v], i) => {
       const a = easeOut(cp * 2.2 - 0.5 - i * 0.25); if (a <= 0) return;
@@ -369,6 +378,7 @@ D.end = (c, K, S) => {
       A.uiText(c, v, x + ph * 2.6, y + ph * 0.68, ph * 0.46, { col: '#14182b', weight: 800, maxW: pw - ph * 3 });
       c.restore();
     });
+    if (extra) { const a = easeOut(cp * 2.2 - 1.25); if (a > 0) { c.save(); c.globalAlpha *= a; A.uiText(c, extra, w / 2, cy + U * 0.17 + 3 * ph * 1.22 + ph * 0.75, ph * 0.46, { col: '#ffffff', align: 'center', weight: 800, maxW: pw }); c.restore(); } }
     A.lightLeaks(c, w, h, S.t, [P.accent, '#ff8a3d'], 0.6, 2);
     A.sparkles(c, w, top, S.t, 8, '#ffffff', U);
   }
@@ -401,10 +411,10 @@ D.sticker = (c, K, S) => {
   const disc = (fill) => { c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.arc(s * 0.02, s * 0.03, r, 0, TAU); c.fill(); c.fillStyle = fill; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill(); };
   const ring = () => { c.strokeStyle = '#ffffff'; c.lineWidth = s * 0.05; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.stroke(); };
   if (v === 'flag') { disc('#ffffff'); c.save(); c.beginPath(); c.arc(0, 0, r * 0.94, 0, TAU); c.clip(); A.flagCloth(c, imgOf(K), K.flag, -r * 1.25, -r * 0.95, r * 2.5, r * 1.9, S.t, { pole: false, strips: 14, amp: 0.05 }); c.restore(); ring(); }
-  else if (v === 'visa') { disc('#ffffff'); A.stampMark(c, 0, 0, r * 0.86, 'VISA APPROVED', '✓', '#1f9d55', -0.18, 1, 'round'); ring(); }
+  else if (v === 'visa') { disc('#ffffff'); A.stampMark(c, 0, 0, r * 0.86, tx(S, 'stamp', 'VISA APPROVED'), '✓', '#1f9d55', -0.18, 1, 'round'); ring(); }
   else if (v === 'plane') { disc(P.primary); c.strokeStyle = rgba('#ffffff', 0.6); c.lineWidth = s * 0.02; c.setLineDash([s * 0.04, s * 0.03]); c.beginPath(); c.arc(0, 0, r * 0.62, Math.PI * 0.7, Math.PI * 0.7 + fr(S.t * 0.5) * TAU); c.stroke(); c.setLineDash([]); const a = Math.PI * 0.7 + fr(S.t * 0.5) * TAU; A.plane(c, Math.cos(a) * r * 0.62, Math.sin(a) * r * 0.62, r * 0.36, a + Math.PI / 2, '#ffffff'); ring(); }
   else if (v === 'pin') { c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(0, r * 1.05, r * 0.35, r * 0.1, 0, 0, TAU); c.fill(); c.fillStyle = P.primary === '#ffffff' ? '#e63946' : P.primary; c.beginPath(); c.moveTo(0, r * 1.0); c.bezierCurveTo(-r * 0.6, r * 0.25, -r * 0.85, -r * 0.15, -r * 0.85, -r * 0.35); c.arc(0, -r * 0.35, r * 0.85, Math.PI, 0); c.bezierCurveTo(r * 0.85, -r * 0.15, r * 0.6, r * 0.25, 0, r * 1.0); c.fill(); c.save(); c.beginPath(); c.arc(0, -r * 0.35, r * 0.58, 0, TAU); c.clip(); A.flagCloth(c, imgOf(K), K.flag, -r * 0.8, -r * 0.95, r * 1.6, r * 1.2, S.t, { pole: false, strips: 10, amp: 0.05 }); c.restore(); c.strokeStyle = '#ffffff'; c.lineWidth = s * 0.03; c.beginPath(); c.arc(0, -r * 0.35, r * 0.58, 0, TAU); c.stroke(); }
-  else if (v === 'coin') { A.coin(c, 0, 0, r, K.sign, Math.cos(S.t * 2.4), '#f6c445'); A.glint(c, -r * 0.4, -r * 0.4, r * 0.3, 0.5 + 0.5 * Math.sin(S.t * 3), '#ffffff'); }
+  else if (v === 'coin') { A.coin(c, 0, 0, r, tx(S, 'sign', K.sign), Math.cos(S.t * 2.4), '#f6c445'); A.glint(c, -r * 0.4, -r * 0.4, r * 0.3, 0.5 + 0.5 * Math.sin(S.t * 3), '#ffffff'); }
   else if (v === 'landmark') { disc(K.colors.primary); c.save(); c.beginPath(); c.arc(0, 0, r * 0.94, 0, TAU); c.clip(); A.scene(c, K, -r, -r, r * 2, r * 2, S.t, K.light); c.restore(); ring(); }
   else { for (let i = 0; i < 3; i++) { const a = S.t * 0.8 + i * 2.1, rr2 = r * (0.3 + 0.35 * i); c.fillStyle = i ? '#ffffff' : (P.accent === '#ffffff' ? '#ffd166' : P.accent); A.star(c, Math.cos(a) * r * 0.3 * i, Math.sin(a) * r * 0.3 * i, rr2 * (0.7 + 0.3 * Math.sin(S.t * 4 + i)), 4, 0.22, S.t * 0.5); c.fill(); } }
   c.restore();
@@ -414,16 +424,17 @@ D.sticker = (c, K, S) => {
 // ── BULLETIN TEMPLATES (2026-11, the owner: "proper templates like bulletin"): broadcast-size, every word editable,
 //    every fact a placeholder, no real channel's name or look ──
 const acc = (K) => (K.colors.accent === '#ffffff' || A.lum(K.colors.accent) > 0.92 ? '#ffd166' : K.colors.accent);
-const crawlText = (K, txt) => txt.crawl || `${(K.name || '').toUpperCase()} · YOUR HEADLINE HERE · BOOK A FREE CONSULTATION · PLACEHOLDER UPDATE — VERIFY ON THE OFFICIAL WEBSITE · `;
+const crawlText = (K, S) => tx(S, 'crawl', `${(K.name || '').toUpperCase()} · YOUR HEADLINE HERE · BOOK A FREE CONSULTATION · PLACEHOLDER UPDATE — VERIFY ON THE OFFICIAL WEBSITE · `);
 /** a news crawl: a label block and text scrolling right → left inside (x, y, w, h) */
 function crawl(c, K, x, y, w, h, t, text, label = 'LIVE') {
   c.save(); c.fillStyle = 'rgba(8,10,24,0.92)'; c.fillRect(x, y, w, h);
   const lw = h * 3.2; c.fillStyle = '#d7263d'; c.fillRect(x, y, lw, h);
   A.uiText(c, label, x + lw / 2, y + h * 0.68, h * 0.46, { col: '#ffffff', align: 'center', weight: 900, track: 0.08, maxW: lw * 0.88 });
   c.beginPath(); c.rect(x + lw, y, w - lw, h); c.clip();
-  c.font = `700 ${Math.round(h * 0.5)}px ${A.FONT_UI}`; c.textBaseline = 'alphabetic'; c.textAlign = 'left'; c.fillStyle = '#ffffff';
-  const tw = Math.max(1, c.measureText(text).width), off = (t * h * 2.4) % tw;
-  for (let xx = x + lw + h * 0.4 - off; xx < x + w; xx += tw) c.fillText(text, xx, y + h * 0.68);
+  // the scrolling words: one copy after the next, measured in the element's own text style so the loop has no seam
+  const o = { weight: 700, col: '#ffffff', key: 'crawl' };
+  const tw = Math.max(1, A.rawText(c, text, 0, 0, h * 0.5, { ...o, measure: true })), off = (t * h * 2.4) % tw;
+  for (let xx = x + lw + h * 0.4 - off; xx < x + w; xx += tw) A.rawText(c, text, xx, y + h * 0.68, h * 0.5, o);
   c.restore();
 }
 /** a full-bleed waving flag (or the theme's emblem), darkened toward the bottom */
@@ -442,17 +453,17 @@ D.breaking = (c, K, S) => {
   // tag row: the label block + a live dot + a time slot
   const tagW = Math.min(w * 0.46, h * 1.55);
   c.fillStyle = '#d7263d'; c.fillRect(0, 0, tagW, tagH);
-  A.kineticText(c, txt.tag || 'BREAKING', tagW / 2, tagH * 0.8, tagH * 0.72, clamp(S.tl / 0.5), { col: '#ffffff', maxW: tagW * 0.86, shadow: false });
+  A.kineticText(c, tx(S, 'tag', 'BREAKING'), tagW / 2, tagH * 0.8, tagH * 0.72, clamp(S.tl / 0.5), { col: '#ffffff', maxW: tagW * 0.86, shadow: false });
   c.fillStyle = mix(P.primary, '#000000', 0.35); c.fillRect(tagW, 0, w - tagW, tagH);
   const pu = 0.5 + 0.5 * Math.sin(S.t * 6); c.fillStyle = rgba('#ff4d4d', 0.5 + 0.5 * pu); c.beginPath(); c.arc(tagW + tagH * 0.5, tagH * 0.5, tagH * 0.17, 0, TAU); c.fill();
-  A.uiText(c, txt.time || 'LIVE · 00:00', tagW + tagH * 0.85, tagH * 0.68, tagH * 0.42, { col: '#ffffff', weight: 800, maxW: w - tagW - tagH });
+  A.uiText(c, tx(S, 'time', 'LIVE · 00:00'), tagW + tagH * 0.85, tagH * 0.68, tagH * 0.42, { col: '#ffffff', weight: 800, maxW: w - tagW - tagH });
   // the headline band in the flag's colours
   const g = c.createLinearGradient(0, bandY, w, bandY + bandH); g.addColorStop(0, mix(P.primary, '#ffffff', 0.08)); g.addColorStop(1, mix(P.primary, '#000000', 0.2));
   c.fillStyle = g; c.fillRect(0, bandY, w, bandH);
   K.flag.slice(0, 3).forEach((col, i) => { c.fillStyle = col; c.fillRect(0, bandY + (i * bandH) / 3, h * 0.06, bandH / 3 + 0.5); });
-  A.kineticText(c, txt.headline || `STUDY & WORK IN ${(K.name || '').toUpperCase()}`, h * 0.2, bandY + bandH * 0.72, bandH * 0.56, clamp((S.tl - 0.15) / 0.6), { col: onColor(P.primary), align: 'left', maxW: w - h * 0.4 });
+  A.kineticText(c, tx(S, 'headline', `STUDY & WORK IN ${(K.name || '').toUpperCase()}`), h * 0.2, bandY + bandH * 0.72, bandH * 0.56, clamp((S.tl - 0.15) / 0.6), { col: onColor(P.primary), align: 'left', maxW: w - h * 0.4 });
   A.sheen(c, 0, bandY, w, bandH, fr(S.tl / 2.6), 0.3);
-  crawl(c, K, 0, crawlY, w, crawlH, S.t, crawlText(K, txt), txt.crawlTag || 'UPDATE');
+  crawl(c, K, 0, crawlY, w, crawlH, S.t, crawlText(K, S), tx(S, 'crawlTag', 'UPDATE'));
   c.restore();
 };
 
@@ -467,19 +478,19 @@ D.bulletin = (c, K, S) => {
     // top bar
     const tb = U * 0.11; c.fillStyle = 'rgba(8,10,24,0.88)'; c.fillRect(0, h * 0.05, w, tb);
     c.fillStyle = acc(K); c.fillRect(0, h * 0.05, U * 0.42, tb);
-    A.uiText(c, txt.label || 'COUNTRY BULLETIN', U * 0.21, h * 0.05 + tb * 0.64, tb * 0.36, { col: onColor(acc(K)), align: 'center', weight: 900, track: 0.08, maxW: U * 0.4 });
-    A.uiText(c, txt.date || 'DD MMM YYYY', w - U * 0.05, h * 0.05 + tb * 0.64, tb * 0.34, { col: '#ffffff', align: 'right', weight: 700 });
+    A.uiText(c, tx(S, 'label', 'COUNTRY BULLETIN'), U * 0.21, h * 0.05 + tb * 0.64, tb * 0.36, { col: onColor(acc(K)), align: 'center', weight: 900, track: 0.08, maxW: U * 0.4 });
+    A.uiText(c, tx(S, 'date', 'DD MMM YYYY'), w - U * 0.05, h * 0.05 + tb * 0.64, tb * 0.34, { col: '#ffffff', align: 'right', weight: 700 });
     // the country, big, in English and Arabic
-    A.kineticText(c, txt.title || W2.title, U * 0.07, h * 0.36, U * 0.2, cp * 1.4, { col: '#ffffff', align: 'left', maxW: w - U * 0.14 });
-    A.arabicText(c, txt.titleAr ?? W2.titleAr, w - U * 0.07, h * 0.36 + U * 0.12, U * 0.085, clamp(cp * 2 - 0.3), { col: '#ffffff', align: 'right', maxW: w * 0.8 });
+    A.kineticText(c, tx(S, 'title', W2.title), U * 0.07, h * 0.36, U * 0.2, cp * 1.4, { col: '#ffffff', align: 'left', maxW: w - U * 0.14 });
+    A.arabicText(c, tx(S, 'titleAr', W2.titleAr), w - U * 0.07, h * 0.36 + U * 0.12, U * 0.085, clamp(cp * 2 - 0.3), { col: '#ffffff', align: 'right', maxW: w * 0.8 });
     // headline + subline plate
     const py = h * 0.36 + U * 0.2, pw = w - U * 0.14, ph = U * 0.3, a = easeOut(cp * 2 - 0.4);
     c.save(); c.globalAlpha *= a; c.translate((1 - a) * -w * 0.2, 0);
     c.fillStyle = 'rgba(255,255,255,0.95)'; c.fillRect(U * 0.07, py, pw, ph); c.fillStyle = P.primary === '#ffffff' ? '#d7263d' : P.primary; c.fillRect(U * 0.07, py, U * 0.025, ph);
-    A.uiText(c, txt.headline || 'Your headline here', U * 0.13, py + ph * 0.42, ph * 0.24, { col: '#11142a', weight: 900, maxW: pw - U * 0.1 });
-    A.uiText(c, txt.sub || 'Subline: edit this in the inspector', U * 0.13, py + ph * 0.78, ph * 0.15, { col: '#3b4160', weight: 600, maxW: pw - U * 0.1 });
+    A.uiText(c, tx(S, 'headline', 'Your headline here'), U * 0.13, py + ph * 0.42, ph * 0.24, { col: '#11142a', weight: 900, maxW: pw - U * 0.1 });
+    A.uiText(c, tx(S, 'sub', 'Subline: edit this in the inspector'), U * 0.13, py + ph * 0.78, ph * 0.15, { col: '#3b4160', weight: 600, maxW: pw - U * 0.1 });
     c.restore();
-    crawl(c, K, 0, h - U * 0.1, w, U * 0.07, S.t, crawlText(K, txt), txt.crawlTag || 'UPDATE');
+    crawl(c, K, 0, h - U * 0.1, w, U * 0.07, S.t, crawlText(K, S), tx(S, 'crawlTag', 'UPDATE'));
     A.lightLeaks(c, w, h, S.t, [acc(K), '#ff8a3d'], 0.45, 2);
   }
   if (tl < 0.5) A.slabWipe(c, w, h, K.slabs, clamp(tl / 0.5) * 0.5, { dir: 1 });
@@ -515,10 +526,10 @@ D.split = (c, K, S) => {
     A.scene(g, K2, x, y, pw, ph, S2.t, K2.light, 0.7);
     const u2 = Math.min(pw, ph);
     g.fillStyle = 'rgba(8,10,24,0.85)'; g.fillRect(x, y + ph * 0.08, pw * 0.62, u2 * 0.11);
-    A.uiText(g, txt.label || 'COUNTRY FOCUS', x + u2 * 0.06, y + ph * 0.08 + u2 * 0.075, u2 * 0.05, { col: '#ffffff', weight: 900, track: 0.12, maxW: pw * 0.56 });
-    A.kineticText(g, txt.title || W2.title, x + u2 * 0.06, y + ph * 0.62, u2 * 0.2, clamp(S2.tl / 0.7), { col: '#ffffff', align: 'left', maxW: pw - u2 * 0.12 });
-    A.arabicText(g, txt.titleAr ?? W2.titleAr, x + pw - u2 * 0.06, y + ph * 0.62 + u2 * 0.12, u2 * 0.08, clamp(S2.tl / 0.9), { col: '#ffffff', align: 'right', maxW: pw * 0.8 });
-    A.uiText(g, txt.headline || 'Your headline here', x + u2 * 0.06, y + ph * 0.62 + u2 * 0.25, u2 * 0.06, { col: '#ffffff', weight: 800, maxW: pw - u2 * 0.12 });
+    A.uiText(g, tx(S2, 'label', 'COUNTRY FOCUS'), x + u2 * 0.06, y + ph * 0.08 + u2 * 0.075, u2 * 0.05, { col: '#ffffff', weight: 900, track: 0.12, maxW: pw * 0.56 });
+    A.kineticText(g, tx(S2, 'title', W2.title), x + u2 * 0.06, y + ph * 0.62, u2 * 0.2, clamp(S2.tl / 0.7), { col: '#ffffff', align: 'left', maxW: pw - u2 * 0.12 });
+    A.arabicText(g, tx(S2, 'titleAr', W2.titleAr), x + pw - u2 * 0.06, y + ph * 0.62 + u2 * 0.12, u2 * 0.08, clamp(S2.tl / 0.9), { col: '#ffffff', align: 'right', maxW: pw * 0.8 });
+    A.uiText(g, tx(S2, 'headline', 'Your headline here'), x + u2 * 0.06, y + ph * 0.62 + u2 * 0.25, u2 * 0.06, { col: '#ffffff', weight: 800, maxW: pw - u2 * 0.12 });
   }
 };
 
@@ -526,7 +537,7 @@ D.split = (c, K, S) => {
 D.lowerbar = (c, K, S) => {
   const { w, h } = S, P = K.colors, txt = S.txt, W2 = K.words, ii = S.inn(0.45), oo = S.out(0.3), k = Math.min(ii, oo);
   if (k <= 0) return;
-  const ls = h, top = h * 0.58;
+  const ls = h, top = h * 0.58, l3 = S.txt.line3 != null ? tx(S, 'line3', '') : '', rh = l3 ? (h - top) / 2 : h - top;
   c.save(); c.globalAlpha *= clamp(k * 3);
   c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(h * 0.05, h * 0.08, w * easeOut(k), h);
   // logo slot: the company's logo on a white tile, or a placeholder
@@ -539,13 +550,15 @@ D.lowerbar = (c, K, S) => {
   const g = c.createLinearGradient(ls, 0, w, 0); g.addColorStop(0, P.primary); g.addColorStop(1, mix(P.primary, '#000000', 0.3));
   c.fillStyle = g; c.fillRect(ls, 0, w - ls, top);
   c.fillStyle = '#ffffff'; c.fillRect(ls, top, w - ls, h - top);
+  if (l3) { c.fillStyle = mix(P.primary, '#000000', 0.35); c.fillRect(ls, top + rh, w - ls, rh); }
   c.fillStyle = acc(K); c.fillRect(ls, top - h * 0.05, w - ls, h * 0.05);
-  A.uiText(c, (txt.name || W2.lowerName).toUpperCase(), ls + h * 0.2, top * 0.7, top * 0.5, { col: onColor(P.primary), weight: 900, maxW: w - ls - h * 1.6, track: 0.03 });
-  A.uiText(c, txt.role || W2.lowerRole, ls + h * 0.2, top + (h - top) * 0.72, (h - top) * 0.55, { col: '#14182b', weight: 700, maxW: w - ls - h * 0.4 });
+  A.uiText(c, tx(S, 'name', W2.lowerName).toUpperCase(), ls + h * 0.2, top * 0.7, top * 0.5, { col: onColor(P.primary), weight: 900, maxW: w - ls - h * 1.6, track: 0.03 });
+  A.uiText(c, tx(S, 'role', W2.lowerRole), ls + h * 0.2, top + rh * 0.72, rh * 0.55, { col: '#14182b', weight: 700, maxW: w - ls - h * 0.4 });
+  if (l3) A.uiText(c, l3, ls + h * 0.2, top + rh + rh * 0.72, rh * 0.55, { col: '#ffffff', weight: 700, maxW: w - ls - h * 0.4 });
   // a LIVE tag and a clock slot on the right
   const tw = h * 1.1; c.fillStyle = '#d7263d'; c.fillRect(w - tw, 0, tw, top * 0.5);
-  A.uiText(c, txt.tag || 'LIVE', w - tw / 2, top * 0.38, top * 0.3, { col: '#ffffff', align: 'center', weight: 900, track: 0.1 });
-  A.uiText(c, txt.time || '00:00', w - tw / 2, top * 0.86, top * 0.28, { col: rgba('#ffffff', 0.9), align: 'center', weight: 800 });
+  A.uiText(c, tx(S, 'tag', 'LIVE'), w - tw / 2, top * 0.38, top * 0.3, { col: '#ffffff', align: 'center', weight: 900, track: 0.1 });
+  A.uiText(c, tx(S, 'time', '00:00'), w - tw / 2, top * 0.86, top * 0.28, { col: rgba('#ffffff', 0.9), align: 'center', weight: 800 });
   A.sheen(c, ls, 0, w - ls, top, fr(S.tl / 3), 0.35);
   c.restore(); c.restore();
 };
@@ -560,9 +573,10 @@ D.visa = (c, K, S) => {
   const hh = h * 0.2; const g = c.createLinearGradient(0, 0, w, 0); g.addColorStop(0, P.primary); g.addColorStop(1, mix(P.primary, '#000000', 0.3));
   c.fillStyle = g; c.fillRect(0, 0, w, hh);
   c.save(); c.beginPath(); c.rect(hh * 0.18, hh * 0.18, hh * 0.96, hh * 0.64); c.clip(); A.flagCloth(c, imgOf(K), K.flag, hh * 0.18, hh * 0.18, hh * 0.96, hh * 0.64, S.t, { pole: false, strips: 10, amp: 0.05 }); c.restore();
-  A.kineticText(c, txt.title || 'VISA UPDATE', hh * 1.4, hh * 0.62, hh * 0.46, clamp(S.tl / 0.6), { col: onColor(P.primary), align: 'left', maxW: w - hh * 1.6, shadow: false });
-  A.uiText(c, (txt.country || K.name || '').toUpperCase(), hh * 1.4, hh * 0.88, hh * 0.15, { col: rgba(onColor(P.primary), 0.85), weight: 800, track: 0.14, maxW: w - hh * 1.6 });
-  const pts = [txt.p1 || 'Point one: edit me', txt.p2 || 'Point two: edit me', txt.p3 || 'Point three: edit me', txt.p4 || 'Point four: edit me'].filter((x) => x && x !== '-');
+  A.kineticText(c, tx(S, 'title', 'VISA UPDATE'), hh * 1.4, hh * 0.62, hh * 0.46, clamp(S.tl / 0.6), { col: onColor(P.primary), align: 'left', maxW: w - hh * 1.6, shadow: false });
+  A.uiText(c, tx(S, 'country', K.name || '').toUpperCase(), hh * 1.4, hh * 0.88, hh * 0.15, { col: rgba(onColor(P.primary), 0.85), weight: 800, track: 0.14, maxW: w - hh * 1.6 });
+  // four points by default; Text → + Add point appends p5 … p8; "-" (or an empty field) leaves a point out
+  const pts = ['Point one: edit me', 'Point two: edit me', 'Point three: edit me', 'Point four: edit me', null, null, null, null].map((d0, i) => (d0 || txt['p' + (i + 1)] != null ? tx(S, 'p' + (i + 1), d0 || '') : '')).filter((x) => x && x !== '-');
   const rowH = (h - hh - h * 0.14) / Math.max(3, pts.length), per = Math.max(0.35, (S.d - 1.2) / pts.length);
   const cur = Math.min(pts.length - 1, Math.floor(Math.max(0, S.tl - 0.5) / per));
   pts.forEach((pt, i) => {
@@ -577,7 +591,7 @@ D.visa = (c, K, S) => {
     c.restore();
   });
   c.fillStyle = '#eef0f6'; c.fillRect(0, h - h * 0.1, w, h * 0.1);
-  A.uiText(c, txt.note || 'Placeholder points: verify on the official government website before publishing.', w * 0.04, h - h * 0.035, h * 0.034, { col: '#5b6280', weight: 600, maxW: w * 0.92 });
+  A.uiText(c, tx(S, 'note', 'Placeholder points: verify on the official government website before publishing.'), w * 0.04, h - h * 0.035, h * 0.034, { col: '#5b6280', weight: 600, maxW: w * 0.92 });
   c.restore();
 };
 
@@ -587,7 +601,7 @@ for (const def of ELEMENTS.filter((e) => e.fam)) {
     const { w, h } = S, U = Math.min(w, h), ii = S.inn(0.4), oo = S.out(0.35); if (oo <= 0 || ii <= 0) return;
     // the piece builds in about 3.8 s; a shorter clip plays it faster so it always finishes
     const ta = S.tl * Math.max(1, 3.8 / Math.max(0.6, S.d * 0.85));
-    const words = Object.fromEntries(Object.entries(S.txt || {}).filter(([k, v]) => def.words.includes(k) && v));
+    const words = Object.fromEntries(Object.entries(S.txt || {}).filter(([k, v]) => def.words.includes(k) && v != null));
     const card = def.box === 'famcard', r = card ? U * 0.05 : 0;
     c.save(); c.globalAlpha *= Math.min(ii, oo);
     const z = 0.94 + 0.06 * ii; c.translate(w / 2, h / 2); c.scale(z, z); c.translate(-w / 2, -h / 2);
@@ -603,7 +617,7 @@ D.capsules = (c, K, S) => drawCapsules(c, S.style.caps || defaultCaps(), { w: S.
 export const ELEMENT_DRAW = D;
 
 // ── one renderer for theme.el, theme.sting, theme.outro ──
-export function drawElement(ctx, el, item, project, env, styleOverride, inLayer = false) {
+export function drawElement(ctx, el, item, project, env, styleOverride, inLayer = false, opts = null) {
   const def = elementById(el), s = styleOverride || item.style || {};
   const K = kitOfItem(item, project), local = env.local, dur = Math.max(0.1, (item.out - item.in) / (item.speed || 1));
   const T = timing(def, local, dur), W = project.canvas.w, H = project.canvas.h;
@@ -611,7 +625,9 @@ export function drawElement(ctx, el, item, project, env, styleOverride, inLayer 
   const beats = s.beats || project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.beats || [];
   const S = { tl: T.tl, d: T.d, k: T.k, inn: T.inn, out: T.out, w: env.box.w, h: env.box.h, U: Math.min(W, H), t: item.t0 + local, pulse: s.beat === false ? 0 : pulseAt(beats, item.t0 + local), txt: s.text || {}, style: s, brand: s.brand, face: (project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.faces || [])[0] || null, beats, covered: el === 'grade' && !inLayer && (coveredAt(project, item.t0 + local) || overlayAt(project, item.t0 + local)) };
   ctx.save();
-  try { fn(ctx, K, S); } finally { ctx.restore(); }
+  // the element's text pass (./text.js): text style, fitting, and, in the preview, where each string landed
+  const rec = !!env.preview && !opts?.noRec, prev = textBegin(ctx, s.tstyle, S.txt, { rec, fields: opts?.fields, draws: opts?.draws });
+  try { fn(ctx, K, S); } finally { const o = textEnd(prev); if (rec && o?.rec) setLastBoxes(item.id, S.t, o.rec); ctx.restore(); }
 }
 registerLayer('theme.el', (ctx, item, t, project, env) => drawElement(ctx, item.style?.el, item, project, env));
 // the intro and end card that "Apply theme" places (and that older projects carry) draw the same way

@@ -23,6 +23,7 @@
 // from the shared art kit (art.js).
 import * as A from './art.js';
 import { kitFor } from './kit.js';
+import { textActive, textStyle, fitText, drawPlain, noteBox } from './text.js';
 
 const { TAU, clamp, easeOut, easeIO, back, elastic, rnd, fr, mix, rgba, lum } = A;
 const isAr = (s) => /[؀-ۿ]/.test(s || '');
@@ -48,6 +49,14 @@ export const setMirror = (m) => { MIR = !!m; };
 export function T(c, s, x, y, size, { col = '#ffffff', align = 'center', weight = 800, font = 'ui', maxW = 1e9, base = 'alphabetic', track = 0 } = {}) {
   if (!s) return 0;
   s = String(s); const ar = isAr(s);
+  // a reel element's text pass (./text.js): the piece's word key, the element's text style, fitting long words
+  const d = textActive() ? textStyle({ kind: ar ? 'ar' : 'fam', text: s, x, y, size, col, align, weight: ar ? Math.max(700, weight) : weight, family: ar ? A.FONT_AR : font === 'display' ? A.FONT_EN : A.FONT_UI, maxW, base, track: ar ? 0 : track, shadow: false }) : null;
+  if (d?.custom) {
+    fitText(c, d); c.save();
+    if (MIR) { c.translate(d.x, d.y); c.scale(-1, 1); d.x = 0; d.y = 0; d.align = d.align === 'left' ? 'right' : d.align === 'right' ? 'left' : d.align; }
+    const w = Math.min(d.maxW, drawPlain(c, d)); noteBox(c, d, w); c.restore();
+    return w;
+  }
   c.save();
   c.font = `${ar ? Math.max(700, weight) : weight} ${Math.round(size)}px ${ar ? A.FONT_AR : font === 'display' ? A.FONT_EN : A.FONT_UI}`;
   c.textBaseline = base; c.fillStyle = col;
@@ -57,6 +66,7 @@ export function T(c, s, x, y, size, { col = '#ffffff', align = 'center', weight 
   if (MIR) { c.translate(x, y); c.scale(-1, 1); x = 0; y = 0; al = align === 'left' ? 'right' : align === 'right' ? 'left' : align; }
   c.textAlign = al; c.fillText(s, x, y, maxW);
   const w = Math.min(maxW, c.measureText(s).width);
+  if (d) noteBox(c, { ...d, x, y, align: al }, w);
   c.restore();
   return w;
 }
