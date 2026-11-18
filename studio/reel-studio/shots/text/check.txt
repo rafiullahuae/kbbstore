@@ -21,10 +21,11 @@ PASS typing on the canvas is live (“Sara Ali”), Enter commits and closes it,
 PASS double-click on the role, type, Esc: the words go back and the editor closes
 PASS a click away from the canvas editor commits (“Click-away keeps”)
 PASS a double-click on the element away from its words focuses its first field (name)
+PASS double-click edits every placeholder in place, its inspector control flashes, Enter keeps it: end.cta “BOOK YOUR FREE CONSULTATION”; end.phone “+971 XX XXX XXXX”; end.web “www.yourwebsite.com”; end.handle “@yourhandle”; bulletin.headline “Your headline here”; breaking.crawl “EUROPE · YOUR HEADLINE HERE · BOOK A FREE CONSULTATION · PLACEHOLDER UPDATE — VERIFY ON THE OFFICIAL WEBSITE · ”; visa.p2 “Point two: edit me”; fam-cv.role “‹Your next role›”; fam-growth.v “XX”; capsules.capsule “Drivers”
 PASS every Text style control changes the render: font 1539px/1st, size 2312px/1st, colour 1876px/1st, bold 2327px/1st, case 583px/1st, italic 1609px/1st, outline 2577px/1st, align 4296px/1st, band 6491px/1st
 PASS the style is stored on the item: {"font":"Playfair Display","scale":1.4,"color":"#c6395f","weight":400,"case":"asis","italic":true,"outline":true,"align":"right"}
 PASS per-field size and colour (name 0.6, #111111): 919 / 193 px changed
-PASS preview = export with a styled, edited lower third (Playfair, 140 %, colours, outline): 1 s 1.96/255, 1.9 s 2.01/255, 2.6 s 2.05/255 (< 6)
+PASS preview = export with a styled, edited lower third (Playfair, 140 %, colours, outline): 1 s 1.95/255, 1.9 s 2/255, 2.6 s 2.05/255 (< 6)
 PASS Reset text style drops every style choice (one click)
 PASS undo brings the text style back; redo/undo are exact
 PASS Use theme colours puts the theme’s band colours back
@@ -39,5 +40,5 @@ PASS re-applying Europe keeps the words and style: {"name":"Rafi Khan","scale":1
 PASS applying another theme keeps the personal words (name, the whole-video role) and lets the new theme title itself: {"name":"Rafi Khan","title":null,"whole":"Whole-video role","theme":"country-de"}
 PASS save + reload: words {"name":"Rafi Khan"} and style come back, max pixel difference 0
 PASS an old project (no edited words, no text style) draws pixel-identical to the code before this change: 44 elements × 4 moments
-PASS typing: 17.1 ms per keystroke over 37 keys (writes at most once a frame), 0 long tasks (none > 120 ms); field discovery 1.2 ms, once per selection
+PASS typing: 7.8 ms per keystroke over 37 keys (writes at most once a frame), 0 long tasks (none > 120 ms); field discovery 1.7 ms, once per selection
 PASS no console errors or theme render warnings

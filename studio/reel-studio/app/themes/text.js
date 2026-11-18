@@ -26,6 +26,8 @@ export function textBegin(c, tstyle, txt, opts = {}) {
 /** end it; returns the pass ({rec: boxes}) */
 export function textEnd(prev) { const o = CUR; CUR = prev; return o; }
 export const textActive = () => !!CUR;
+/** is the preview recording boxes now (a slot drawn by its own routine notes itself only then) */
+export const textRecording = () => !!CUR?.rec;
 
 /** a style object with only the keys that change something (null when none do) */
 export function cleanStyle(s) {
@@ -180,6 +182,23 @@ export function noteBox(c, d, w) {
   const k = Math.hypot(m.a, m.b) || 1;
   CUR.rec.push({ key: d.key || null, text: d.text, x: x0, y: y0, w: x1 - x0, h: y1 - y0, size: size * k, ar: d.kind === 'ar' || isAr(d.text), align: a });
 }
+
+// ── TEXT SLOTS: how an element makes its words editable (for every element lane, present and future) ──
+//
+//   1. The usual way, nothing else to do: draw each string with tx(S, 'key', 'Default words') through an art primitive
+//      (A.uiText / kineticText / arabicText / rawText, the families' T). The key becomes an inspector field (prefilled,
+//      live, reset, per-word size/colour), its box is recorded for double-click editing on the video, the element's
+//      Text style applies and long words fit. The words live in item.style.text[key].
+//   2. Words that live somewhere else (the capsules' labels in item.style.caps) or are painted by a routine of their
+//      own: call noteSlot({key, text, x, y, w, h, size, ar}) with the box in the item's own coordinates while
+//      drawing, and registerTextSlots({prefix, label, read(item, key), write(style, key, value), focus(key)}) once,
+//      so the canvas editor knows how to read and write them and which inspector control to flash.
+// Both are pure draw-time records: preview and export draw the same pixels whether anything records or not.
+const KINDS = [];
+export function registerTextSlots(kind) { if (!KINDS.some((k) => k.prefix === kind.prefix)) KINDS.push(kind); }
+export const slotKind = (key) => KINDS.find((k) => String(key || '').startsWith(k.prefix)) || null;
+/** a slot drawn by its own routine: its box in item-local coordinates (only while the preview records) */
+export function noteSlot(s) { if (CUR?.rec && s?.key) CUR.rec.push({ key: s.key, text: String(s.text ?? ''), x: s.x, y: s.y, w: s.w, h: s.h, size: s.size || s.h * 0.5, ar: !!s.ar, align: s.align || 'left' }); }
 
 // ── the boxes the preview drew last, per item (for editing on the canvas) ──
 const LAST = new Map();

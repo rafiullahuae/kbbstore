@@ -16,6 +16,7 @@
 // cap  = { id, en, ar, icon? | flag? | cont?, col?:{fill,text,icon,border} }
 import { registerPrepare } from '../core/render.js';
 import { FEATURED_JOBS, DEFAULT_COUNTRIES, LINE_ICONS, jobCap, countryCap, continentCap } from './capsules-data.js';
+import { textRecording, noteSlot, registerTextSlots } from './text.js';
 
 export const SITE = { primary: '#0B2A66', accent: '#D7263D' };   // the screenshot's navy and red
 export const COLOR_KEYS = ['fill', 'text', 'icon', 'border', 'shadow'];
@@ -288,6 +289,7 @@ function drawRowContent(g, rows, caps, L, G, y, w, d, dens, x0 = 0) {
           const a = (((hashOf(it.cap.id) % 5) - 2) * 2.6 * Math.PI) / 180;
           g.save(); g.translate(x + cw / 2, y + G.h / 2); g.rotate(a); g.drawImage(b.cv, -cw / 2 - b.m, -G.h / 2 - b.m, cw + b.m * 2, G.h + b.m * 2); g.restore();
         } else g.drawImage(b.cv, x - b.m, y - b.m, cw + b.m * 2, G.h + b.m * 2);
+        if (textRecording()) noteSlot({ key: 'caps:' + it.cap.id, text: labelOf(it.cap, caps, Lc), x, y, w: cw, h: G.h, size: G.font, ar: caps.lang === 'ar' });
         if (L.dots) { g.beginPath(); g.arc(x + cw + G.gap / 2, y + G.h / 2, Math.max(2, G.h * 0.06), 0, Math.PI * 2); g.fillStyle = R.L.icon; g.fill(); }
       }
       x += cw + G.gap; i++;
@@ -365,7 +367,7 @@ function drawMixed(g, r, caps, L, G, y, w, dens) {
   let x = r.dir === 'right' ? off - period : -off, i = 0, guard = 0;
   while (x < w && guard++ < 4000) {
     const it = list[i % list.length];
-    if (x + it.w > -2) { const b = capBitmap(it.cap, caps, capLook(it.L, it.cap, i), G, dens); g.drawImage(b.cv, x - b.m, y - b.m, it.w + b.m * 2, G.h + b.m * 2); }
+    if (x + it.w > -2) { const b = capBitmap(it.cap, caps, capLook(it.L, it.cap, i), G, dens); g.drawImage(b.cv, x - b.m, y - b.m, it.w + b.m * 2, G.h + b.m * 2); if (textRecording()) noteSlot({ key: 'caps:' + it.cap.id, text: labelOf(it.cap, caps, it.L), x, y, w: it.w, h: G.h, size: G.font, ar: caps.lang === 'ar' }); }
     x += it.w + G.gap; i++;
   }
 }
@@ -414,4 +416,13 @@ registerPrepare('capsules', async (project) => {
   const codes = [];
   for (const tr of project.tracks || []) for (const it of tr.items) if (it.type === 'theme.el' && it.style?.el === 'capsules') codes.push(...capsFlagCodes(it.style.caps));
   if (codes.length) await loadFlags(codes);
+});
+
+// a capsule's label is a text slot (themes/text.js): double-click it on the video to rename it there
+const capOf = (caps, id) => { for (const r of caps?.rows || []) { const c = r.items.find((x) => x.id === id); if (c) return c; } return null; };
+registerTextSlots({
+  prefix: 'caps:', label: 'Capsule label',
+  read: (item, key) => { const caps = item.style?.caps, c = capOf(caps, key.slice(5)); return c ? (caps.lang === 'ar' ? c.ar || '' : c.en || '') : null; },
+  write: (style, key, v) => { const c = capOf(style.caps, key.slice(5)); if (c) c[style.caps.lang === 'ar' ? 'ar' : 'en'] = String(v).trim(); },
+  focus: (key) => `[data-caps-label="${key.slice(5).replace(/["\\]/g, '')}"]`,
 });

@@ -29,7 +29,7 @@ function toHex(c) {
 }
 
 // ── writes (each one ops.setItems on the item's style: absolute values, so typing coalesces exactly) ──
-function writeStyle(ed, id, fn, label) {
+export function writeStyle(ed, id, fn, label) {
   const it = curItem(ed, id); if (!it) return;
   const style = structuredClone(it.style || {}); fn(style);
   ed.apply(ops.setItems([{ id, props: { style } }], label));
@@ -89,6 +89,7 @@ const STYLE_CSS = `
 .tx-field textarea { resize: vertical; min-height: 52px; font: inherit; }
 .tx-field.on input, .tx-field.on textarea { outline: 2px solid var(--accent, #e8508b); outline-offset: 1px; }
 .tx-field.flash input, .tx-field.flash textarea { box-shadow: 0 0 0 3px var(--accent, #e8508b); transition: box-shadow .2s; }
+.tx-flash-on { box-shadow: 0 0 0 3px var(--accent, #e8508b) !important; transition: box-shadow .2s; }
 .tx-more { display: grid; gap: 4px; padding: 6px 8px; border: 1px solid var(--line2, #333); border-radius: 8px; }
 .tx-more[hidden] { display: none; }
 .tx-cols { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -102,7 +103,7 @@ const STYLE_CSS = `
 .tx-note { display: block; margin: 2px 0 6px; }
 `;
 let styled = false;
-const injectCss = () => { if (styled) return; styled = true; document.head.appendChild(h('style', { id: 'kbb-theme-text-css' }, STYLE_CSS)); };
+export const injectCss = () => { if (styled) return; styled = true; document.head.appendChild(h('style', { id: 'kbb-theme-text-css' }, STYLE_CSS)); };
 
 /** a slider's range input marked with a data attribute (the search index and the checks find it by it) */
 const tag = (el, k) => { const i = el.querySelector('input'); if (i) i.dataset[k] = '1'; return el; };

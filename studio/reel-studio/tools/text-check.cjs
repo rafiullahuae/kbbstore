@@ -10,7 +10,8 @@
 //             fields), the field shows the current words, and editing it changes the rendered pixels
 //   live      typing changes the project and the preview on every keystroke; one undo step per edit burst (pauses
 //             longer than the history's merge window included); Enter / Esc / ↺ reset
-//   canvas    double-click a word on the video: an input on the renderer's own box, live, Enter commits, one undo step,
+//   canvas    double-click a word on the video (every placeholder: CTA, phone, web, handle, headline, crawl, points,
+//             ‹edit› / XX in the family pieces, capsule labels): an input on the renderer's own box, live, Enter commits, one undo step,
 //             the inspector field flashes; a double-click off the words focuses the first field
 //   style     font, size, colour, bold, case, italic, outline, alignment, per-field size and colour each change the
 //             render; Reset text style; band colours and "Use theme colours"
@@ -230,6 +231,29 @@ function frameRGB(file, t, w, h) {
   const offWord = await ev(() => ({ canvas: !!document.querySelector('[data-th-canvas-text]'), focus: document.activeElement?.dataset?.thText || null }));
   ok(!offWord.canvas && !!offWord.focus, `a double-click on the element away from its words focuses its first field (${offWord.focus})`);
   await page.keyboard.press('Escape');
+
+  // every placeholder and CTA (the owner, 18 Nov: "when we use any place holder, cta etc. upon double click it must give
+  // edit box to edit the text"): the end card's CTA and contact lines, a headline placeholder, the crawl, a bulletin
+  // point, a family piece's ‹edit› and XX, a capsule's label — double-click, the box opens on it, its inspector control
+  // flashes, Enter keeps the new words
+  const PH = [['end', 'cta', 2.6], ['end', 'phone', 2.8], ['end', 'web', 2.8], ['end', 'handle', 2.9], ['bulletin', 'headline', 2.0], ['breaking', 'crawl', 2.0], ['visa', 'p2', 3.6], ['fam-cv', 'role', 3.2], ['fam-growth', 'v', 3.6], ['capsules', 'caps:', 2.0]];
+  const phRes = [];
+  for (const [el, key, at] of PH) {
+    const id = await ev(({ el, at }) => { const it = TH.placeElement(CTX, el, { theme: 'europe', t0: 10, dur: 4 }); ED.history.seal(); ED.select([it.id]); ED.showSide('inspector'); ED.seek(10 + at); return it.id; }, { el, at });
+    await page.waitForTimeout(500); await frame();
+    const b = await ev(({ id, key }) => { const it = find(id), k = ED.preview.k, cw = ED.project.canvas.w; const list = (TX.lastBoxes(id)?.boxes || []).filter((x) => (key.endsWith(':') ? x.key?.startsWith(key) : x.key === key) && x.w > 4 && it.x + x.x < cw - 40 && it.x + x.x + x.w > 40); const bb = list[0]; if (!bb) return null; const x0 = Math.max(it.x + bb.x, 0); return { key: bb.key, text: bb.text, x: (x0 + Math.min(it.x + bb.x + bb.w, cw)) / 2 * k, y: (it.y + bb.y + bb.h / 2) * k }; }, { id, key });
+    if (!b) { phRes.push({ el, key, ok: false, why: 'no box' }); await ev((id) => ED.apply(ED.ops.removeItems([id])), id); continue; }
+    const ov2 = await page.locator('.pv-overlay').boundingBox();
+    await page.mouse.dblclick(ov2.x + b.x, ov2.y + b.y);
+    const open = await page.waitForSelector('[data-th-canvas-text]', { timeout: 3000 }).then(() => true).catch(() => false);
+    const st = await ev(() => { const i = document.querySelector('[data-th-canvas-text]'); return i && { key: i.dataset.thCanvasText, value: i.value, flash: !!document.querySelector('.tx-field.flash, .tx-flash-on') }; });
+    const words = 'Edited ' + b.key.replace(/^caps:/, 'capsule');
+    if (open) { await page.keyboard.press('ControlOrMeta+a'); await page.keyboard.type(words); await page.keyboard.press('Enter'); await frame(); }
+    const stored = await ev(({ id, key }) => { const it = find(id); if (key.startsWith('caps:')) { for (const r of it.style.caps.rows) { const c = r.items.find((x) => 'caps:' + x.id === key); if (c) return c.en; } return null; } return it.style.text?.[key] ?? null; }, { id, key: b.key });
+    phRes.push({ el, key: b.key, ok: open && st?.key === b.key && stored === words && st.flash, shown: st?.value, flash: st?.flash, stored });
+    await ev((id) => { ED.apply(ED.ops.removeItems([id])); ED.history.seal(); }, id);
+  }
+  ok(phRes.every((r) => r.ok), `double-click edits every placeholder in place, its inspector control flashes, Enter keeps it: ${phRes.map((r) => `${r.el}.${r.key.replace(/^caps:.*/, 'capsule')} “${r.shown ?? r.why}”${r.ok ? '' : ` ✗ flash=${r.flash} stored=${r.stored}`}`).join('; ')}`);
 
   // ════════ 4 · text style ════════
   await ev((id) => { ED.select([id]); }, lw); await page.waitForSelector('[data-th-style-sec]');
