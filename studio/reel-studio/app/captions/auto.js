@@ -9,6 +9,7 @@ import { styleForWorkspace } from './styles.js';
 import { createItem, itemDur, findMedia, tracksOfKind, srcTime } from '../core/project.js';
 import { cleanNonSpeech, DEFAULT_TAG_MODE } from './nonspeech.js';
 import { vocabFor, promptFor, correctTerms } from './vocab.js';
+import { heardLanguage, withHeardLanguage } from './hinglish/script.js';
 
 const SR = 16000;
 let shared = null;
@@ -73,6 +74,7 @@ export async function autoCaptions(ctx, opts = {}) {
   const cap = { style, lang: r.lang, words: r.words, lines: buildLines(r.words, style, project.canvas),
     soundTags: project.captions?.soundTags || DEFAULT_TAG_MODE, music: r.music, dropped: r.dropped, speakers: r.speakers };
   if (project.captions?.alt) cap.alt = project.captions.alt;
+  Object.assign(cap, withHeardLanguage(cap, r, lang, project));   // what was heard + the Hindi / Urdu script (hinglish/)
   ctx.history.apply(captionsWithItem(project, cap, ctx.ops));
   const extra = [r.dropped.length ? `${r.dropped.length} invented words removed` : '', r.fixes.length ? `${r.fixes.length} names spelled right` : '',
     r.speakers > 1 ? `${r.speakers} speakers` : ''].filter(Boolean).join(', ');
@@ -100,7 +102,7 @@ export async function captureWords(tr, audio, opts = {}) {
   if (opts.speakers !== false && words.length >= 6) {
     try { const sp = await tr.speakers(audio, words); words = sp.words; speakers = sp.n; } catch { /* best effort */ }
   }
-  return { words, lang: raw.lang, music: ns.music, dropped: ns.dropped, fixes: fx.fixes, speakers, raw };
+  return { words, lang: raw.lang, music: ns.music, dropped: ns.dropped, fixes: fx.fixes, speakers, raw, ...heardLanguage(raw, words) };
 }
 
 /** setCaptions + make sure one caption item spans them, as a single undo step. */

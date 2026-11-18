@@ -26,6 +26,8 @@ import { dragPrefs, posSel, selectLines, lineKey, linePos, resetLines, resetAll 
 import { wsDir } from '../core/config.js';
 import { mountTranslate } from './translate/panel.js';
 import { lineFlags } from './translate/pipeline.js';
+import { mountLangNotice } from './hinglish/notice.js';
+import { SCRIPTS, setScript, isHindustani, currentScript } from './hinglish/script.js';
 
 const h = (tag, attrs = {}, ...kids) => {
   const el = document.createElement(tag);
@@ -59,7 +61,10 @@ export function mountCaptionPanel(el, ctx) {
     Object.values(SPEECH_MODELS).map((m) => h('option', { value: m.key }, m.label)));
   const langSel = h('select', { class: 'rs-cap-in', title: 'Language' }, LANGS.map((l) => h('option', { value: l.id }, l.label)));
   const meta = P().meta?.captions || {};
-  modelSel.value = meta.model || 'small'; langSel.value = meta.lang || 'auto';
+  // Hindi / Urdu captions in: auto (Roman for Hinglish, else as heard) or one script, for this project
+  const scriptSel = h('select', { class: 'rs-cap-in', title: 'Script for Hindi / Urdu captions', 'data-k': 'capScript' },
+    h('option', { value: 'auto' }, 'Auto (Roman for Hinglish)'), SCRIPTS.map((s) => h('option', { value: s.id }, s.title)));
+  modelSel.value = meta.model || 'small'; langSel.value = meta.lang || 'auto'; scriptSel.value = meta.script || 'auto';
   const bar = h('div', { class: 'rs-cap-bar' }, h('i'));
   const barLabel = h('span', { class: 'rs-cap-barlabel' });
   const cancelBtn = h('button', { class: 'rs-cap-btn ghost', onclick: () => running?.abort() }, 'Cancel');
@@ -410,10 +415,13 @@ export function mountCaptionPanel(el, ctx) {
   const settings = h('details', { class: 'rs-cap-settings' },
     h('summary', {}, '⚙ Settings ', tagChip),
     h('div', { class: 'rs-cap-row' }, modelSel, langSel),
+    h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Hindi / Urdu in'), scriptSel),
     h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel),
     vocabBox);
   const trBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'open-translate', title: 'Translate the captions (Urdu, Arabic, English, Hindi …)', onclick: () => show('translate') }, '🌐 Translate');
-  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, trBtn, settings), progress),
+  // what Whisper heard + the Hindi / Urdu script switch (hinglish/notice.js)
+  const notice = mountLangNotice({ cap, apply, canvas: () => P().canvas, relisten: (l) => { langSel.value = l; saveMeta(); runAuto(); } });
+  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, trBtn, settings), progress, notice.el),
     tabs, transcriptPane, scriptPane, stylePane, translatePane);
 
   let queued = false;
@@ -424,6 +432,7 @@ export function mountCaptionPanel(el, ctx) {
       if (sel >= cap().words.length) sel = cap().words.length - 1;
       tagSel.value = cap().soundTags || DEFAULT_TAG_MODE;
       tagChip.textContent = '· ♪ ' + (TAG_MODES.find((m) => m.id === tagSel.value)?.label || '');
+      notice.render();
       if (tab === 'transcript') renderList();
       else if (tab === 'script') { if (!scriptPane.contains(document.activeElement)) script?.render(); }
       else if (tab === 'translate') { if (!translatePane.contains(document.activeElement) || document.activeElement.tagName !== 'DIV') trView?.render(); }
@@ -437,7 +446,20 @@ export function mountCaptionPanel(el, ctx) {
       ctx.bus.on('workspace', () => { renderVocab(); if (tab === 'style') gallery.render(); }));
   }
   modelSel.onchange = langSel.onchange = () => saveMeta();
-  function saveMeta() { if (ctx.ops?.setProject) ctx.history.apply(ctx.ops.setProject({ meta: { ...(P().meta || {}), captions: { model: modelSel.value, lang: langSel.value } } }, 'Caption settings')); }
+  // the script setting also re-writes Hindi / Urdu captions already made (one undo step with the setting)
+  scriptSel.onchange = () => {
+    const c = cap(), to = scriptSel.value === 'auto' ? (c.detect?.hinglish ? 'roman' : c.lang === 'ur' ? 'urdu' : 'deva') : scriptSel.value;
+    const redo = isHindustani(c) && c.words.length && to !== currentScript(c) ? setScript(to, P().canvas) : null;
+    saveMeta(redo);
+  };
+  function metaCmd() {
+    const m = P().meta?.captions || {}, script = scriptSel.value;
+    return ctx.ops.setProject({ meta: { ...(P().meta || {}), captions: { model: modelSel.value, lang: langSel.value, ...(script !== 'auto' || m.script ? { script } : {}) } } }, 'Caption settings');
+  }
+  function saveMeta(extra) {
+    if (!ctx.ops?.setProject) { if (extra) apply(extra); return; }
+    ctx.history.apply(extra && ctx.ops.batch ? ctx.ops.batch('Caption script', [metaCmd(), extra]) : metaCmd());
+  }
 
   loadCaptionFonts().then(() => tab === 'style' && gallery.draw(1.2, true));
   renderVocab();

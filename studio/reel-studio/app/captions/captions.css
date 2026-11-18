@@ -81,6 +81,17 @@
 .rs-cap-settings > summary { cursor: pointer; color: var(--c-mute); padding: 6px 2px; list-style-position: inside; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rs-cap-settings[open] { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; background: var(--c-bg2); border: 1px solid var(--c-line); border-radius: 8px; padding: 4px 8px 8px; }
 .rs-cap-tagchip { font-size: 11px; }
+/* "Heard: Hindi 96%" + the Hindi / Urdu script switch (hinglish/notice.js) */
+.rs-cap-detect { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 6px 8px; background: var(--c-bg2); border: 1px solid var(--c-line); border-radius: 8px; }
+.rs-cap-detect[hidden] { display: none; }
+.rs-cap-detect-what { color: var(--c-mute); white-space: nowrap; }
+.rs-cap-detect-what b { color: var(--c-fg); font-weight: 650; }
+.rs-cap-scripts { display: inline-flex; gap: 2px; padding: 2px; margin-left: auto; background: var(--c-bg); border: 1px solid var(--c-line); border-radius: var(--r-sm, 7px); }
+.rs-cap-script { background: none; border: 0; border-radius: 5px; color: var(--c-mute); min-height: 28px; padding: 0 10px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.rs-cap-script[data-script="deva"] { font-family: "Noto Sans Devanagari", var(--font, system-ui), sans-serif; }
+.rs-cap-script[data-script="urdu"] { font-family: "Noto Naskh Arabic", var(--font, system-ui), sans-serif; }
+.rs-cap-script:hover { color: var(--c-fg); }
+.rs-cap-script.on { color: var(--c-acc-fg); background: var(--c-acc); }
 .rs-cap-vocabbox summary { cursor: pointer; color: var(--c-mute); }
 .rs-cap-vocabbox[open] { display: flex; flex-direction: column; gap: 6px; }
 .rs-cap-vocab { width: 100%; resize: vertical; font: 12px/1.4 ui-monospace, Menlo, monospace; }

@@ -12,8 +12,31 @@ const DEFAULT_MODELS = new URL('../../models/', import.meta.url).href;
 
 export const LANGS = [
   { id: 'auto', label: 'Auto-detect' }, { id: 'en', label: 'English' }, { id: 'ar', label: 'العربية Arabic' },
-  { id: 'hi', label: 'हिन्दी Hindi' }, { id: 'ur', label: 'اردو Urdu' },
+  { id: 'ur', label: 'اردو Urdu' }, { id: 'hi', label: 'हिन्दी Hindi' }, { id: 'hinglish', label: 'Hinglish (Hindi + English)' },
 ];
+
+/** Script anchors for Whisper's prompt (see transcribe): one plain everyday sentence in the wanted script. */
+export const SCRIPT_PROMPT = { hi: 'नमस्ते दोस्तों, आज हम आपसे बात करेंगे', ur: 'السلام علیکم دوستو، آج ہم آپ سے بات کریں گے' };
+
+/**
+ * Whisper's language probabilities averaged over the loudest (≤ 3) windows -> the caption language.
+ * Hindi and Urdu are one spoken language (Hindustani) that Whisper splits by script, so their probabilities are
+ * summed for the confidence and the choice between them is a default the owner can flip in one click:
+ * Hindi unless Whisper favours Urdu by 1.5x. English heard next to Hindustani (≥ 8 %, or one window that is
+ * English) marks Hinglish. Returns { lang, conf, probs, alt, hinglish, windows }.
+ */
+export function pickLanguage(list) {
+  const probs = {};
+  for (const r of list) for (const [k, v] of Object.entries(r.probs || {})) probs[k] = (probs[k] || 0) + v / list.length;
+  const top = Object.entries(probs).sort((a, b) => b[1] - a[1])[0]?.[0] || 'en';
+  const hi = probs.hi || 0, ur = probs.ur || 0, hu = hi + ur;
+  if (top === 'hi' || top === 'ur' || hu >= 0.5) {
+    const lang = ur >= 1.5 * hi ? 'ur' : 'hi';
+    const hinglish = (probs.en || 0) >= 0.08 || list.some((r) => r.lang === 'en');
+    return { lang, conf: +Math.min(1, hu).toFixed(3), probs, alt: lang === 'hi' ? 'ur' : 'hi', hinglish, windows: list.length };
+  }
+  return { lang: top, conf: +(probs[top] || 0).toFixed(3), probs, alt: null, hinglish: false, windows: list.length };
+}
 
 export class Transcriber {
   constructor({ modelsUrl = DEFAULT_MODELS, vendorUrl = DEFAULT_VENDOR } = {}) {
@@ -61,7 +84,7 @@ export class Transcriber {
 
   /**
    * Transcribe mono 16 kHz audio. Returns { words:[{t0,t1,w,conf}], lang, ms, rtf, device, analysis, stats }.
-   * opts: { model, lang:'auto'|'en'|'ar'|'hi'|'ur', task:'transcribe'|'translate', onProgress, signal, offset,
+   * opts: { model, lang:'auto'|'en'|'ar'|'hi'|'ur'|'hinglish', task:'transcribe'|'translate', onProgress, signal, offset,
    *         prompt (vocabulary sentence for Whisper's initial prompt; {en,ar} or a string), analyse (default true),
    *         debugDrop:[[t0,t1]] (test hook: pretend the first pass skipped those stretches, as Whisper does) }
    *
@@ -87,16 +110,37 @@ export class Transcriber {
       const an = opts.analyse === false ? null : (await this._call({ type: 'analyse', audio: audio.slice() })).analysis;
       if (signal?.aborted) throw abortError();
       const plan = planWindows(dur, an);
+      // 'hinglish' = Hindi decoding (English words come out as English or as Devanagari loanwords, never translated)
+      let hinglish = lang === 'hinglish', detect = null;
+      if (hinglish) lang = 'hi';
       if (!lang) {
-        const w = loudestWindow(audio, plan.map((p) => p.s));
-        lang = (await this._call({ type: 'detect', audio: audio.slice(w * SR, (w + WIN) * SR) })).lang;
+        detect = await this.detectLanguage(audio, plan);
+        lang = detect.lang; hinglish = detect.hinglish;
       }
-      const promptText = typeof opts.prompt === 'string' ? opts.prompt : opts.prompt ? (opts.prompt[lang] || opts.prompt.en || '') : '';
-      const run = async (s, e) => {
+      // Hindi / Urdu: a short prompt in the script asked for anchors the output script (measured: with no prompt
+      // whisper-base wrote Hindi speech in Urdu letters or broken Latin). The company's English terms are not used
+      // here: an English prompt pulls Hindi towards Latin spelling.
+      const promptOf = (l) => (typeof opts.prompt === 'string' ? opts.prompt : (opts.prompt?.[l] || SCRIPT_PROMPT[l] || opts.prompt?.en || ''));
+      const promptText = promptOf(lang);
+      const hindustani = lang === 'hi' || lang === 'ur';
+      // Hindustani speech with English in it: a stretch Whisper hears as English is decoded as English. Measured
+      // (whisper-small, 'hi' everywhere): "how to apply for a work visa" between two Hindi sentences came back as
+      // NOTHING — the words were dropped, not even transliterated.
+      const englishAt = async (s, e) => {
+        const d = await this._call({ type: 'detect', audio: audio.slice(Math.floor(s * SR), Math.floor(e * SR)) });
+        const p = d.probs || {};
+        stats.langChecks = (stats.langChecks || 0) + 1;
+        return (p.en || 0) > (p.hi || 0) + (p.ur || 0);
+      };
+      const run = async (s, e, l = lang) => {
         const chunk = audio.slice(Math.floor(s * SR), Math.floor(e * SR));
-        const r = await this._call({ type: 'run', audio: chunk, offset: s, language: lang, task, prompt: promptText || null }, [chunk.buffer]);
+        const pt = l === lang ? promptText : promptOf(l);
+        const r = await this._call({ type: 'run', audio: chunk, offset: s, language: l, task, prompt: pt || null }, [chunk.buffer]);
         if (r.prompted) stats.prompted++;
-        return r.words;
+        if (l !== lang) { stats.english = (stats.english || 0) + 1; r.words.forEach((w) => { w.lang = l; }); }
+        // not words: a bare danda / full stop left where the script prompt ended, and a syllable loop (whisper-base on
+        // Hindi, measured: one "word" of वाँ repeated 200 times)
+        return r.words.filter((w) => !/^[।॥۔.]+$/.test(w.w) && !/([\u0900-\u097F\u0600-\u06FF]{1,4})\1{3,}/u.test(w.w));
       };
       let words = [];
       for (let k = 0; k < plan.length; k++) {
@@ -107,11 +151,39 @@ export class Transcriber {
         if (an ? !loudIn(an, s, e) : rms(audio.subarray(Math.floor(s * SR), Math.floor(e * SR))) < 0.003) { stats.skipped++; continue; }
         stats.windows++;
         if (plan[k].cut) stats.cuts++;
-        const ws = await run(s, e);
+        const ws = await run(s, e, hinglish && await englishAt(s, e) ? 'en' : lang);
         words.push(...ws.filter((w) => { const mid = (w.t0 + w.t1) / 2; return mid >= lo && mid < hi; }));
       }
       if (opts.debugDrop) words = words.filter((w) => !opts.debugDrop.some(([a, b]) => (w.t0 + w.t1) / 2 > a && (w.t0 + w.t1) / 2 < b));
       words.sort((a, b) => a.t0 - b.t0);
+      // Hindi / Urdu with English in it, per stretch of speech between pauses. Measured (whisper-small, 'hi'):
+      // "how to apply for a work visa" between two Hindi sentences came back as NOTHING, and the Hindi words around it
+      // were stretched over it, so no hole was left for the second listen. A stretch with too few words for its length
+      // (or every stretch, for Hinglish) is checked; one Whisper hears as English is decoded again as English.
+      const enSpans = [];   // stretches decoded as English: a hole inside one is read again as English
+      if (hindustani && an?.pauses) {
+        const mid = (w) => (w.t0 + w.t1) / 2;
+        for (const [a, b] of speechStretches(dur, an.pauses)) {
+          if (signal?.aborted) throw abortError();
+          if ((stats.langChecks || 0) >= 40) break;
+          const inside = words.filter((w) => mid(w) >= a && mid(w) < b);
+          // checked: every stretch for Hinglish; else one with too few words for its length, or a repeated phrase (a
+          // decoder loop — measured in the editor on AAC audio: "आज हुट आज हुट" written over two English sentences)
+          const txt = inside.map((w) => w.w.replace(/[^\p{L}\p{M}]/gu, ''));
+          const loop = txt.some((x, i) => i >= 2 && x && x === txt[i - 2] && txt[i - 1] === txt[i - 3]);
+          if (!hinglish && !loop && inside.length / (b - a) >= 1.5) continue;
+          const s0 = Math.max(0, a - 0.15), s1 = Math.min(dur, b + 0.15);
+          const english = await englishAt(s0, s1);
+          if (!english && !loop) continue;
+          // English: decoded as English. A Hindi stretch the decoder looped over: listened to again on its own.
+          const got = (await run(s0, s1, english ? 'en' : lang)).filter((w) => mid(w) >= a && mid(w) < b);
+          const gt = got.map((w) => w.w.replace(/[^\p{L}\p{M}]/gu, ''));
+          if (!got.length || (!english && gt.some((x, i) => i >= 3 && x && x === gt[i - 2] && gt[i - 1] === gt[i - 3]))) continue;
+          words = words.filter((w) => !(mid(w) >= a && mid(w) < b)).concat(got);
+          if (english) { hinglish = true; enSpans.push([a, b]); } else stats.reread++;
+        }
+        words.sort((a, b) => a.t0 - b.t0);
+      }
       // Second listen. Measured before this existed: whisper-small dropped 16 s of clear speech in one 29 s window.
       // A long hole is listened to again in pieces of ≤ 8 s split at pauses (asked to read 11 s again, small skips part
       // of it a second time), and the holes are looked for again after each pass (at most 3 passes, 40 re-reads).
@@ -141,7 +213,8 @@ export class Transcriber {
           // at least 3 s of audio around a short hole: Whisper is unreliable on a one-second clip
           const pad = Math.max(0.3, (3 - (b - a)) / 2);
           const s0 = Math.max(0, a - pad), s1 = Math.min(dur, b + pad, s0 + WIN);
-          const got = (await run(s0, s1)).filter((w) => { const mid = (w.t0 + w.t1) / 2; return mid > a && mid < b; });
+          const inEnglish = enSpans.some(([x, y]) => a >= x - 0.3 && b <= y + 0.3);
+          const got = (await run(s0, s1, inEnglish || (hindustani && await englishAt(s0, s1)) ? 'en' : lang)).filter((w) => { const mid = (w.t0 + w.t1) / 2; return mid > a && mid < b; });
           // never put back a word the first pass already has at the same moment
           const fresh = got.filter((w) => !words.some((x) => Math.abs(x.t0 - w.t0) < 0.25 && x.w.toLowerCase() === w.w.toLowerCase()));
           words.push(...fresh);
@@ -154,12 +227,21 @@ export class Transcriber {
       words = clean(words, dur).map((w) => ({ ...w, t0: +(w.t0 + offset).toFixed(3), t1: +(w.t1 + offset).toFixed(3) }));
       const ms = performance.now() - t0;
       onProgress({ phase: 'transcribe', done: plan.length, total: plan.length, t: dur, dur });
-      return { words, lang, ms, rtf: ms / 1000 / Math.max(0.01, dur), device: info.device, repaired: stats.reread, stats, analysis: an, prompt: promptText,
+      return { words, lang, hinglish, detect, ms, rtf: ms / 1000 / Math.max(0.01, dur), device: info.device, repaired: stats.reread, stats, analysis: an, prompt: promptText,
         model, dtype: info.dtype, loadMs: info.loadMs, threads: info.threads };
     } finally {
       signal?.removeEventListener('abort', onAbort);
       this.onProgress = null;
     }
+  }
+
+  /** Language of a soundtrack: Whisper's language ID on the ≤ 3 loudest decoding windows (pickLanguage). */
+  async detectLanguage(audio, plan) {
+    const starts = plan.map((p) => p.s).filter((s, i, a) => !i || s - a[i - 1] >= 5);
+    const loud = starts.map((s) => [s, rms(audio.subarray(Math.floor(s * SR), Math.floor((s + WIN) * SR)))]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const list = [];
+    for (const [s] of loud) list.push(await this._call({ type: 'detect', audio: audio.slice(Math.floor(s * SR), Math.floor((s + WIN) * SR)) }));
+    return pickLanguage(list);
   }
 
   /** Best-effort speaker turns (worker): words with spk 0/1 when two voices are told apart. */
@@ -196,11 +278,6 @@ function voiced(a) {
   return n ? on / n : 0;
 }
 
-function loudestWindow(audio, windows) {
-  let best = 0, bv = -1;
-  for (const s of windows.slice(0, 6)) { const v = rms(audio.subarray(s * SR, (s + WIN) * SR)); if (v > bv) { bv = v; best = s; } }
-  return best;
-}
 
 /**
  * Tidy the stitched words: monotonic times, a minimum length, no stuttered repeats across a window
@@ -267,6 +344,17 @@ export function planWindows(dur, an) {
 }
 
 /** Cut a hole longer than 8 s into pieces of ≤ 8 s, at the pause nearest each 6 s step. */
+/** Stretches of speech between pauses (≥ 0.25 s), each ≥ 0.8 s; very long ones cut at ≤ 6 s (a language check on a long mixed stretch hears only its majority). */
+export function speechStretches(dur, pauses) {
+  const out = [];
+  let s = 0;
+  for (const [p0, p1] of [...pauses.filter((p) => p[1] - p[0] >= 0.25), [dur, dur]]) {
+    for (let a = s; p0 - a >= 0.8; a += 6) out.push([+a.toFixed(2), +Math.min(p0, a + 6).toFixed(2)]);
+    s = Math.max(s, p1);
+  }
+  return out;
+}
+
 export function splitHole([a, b], pauses) {
   const out = [];
   let s = a;

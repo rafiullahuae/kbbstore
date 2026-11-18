@@ -76,7 +76,9 @@ export async function alignWords(words, audio, opts = {}) {
   if (opts.aligner && speech.length) {
     const al = await opts.aligner.load();
     model = al.spec.id;
-    const sw = speech.map((i) => ({ ...list[i], ids: al.tok(words[i].w) }));
+    // a word shown in another script (Roman Hindi) is aligned on its native letters (w.orig): the model reads
+    // Devanagari / Urdu sounds, not the casual Roman spelling
+    const sw = speech.map((i) => ({ ...list[i], ids: al.tok(words[i].orig ?? words[i].w) }));
     const cols = [...new Set([al.ids.blank, ...(al.ids.delim != null ? [al.ids.delim] : []), ...sw.flatMap((w) => w.ids)])];
     if (opts.signal?.aborted) throw new DOMException('aborted', 'AbortError');
     al.onProgress = (p) => { if (p.phase === 'align') opts.onProgress?.(p.done / p.total); };

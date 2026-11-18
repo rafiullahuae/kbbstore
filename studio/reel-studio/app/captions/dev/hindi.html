@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hindi captions harness</title>
+<link rel="stylesheet" href="../captions.css">
+<style>
+  html, body { margin: 0; background: #15151b; color: #eee; font: 14px/1.4 system-ui, sans-serif; }
+  #stage { display: flex; gap: 16px; padding: 16px; }
+  #preview { width: 405px; height: 720px; border-radius: 10px; background: #000; align-self: flex-start; }
+  #preview2 { width: 405px; height: 720px; border-radius: 10px; background: #000; align-self: flex-start; }
+  #panel { width: 460px; height: 860px; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="preview" width="1080" height="1920"></canvas><canvas id="preview2" width="1080" height="1920" hidden></canvas><div id="panel"></div></div>
+<script type="module" src="./hindi.js"></script>
+</body>
+</html>
