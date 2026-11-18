@@ -8,6 +8,7 @@ import { speedBadge, clipMenu, retimeCommand, fmtSpeed } from './speed.js';
 import { h, clear, toast, fmtDur } from './ui.js';
 import { fits } from './items.js';
 import { listTimelineStrips } from '../core/modules.js';
+import * as TD from './tl-drag.js';   // drag & drop, blade, ranges, ripple trim (tl-drag.js / edit-ops.js)
 
 const HEAD_W = 176;
 const ROW_H = { video: 66, overlay: 50, text: 42, caption: 42, music: 50, sfx: 42 };
@@ -22,7 +23,8 @@ export class Timeline {
     this.fitted = false;
     this.snapBtn = h('button.chip.on', { title: 'Snapping', on: { click: () => { this.snapOn = !this.snapOn; this.snapBtn.classList.toggle('on', this.snapOn); } } }, '🧲 Snap');
     const tools = h('div.tl-tools',
-      h('button.tool', { title: 'Split at playhead (S)', on: { click: () => ed.split() } }, '✂ Split'),
+      h('button.tool', { title: 'Split at playhead (S or ⌘B)', on: { click: () => ed.split() } }, '✂ Split'),
+      ...TD.extraTools(this),
       h('button.tool', { title: 'Delete (Delete) — Shift+Delete closes the gap', on: { click: (e) => ed.deleteSelection(e.shiftKey) } }, '🗑 Delete'),
       h('button.tool', { title: 'Duplicate (⌘D)', on: { click: () => ed.duplicate() } }, '⧉ Duplicate'),
       h('button.tool', { title: 'Add marker (M)', on: { click: () => ed.addMarker() } }, '⚑ Marker'),
@@ -42,8 +44,9 @@ export class Timeline {
     this.scroll.addEventListener('wheel', (e) => {
       if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.zoom(e.deltaY < 0 ? 1.15 : 0.87, e.clientX); }
     }, { passive: false });
-    this.scroll.addEventListener('dragover', (e) => { if ([...e.dataTransfer.types].some((t) => t.startsWith('application/x-kbb') || t === 'Files')) e.preventDefault(); });
-    this.scroll.addEventListener('drop', (e) => this.onDrop(e));
+    this.scroll.addEventListener('dragover', (e) => TD.onDragOver(this, e));
+    this.scroll.addEventListener('dragleave', (e) => TD.onDragLeave(this, e));
+    this.scroll.addEventListener('drop', (e) => { if (!TD.onDrop(this, e)) this.onDrop(e); });
     this.autoFit = true;   // keep fitting the whole reel until the owner zooms by hand
     this.ro = new ResizeObserver(() => { if (this.autoFit && this.scroll.clientWidth > 0) this.fit(true); });
     this.ro.observe(this.scroll);
@@ -142,6 +145,8 @@ export class Timeline {
     }
     this.playhead = h('div.tl-playhead', h('div.ph-knob'));
     this.content.appendChild(this.playhead);
+    TD.drawRange(this);
+    this.dropEl = null;
     this.renderPlayhead();
     this.renderSelection();
   }
@@ -218,17 +223,9 @@ export class Timeline {
     for (const r of this.rows) { const b = r.row.getBoundingClientRect(); if (clientY >= b.top && clientY < b.bottom) return r; }
     return null;
   }
-  snapPoints(exclude) {
-    const ed = this.ed, pts = [0, ed.t, ...ed.project.markers.map((m) => m.t)];
-    for (const tr of ed.project.tracks) for (const it of tr.items) if (!exclude.has(it.id)) pts.push(it.t0, itemEnd(it));
-    return pts;
-  }
-  snapT(vals, pts) {
-    if (!this.snapOn) return 0;
-    const thr = SNAP_PX / this.pps; let best = null;
-    for (const v of vals) for (const p of pts) { const d = p - v; if (Math.abs(d) <= thr && (best === null || Math.abs(d) < Math.abs(best))) best = d; }
-    return best || 0;
-  }
+  /** playhead, item edges, markers, caption line edges, beats (tl-drag.js) */
+  snapPoints(exclude) { return TD.snapPoints(this.ed, exclude); }
+  snapT(vals, pts) { return !this.snapOn || this.freeSnap ? 0 : TD.snapDelta(vals, pts, this.pps); }
   track(e, move, up) {
     const id = e.pointerId;
     const mv = (ev) => { if (ev.pointerId === id) move(ev); };
@@ -249,55 +246,33 @@ export class Timeline {
     if (tgt.closest('.tl-head') || tgt.closest('.tl-corner')) return;
     const mk = tgt.closest('.marker');
     if (mk) { const m = ed.project.markers.find((x) => x.id === mk.dataset.marker); if (m) ed.seek(m.t); return; }
+    if (e.shiftKey && tgt.closest('.tl-ruler')) { e.preventDefault(); TD.dragRange(this, e); return; }   // Shift-drag on the ruler: a range
     if (tgt.closest('.tl-ruler') || tgt.closest('.tl-strip') || tgt.closest('.tl-playhead')) { e.preventDefault(); ed.pause(); ed.seek(this.timeAt(e.clientX)); this.track(e, (ev) => ed.seek(this.timeAt(ev.clientX))); return; }
     const itEl = tgt.closest('.tl-item');
     if (itEl) {
       e.preventDefault();
       const id = itEl.dataset.id;
+      if (this.blade) { TD.bladeAt(this, e, id); return; }
       if ((e.shiftKey && !tgt.dataset.trim) || e.metaKey || e.ctrlKey) { ed.select([id], 'toggle'); return; }
       if (!ed.sel.has(id)) ed.select([id]);
       const trim = tgt.dataset.trim;
-      return trim ? (e.shiftKey ? this.dragStretch(e, id, trim) : this.dragTrim(e, id, trim)) : this.dragMove(e, id);
+      return trim ? (e.shiftKey ? this.dragStretch(e, id, trim) : this.dragTrim(e, id, trim)) : TD.dragMove(this, e, id);
     }
     if (tgt.closest('.tl-lane') || tgt === this.content || tgt === this.scroll) { e.preventDefault(); this.dragMarquee(e); }
   }
 
-  dragMove(e, id) {
-    const ed = this.ed, p = ed.project;
-    const hits = ed.selectedItems().filter((x) => !x.track.locked);
-    if (!hits.length) return;
-    const lead = hits.find((x) => x.item.id === id) || hits[0];
-    const start = hits.map(({ item, track }) => ({ id: item.id, t0: item.t0, trackId: track.id, type: item.type }));
-    const ex = new Set(start.map((s) => s.id));
-    const pts = this.snapPoints(ex);
-    const x0 = e.clientX, sameTrack = start.every((s) => s.trackId === start[0].trackId);
-    const dur = itemDur(lead.item);
-    let moved = false;
-    this.track(e, (ev) => {
-      if (!moved && Math.abs(ev.clientX - x0) < 3 && !this.rowChanged(ev, lead.track)) return;
-      moved = true;
-      let dt = (ev.clientX - x0) / this.pps;
-      dt = Math.max(dt, -Math.min(...start.map((s) => s.t0)));
-      const leadT = lead.item.t0 === undefined ? 0 : start.find((s) => s.id === lead.item.id).t0 + dt;
-      const sd = this.snapT([leadT, leadT + dur], pts);
-      dt += sd; this.showSnapLine(sd ? (Math.abs(this.snapT([leadT], pts)) === Math.abs(sd) ? leadT + sd : leadT + dur + sd) : null);
-      let target = null;
-      if (sameTrack) {
-        const r = this.rowAt(ev.clientY);
-        if (r && r.track.id !== start[0].trackId && !r.track.locked && start.every((s) => fits(s.type, r.track.kind))) target = r.track.id;
-      }
-      ed.apply(ops.moveItems(start.map((s) => ({ id: s.id, t0: Math.max(0, s.t0 + dt), trackId: target || s.trackId })), 'Move'));
-    });
-  }
-  rowChanged(ev, track) { const r = this.rowAt(ev.clientY); return r && r.track.id !== track.id; }
+  /** move: tl-drag.js (drop indicator, insert / overwrite, new tracks, one undo step on drop) */
+  dragMove(e, id) { return TD.dragMove(this, e, id); }
 
+  /** trim either edge; Alt = ripple trim (the items after it on the track ride the edge) */
   dragTrim(e, id, side) {
     const ed = this.ed, hit = ed.selectedItems().find((x) => x.item.id === id) || null;
     const it = hit?.item; if (!it || hit.track.locked) return;
     const m = it.media ? findMedia(ed.project, it.media) : null;
     const hasSrc = m && m.kind !== 'image';
-    const s0 = { t0: it.t0, in: it.in, out: it.out }, sp = it.speed || 1;
+    const s0 = { t0: it.t0, in: it.in, out: it.out, dur: itemDur(it), end: itemEnd(it) }, sp = it.speed || 1;
     const pts = this.snapPoints(new Set([id]));
+    const ripple = e.altKey, followers = ripple ? TD.trimFollowers(hit.track, it) : [];
     const x0 = e.clientX, MIN = 0.1;
     if (hasSrc && (it.curve || it.reverse || it.freeze)) {
       // a ramp, a reversed clip or a hold: trim through its time mapping, so the frames that stay keep their timing
@@ -307,28 +282,32 @@ export class Timeline {
         const edge = side === 'l' ? s0.t0 + dt : end0 + dt, sd = this.snapT([edge], pts); dt += sd; this.showSnapLine(sd ? edge + sd : null);
         const a = side === 'l' ? Math.max(0, Math.min(end0 - MIN, s0.t0 + dt)) : s0.t0, b = side === 'l' ? end0 : Math.max(s0.t0 + MIN, end0 + dt);
         const props = trimProps(it0, a, b, it.freeze ? Infinity : (m.dur || Infinity));
-        ed.apply(ops.setItems([{ id, props }], 'Trim'));
+        // Alt (ripple): what follows on the track rides the new end
+        const rip = ripple ? TD.rippleProps(followers, (props.t0 ?? a) + itemDur({ ...it0, ...props }) - end0) : [];
+        ed.apply(ops.setItems([{ id, props }, ...rip], ripple ? 'Ripple trim' : 'Trim'));
       });
       return;
     }
     this.track(e, (ev) => {
+      this.freeSnap = ev.metaKey || ev.ctrlKey;
       let dt = (ev.clientX - x0) / this.pps;
-      let props;
+      let props, dEnd;
       if (side === 'l') {
-        const sd = this.snapT([s0.t0 + dt], pts); dt += sd; this.showSnapLine(sd ? s0.t0 + dt : null);
-        dt = Math.max(dt, -s0.t0);
-        if (hasSrc) { dt = Math.max(dt, -s0.in / sp); dt = Math.min(dt, (s0.out - s0.in) / sp - MIN); props = { t0: s0.t0 + dt, in: s0.in + dt * sp }; }
-        else { dt = Math.min(dt, (s0.out - s0.in) / sp - MIN); props = { t0: s0.t0 + dt, out: s0.out - dt * sp }; }
+        if (!ripple) { const sd = this.snapT([s0.t0 + dt], pts); dt += sd; this.showSnapLine(sd ? s0.t0 + dt : null); }
+        if (!ripple) dt = Math.max(dt, -s0.t0);
+        dt = Math.min(dt, s0.dur - MIN);
+        if (hasSrc) { dt = Math.max(dt, -s0.in / sp); props = ripple ? { in: s0.in + dt * sp } : { t0: s0.t0 + dt, in: s0.in + dt * sp }; }
+        else props = ripple ? { out: s0.out - dt * sp } : { t0: s0.t0 + dt, out: s0.out - dt * sp };
+        dEnd = -dt;
       } else {
-        const end0 = s0.t0 + (s0.out - s0.in) / sp;
-        const sd = this.snapT([end0 + dt], pts); dt += sd; this.showSnapLine(sd ? end0 + dt : null);
+        const sd = this.snapT([s0.end + dt], pts); dt += sd; this.showSnapLine(sd ? s0.end + dt : null);
         let out = s0.out + dt * sp;
         out = Math.max(s0.in + MIN * sp, out);
         if (hasSrc) out = Math.min(out, m.dur || out);
-        props = { out };
+        props = { out }; dEnd = (out - s0.out) / sp;
       }
-      ed.apply(ops.setItems([{ id, props }], 'Trim'));
-    });
+      ed.apply(ops.setItems([{ id, props }, ...(ripple ? TD.rippleProps(followers, dEnd) : [])], ripple ? 'Ripple trim' : 'Trim'));
+    }, () => { this.freeSnap = false; });
   }
 
   /** Shift-drag on a clip's edge: retime it — the same footage stretched or squeezed to the new length (later clips ripple) */

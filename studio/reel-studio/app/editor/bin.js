@@ -47,7 +47,7 @@ export class Bin {
     const ed = this.ed;
     b.appendChild(h('button.drop-zone', { on: { click: () => this.fileIn.click() } }, h('b', '+ Add videos, photos, music'), h('small', 'or drop files anywhere')));
     const grid = h('div.media-grid');
-    const list = ed.project.media.filter((m) => !/^library\//.test(m.src) || m.kind !== 'audio');
+    const list = ed.project.media.filter((m) => (!/^library\//.test(m.src) || m.kind !== 'audio') && !m.of);   // m.of: a clip's unlinked sound
     if (!list.length) grid.appendChild(h('p.muted', 'Nothing here yet.'));
     for (const m of list) {
       const thumb = h('div.mthumb', m.kind === 'audio' ? h('span.big-ic', '🎵') : null);

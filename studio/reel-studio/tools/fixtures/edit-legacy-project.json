@@ -1,0 +1,47 @@
+{
+  "v": 1,
+  "id": "plegacyedit01",
+  "workspace": "kbb",
+  "name": "Legacy edit fixture (before edit-ops)",
+  "brand": null,
+  "recipe": null,
+  "created": "2026-09-01T10:00:00.000Z",
+  "modified": "2026-09-01T10:00:00.000Z",
+  "canvas": { "w": 1080, "h": 1920, "fps": 30, "bg": "#000000", "aspect": "9:16" },
+  "media": [
+    { "id": "mlegacy1", "kind": "video", "name": "portrait.mp4", "src": "library/edit-test/portrait.mp4", "dur": 20, "w": 1080, "h": 1920, "fps": 30, "hasAudio": true, "size": 1 }
+  ],
+  "tracks": [
+    { "id": "tvid", "kind": "video", "name": "Video", "locked": false, "muted": false, "hidden": false, "volume": 1, "items": [
+      { "id": "iclipA", "type": "clip", "media": "mlegacy1", "t0": 0, "in": 0, "out": 8, "speed": 1, "x": 0, "y": 0, "w": 1080, "h": 1920, "rot": 0, "opacity": 1, "fx": [], "kf": {}, "volume": 1, "muted": false, "fadeIn": 0, "fadeOut": 0, "name": "portrait.mp4" },
+      { "id": "iclipB", "type": "clip", "media": "mlegacy1", "t0": 8, "in": 10, "out": 16, "speed": 1, "x": 0, "y": 0, "w": 1080, "h": 1920, "rot": 0, "opacity": 1, "fx": [], "kf": {}, "volume": 1, "muted": false, "fadeIn": 0, "fadeOut": 0, "name": "portrait.mp4" }
+    ] },
+    { "id": "tover", "kind": "overlay", "name": "Overlay", "locked": false, "muted": false, "hidden": false, "volume": 1, "items": [
+      { "id": "itrans", "type": "look.transition", "t0": 7.75, "in": 0, "out": 0.5, "speed": 1, "x": 0, "y": 0, "w": 1080, "h": 1920, "rot": 0, "opacity": 1, "fx": [], "kf": {}, "volume": 1, "muted": false, "fadeIn": 0, "fadeOut": 0, "name": "Transition · Dissolve", "style": { "kind": "dissolve", "a": "iclipA", "b": "iclipB", "color": "#ffffff" } }
+    ] },
+    { "id": "ttext", "kind": "text", "name": "Text", "locked": false, "muted": false, "hidden": false, "volume": 1, "items": [
+      { "id": "itext", "type": "text", "t0": 9, "in": 0, "out": 2, "speed": 1, "x": 90, "y": 380, "w": 900, "h": 230, "rot": 0, "opacity": 1, "fx": [], "kf": {}, "volume": 1, "muted": false, "fadeIn": 0, "fadeOut": 0, "text": "Old title", "style": { "font": "system-ui", "size": 96, "weight": 800, "color": "#ffffff", "align": "center", "lineH": 1.15, "pad": 24 }, "name": "Title" }
+    ] },
+    { "id": "tcap", "kind": "caption", "name": "Captions", "locked": false, "muted": false, "hidden": false, "volume": 1, "items": [
+      { "id": "icap", "type": "caption", "t0": 0, "in": 0, "out": 14, "speed": 1, "x": 0, "y": 0, "w": 1080, "h": 1920, "rot": 0, "opacity": 1, "fx": [], "kf": {}, "volume": 1, "muted": false, "fadeIn": 0, "fadeOut": 0, "name": "Captions" }
+    ] },
+    { "id": "tmus", "kind": "music", "name": "Music", "locked": false, "muted": false, "hidden": false, "volume": 1, "items": [] },
+    { "id": "tsfx", "kind": "sfx", "name": "Sound FX", "locked": false, "muted": false, "hidden": false, "volume": 1, "items": [] }
+  ],
+  "captions": {
+    "style": "word-box", "lang": "en",
+    "words": [
+      { "w": "one", "t0": 0.5, "t1": 0.9, "conf": 1 }, { "w": "two", "t0": 1.0, "t1": 1.4, "conf": 1 }, { "w": "three", "t0": 1.5, "t1": 1.9, "conf": 1 },
+      { "w": "four", "t0": 2.0, "t1": 2.4, "conf": 1 }, { "w": "five", "t0": 2.5, "t1": 2.9, "conf": 1 }, { "w": "six", "t0": 3.0, "t1": 3.4, "conf": 1 },
+      { "w": "seven", "t0": 8.5, "t1": 8.9, "conf": 1 }, { "w": "eight", "t0": 9.0, "t1": 9.4, "conf": 1 }, { "w": "nine", "t0": 9.5, "t1": 9.9, "conf": 1 },
+      { "w": "ten", "t0": 10.0, "t1": 10.4, "conf": 1 }
+    ],
+    "lines": [
+      { "id": "cl1", "t0": 0.5, "t1": 1.9, "wordIdx": [0, 2] },
+      { "id": "cl2", "t0": 2.0, "t1": 3.55, "wordIdx": [3, 5] },
+      { "id": "cl3", "t0": 8.5, "t1": 10.55, "wordIdx": [6, 9], "ov": { "pos": { "x": 0.5, "y": 0.3 } } }
+    ]
+  },
+  "markers": [ { "id": "kmark1", "t": 12, "label": "Marker", "color": "#ffd166" } ],
+  "meta": {}
+}

@@ -28,13 +28,18 @@ export const syncMeta = (p) => Object.assign({ auto: true, nudgeMs: 0, leadMs: 0
 // ── captions follow the media ──
 registerHistoryHook({
   id: 'sync.captions',
-  before: (p) => ({ cap: p.captions, words: p.captions?.words, n: p.captions?.words?.length || 0, sig: layoutSig(p) }),
+  // words that carry no anchor yet (captions made before anchoring existed, an old project) are anchored against the
+  // layout BEFORE the edit, so they follow it like every other word
+  before: (p) => {
+    const cap = p.captions, bare = cap?.words?.some((w) => !w.src) || cap?.alt?.words?.some((w) => !w.src);
+    return { cap, words: cap?.words, n: cap?.words?.length || 0, sig: layoutSig(p), pre: bare && p.meta?.sync?.follow !== false ? anchorCaptions(cap, speechClips(p)) : null };
+  },
   after(p, st) {
     const cap = p.captions;
     if (!cap || (!cap.words?.length && !cap.offcut?.length) || p.meta?.sync?.follow === false) return null;
     const clips = speechClips(p);
     const capChanged = cap !== st.cap || cap.words !== st.words || (cap.words?.length || 0) !== st.n;
-    const next = capChanged ? anchorCaptions(cap, clips) : layoutSig(p) !== st.sig ? followCaptions(cap, clips, p.canvas) : null;
+    const next = capChanged ? anchorCaptions(cap, clips) : layoutSig(p) !== st.sig ? followCaptions(st.pre || cap, clips, p.canvas) : null;
     return next ? captionsSwap('Captions follow the clips', cap, next) : null;
   },
 });

@@ -16,7 +16,8 @@ import { Bin } from './bin.js';
 import { exportDialog } from './exportdlg.js';
 import { clipFromMedia, trackEnd, reflowTo } from './items.js';
 import { prepareRender } from '../core/render.js';
-import { splitProps } from '../core/retime.js';
+import { splitCmd } from './edit-ops.js';   // splits through core/retime.js splitProps (ramps, reverse, freeze)
+import { timelineKey } from './tl-drag.js';
 
 /** a right-column tab label "🎨 Look" as an icon over a word (editor.css .side-tab); textContent stays "🎨 Look" */
 function sideLabel(text) {
@@ -297,24 +298,14 @@ export class Editor {
     this.select([]);
   }
 
-  /** split the selected items (or everything under the playhead) at the playhead */
+  /** split the selected items under the playhead (or everything under it) at the playhead's frame (edit-ops.js) */
   split() {
-    const t = this.t, p = this.project;
-    let targets = this.selectedItems();
-    if (!targets.length) targets = p.tracks.filter((tr) => !tr.locked).flatMap((track) => track.items.filter((it) => t > it.t0 + 0.02 && t < itemEnd(it) - 0.02).map((item) => ({ track, item })));
-    targets = targets.filter(({ track, item }) => !track.locked && t > item.t0 + 0.02 && t < itemEnd(item) - 0.02);
-    if (!targets.length) { toast('Move the playhead over a clip to split it'); return; }
-    const cmds = [], newIds = [];
-    for (const { track, item } of targets) {
-      // through the speed ramp / reverse / freeze, so both halves play exactly what the whole clip played
-      const { left, right: rp } = splitProps(item, t);
-      const right = Object.assign(clone(item), rp); right.id = uid('i'); right.fadeIn = 0; right.kf = {};
-      cmds.push(ops.setItem(item.id, Object.assign(left, { fadeOut: 0 }), 'Split'));
-      cmds.push(ops.addItems([{ trackId: track.id, item: right, index: track.items.indexOf(item) + 1 }]));
-      newIds.push(right.id);
-    }
-    this.apply(ops.batch('Split', cmds));
-    this.select(newIds);
+    const sel = this.selectedItems(), t = this.t;
+    const under = sel.filter(({ item }) => t > item.t0 && t < itemEnd(item));
+    const r = splitCmd(this.project, under.length ? under : null, t);
+    if (!r) { toast('Move the playhead over a clip to split it'); return; }
+    this.apply(r.cmd);
+    this.select(r.ids);
   }
 
   copy(quiet = false) {
@@ -384,6 +375,7 @@ export class Editor {
     const mod = e.metaKey || e.ctrlKey, k = e.key;
     const done = () => { e.preventDefault(); e.stopPropagation(); };
     if (canvasKey(e, this.context())) { done(); return; }     // a module's canvas selection (e.g. arrows nudge a caption line)
+    if (timelineKey(this, e)) { done(); return; }             // blade, ranges, join, ⌘B, frame nudge, magnetic delete (tl-drag.js)
     if (mod && k.toLowerCase() === 'z') { done(); e.shiftKey ? this.history.redo() : this.history.undo(); return; }
     if (mod && k.toLowerCase() === 'y') { done(); this.history.redo(); return; }
     if (mod && k.toLowerCase() === 'c') { done(); this.copy(); return; }
@@ -422,7 +414,10 @@ export class Editor {
   shortcuts() {
     const rows = [
       ['Space', 'Play / pause'], ['J / K / L', 'Back 1 s / stop / play (press L again: faster)'], ['← →', 'One frame (Shift: 10 frames)'],
-      ['Home / End', 'Start / end'], ['S', 'Split at playhead'], ['Delete', 'Delete selected'], ['Shift + Delete', 'Ripple delete (close the gap)'],
+      ['Home / End', 'Start / end'], ['S / ⌘B', 'Split at playhead'], ['B', 'Blade: click a clip to cut it there (Shift-click: every track)'],
+      ['Delete', 'Delete selected (on the main video track the gap closes)'], ['Alt + Delete', 'Delete and keep the gap (lift)'], ['Shift + Delete', 'Ripple delete (close the gap)'],
+      ['I / O, Shift-drag the ruler', 'Mark a range · Delete removes it (the gap closes) · Alt + Delete lifts it'], ['⌘J', 'Rejoin pieces of the same clip'],
+      [', / .', 'Move selected one frame earlier / later (Shift: 10 frames)'], ['Alt + drag', 'Overwrite instead of insert (main track); Alt + trim edge: ripple trim'], ['⌘ while dragging', 'No snapping'],
       ['⌘Z / ⇧⌘Z', 'Undo / redo'], ['⌘C / ⌘X / ⌘V', 'Copy / cut / paste at playhead'], ['⌘D', 'Duplicate'], ['⌘A', 'Select all'],
       ['⌘G / ⇧⌘G', 'Group / ungroup'], ['↑ ↓ (Alt + ← →)', 'Nudge selected 1 px (Shift: 10 px)'], ['M', 'Add marker'],
       ['+ / − / \\', 'Timeline zoom in / out / fit'], ['⌘S', 'Save now'], ['⌘E', 'Export'], ['Esc', 'Clear selection'],
