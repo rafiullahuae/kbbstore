@@ -87,13 +87,13 @@ export function mountCaptionPanel(el, ctx) {
     newRow.firstChild.textContent = fresh.length ? `No captions yet: ${fresh.map((c) => c.name).join(', ')}` : '';
   }
 
-  async function runAuto(clips) {
+  async function runAuto(clips, scope) {
     if (running) return;
     running = new AbortController();
     progress.hidden = false; goBtn.disabled = true; newBtn.disabled = true;
     const set = (label, f) => { barLabel.textContent = label || ''; bar.firstChild.style.width = f == null ? '0' : Math.round(f * 100) + '%'; };
     try {
-      await autoCaptions(ctx, { model: modelSel.value, lang: langSel.value, signal: running.signal, onProgress: set, ...(clips ? { clips } : { scope: scopeSel.value }) });
+      await autoCaptions(ctx, { model: modelSel.value, lang: langSel.value, signal: running.signal, onProgress: set, ...(clips ? { clips } : { scope: scope || scopeSel.value }) });
     } catch (e) {
       if (e.name !== 'AbortError') ctx.toast?.('Captions failed: ' + e.message, 'error');
     } finally { running = null; progress.hidden = true; goBtn.disabled = false; newBtn.disabled = false; }
@@ -436,7 +436,7 @@ export function mountCaptionPanel(el, ctx) {
     vocabBox);
   const trBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'open-translate', title: 'Translate the captions (Urdu, Arabic, English, Hindi …)', onclick: () => show('translate') }, '🌐 Translate');
   // what Whisper heard + the Hindi / Urdu script switch (hinglish/notice.js)
-  const notice = mountLangNotice({ cap, apply, canvas: () => P().canvas, relisten: (l) => { langSel.value = l; saveMeta(); runAuto(); } });
+  const notice = mountLangNotice({ cap, apply, canvas: () => P().canvas, relisten: (l) => { langSel.value = l; saveMeta(); runAuto(null, 'all'); } });
   el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, scopeSel, trBtn, settings), newRow, progress, notice.el),
     tabs, transcriptPane, scriptPane, stylePane, translatePane);
 

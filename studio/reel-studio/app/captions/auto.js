@@ -177,6 +177,8 @@ export async function autoCaptions(ctx, opts = {}) {
     cap.music = [...(p.captions.music || []).filter((m) => !inRanges(ranges, { t0: m[0], t1: m[1] })), ...music].sort((x, y) => x[0] - y[0]);
     cap.dropped = [...(p.captions.dropped || []).filter((w) => !inRanges(ranges, w)), ...r.dropped];
     cap.heard = heard;
+    // every earlier word was re-heard: the language is the new one (else the clips kept keep theirs)
+    if (!p.captions.words.some((w) => !inRanges(ranges, w))) cap.lang = r.lang;
   } else {
     cap = { style, lang: r.lang, words, lines: buildLines(words, style, p.canvas),
       soundTags: p.captions?.soundTags || DEFAULT_TAG_MODE, music, dropped: r.dropped, speakers: r.speakers, heard };
