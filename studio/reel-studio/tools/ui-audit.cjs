@@ -186,6 +186,8 @@ function measure() {
     if (!direct && !isField) continue;
     if (e.closest('[disabled], .soon, [aria-disabled=true]') || e.matches(':disabled')) continue;
     if (hiddenUp(e)) continue;
+    // the hover-help card (#kbh-card) fades in over ~120 ms; one caught mid-fade is not a contrast fault of the card
+    if (e.closest('#kbh-card') && +cs(e.closest('#kbh-card')).opacity < 1) continue;
     const { v } = visRect(e); if (v.w <= 0 || v.h <= 0) continue;
     const s = cs(e);
     let fg = parse(s.color); if (!fg) continue;
