@@ -14,6 +14,7 @@ import { flagImage, mapPaths, pulseAt, logoImage } from './draw.js';
 import * as A from './art.js';
 import { kitFor } from './kit.js';
 import { themeById } from './themes.js';
+import { drawCapsules, defaultCaps, capsHeight } from './capsules.js';
 import { FAM_PIECES, FAM_PAL, FAMILY_ICONS, FAMILY_LABELS, TRADE_IDS, TRADES, drawFam } from './fam.js';
 
 const { clamp, easeOut, easeIO, easeIn, back, elastic, TAU, rnd, fr, mix, rgba, onColor } = A;
@@ -39,6 +40,7 @@ export const ELEMENTS = [
   { id: 'confetti', label: 'Confetti burst', icon: '🎉', dur: 2.2, box: 'full', whole: 'span', cycle: 3.2, note: 'Confetti and sparkles' },
   { id: 'end', label: 'End card', icon: '🏁', dur: 2.6, box: 'full', whole: 'end', note: 'Call to action + contact placeholders' },
   { id: 'grade', label: 'Colour grade', icon: '🎨', dur: 4, box: 'full', whole: 'span', note: 'The theme’s tint over the picture' },
+  { id: 'capsules', label: 'Capsules carousel', icon: '💊', dur: 6, box: 'capsules', whole: 'span', note: 'Job and country pills scrolling for ever (edit in the inspector)' },
   { id: 'sticker', label: 'Sticker', icon: '⭐', dur: 3, box: 'sticker', whole: 'span', variants: ['flag', 'visa', 'plane', 'pin', 'coin', 'landmark', 'sparkle'], note: 'Animated sticker set', hidden: true },
   // the design families (2026-11): careers, travel, occupations, bright future -- big compositions, nothing bulletin
   ...famElements(),
@@ -75,6 +77,7 @@ export function boxFor(el, W, H) {
     case 'lowerbar': { const w = cw(0.94, 1.25), h = w * 0.17; return at(w, h, (W - w) / 2, land ? H * 0.7 : H * 0.62); }
     case 'board': { const w = cw(0.9, 1.1), h = w * 0.82; return at(w, h, (W - w) / 2, top); }
     case 'sticker': { const s = u * 0.26; return at(s, s, W - s - u * 0.06, top + u * 0.05); }
+    case 'capsules': { const h = Math.min(H * 0.4, capsHeight(defaultCaps())); return at(W, h, 0, land ? H * 0.7 : H * 0.72); }
     case 'famcard': { const w = land ? Math.min(W * 0.62, H * 0.84 * 1.45) : W * 0.9, h = land ? H * 0.84 : Math.min(H * 0.58, w * 1.3); return at(w, h, (W - w) / 2, land ? H * 0.08 : H * 0.12); }
     default: return at(W, H, 0, 0);
   }
@@ -594,6 +597,9 @@ for (const def of ELEMENTS.filter((e) => e.fam)) {
   };
 }
 
+// ── CAPSULES CAROUSEL (./capsules.js): the item's own model, its time and the music's beats ──
+D.capsules = (c, K, S) => drawCapsules(c, S.style.caps || defaultCaps(), { w: S.w, h: S.h, t: S.tl, tg: S.t, beats: S.beats });
+
 export const ELEMENT_DRAW = D;
 
 // ── one renderer for theme.el, theme.sting, theme.outro ──
@@ -603,7 +609,7 @@ export function drawElement(ctx, el, item, project, env, styleOverride, inLayer 
   const T = timing(def, local, dur), W = project.canvas.w, H = project.canvas.h;
   const fn = D[el]; if (!fn) return;
   const beats = s.beats || project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.beats || [];
-  const S = { tl: T.tl, d: T.d, k: T.k, inn: T.inn, out: T.out, w: env.box.w, h: env.box.h, U: Math.min(W, H), t: item.t0 + local, pulse: s.beat === false ? 0 : pulseAt(beats, item.t0 + local), txt: s.text || {}, style: s, brand: s.brand, face: (project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.faces || [])[0] || null, covered: el === 'grade' && !inLayer && (coveredAt(project, item.t0 + local) || overlayAt(project, item.t0 + local)) };
+  const S = { tl: T.tl, d: T.d, k: T.k, inn: T.inn, out: T.out, w: env.box.w, h: env.box.h, U: Math.min(W, H), t: item.t0 + local, pulse: s.beat === false ? 0 : pulseAt(beats, item.t0 + local), txt: s.text || {}, style: s, brand: s.brand, face: (project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.faces || [])[0] || null, beats, covered: el === 'grade' && !inLayer && (coveredAt(project, item.t0 + local) || overlayAt(project, item.t0 + local)) };
   ctx.save();
   try { fn(ctx, K, S); } finally { ctx.restore(); }
 }
@@ -614,7 +620,7 @@ registerLayer('theme.outro', (ctx, item, t, project, env) => drawElement(ctx, 'e
 
 /** a theme.el item for el at t0 (canvas px box); text placeholders start empty so the kit's words show */
 export function elementStyle(themeId, el, { colors, variant, whole, text, brand, logo } = {}) {
-  return { theme: themeId, el, colors: colors || null, variant: variant || (el === 'sticker' ? 'flag' : elementById(el)?.variants && elementById(el)?.fam ? FAM_DEFAULT_ROLE[el] || 'nurse' : undefined), whole: whole || false, text: text || {}, brand: brand || null, logo: logo || null };
+  return { theme: themeId, el, colors: colors || null, variant: variant || (el === 'sticker' ? 'flag' : elementById(el)?.variants && elementById(el)?.fam ? FAM_DEFAULT_ROLE[el] || 'nurse' : undefined), whole: whole || false, text: text || {}, brand: brand || null, logo: logo || null, ...(el === 'capsules' ? { caps: defaultCaps() } : {}) };
 }
 
 /**

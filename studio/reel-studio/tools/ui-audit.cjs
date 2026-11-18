@@ -330,6 +330,18 @@ function measure() {
         await page.click(`.rs-cap-tabs button[data-tab="${t}"]`); await page.waitForTimeout(500); await audit('captions:' + t);
       }
     });
+    // the capsules carousel's inspector (themes/capsules-panel.js) and its two pickers; the carousel is taken out again
+    await tryStep('inspector-capsules', async () => {
+      await page.evaluate(async () => { const TH = await import('/app/themes/index.js'); const it = TH.placeElement(kbbEditor.context(), 'capsules', { t0: 0 }); kbbEditor.select([it.id]); kbbEditor.showSide('inspector'); window.__capsUndo = kbbEditor.history.undoStack.length; });
+      await page.waitForSelector('[data-caps-insp] .cps-preset'); await page.waitForTimeout(600);
+      await audit('inspector-capsules');
+      await page.click(`.cps-item .cps-grip`); await page.waitForSelector('[data-caps-sel-box]'); await page.waitForTimeout(200);
+      await audit('inspector-capsules-selected');
+      await page.click('[data-caps-add-countries]'); await page.waitForSelector('.cps-countries label[data-caps-country]'); await page.waitForTimeout(800); await audit('capsules-country-picker'); await closeModal();
+      await page.click('[data-caps-add-jobs]'); await page.waitForSelector('.cps-jobs label'); await page.waitForTimeout(400); await audit('capsules-jobs-picker'); await closeModal();
+      await page.click('[data-caps-add-custom="jobs"]'); await page.waitForSelector('.cps-icons button'); await audit('capsules-custom'); await closeModal();
+      await page.evaluate(() => { kbbEditor.history.undo(); });
+    });
     await page.click('.side-tab[data-side="captions"]');
     await page.click('.rs-cap-tabs button[data-tab="transcript"]').catch(() => {});
     await tryStep('export', async () => { await page.click('.export-btn'); await page.waitForSelector('#x-go'); await page.waitForTimeout(400); await audit('export', wsId === 'kbb' ? 'export' : null); await closeModal(); });

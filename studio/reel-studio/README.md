@@ -158,6 +158,25 @@ Good to know: picking another theme replaces the first; your own text, stickers 
 The theme follows the reel: trim it, remove silences or move clips and it still runs to the very end, with the outro
 on the last moment. Every step undoes with **⌘Z**.
 
+**💊 Capsules carousel** (Themes → Place elements → *Capsules carousel*, ＋ or drag it onto the timeline, or tick
+*Whole video*). Two rows of rounded pills that scroll for ever: jobs on top (a line icon + a name), countries below
+(a flag + a name). Once placed it is selected and the **⚙ Inspector** shows its controls:
+
+* **Capsules · theme** — 14 looks (website strip, glass, neon, gradient, flag-filled, stickers, big bold row, minimal
+  text, dark luxury, pastel, ticker with a *NOW HIRING* tab, curved arc, 3D, icon badges). Hover a tile to see it
+  play with your own capsules; click to switch (your capsules, sizes, position and own colours stay; ⌘Z undoes).
+  **Apply theme to all (clear overrides)** drops your own colours. **Use company colours** draws every look in the
+  company's colours. **Language**: English or عربي (right to left).
+* **Capsules · rows** — per row: show/hide, direction, speed (px per second), and **Row colours** (fill, text, icon,
+  border, shadow; ↺ goes back to the theme). The lists: type to rename, ✕ removes, drag ⋮⋮ to reorder.
+  **＋ Jobs list** (100 occupations by sector, English + Arabic, each with its icon), **＋ Countries & continents**
+  (Europe, Asia, Middle East, North and South America, Africa, Oceania: tick countries, *Select all* takes a whole
+  continent, or the continent itself as one capsule), **＋ Custom** (any name, an icon or a flag). Click a capsule
+  (Shift / ⌘ for several) to give it **its own colours**; a dot marks it, ↺ / **Reset to theme** undoes it.
+* **Capsules · size & motion** — scale, height, text, icon, gap, corners, row spacing; **Smooth**, **Glide & rest** or
+  **On the beat**; fade at the edges; Top / Middle / Bottom. Drag it on the video to move it; tilt and opacity are
+  under *Position & size*. Every flag of every country is inside the studio (no internet needed).
+
 **Hover previews everywhere.** The same hover-to-preview works on **Templates**, **Look** tiles and transitions,
 **Create** formats, and **Music** and **SFX** (a few seconds play; sound stays off until you press **🔊**). Only one
 preview plays at a time, and the keyboard works too: move to a tile with **Tab** and it plays.
