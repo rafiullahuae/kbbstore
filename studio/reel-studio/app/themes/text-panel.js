@@ -79,7 +79,7 @@ export function fieldsFor(item, project) {
   return raw.map((f) => (text[f.key] != null ? { ...f, user: true, value: String(text[f.key]) } : f));
 }
 
-const CSS = `
+const STYLE_CSS = `
 .tx-field { display: grid; gap: 4px; margin: 0 0 8px; }
 .tx-head { display: flex; align-items: center; gap: 6px; min-height: 24px; }
 .tx-head .lbl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -102,8 +102,10 @@ const CSS = `
 .tx-note { display: block; margin: 2px 0 6px; }
 `;
 let styled = false;
-const injectCss = () => { if (styled) return; styled = true; document.head.appendChild(h('style', { id: 'kbb-theme-text-css' }, CSS)); };
+const injectCss = () => { if (styled) return; styled = true; document.head.appendChild(h('style', { id: 'kbb-theme-text-css' }, STYLE_CSS)); };
 
+/** a slider's range input marked with a data attribute (the search index and the checks find it by it) */
+const tag = (el, k) => { const i = el.querySelector('input'); if (i) i.dataset[k] = '1'; return el; };
 /** the company's colours (unique), then white and near-black */
 function chipColours(ws) {
   const c = ws?.colors || {}, out = [];
@@ -113,14 +115,14 @@ function chipColours(ws) {
 /** a colour picker: company chips, the swatch, a hex box and a reset; onPick(hex|null, done) */
 function colourRow(label, value, ws, onPick, resetLabel = 'Theme', data = {}) {
   const v = value ? toHex(value) : null;
-  const sw = h('input', { type: 'color', value: v || '#ffffff', 'aria-label': label + ' colour', title: label + ' colour', dataset: data });
+  const sw = h('input', { type: 'color', value: v || '#ffffff', 'aria-label': label + ' colour', title: label + ' colour' });
   const hex = h('input.tx-hex', { type: 'text', value: v ? v.toUpperCase() : '', placeholder: resetLabel, maxlength: 7, spellcheck: false, 'aria-label': label + ' hex' });
   sw.addEventListener('input', () => { hex.value = sw.value.toUpperCase(); onPick(sw.value, false); });
   sw.addEventListener('change', () => onPick(sw.value, true));
   hex.addEventListener('keydown', (e) => e.stopPropagation());
   hex.addEventListener('change', () => { const x = hex.value.trim(); if (!x) return onPick(null, true); const y = /^#?[0-9a-f]{6}$/i.test(x) ? '#' + x.replace('#', '') : null; if (y) { sw.value = y.toLowerCase(); onPick(y.toLowerCase(), true); } else hex.value = v ? v.toUpperCase() : ''; });
   const chips = chipColours(ws).map((c) => h('button.tx-chip' + (v === c ? '.on' : ''), { type: 'button', title: `${label}: ${c.toUpperCase()}`, 'aria-label': `${label} ${c}`, 'data-sample': '1', style: { background: c }, on: { click: () => onPick(c, true) } }));
-  return h('div.row', h('span.lbl', label), h('div.tx-cols', chips, sw, hex, h('button.btn.small', { type: 'button', title: `${label}: back to the ${resetLabel.toLowerCase()}`, disabled: !v, on: { click: () => onPick(null, true) } }, '↺')));
+  return h('div.row', { dataset: data }, h('span.lbl', label), h('div.tx-cols', chips, sw, hex, h('button.btn.small', { type: 'button', title: `${label}: back to the ${resetLabel.toLowerCase()}`, disabled: !v, on: { click: () => onPick(null, true) } }, '↺')));
 }
 
 /**
@@ -151,8 +153,8 @@ export function themeTextSections(insp, item) {
     const sz = +(ts.sizes?.[f.key]) || 1, col = ts.colors?.[f.key] || null;
     const more = h('div.tx-more', { hidden: !(sz !== 1 || col) },
       slider({ label: 'Size', min: 0.5, max: 2, step: 0.05, value: sz, fmt: (v) => Math.round(v * 100) + '%', onInput: (v) => writeTStyle(ed, id, { sizes: { ...(curItem(ed, id)?.style?.tstyle?.sizes || {}), [f.key]: v } }, 'Text size'), onDone: () => ed.history.seal() }),
-      colourRow('Colour', col, ws, (c, done) => { const cur = { ...(curItem(ed, id)?.style?.tstyle?.colors || {}) }; if (c) cur[f.key] = c; else delete cur[f.key]; writeTStyle(ed, id, { colors: cur }, 'Text colour'); if (done) { ed.history.seal(); if (!c) insp.render(true); } }, 'Element colour'));
-    const aa = h('button.btn.small', { type: 'button', title: f.label + ': its own size and colour', 'aria-label': f.label + ' size and colour', 'aria-expanded': String(!more.hidden), on: { click: () => { more.hidden = !more.hidden; aa.setAttribute('aria-expanded', String(!more.hidden)); } } }, 'Aa');
+      colourRow('Colour', col, ws, (c, done) => { const cur = { ...(curItem(ed, id)?.style?.tstyle?.colors || {}) }; if (c) cur[f.key] = c; else delete cur[f.key]; writeTStyle(ed, id, { colors: cur }, 'Text colour'); if (done) { ed.history.seal(); if (!c) insp.render(true); } }, 'Element colour', { thCol: 'field' }));
+    const aa = h('button.btn.small', { type: 'button', dataset: { thAa: f.key }, title: f.label + ': its own size and colour', 'aria-label': f.label + ' size and colour', 'aria-expanded': String(!more.hidden), on: { click: () => { more.hidden = !more.hidden; aa.setAttribute('aria-expanded', String(!more.hidden)); } } }, 'Aa');
     return { inp, head: h('div.tx-head', h('span.lbl', f.label), reset, aa), more };
   };
   for (const f of fields) {
@@ -191,19 +193,19 @@ function styleSection(insp, item) {
   const band = (k, label) => colourRow(label, colors[k], ws, (c, done) => {
     writeStyle(ed, id, (st) => { const base = st.colors || (th ? colorsFor(th, 'theme') : {}); st.colors = { ...base, [k]: c || (th ? colorsFor(th, 'theme')[k] : base[k]) }; }, 'Element colours');
     if (done) ed.history.seal();
-  }, 'Theme', { thBand: k });
+  }, 'Theme', { thCol: k });
   const sec = insp.section('Text style',
     field('Font', fontSel),
-    slider({ label: 'Size', min: 0.5, max: 2, step: 0.05, value: +ts.scale || 1, fmt: (v) => Math.round(v * 100) + '%', onInput: (v) => set({ scale: Math.abs(v - 1) < 0.001 ? null : v }, 'Text size', false), onDone: () => ed.history.seal() }),
+    tag(slider({ label: 'Size', min: 0.5, max: 2, step: 0.05, value: +ts.scale || 1, fmt: (v) => Math.round(v * 100) + '%', onInput: (v) => set({ scale: Math.abs(v - 1) < 0.001 ? null : v }, 'Text size', false), onDone: () => ed.history.seal() }), 'thScale'),
     field('Weight', seg([['', 'Theme'], ['400', 'Regular'], ['800', 'Bold'], ['900', 'Black']], String(ts.weight || ''), (v) => set({ weight: v ? +v : null }, 'Text weight'), '.tx-weight')),
     field('Case', seg([['', 'Theme'], ['upper', 'UPPER'], ['title', 'Title'], ['asis', 'As typed']], ts.case || '', (v) => set({ case: v || null }, 'Text case'), '.tx-case')),
     field('Align', seg([['', 'Theme'], ['left', '⯇', 'Left'], ['center', '≡', 'Centre'], ['right', '⯈', 'Right']], ts.align || '', (v) => set({ align: v || null }, 'Text alignment'), '.tx-align')),
-    slider({ label: 'Spacing', min: -0.05, max: 0.4, step: 0.01, value: ts.track ?? 0, fmt: (v) => (v * 100).toFixed(0) + '%', onInput: (v) => set({ track: v }, 'Letter spacing', false), onDone: () => ed.history.seal() }),
+    tag(slider({ label: 'Spacing', min: -0.05, max: 0.4, step: 0.01, value: ts.track ?? 0, fmt: (v) => (v * 100).toFixed(0) + '%', onInput: (v) => set({ track: v }, 'Letter spacing', false), onDone: () => ed.history.seal() }), 'thTrack'),
     h('div.checks',
       h('label.check', h('input', { type: 'checkbox', checked: !!ts.italic, dataset: { thItalic: '1' }, on: { change: (e) => set({ italic: e.target.checked || null }, 'Italic') } }), 'Italic'),
       h('label.check', h('input', { type: 'checkbox', checked: !!ts.outline, dataset: { thOutline: '1' }, on: { change: (e) => set({ outline: e.target.checked || null }, 'Outline') } }), 'Outline')),
     field('Shadow', seg([['', 'Theme'], ['on', 'On'], ['off', 'Off']], ts.shadow || '', (v) => set({ shadow: v || null }, 'Text shadow'), '.tx-shadow')),
-    colourRow('Text', ts.color, ws, (c, done) => set({ color: c }, 'Text colour', done), 'Theme', { thColor: '1' }),
+    colourRow('Text', ts.color, ws, (c, done) => set({ color: c }, 'Text colour', done), 'Theme', { thCol: 'text' }),
     band('primary', 'Band'), band('accent', 'Accent'),
     h('div.tx-btns',
       h('button.btn', { type: 'button', title: 'Draw this element in its theme’s own colours again', dataset: { thThemeColours: '1' }, disabled: !th, on: { click: () => { writeStyle(ed, id, (st) => { st.colors = colorsFor(th, 'theme'); }, 'Use theme colours'); ed.history.seal(); insp.render(true); } } }, 'Use theme colours'),

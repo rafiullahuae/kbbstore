@@ -72,6 +72,7 @@ function ensureSelection(need) {
   if (need === 'clip' && !pick((it, tr) => it.type === 'clip' && (tr.kind === 'video' || tr.kind === 'overlay'))) return 'Add a video first: Left panel → Media → “Add videos, photos, music”.';
   if (need === 'text' && !pick((it) => it.type === 'text')) return 'Add a text first: Left panel → Text, then pick Title or Subtitle.';
   if (need === 'capsules' && !pick((it) => it.type === 'theme.el' && it.style?.el === 'capsules')) return 'Place a capsules carousel first: Themes → Capsules carousel → ＋.';
+  if (need === 'theme' && !pick((it) => /^theme\.(el|sting|outro)$/.test(it.type) && !/^(capsules|grade|wipe|confetti)$/.test(it.style?.el || ''))) return 'Place a theme element first: Themes → Place elements (a lower third, an end card …) → ＋.';
   if (need === 'multi' && ed.sel.size < 2) return 'Select two or more items first (Shift-click them on the timeline or drag a box on the video).';
   return null;
 }
@@ -166,6 +167,7 @@ export async function goTo(entry, { run = false } = {}) {
   if (screen === 'editor') {
     hint = ensureSelection(go.need);
     if (hint && go.need === 'capsules') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', label: 'Capsules carousel' } }); }
+    if (hint && go.need === 'theme') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', label: 'Add at the playhead' } }); }
     if (hint && go.need === 'text') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', bin: 'Text', label: 'Title' } }); }
     if (hint) toast(hint, 'info', 4200);
   }

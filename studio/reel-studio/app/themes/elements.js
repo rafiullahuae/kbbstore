@@ -351,14 +351,14 @@ D.confetti = (c, K, S) => {
 
 // ── END CARD: CTA + contact placeholders over the landmark scene and the flag colours ──
 D.end = (c, K, S) => {
-  const { w, h, U } = S, P = K.colors, txt = S.txt, p = S.tl;
+  // the card is laid out in U, kept small enough that the CTA and all three contact rows (and an added line) fit the frame
+  const { w, h } = S, U = Math.min(S.U, h / 1.16), P = K.colors, txt = S.txt, p = S.tl;
   const sp = clamp(p / 0.5) * 0.5;   // slabs in, then the card under them
   if (p > 0.24) {
-    const cp = clamp((p - 0.24) / 0.9);
-    const top = h * 0.46;
+    const cp = clamp((p - 0.24) / 0.9), more = txt.extra != null && txt.extra !== '';
+    const top = Math.min(h * 0.46, h - U * 0.58 - U * (0.17 + 2 * 0.085 * 1.22 + 0.085 + 0.03 + (more ? 0.085 * 1.1 : 0)));
     A.scene(c, K, 0, 0, w, top + U * 0.16, S.t, K.light);
     c.save(); c.beginPath(); c.moveTo(0, top + U * 0.12); c.lineTo(w, top - U * 0.04); c.lineTo(w, h); c.lineTo(0, h); c.closePath(); c.clip(); A.gradRect(c, 0, top - U * 0.05, w, h - top + U * 0.05, [[0, mix(P.primary, '#ffffff', 0.05)], [1, mix(P.primary, '#000000', 0.45)]]); c.restore();
-    c.fillStyle = g; c.beginPath(); c.moveTo(0, top + U * 0.12); c.lineTo(w, top - U * 0.04); c.lineTo(w, h); c.lineTo(0, h); c.closePath(); c.fill();
     K.flag.slice(0, 3).forEach((col, i) => { c.fillStyle = col; c.beginPath(); const y0 = top + U * 0.12 - i * U * 0.018; c.moveTo(0, y0); c.lineTo(w, y0 - U * 0.16); c.lineTo(w, y0 - U * 0.16 - U * 0.016); c.lineTo(0, y0 - U * 0.016); c.closePath(); c.fill(); });
     const fh = U * 0.12; A.flagCloth(c, imgOf(K), K.flag, U * 0.08, top + U * 0.2, fh * 1.5, fh, S.t, { pole: true, strips: 14 });
     A.uiText(c, tx(S, 'brand', S.brand || 'YOUR COMPANY').toUpperCase(), U * 0.08 + fh * 1.75, top + U * 0.29, U * 0.05, { col: rgba('#ffffff', clamp(cp * 3)), weight: 900, track: 0.12, maxW: w - U * 0.3 - fh * 1.75 });
@@ -378,7 +378,7 @@ D.end = (c, K, S) => {
       A.uiText(c, v, x + ph * 2.6, y + ph * 0.68, ph * 0.46, { col: '#14182b', weight: 800, maxW: pw - ph * 3 });
       c.restore();
     });
-    if (extra) { const a = easeOut(cp * 2.2 - 1.25); if (a > 0) { c.save(); c.globalAlpha *= a; A.uiText(c, extra, w / 2, cy + U * 0.17 + 3 * ph * 1.22 + ph * 0.75, ph * 0.46, { col: '#ffffff', align: 'center', weight: 800, maxW: pw }); c.restore(); } }
+    if (extra) { const a = easeOut(cp * 2.2 - 1.25); if (a > 0) { c.save(); c.globalAlpha *= a; A.uiText(c, extra, w / 2, cy + U * 0.17 + 3 * ph * 1.22 + ph * 0.55, ph * 0.46, { col: '#ffffff', align: 'center', weight: 800, maxW: pw }); c.restore(); } }
     A.lightLeaks(c, w, h, S.t, [P.accent, '#ff8a3d'], 0.6, 2);
     A.sparkles(c, w, top, S.t, 8, '#ffffff', U);
   }
@@ -544,7 +544,7 @@ D.lowerbar = (c, K, S) => {
   const lg = S.style.logo ? logoImage(S.style.logo) : null;
   c.fillStyle = '#ffffff'; c.fillRect(0, 0, ls, ls);
   if (lg) { const r = Math.min((ls * 0.78) / lg.width, (ls * 0.78) / lg.height); c.drawImage(lg, (ls - lg.width * r) / 2, (ls - lg.height * r) / 2, lg.width * r, lg.height * r); }
-  else { c.strokeStyle = '#9aa1b8'; c.setLineDash([ls * 0.06, ls * 0.04]); c.lineWidth = ls * 0.025; c.strokeRect(ls * 0.14, ls * 0.14, ls * 0.72, ls * 0.72); c.setLineDash([]); A.uiText(c, 'YOUR', ls / 2, ls * 0.47, ls * 0.14, { col: '#6b7290', align: 'center', weight: 900 }); A.uiText(c, 'LOGO', ls / 2, ls * 0.65, ls * 0.14, { col: '#6b7290', align: 'center', weight: 900 }); }
+  else { c.strokeStyle = '#9aa1b8'; c.setLineDash([ls * 0.06, ls * 0.04]); c.lineWidth = ls * 0.025; c.strokeRect(ls * 0.14, ls * 0.14, ls * 0.72, ls * 0.72); c.setLineDash([]); A.uiText(c, tx(S, 'logoTop', 'YOUR'), ls / 2, ls * 0.47, ls * 0.14, { col: '#6b7290', align: 'center', weight: 900 }); A.uiText(c, tx(S, 'logoBottom', 'LOGO'), ls / 2, ls * 0.65, ls * 0.14, { col: '#6b7290', align: 'center', weight: 900 }); }
   const bw = (w - ls) * easeOut(k);
   c.save(); c.beginPath(); c.rect(ls, 0, bw, h); c.clip();
   const g = c.createLinearGradient(ls, 0, w, 0); g.addColorStop(0, P.primary); g.addColorStop(1, mix(P.primary, '#000000', 0.3));
@@ -601,7 +601,7 @@ for (const def of ELEMENTS.filter((e) => e.fam)) {
     const { w, h } = S, U = Math.min(w, h), ii = S.inn(0.4), oo = S.out(0.35); if (oo <= 0 || ii <= 0) return;
     // the piece builds in about 3.8 s; a shorter clip plays it faster so it always finishes
     const ta = S.tl * Math.max(1, 3.8 / Math.max(0.6, S.d * 0.85));
-    const words = Object.fromEntries(Object.entries(S.txt || {}).filter(([k, v]) => def.words.includes(k) && v != null));
+    const words = Object.fromEntries(Object.entries(S.txt || {}).filter(([, v]) => v != null));   // its words, and the ones its defaults name (cities, trades)
     const card = def.box === 'famcard', r = card ? U * 0.05 : 0;
     c.save(); c.globalAlpha *= Math.min(ii, oo);
     const z = 0.94 + 0.06 * ii; c.translate(w / 2, h / 2); c.scale(z, z); c.translate(-w / 2, -h / 2);

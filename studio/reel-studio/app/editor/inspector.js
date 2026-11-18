@@ -13,6 +13,8 @@ import { inspectorSections } from '../core/modules.js';
 let FAM_ELS = null; import('../themes/elements.js').then((m) => { FAM_ELS = m.ELEMENTS.filter((d) => d.fam); }).catch(() => {});
 // the capsules carousel's own sections (themes/capsules-panel.js), loaded with the editor so the inspector builds them in step
 let CAPS_PANEL = null; import('../themes/capsules-panel.js').then((m) => { CAPS_PANEL = m; }).catch(() => {});
+// a theme element's Text and Text style sections (themes/text-panel.js), loaded with the editor the same way
+let TEXT_PANEL = null; import('../themes/text-panel.js').then((m) => { TEXT_PANEL = m; }).catch(() => {});
 
 const FONTS = ['system-ui', 'Helvetica Neue', 'Avenir Next', 'Futura', 'Gill Sans', 'Georgia', 'Didot', 'Baskerville', 'Times New Roman', 'Courier New', 'Arial Rounded MT Bold', 'Impact', 'Geeza Pro', 'Damascus', 'Baghdad'];
 const pct = (v) => Math.round(v * 100) + '%';
@@ -44,6 +46,8 @@ export class Inspector {
   }
 
   focusText() { this.render(true); this.el.querySelector('textarea')?.focus(); }
+  /** a theme element's field for key: focused and flashed (a double-click on its words on the video) */
+  focusThemeText(key) { return !!TEXT_PANEL?.focusThemeField(this, key); }
 
   /** the one-item header's line: name · length (· locked) */
   headText(item, track, m) { return (m?.name || item.name || '') + ' · ' + fmtDur(itemDur(item)) + (track.locked ? ' · 🔒 locked track' : ''); }
@@ -164,6 +168,8 @@ export class Inspector {
       const kind = select(T.TRANSITIONS.map((x) => [x.id, x.label]), item.style?.kind || 'slabs', (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.kind = v; this.set(item, { style, name: `${T.TRANSITIONS.find((x) => x.id === v)?.icon || ''} ${T.TRANSITIONS.find((x) => x.id === v)?.label || v}` }, 'Transition kind'); this.seal(); });
       kind.dataset.th = 'kind';
       this.el.append(this.section('Country transition', field('Duration', len), field('Switch', kind), h('small.muted', 'It sits on the cut between two clips: both clips show through it. Delete removes it; Themes → Transitions puts one on every cut.')));
+      // a page turn or a boarding pass draws words: they are edited like an element's
+      if (TEXT_PANEL && TEXT_PANEL.fieldsFor(item, this.ed.project).length) this.el.append(...TEXT_PANEL.themeTextSections(this, item));
     });
   }
 
@@ -179,17 +185,8 @@ export class Inspector {
       num('Start', item.t0, 0, (v) => this.set(item, { t0: v }, 'Element start'), 'When it starts on the timeline (seconds)'),
       num('Duration', dur, 0.2, (v) => this.set(item, { out: item.in + v * (item.speed || 1) }, 'Element duration'), 'How long it runs; the animation re-times itself'),
     ];
-    if (item.auto === 'theme') kids.push(h('small.muted', item.style?.whole ? 'Whole video: follows the reel’s length. Switch it off in Themes → Place elements.' : 'Placed by the theme; applying another theme replaces it.'));
+    if (item.auto === 'theme') kids.push(h('small.muted', item.style?.whole ? 'Whole video: follows the reel’s length (your words stay when the theme is applied again). Switch it off in Themes → Place elements.' : 'Placed by the theme: applying a theme again replaces it but keeps your words.'));
     const el = item.type === 'theme.sting' ? 'intro' : item.type === 'theme.outro' ? 'end' : item.style?.el;
-    const FIELDS = { intro: ['title', 'titleAr', 'kicker'], title: ['title', 'titleAr', 'kicker'], lower: ['name', 'role'], end: ['cta', 'ctaAr', 'phone', 'web', 'handle', 'brand'], counter: ['value', 'label'], ticket: ['from', 'to', 'flight', 'gate', 'seat', 'date'], stamp: ['stamp', 'approved', 'date'], hiring: ['hiring', 'hiringAr', 'role0', 'role1', 'role2'], globe: ['from', 'to'], postcard: ['title', 'titleAr', 'greet'], map: ['title'] }[el] || this.famDef?.(el)?.words || [];
-    const LBL = { title: 'Title', titleAr: 'Title (Arabic)', kicker: 'Small line', name: 'Name', role: 'Role', cta: 'Call to action', ctaAr: 'CTA (Arabic)', phone: 'Phone', web: 'Website', handle: 'Handle', brand: 'Company', value: 'Number', label: 'Label', from: 'From', to: 'To', flight: 'Flight', gate: 'Gate', seat: 'Seat', date: 'Date', stamp: 'Stamp', approved: 'Second stamp', hiring: 'Banner', hiringAr: 'Banner (Arabic)', role0: 'Role 1', role1: 'Role 2', role2: 'Role 3', greet: 'Small line' };
-    const setText = (k, v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.text = Object.assign({}, style.text, { [k]: v }); if (!v) delete style.text[k]; this.set(item, { style }, 'Element text'); };
-    for (const k of FIELDS) {
-      const inp = h('input', { type: 'text', value: item.style?.text?.[k] || '', placeholder: 'theme default', dir: /Ar$/.test(k) ? 'rtl' : 'auto', dataset: { thText: k } });
-      inp.addEventListener('change', () => { setText(k, inp.value.trim()); this.seal(); }); inp.addEventListener('keydown', (e) => e.stopPropagation());
-      kids.push(field(LBL[k] || k, inp));
-    }
-    if (FIELDS.includes('phone') || FIELDS.includes('value')) kids.push(h('small.muted', 'Placeholders: put in your own details. Nothing here states a visa rule, a fee or a salary.'));
     if (el === 'sticker') {
       const vs = ['flag', 'visa', 'plane', 'pin', 'coin', 'landmark', 'sparkle'];
       kids.push(field('Sticker', select(vs.map((v) => [v, v[0].toUpperCase() + v.slice(1)]), item.style?.variant || 'flag', (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.variant = v; this.set(item, { style }, 'Sticker'); this.seal(); })));
@@ -197,6 +194,8 @@ export class Inspector {
     const fd = this.famDef?.(el);
     if (fd?.variants) kids.push(field('Trade', select(fd.variants.map((v) => [v, fd.variantLabels?.[v] || v]), item.style?.variant || fd.variants[0], (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.variant = v; this.set(item, { style }, 'Trade'); this.seal(); })));
     this.el.append(this.section('Theme element', ...kids));
+    // every word it draws, prefilled and live, plus its text style (themes/text-panel.js)
+    if (el !== 'capsules' && TEXT_PANEL) this.el.append(...TEXT_PANEL.themeTextSections(this, item));
     if (el === 'capsules' && CAPS_PANEL) { const box = h('div', { dataset: { capsInsp: item.id } }); this.el.append(box); CAPS_PANEL.capsulesInspector(this, item, box); }
   }
 

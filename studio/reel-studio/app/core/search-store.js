@@ -11,9 +11,9 @@ import { crawl, keyOf, recordOf, splitIcon } from './search-crawl.js';
 
 const KIND = { button: 'Actions', tab: 'Panels', section: 'Panels', slider: 'Settings', switch: 'Settings', choice: 'Settings', field: 'Settings' };
 const PHRASE = { button: 'Button', tab: 'Tab', section: 'Section', slider: 'Slider', switch: 'Switch', choice: 'Choice', field: 'Field' };
-const NEED_OF_INSP = (h, path) => (!h ? undefined : h === 'Project' ? 'none' : /clip|Picture/.test(h) ? 'clip' : h === 'Text' ? 'text' : /items selected/.test(h) ? 'multi' : /Theme element/.test(h) && path.some((p) => /Capsules/.test(p)) ? 'capsules' : undefined);
+const NEED_OF_INSP = (h, path) => (!h ? undefined : h === 'Project' ? 'none' : /clip|Picture/.test(h) ? 'clip' : h === 'Text' ? 'text' : /items selected/.test(h) ? 'multi' : /Theme element/.test(h) && path.some((p) => /Capsules/.test(p)) ? 'capsules' : /^Theme (element|intro|end card)$/.test(h) ? 'theme' : undefined);
 const MODAL_ID = (name) => (/^Export/.test(name || '') ? 'export' : /Keyboard shortcuts/.test(name || '') ? 'shortcuts' : /company/i.test(name || '') ? 'company' : null);
-export const NEEDS = { clip: 'Needs a selected clip (the one under the playhead is picked for you).', text: 'Needs a selected text item.', capsules: 'Needs a capsules carousel on the reel.', multi: 'Needs two or more selected items.', none: 'Works on the whole reel (nothing selected).' };
+export const NEEDS = { clip: 'Needs a selected clip (the one under the playhead is picked for you).', text: 'Needs a selected text item.', capsules: 'Needs a capsules carousel on the reel.', theme: 'Needs a selected theme element (the one under the playhead is picked for you).', multi: 'Needs two or more selected items.', none: 'Works on the whole reel (nothing selected).' };
 
 let snapshot = null, snapTried = false, store = null;
 

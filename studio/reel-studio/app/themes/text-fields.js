@@ -21,7 +21,7 @@ const LABELS = {
   dateLbl: 'Label · date', stub: 'Stub line', stamp: 'Stamp', stampCode: 'Stamp centre', approved: 'Second stamp', visas: 'Page title',
   hiring: 'Banner', hiringAr: 'Banner (Arabic)', greet: 'Small line', tag: 'Tag', time: 'Time', headline: 'Headline', sub: 'Subline',
   crawl: 'Crawl text', crawlTag: 'Crawl label', country: 'Country', note: 'Footnote', skills: 'Skills', seal: 'Seal', doc: 'Document',
-  scroll: 'Scroll', tagline: 'Tagline',
+  scroll: 'Scroll', tagline: 'Tagline', logoTop: 'Logo slot · top', logoBottom: 'Logo slot · bottom', badge: 'Badge', status: 'Status', mat: 'Door mat', v: 'Value',
 };
 const PER_EL = { ticket: { brand: 'Card title', from: 'From (code)', to: 'To (code)' }, counter: { label: 'Label' }, bulletin: { label: 'Top label' }, split: { label: 'Top label' } };
 const SERIES = { s: 'Step', g: 'Goal', w: 'Word', p: 'Point', c: 'Card', r: 'Row', l: 'Line', role: 'Role', k: 'Key', d: 'Day' };
@@ -29,6 +29,8 @@ export function labelOf(key, el) {
   if (PER_EL[el]?.[key]) return PER_EL[el][key];
   if (LABELS[key]) return LABELS[key];
   let m = /^role(\d)$/.exec(key); if (m) return 'Role ' + (+m[1] + 1);
+  m = /^trade_(.+)$/.exec(key); if (m) return 'Trade · ' + m[1][0].toUpperCase() + m[1].slice(1).replace(/[-_]/g, ' ');
+  m = /^city(\d)$/.exec(key); if (m) return 'City ' + m[1];
   m = /^([a-z]+?)(\d+)$/.exec(key);
   if (m) return (elementById(el)?.fam && m[1] === 'p' ? 'Panel' : SERIES[m[1]] || m[1][0].toUpperCase() + m[1].slice(1)) + ' ' + m[2];
   const ar = /Ar$/.test(key); const base = key.replace(/Ar$/, '');

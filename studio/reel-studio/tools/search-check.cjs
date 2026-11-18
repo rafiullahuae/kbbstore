@@ -124,6 +124,8 @@ const NAV = [
   ['translate', /^Translate( captions)?$/, '.side-tab.on[data-side="captions"]'],
   ['word sync', /^Sync words to the voice$/, '.side-tab.on[data-side="mod:sync"]'],
   ['font', /font/i, null],
+  ['edit text', /^Theme element text/, null],
+  ['theme font', /^Theme text style/, null],
   ['caption position', /^Caption position/, null],
   ['themes', /^Themes$/, '.side-tab.on[data-side="mod:themes"]'],
   ['transitions', /^Transitions$/, '.side-tab.on[data-side="mod:look"]'],

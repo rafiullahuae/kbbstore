@@ -441,7 +441,7 @@ export function uiText(c, text, x, y, size, { col = '#ffffff', align = 'left', w
   c.fillText(text, x, y, maxW);
   const mw = d ? c.measureText(text).width : 0;
   if (track && 'letterSpacing' in c) c.letterSpacing = '0px';
-  if (d) { const w = Math.min(maxW, mw); noteBox(c, d, w); return w; }
+  if (d) noteBox(c, d, Math.min(maxW, mw));
   return Math.min(maxW, c.measureText(text).width);
 }
 /**
