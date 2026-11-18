@@ -5,7 +5,10 @@
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs'), crypto = require('crypto');
 async function fingerprint(file, b) {
-  const p = await b.newPage({ viewport: { width: 1400, height: 1000 } });
+  // 880 px wide: the one-column layout, where the stage is still 470 / 520 / 360 px (post / square / story) as when the
+  // baseline was made. From 900 px the stage is fitted to the window (18 Nov 2026, the app shell), and fitText's sizes
+  // follow the width the text is measured at -- the downloads do not (they are fitted at 1080 px; check-layout.cjs).
+  const p = await b.newPage({ viewport: { width: 880, height: 1000 } });
   await p.goto('file://' + file); await p.waitForFunction(() => document.documentElement.dataset.ready === '1'); await p.evaluate(() => document.fonts.ready);
   const out = await p.evaluate(async () => {
     const S = window.KBB_STUDIO, o = {};

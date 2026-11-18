@@ -152,7 +152,7 @@ export class Preview {
     // frames about as large as the monitor shows them (a portrait canvas over a landscape clip shows its full height)
     const c = this.ed.project.canvas, k = Math.max(c.w / (m.w || c.w), c.h / (m.h || c.h)) * (this.scale || 0.5);
     const maxW = Math.min(m.w || 1920, Math.ceil((m.w || 1920) * Math.min(1, k * 1.5)));
-    const p = this.ed.media.openStream(m.id, { maxW, budgetMB: 384 }).then((fs) => { this.streams.set(m.id, fs); this.draw(); return fs; }, () => { this.streams.set(m.id, null); });
+    const p = this.ed.media.openStream(m.id, { maxW, budgetMB: 384, proxy: true }).then((fs) => { this.streams.set(m.id, fs); this.draw(); return fs; }, () => { this.streams.set(m.id, null); });
     this.streams.set(m.id, p);
     return undefined;
   }

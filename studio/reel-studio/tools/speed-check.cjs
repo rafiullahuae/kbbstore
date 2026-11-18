@@ -393,6 +393,12 @@ const stats = (a) => { if (!a.length) return { mean: 0, p95: 0, max: 0 }; const 
     await page.mouse.move(px, py); await page.mouse.down(); await page.mouse.move(px, py - 25, { steps: 6 }); await page.mouse.up();
     const it11 = await item(id);
     ok(it11.curve.pts[2][1] > P0[1] + 0.1 && Math.abs(it11.speed - (await ev((pts) => window.RT.curveMean(pts), it11.curve.pts))) < 1e-5, `curve editor: dragging the slow point up ${P0[1]}× → ${it11.curve.pts[2][1]}×; the clip's length follows (${(6 / it11.speed).toFixed(3)} s)`);
+    // the panel follows the drag without reselecting the clip: the header's length and the Custom slider read the new
+    // speed. Before 2026-11-18 both kept the values from before the drag (the inspector does not rebuild while focus is
+    // inside it, and the curve canvas holds the focus) until the clip was selected again.
+    const panel = await ev(() => ({ head: document.querySelector('.insp-head small')?.textContent || '', slider: +document.querySelector('input[aria-label="Custom speed"]')?.value }));
+    const durTxt = await ev((d) => import('/app/editor/ui.js').then((U) => U.fmtDur(d)), 6 / it11.speed);
+    ok(panel.head.includes(durTxt) && Math.abs(panel.slider - it11.speed) < 0.026, `after the curve drag the panel shows the new length in its header ("${panel.head}" has ${durTxt}) and the Custom slider the new average speed (${panel.slider} for ${it11.speed.toFixed(3)}×) without reselecting the clip`);
     await page.waitForTimeout(300);
     await page.locator('.sp-curve').screenshot({ path: path.join(SHOTS, 'curve-editor.png') });
     // the pictures: the panel (top: speeds, presets, curve; then the options), the timeline badges, at 1440×900
@@ -444,6 +450,7 @@ const stats = (a) => { if (!a.length) return { mean: 0, p95: 0, max: 0 }; const 
       ed.pause();
       const q1 = el?.getVideoPlaybackQuality?.();
       pv.loop = L; pv.source = src0;
+      const st = pv.streams.get(m.id), proxy = st && !st.then ? st.proxy || null : null;
       const dts = []; for (let i = 1; i < rec.length; i++) dts.push(rec[i].now - rec[i - 1].now);
       // source-frame error per tick (frames of the SOURCE), skipping the first 300 ms (start-up)
       const settled = rec.filter((r) => r.now - rec[0].now > 300 && r.drawn != null);
@@ -452,12 +459,12 @@ const stats = (a) => { if (!a.length) return { mean: 0, p95: 0, max: 0 }; const 
       const want = new Set(settled.map((r) => Math.floor(r.want * fps + 1e-3))), got = new Set(settled.map((r) => Math.round(r.drawn * fps)));
       let missed = 0; for (const f of want) if (!got.has(f)) missed++;
       return { ticks: rec.length, dts, costs: rec.map((r) => r.cost), errs, wantFrames: want.size, missedFrames: missed, nodrawn: rec.length - rec.filter((r) => r.drawn != null).length,
-        elDropped: q1 && q0 ? q1.droppedVideoFrames - q0.droppedVideoFrames : null, elTotal: q1 && q0 ? q1.totalVideoFrames - q0.totalVideoFrames : null, fps };
+        elDropped: q1 && q0 ? q1.droppedVideoFrames - q0.droppedVideoFrames : null, elTotal: q1 && q0 ? q1.totalVideoFrames - q0.totalVideoFrames : null, fps, proxy };
     }, { mediaName, props, secs }).then((r) => {
       const d = stats(r.dts), c = stats(r.costs), er = stats(r.errs);
       const late = r.dts.filter((x) => x > 16.7 * 1.5).length;
-      const out = { label, ticks: r.ticks, tick: d, loopCost: c, lateTicks: late, srcErrFrames: er, wantFrames: r.wantFrames, missedFrames: r.missedFrames, elDropped: r.elDropped, elTotal: r.elTotal, nodrawn: r.nodrawn };
-      console.log(`PERF ${label}: tick ${d.mean}/${d.p95}/${d.max} ms (mean/p95/max), late ${late}/${r.ticks}, loop ${c.mean}/${c.p95}/${c.max} ms, source error ${er.mean}/${er.p95}/${er.max} frames, missed ${r.missedFrames}/${r.wantFrames} frames, element dropped ${r.elDropped}/${r.elTotal}`);
+      const out = { label, ticks: r.ticks, tick: d, loopCost: c, lateTicks: late, srcErrFrames: er, wantFrames: r.wantFrames, missedFrames: r.missedFrames, elDropped: r.elDropped, elTotal: r.elTotal, nodrawn: r.nodrawn, proxy: r.proxy };
+      console.log(`PERF ${label}: tick ${d.mean}/${d.p95}/${d.max} ms (mean/p95/max), late ${late}/${r.ticks}, loop ${c.mean}/${c.p95}/${c.max} ms, source error ${er.mean}/${er.p95}/${er.max} frames, missed ${r.missedFrames}/${r.wantFrames} frames, element dropped ${r.elDropped}/${r.elTotal}${r.proxy ? `, proxy 1/${r.proxy.k} (full copies ${r.proxy.copyMs} ms for ${r.proxy.need} a second)` : ''}`);
       (numbers.perf ||= []).push(out);
       return out;
     });
@@ -470,6 +477,24 @@ const stats = (a) => { if (!a.length) return { mean: 0, p95: 0, max: 0 }; const 
     ['4K ramp slow-mo hit', 's4k', { preset: 'slowmo-hit', smooth: 'blend' }], ['4K reverse 1×', 's4k', { reverse: true }]);
   const ONLY = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
   if (!ARGS.has('--func')) for (const [label, name, props] of perfSet) if (!ONLY || label.includes(ONLY)) await perf(label, name, props);
+  // 4K without a hardware decoder: turning a decoded 4K frame into a picture costs more than a frame lasts, so before
+  // 2026-11-18 a 4K ramp ran 7–9 frames behind (p95 24) and a 4K reverse 3 (p95 15). The preview now measures its copies
+  // and drops to a 1/2 or 1/4 proxy copy when they miss the budget (core/frames-engine.js); the export never does.
+  if (!ARGS.has('--func') && !ONLY) {
+    for (const label of ['4K ramp slow-mo hit', '4K reverse 1×']) {
+      const x = numbers.perf.find((q) => q.label === label);
+      ok(!!x && x.srcErrFrames.p95 <= 2 && x.missedFrames <= Math.ceil(x.wantFrames * 0.05), `${label} keeps up in the preview: source error ${x?.srcErrFrames.mean}/${x?.srcErrFrames.p95} frames (mean/p95), missed ${x?.missedFrames}/${x?.wantFrames}${x?.proxy ? `; on its 1/${x.proxy.k} proxy copy (a full copy took ${x.proxy.copyMs} ms)` : '; full copies (a hardware decoder)'}`);
+    }
+    const full = await ev(async () => {
+      const ed = window.kbbEditor, m = ed.project.media.find((x) => /s4k/.test(x.src));
+      const fs = await ed.media.openStream(m.id, { maxW: m.w, budgetMB: 640 });   // what core/export.js opens
+      const ws = [];
+      for (let i = 0; i < 40; i++) { const r = await fs.frameAt(i / 30, false, 1, 1); ws.push(r?.a?.width || 0); }
+      const proxy = fs.proxy || null; fs.close();
+      return { ws: [...new Set(ws)], proxy, w: m.w };
+    });
+    ok(full.ws.length === 1 && full.ws[0] === full.w && !full.proxy, `the export reads 4K at full resolution: 40 frames in order, every one ${full.ws.join('/')} px wide (source ${full.w}), no proxy copy`);
+  }
 
   fs.writeFileSync(path.join(OUT, ARGS.has('--perf') ? 'perf-numbers.json' : 'numbers.json'), JSON.stringify(numbers, null, 1));
   ok(errors.length === 0, `no console errors (${errors.length})${errors.length ? ': ' + errors.slice(0, 5).join(' | ') : ''}`);
