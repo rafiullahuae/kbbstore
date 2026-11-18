@@ -17,7 +17,7 @@
 //              reload, switch back lossless; no console errors, nothing leaves 127.0.0.1; screenshots 1440×900 ->
 //              shots/hindi/
 //
-// usage: NODE_PATH=/home/user/kbbstore/node_modules node tools/hindi-check.cjs [--units] [--no-editor] [--model=small]
+// usage: NODE_PATH=/home/user/kbbstore/node_modules node tools/hindi-check.cjs [--units] [--editor | --no-editor] [--model=small]
 // Needs (speech/editor): bash tools/r2-fetch-test-models.sh (Whisper + MMS voices incl. Xenova/mms-tts-hin),
 // bash tools/s-fetch-models.sh (word sync), bash tools/t-fetch-models.sh (opus-mt-hi-en), and
 // engine/kbbstudio-linux-amd64 (cd engine && GOOS=linux go build -o kbbstudio-linux-amd64 .).
@@ -128,6 +128,11 @@ async function units() {
   ok(nat.words.map((w) => w.w).join(' ') === words.map((w) => w.w).join(' '), 'translation source of Roman captions = the original Devanagari (+ the English word as is)');
   const ured = S.withScript({ ...cap, lang: 'ur', words: ['میں', 'آج', 'خوش', 'ہوں۔', 'کینیڈا', 'میں', 'جاب'].map((w, i) => ({ w, t0: i, t1: i + 0.5 })) }, 'roman', canvas);
   ok(ured.words.map((w) => w.w).join(' ') === 'Main aaj khush hoon. Canada mein job', `Urdu captions in Roman Urdu: "${ured.words.map((w) => w.w).join(' ')}" (میں = main at a sentence start, mein after a word)`);
+  // Hinglish from the words alone: English loanwords as Whisper misspells them on a Hindi voice (सकिन, विजा) still count
+  const share = (s) => S.englishShare(s.split(' ').map((w) => ({ w })));
+  const hg = share('कनामे जब किलिए अप्राई करो ये सीरम आपकी सकिन को गलोएन बनाता है विजा प्रोसेस बहुत एजी है'), hd = share('मेरा नाम राहुल है और मैं दिल्ली में रहता हूँ। मुझे खाना बनाना बहुत पसंद है। कल हम बाजार गए थे'),
+    hd2 = share('आप कैसे है? मैं आज बहुत खूष हूँ हमारी तीम आग की मदद करेगी ये सीम आपकी तोशा को मुलायम बनाता है');
+  ok(hg >= 0.12 && hd < 0.12 && hd2 < 0.12, `Hinglish by its words: English share ${(hg * 100).toFixed(0)} % in a misspelt Hinglish transcript (≥ 12 % = Hinglish), ${(hd * 100).toFixed(0)} % / ${(hd2 * 100).toFixed(0)} % in plain Hindi`);
   // 4. glyphs
   const F = path.join(ROOT, 'vendor/caption-fonts');
   const deva = woff2Cmap(path.join(F, 'noto-sans-devanagari-devanagari-wght-normal.woff2'));
@@ -181,7 +186,7 @@ async function speech() {
     numbers.speech[k] = { lang: r.lang, hinglish: r.hinglish, conf: r.detect?.conf, probs: r.detect?.probs && Object.fromEntries(Object.entries(r.detect.probs).slice(0, 3)), text: r.text, cerHindi: hiRef ? cer(hiRef, devaHyp) : null, english: en, secs: (Date.now() - t) / 1000, stats: r.stats };
     const s = numbers.speech[k];
     if (k === 'english') ok(r.lang === 'en' && !r.hinglish, `detect · English speech -> English ${Math.round((s.conf || 0) * 100)}% ("${r.text}")`);
-    else if (k === 'hindi') ok(r.lang === 'hi' && devaHyp.length > 10, `detect · Hindi speech -> Hindi ${Math.round((s.conf || 0) * 100)}% (Hindi+Urdu), written in Devanagari, CER ${s.cerHindi}% on the MMS voice: "${r.text}"`);
+    else if (k === 'hindi') ok(r.lang === 'hi' && !r.hinglish && devaHyp.length > 10, `detect · Hindi speech -> Hindi ${Math.round((s.conf || 0) * 100)}% (Hindi+Urdu), not Hinglish, written in Devanagari, CER ${s.cerHindi}% on the MMS voice: "${r.text}"`);
     else ok(r.lang === 'hi' && r.hinglish, `detect · ${k} -> Hinglish (Hindi + English) ${Math.round((s.conf || 0) * 100)}%: "${r.text}"`);
     if (k === 'hinglishMixed') ok(/apply|visa|consultation|book/i.test(en) && devaHyp.length > 10, `Hinglish · English stretches stay English (not translated, not dropped): "${en}"; Hindi stays Hindi (CER ${s.cerHindi}%)`);
   }
@@ -259,7 +264,6 @@ async function editor() {
   for (const d of ['app', 'vendor', 'brands', 'library', 'workspaces', 'settings', 'adstudio']) fs.rmSync(path.join(STUDIO, d), { recursive: true, force: true });
   fs.mkdirSync(path.join(STUDIO, 'models'), { recursive: true });
   for (const d of ['app', 'vendor', 'brands', 'library']) fs.cpSync(path.join(ROOT, d), path.join(STUDIO, d), { recursive: true });
-  if (args.includes('--probe')) fs.copyFileSync(path.join(OUT, 'hinglish.wav'), path.join(STUDIO, 'library', 'hindi-test.wav'));
   fs.copyFileSync(path.join(ROOT, 'models', 'manifest.json'), path.join(STUDIO, 'models', 'manifest.json'));
   for (const rel of ['onnx-community', 'NewComer00']) { const src = path.join(ROOT, 'models', rel), dst = path.join(STUDIO, 'models', rel); if (fs.existsSync(src) && !fs.existsSync(dst)) execFileSync('cp', ['-al', src, dst]); }
   const talk = path.join(OUT, 'hinglish.mp4');
@@ -287,7 +291,6 @@ async function editor() {
       const eng = window.kbbEditor.engine, orig = eng.modelsStatus.bind(eng);
       eng.modelsStatus = async () => { const s = await orig(); for (const m of s.models) if (m.id === 'whisper-' + model) m.installed = true; return s; };
     }, MODEL);
-    if (args.includes('--probe')) console.log('PROBE', JSON.stringify(await ev(async () => { const A = await import('/app/captions/auto.js'); const a = await A.timelineSpeech(window.kbbEditor.project, window.kbbEditor.media); const r = []; for (let s = 0; s < a.length; s += 16000) { let q = 0; for (let i = s; i < Math.min(a.length, s + 16000); i++) q += a[i] * a[i]; r.push(+Math.sqrt(q / 16000).toFixed(3)); } const out = { n: a.length, rms: r, gpu: !!navigator.gpu }; const tr = A.transcriber(); const buf = await (await fetch('/library/hindi-test.wav')).arrayBuffer(); const w = (await new OfflineAudioContext(1, 1, 16000).decodeAudioData(buf)).getChannelData(0); let d = 0; for (let i = 0; i < Math.min(w.length, a.length); i++) d = Math.max(d, Math.abs(w[i] - a[i])); out.maxDiff = d; out.coi = self.crossOriginIsolated; for (const [device, aa] of [['wav', w], ['wasm', a]]) { const x = await A.captureWords(tr, aa, { model: 'small', lang: 'auto', device: 'wasm', workspace: window.kbbEditor.context().workspace }); out[device] = { lang: x.lang, hinglish: x.hinglish, stats: x.raw.stats, dev: x.raw.device, text: x.words.map((w) => w.w).join(' ') }; } return out; })));
     await page.click('.side-tab[data-side="captions"]');
     await page.waitForSelector('.rs-cap .rs-cap-btn.primary');
     await ev((model) => { const s = document.querySelector('.rs-cap select[title="Speech model"]'); s.value = model; s.dispatchEvent(new Event('change')); }, MODEL);
@@ -302,22 +305,41 @@ async function editor() {
     await page.waitForFunction(() => window.kbbEditor.history.undoLabel === 'Sync words to the voice' || window.kbbEditor.project.meta?.sync?.last, null, { timeout: 300000 }).catch(() => {});
     await page.waitForTimeout(1500);
     const st = await ev(() => { const c = window.kbbEditor.project.captions; return { lang: c.lang, script: c.script, detect: c.detect, text: c.words.map((w) => w.w).join(' '), orig: c.words.filter((w) => w.orig).length, n: c.words.length,
-      notice: document.querySelector('.rs-cap-detect')?.textContent, on: document.querySelector('.rs-cap-script.on')?.dataset.script }; });
+      notice: document.querySelector('.rs-cap-detect')?.textContent, on: document.querySelector('.rs-cap-scriptbtn.on')?.dataset.script }; });
     numbers.editor = { secs: capSecs, withSync: (Date.now() - t) / 1000, ...st };
-    ok(st.lang === 'hi' && st.detect?.hinglish && st.script === 'roman' && st.on === 'roman' && /Heard: Hinglish/.test(st.notice || ''),
+    // Hindi or Urdu: one spoken language, Whisper's pick between the two varies with the voice (the one-click switch
+    // below is the answer); Hinglish and the Roman default are what must hold
+    ok(['hi', 'ur'].includes(st.lang) && st.detect?.hinglish && st.script === 'roman' && st.on === 'roman' && /Heard: Hinglish/.test(st.notice || ''),
       `Auto captions on a Hinglish MP4 (${numbers.editor.secs.toFixed(0)} s): notice "${st.notice}", captions in Roman by default: "${st.text}"`);
+    // the one-click "It's Urdu" / "It's Hindi": listens again in the other language (ending on Hindi for the rest)
+    const relisten = async () => {
+      const want = await ev(() => window.kbbEditor.project.captions.detect.alt);
+      await page.click('.rs-cap-detect [data-x="relisten"]');
+      await page.waitForFunction((l) => window.kbbEditor.project.captions?.lang === l && !document.querySelector('.rs-cap-progress:not([hidden])'), want, { timeout: 900000 });
+      await page.waitForFunction(() => window.kbbEditor.history.undoLabel === 'Sync words to the voice' || window.kbbEditor.history.undoLabel === 'Auto captions', null, { timeout: 300000 }).catch(() => {});
+      await page.waitForTimeout(1500);
+      return ev(() => { const c = window.kbbEditor.project.captions; return { lang: c.lang, script: c.script, text: c.words.map((w) => w.w).join(' '), notice: document.querySelector('.rs-cap-detect')?.textContent,
+        setting: document.querySelector('.rs-cap select[title="Language"]').value }; });
+    };
     await ev(() => window.kbbEditor.seek(2.0)); await page.waitForTimeout(800);
+    await page.mouse.move(900, 730); await page.waitForTimeout(400);   // off every control: no hover card in the picture
     await page.screenshot({ path: path.join(SHOTS, 'hindi-01-detection-notice-roman-1440.png') });
+    const r1 = await relisten();
+    ok(r1.lang !== st.lang && r1.script === 'roman' && r1.setting === r1.lang, `"It's ${r1.lang === 'ur' ? 'Urdu' : 'Hindi'}" → listened again as ${r1.lang}, still Roman: "${r1.text}" (notice "${r1.notice}")`);
+    if (r1.lang !== 'hi') await relisten();
+    await ev(() => window.kbbEditor.seek(2.0)); await page.waitForTimeout(800);
     // words compared by content (key order can differ: the sync hook re-adds each word's media anchor after a change)
     const canon = (s) => JSON.stringify(JSON.parse(s).map((w) => Object.fromEntries(Object.entries(w).sort(([a], [b]) => (a < b ? -1 : 1)))));
     const romanWords = canon(await ev(() => JSON.stringify(window.kbbEditor.project.captions.words)));
     // the switch: Devanagari, undo, redo
-    await page.click('.rs-cap-script[data-script="deva"]'); await page.waitForTimeout(600);
+    await page.click('.rs-cap-scriptbtn[data-script="deva"]'); await page.waitForTimeout(600);
     const dv = await ev(() => ({ text: window.kbbEditor.project.captions.words.map((w) => w.w).join(' '), script: window.kbbEditor.project.captions.script, label: window.kbbEditor.history.undoLabel }));
     ok(dv.script === 'deva' && /[ऀ-ॿ]/.test(dv.text) && dv.label === 'Caption script', `script switch → हिंदी, one undo step "${dv.label}": "${dv.text}"`);
     await ev(() => window.kbbEditor.seek(2.0)); await page.waitForTimeout(800);
+    await page.mouse.move(900, 730); await page.waitForTimeout(400);   // off every control: no hover card in the picture
     await page.screenshot({ path: path.join(SHOTS, 'hindi-02-script-switch-devanagari-1440.png') });
-    await page.click('.rs-cap-script[data-script="urdu"]'); await page.waitForTimeout(600);
+    await page.click('.rs-cap-scriptbtn[data-script="urdu"]'); await page.waitForTimeout(600);
+    await page.mouse.move(900, 730); await page.waitForTimeout(400);   // off every control: no hover card in the picture
     await page.screenshot({ path: path.join(SHOTS, 'hindi-03-script-switch-urdu-1440.png') });
     await ev(() => { window.kbbEditor.history.undo(); window.kbbEditor.history.undo(); });
     const un = await ev(() => JSON.stringify(window.kbbEditor.project.captions.words));
@@ -331,9 +353,9 @@ async function editor() {
     await page.reload(); await page.waitForFunction(() => window.kbbEditor?.project?.captions?.words?.length > 0, null, { timeout: 60000 });
     const rl = await ev(() => ({ words: JSON.stringify(window.kbbEditor.project.captions.words), script: window.kbbEditor.project.captions.script, detect: window.kbbEditor.project.captions.detect }));
     ok(canon(rl.words) === romanWords && rl.script === 'roman' && rl.detect?.hinglish, 'save + reload: Roman captions, their native text and the detection come back identical');
-    await page.click('.side-tab[data-side="captions"]'); await page.waitForSelector('.rs-cap-script[data-script="deva"]');
-    await page.click('.rs-cap-script[data-script="deva"]'); await page.waitForTimeout(400);
-    await page.click('.rs-cap-script[data-script="roman"]'); await page.waitForTimeout(400);
+    await page.click('.side-tab[data-side="captions"]'); await page.waitForSelector('.rs-cap-scriptbtn[data-script="deva"]');
+    await page.click('.rs-cap-scriptbtn[data-script="deva"]'); await page.waitForTimeout(400);
+    await page.click('.rs-cap-scriptbtn[data-script="roman"]'); await page.waitForTimeout(400);
     const lossless = canon(await ev(() => JSON.stringify(window.kbbEditor.project.captions.words)));
     const firstDiff = () => { const a = JSON.parse(lossless), b = JSON.parse(romanWords); const i = a.findIndex((w, k) => JSON.stringify(w) !== JSON.stringify(b[k])); return i < 0 ? (a.length !== b.length ? 'length ' + a.length + ' vs ' + b.length : '') : i + ': ' + JSON.stringify(a[i]) + ' vs ' + JSON.stringify(b[i]); };
     ok(lossless === romanWords, 'after reload: Roman → हिंदी → Roman is lossless' + (lossless === romanWords ? '' : ' — ' + firstDiff()));
@@ -341,8 +363,9 @@ async function editor() {
     await ev(() => window.kbbEditor.seek(2.4)); await page.waitForTimeout(800);
     const prev = await page.$('canvas.pv-canvas');
     if (prev) await prev.screenshot({ path: path.join(SHOTS, 'hindi-05-frame-roman.png') });
-    await page.click('.rs-cap-script[data-script="deva"]'); await ev(() => window.kbbEditor.seek(2.4)); await page.waitForTimeout(800);
+    await page.click('.rs-cap-scriptbtn[data-script="deva"]'); await ev(() => window.kbbEditor.seek(2.4)); await page.waitForTimeout(800);
     if (prev) await prev.screenshot({ path: path.join(SHOTS, 'hindi-06-frame-devanagari.png') });
+    await page.mouse.move(900, 730); await page.waitForTimeout(400);   // off every control: no hover card in the picture
     await page.screenshot({ path: path.join(SHOTS, 'hindi-07-devanagari-frame-1440.png') });
     ok(!errors.length, `editor: no console errors${errors.length ? ' — ' + errors.slice(0, 3).join(' | ') : ''}`);
     ok(!outside.length, `editor: nothing left 127.0.0.1${outside.length ? ' — ' + outside.slice(0, 3).join(' ') : ''}`);

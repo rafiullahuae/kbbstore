@@ -152,10 +152,22 @@ export function toRoman(word) {
   return pre + (hit ?? rulesRoman(digits)) + p2;
 }
 
-/** Is this Devanagari word an English loanword (it maps back to English spelling)? */
-export function isLoan(word) { return LOAN_KEYS().has(keyOf(String(word || '').replace(/[^\p{L}\p{M}]/gu, ''))); }
-let loanKeys = null;
+/**
+ * Is this Devanagari word an English loanword (it maps back to English spelling)? fuzzy: also a word the Hindi
+ * dictionary does not know whose consonant skeleton (2+ consonants, vowels and marks dropped) is a loanword's —
+ * measured: Whisper on a Hindi voice wrote स्किन as सकिन and वीज़ा as विजा. Used to tell Hinglish, never to spell.
+ */
+export function isLoan(word, { fuzzy = false } = {}) {
+  const k = keyOf(String(word || '').replace(/[^\p{L}\p{M}]/gu, ''));
+  if (LOAN_KEYS().has(k)) return true;
+  if (!fuzzy || dict().has(k)) return false;
+  const sk = skeleton(k);
+  return sk.length >= 2 && LOAN_SKEL().has(sk);
+}
+const skeleton = (k) => [...k.normalize('NFD')].filter(isCons).join('');
+let loanKeys = null, loanSkel = null;
 const LOAN_KEYS = () => (loanKeys ||= new Set(LOANS.map(([d]) => keyOf(d))));
+const LOAN_SKEL = () => (loanSkel ||= new Set(LOANS.map(([d]) => skeleton(keyOf(d))).filter((s) => s.length >= 2)));
 
 /** Capitalise the first letter of a sentence (start, or after . ? !). words: [string] in Roman. */
 export function sentenceCase(words) {

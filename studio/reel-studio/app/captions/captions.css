@@ -86,12 +86,13 @@
 .rs-cap-detect[hidden] { display: none; }
 .rs-cap-detect-what { color: var(--c-mute); white-space: nowrap; }
 .rs-cap-detect-what b { color: var(--c-fg); font-weight: 650; }
-.rs-cap-scripts { display: inline-flex; gap: 2px; padding: 2px; margin-left: auto; background: var(--c-bg); border: 1px solid var(--c-line); border-radius: var(--r-sm, 7px); }
-.rs-cap-script { background: none; border: 0; border-radius: 5px; color: var(--c-mute); min-height: 28px; padding: 0 10px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.rs-cap-script[data-script="deva"] { font-family: "Noto Sans Devanagari", var(--font, system-ui), sans-serif; }
-.rs-cap-script[data-script="urdu"] { font-family: "Noto Naskh Arabic", var(--font, system-ui), sans-serif; }
-.rs-cap-script:hover { color: var(--c-fg); }
-.rs-cap-script.on { color: var(--c-acc-fg); background: var(--c-acc); }
+.rs-cap-scriptsw { display: inline-flex; gap: 2px; padding: 2px; margin-left: auto; background: var(--c-bg); border: 1px solid var(--c-line); border-radius: var(--r-sm, 7px); }
+.rs-cap-scriptbtn { background: none; border: 0; border-radius: 5px; color: var(--c-mute); min-height: 28px; padding: 0 10px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.rs-cap-scriptbtn[data-script="deva"] { font-family: "Noto Sans Devanagari", var(--font, system-ui), sans-serif; }
+.rs-cap-scriptbtn[data-script="urdu"] { font-family: "Noto Naskh Arabic", var(--font, system-ui), sans-serif; }
+.rs-cap-scriptbtn:hover { color: var(--c-fg); }
+.rs-cap-scriptbtn.on { color: var(--c-acc-fg); background: var(--c-acc); }
 .rs-cap-vocabbox summary { cursor: pointer; color: var(--c-mute); }
 .rs-cap-vocabbox[open] { display: flex; flex-direction: column; gap: 6px; }
 .rs-cap-vocab { width: 100%; resize: vertical; font: 12px/1.4 ui-monospace, Menlo, monospace; }

@@ -37,8 +37,8 @@ export function mountLangNotice(opts) {
     }
     if (hu) {
       const now = currentScript(c);
-      kids.push(h('span', { class: 'rs-cap-scripts', role: 'group', 'aria-label': 'Caption script' },
-        SCRIPTS.map((s) => h('button', { class: 'rs-cap-script' + (s.id === now ? ' on' : ''), 'data-script': s.id, title: s.title, 'aria-pressed': String(s.id === now),
+      kids.push(h('span', { class: 'rs-cap-scriptsw', role: 'group', 'aria-label': 'Caption script' },
+        SCRIPTS.map((s) => h('button', { class: 'rs-cap-scriptbtn' + (s.id === now ? ' on' : ''), 'data-script': s.id, title: s.title, 'aria-pressed': String(s.id === now),
           onclick: () => { if (s.id !== currentScript(opts.cap())) opts.apply(setScript(s.id, opts.canvas?.())); } }, s.label))));
     }
     el.replaceChildren(...kids);

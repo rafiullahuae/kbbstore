@@ -3,6 +3,7 @@
 
 import { SPEECH_MODELS, dtypesFor, pickDevice } from './models.js';
 import { uncoveredSpeech } from './nonspeech.js';
+import { englishShare } from './hinglish/script.js';
 
 // 29 s, not 30: a window of exactly 480 000 samples makes the word-timestamp decode collapse
 // (measured: 2 words at t=30.0 instead of 70), while 28-29.5 s windows transcribe normally.
@@ -22,7 +23,8 @@ export const SCRIPT_PROMPT = { hi: 'नमस्ते दोस्तों, �
  * Whisper's language probabilities averaged over the loudest (≤ 3) windows -> the caption language.
  * Hindi and Urdu are one spoken language (Hindustani) that Whisper splits by script, so their probabilities are
  * summed for the confidence and the choice between them is a default the owner can flip in one click:
- * Hindi unless Whisper favours Urdu by 1.5x. English heard next to Hindustani (≥ 8 %, or one window that is
+ * Hindi unless Whisper favours Urdu 2 : 1 (measured on one Hindi voice, Urdu/Hindi ran from 0.01 to over 1.5 between runs).
+ * English heard next to Hindustani (≥ 8 %, or one window that is
  * English) marks Hinglish. Returns { lang, conf, probs, alt, hinglish, windows }.
  */
 export function pickLanguage(list) {
@@ -31,7 +33,7 @@ export function pickLanguage(list) {
   const top = Object.entries(probs).sort((a, b) => b[1] - a[1])[0]?.[0] || 'en';
   const hi = probs.hi || 0, ur = probs.ur || 0, hu = hi + ur;
   if (top === 'hi' || top === 'ur' || hu >= 0.5) {
-    const lang = ur >= 1.5 * hi ? 'ur' : 'hi';
+    const lang = ur >= 2 * hi ? 'ur' : 'hi';
     const hinglish = (probs.en || 0) >= 0.08 || list.some((r) => r.lang === 'en');
     return { lang, conf: +Math.min(1, hu).toFixed(3), probs, alt: lang === 'hi' ? 'ur' : 'hi', hinglish, windows: list.length };
   }
@@ -163,7 +165,14 @@ export class Transcriber {
       const enSpans = [];   // stretches decoded as English: a hole inside one is read again as English
       if (hindustani && an?.pauses) {
         const mid = (w) => (w.t0 + w.t1) / 2;
-        for (const [a, b] of speechStretches(dur, an.pauses)) {
+        // Hinglish already, if ≥ 12 % of the first pass is English (loanwords Whisper spelt in Devanagari included)
+        if (!hinglish && englishShare(words) >= 0.12) hinglish = true;
+        const stretches = speechStretches(dur, an.pauses), skipped = [];
+        // a stretch skipped before the clip turned out to be Hinglish is checked in a second round
+        for (let k = 0; k < stretches.length + skipped.length; k++) {
+          const [a, b] = k < stretches.length ? stretches[k] : skipped[k - stretches.length];
+          const late = k >= stretches.length;
+          if (late && !hinglish) break;
           if (signal?.aborted) throw abortError();
           if ((stats.langChecks || 0) >= 40) break;
           const inside = words.filter((w) => mid(w) >= a && mid(w) < b);
@@ -171,7 +180,7 @@ export class Transcriber {
           // decoder loop — measured in the editor on AAC audio: "आज हुट आज हुट" written over two English sentences)
           const txt = inside.map((w) => w.w.replace(/[^\p{L}\p{M}]/gu, ''));
           const loop = txt.some((x, i) => i >= 2 && x && x === txt[i - 2] && txt[i - 1] === txt[i - 3]);
-          if (!hinglish && !loop && inside.length / (b - a) >= 1.5) continue;
+          if (!hinglish && !loop && inside.length / (b - a) >= 1.5) { skipped.push([a, b]); continue; }
           const s0 = Math.max(0, a - 0.15), s1 = Math.min(dur, b + 0.15);
           const english = await englishAt(s0, s1);
           if (!english && !loop) continue;

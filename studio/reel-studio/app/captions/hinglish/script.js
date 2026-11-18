@@ -96,7 +96,7 @@ export const nativeCaptions = (cap) => (cap && cap.words?.some((w) => w.orig != 
 export function englishShare(words) {
   const sp = (words || []).filter((w) => !w.tag && /[\p{L}]/u.test(w.w));
   if (!sp.length) return 0;
-  return sp.filter((w) => w.lang === 'en' || scriptOfText(w.w) === 'latin' || isLoan(w.w)).length / sp.length;
+  return sp.filter((w) => w.lang === 'en' || scriptOfText(w.w) === 'latin' || isLoan(w.w, { fuzzy: true })).length / sp.length;
 }
 
 /**
@@ -126,7 +126,11 @@ export function heardLanguage(raw, words) {
  * in the project's script (meta.captions.script; auto = Roman for Hinglish, else as heard). Returns a patch.
  */
 export function withHeardLanguage(cap, r, chosen, project) {
-  const info = captionLangInfo(r, chosen, project?.meta?.captions?.script);
+  // listening again ("It's Urdu", or Auto captions a second time) keeps the script on screen when the setting is Auto
+  let pref = project?.meta?.captions?.script;
+  const prev = project?.captions;
+  if ((!pref || pref === 'auto') && prev?.script && isHindustani(prev) && prev.words?.length) pref = prev.script;
+  const info = captionLangInfo(r, chosen, pref);
   if (!info.script) return { detect: info.detect };
   if (info.script === currentScript(cap)) return { detect: info.detect, script: info.script };
   const c = withScript(cap, info.script, project?.canvas);
