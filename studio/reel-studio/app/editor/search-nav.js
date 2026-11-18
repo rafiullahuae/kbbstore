@@ -74,7 +74,7 @@ function ensureSelection(need) {
   if (need === 'capsules' && !pick((it) => it.type === 'theme.el' && it.style?.el === 'capsules')) return 'Place a capsules carousel first: Themes → Capsules carousel → ＋.';
   if (need === 'theme' && !pick((it) => /^theme\.(el|sting|outro)$/.test(it.type) && !/^(capsules|grade|wipe|confetti)$/.test(it.style?.el || ''))) return 'Place a theme element first: Themes → Place elements (a lower third, an end card …) → ＋.';
   // contact cards, the logo badge, country badges, cut-out transitions (themes/el2-panel.js)
-  const EL2 = { cta: ['cta', 'a contact card: Themes → Place elements → Contact card → ＋'], logo: ['logo', 'a logo badge: Themes → One click → 🔰 Logo badge'], cbadge: ['cbadge', 'a country badge: Themes → One click → 🌐 Badge every country I mention'] };
+  const EL2 = { cta: ['cta', 'a contact card: Themes → Place elements → Contact card → ＋'], logo: ['logo', 'a logo badge: Themes → One click → 🔰 Logo badge'], cbadge: ['cbadge', 'a country badge: Themes → One click → 🌐 Badge every country I mention'], endscreen: ['endscreen', 'an ending screen: Themes → One click → 🏁 Add ending screen'] };
   if (EL2[need] && !pick((it) => it.type === 'theme.el' && it.style?.el === EL2[need][0])) return 'Place ' + EL2[need][1] + '.';
   if (need === 'cutout' && !pick((it) => it.type === 'theme.trans' && /^cut-/.test(it.style?.kind || ''))) return 'Put a cut-out transition on a cut first: Themes → Transitions between clips → Person stays, background swaps → ＋.';
   if (need === 'multi' && ed.sel.size < 2) return 'Select two or more items first (Shift-click them on the timeline or drag a box on the video).';
@@ -172,7 +172,7 @@ export async function goTo(entry, { run = false } = {}) {
     hint = ensureSelection(go.need);
     if (hint && go.need === 'capsules') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', label: 'Capsules carousel' } }); }
     if (hint && go.need === 'theme') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', label: 'Add at the playhead' } }); }
-    if (hint && /^(cta|logo|cbadge|cutout)$/.test(go.need)) { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', sel: go.need === 'cutout' ? '[data-place-trans="cut-bgswap"]' : go.need === 'cta' ? '[data-place="cta"]' : '[data-e2-quick]' } }); }
+    if (hint && /^(cta|logo|cbadge|cutout|endscreen)$/.test(go.need)) { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', sel: go.need === 'cutout' ? '[data-place-trans="cut-bgswap"]' : go.need === 'cta' ? '[data-place="cta"]' : '[data-e2-quick]' } }); }
     if (hint && go.need === 'text') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', bin: 'Text', label: 'Title' } }); }
     if (hint) toast(hint, 'info', 4200);
   }

@@ -10,16 +10,18 @@
 import { CTA_DESIGNS, drawCta, ctaBox, contactOf } from './cta.js';
 import { LOGO_SHAPES, drawLogoBadge, logoBox, BADGE_DEFAULTS } from './logo-badge.js';
 import { BADGE_LOOKS, drawCountryBadge, badgeBox } from './globe-badge.js';
+import { END_DESIGNS, END_DUR, drawEndScreen } from './endscreen.js';
 import { themeById } from './themes.js';
 
 const labels = (list) => Object.fromEntries(list.map((x) => [x.id, x.label]));
 export const EL2_ELEMENTS = [
   { id: 'cta', label: 'Contact card', icon: '📞', dur: 4, box: 'cta', whole: 'span', el2: true, note: 'Phone, WhatsApp, email, website, socials, QR · 15 designs', variants: CTA_DESIGNS.map((d) => d.id), variantLabels: labels(CTA_DESIGNS) },
   { id: 'logo', label: 'Logo badge', icon: '🔰', dur: 4, box: 'logo', whole: 'span', el2: true, note: 'Your logo on a plate, prepared automatically', variants: LOGO_SHAPES.map((d) => d.id), variantLabels: labels(LOGO_SHAPES) },
+  { id: 'endscreen', label: 'Ending screen', icon: '🏁', dur: END_DUR, box: 'full', whole: 'end', el2: true, note: 'Closing card: logo, phone, WhatsApp, website, CTA · 11 looks', variants: END_DESIGNS.map((d) => d.id), variantLabels: labels(END_DESIGNS) },
   { id: 'cbadge', label: 'Country globe badge', icon: '🌐', dur: 3.5, box: 'cbadge', whole: 'span', el2: true, note: 'Corner badge: turning globe, flag ring, name', variants: BADGE_LOOKS.map((d) => d.id), variantLabels: labels(BADGE_LOOKS) },
 ];
 export const EL2_IDS = new Set(EL2_ELEMENTS.map((e) => e.id));
-export const EL2_DRAW = { cta: drawCta, logo: drawLogoBadge, cbadge: drawCountryBadge };
+export const EL2_DRAW = { cta: drawCta, logo: drawLogoBadge, cbadge: drawCountryBadge, endscreen: drawEndScreen };
 
 const wsNow = () => { try { return globalThis.window?.kbbEditor?.workspace || null; } catch { return null; } };
 const brandColorsOf = (ws) => { const c = ws?.colors || {}; return c.primary ? { primary: c.primary, secondary: c.secondary || null, accent: c.accent || c.secondary || null, text: c.text || null, soft: c.soft || null } : null; };
@@ -32,6 +34,10 @@ export function el2Style(el, { ws, variant, theme } = {}) {
   if (el === 'cta') return { variant: variant || 'phonewa', contact: contactOf(ws), brandColors, palette: brandColors ? 'brand' : 'theme', lang: 'en' };
   if (el === 'logo') return { variant: variant || 'circle', logo: ws.logo || null, logoFull: ws.logoFull || null, brandColors, badge: { ...BADGE_DEFAULTS } };
   const th = themeById(theme);
+  if (el === 'endscreen') {
+    const first = (v) => (Array.isArray(v) ? v[0] : v) || null, photo = Object.values(ws.adPhotos || {}).find(Boolean) || null;
+    return { variant: variant || 'corporate', contact: contactOf(ws), brandColors, palette: brandColors ? 'brand' : 'theme', lang: 'en', logo: ws.logo || null, slides: 1, photo, code: th?.country || 'europe', ctaEn: first(ws.endCard?.cta), ctaAr: first(ws.endCard?.ctaAr) };
+  }
   return { variant: variant || 'glass', code: th?.country || 'europe', lang: 'both', flagIn: false };
 }
 
@@ -41,5 +47,6 @@ export function el2Box(el, W, H, variant) {
   if (el === 'cta') return ctaBox(variant || 'phonewa', W, H);
   if (el === 'logo') return logoBox(variant || 'circle', BADGE_DEFAULTS.corner, BADGE_DEFAULTS.size, W, H, aspect);
   if (el === 'cbadge') return badgeBox('tl', 0.3, W, H, aspect);
+  if (el === 'endscreen') return { x: 0, y: 0, w: W, h: H };
   return null;
 }

@@ -26,6 +26,7 @@ const LABELS = {
   waLbl: 'Label · WhatsApp', bothLbl: 'Label · call or WhatsApp', mailLbl: 'Label · email', snapLbl: 'Label · Snapchat', ytLbl: 'Label · YouTube', scanLbl: 'Label · scan', scanSub: 'Under the label',
   consultLbl: 'Headline', consultSub: 'Subline', tapLbl: 'Button', callRow: 'Row label · call', waRow: 'Row label · WhatsApp', whatsapp: 'WhatsApp number', email: 'Email', website: 'Website',
   instagram: 'Handle', tiktok: 'TikTok handle', snapchat: 'Snapchat handle', youtube: 'YouTube channel', qr: 'QR link', countryUr: 'Country (Urdu)', countryHi: 'Country (Hindi)', stampSub: 'Stamp line',
+  thanks: 'Thank-you line', waTitle: 'WhatsApp headline', follow: 'Follow line', visit: 'Visit line', scan: 'Scan line', address: 'Address / office', company: 'Company name',
 };
 const PER_EL = { ticket: { brand: 'Card title', from: 'From (code)', to: 'To (code)' }, counter: { label: 'Label' }, bulletin: { label: 'Top label' }, split: { label: 'Top label' } };
 const SERIES = { s: 'Step', g: 'Goal', w: 'Word', p: 'Point', c: 'Card', r: 'Row', l: 'Line', role: 'Role', k: 'Key', d: 'Day' };

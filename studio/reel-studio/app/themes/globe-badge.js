@@ -63,7 +63,7 @@ export function colorsOf(code) {
   } catch {}
   COLS.set(code, out); return out;
 }
-const flagOf = (code) => (code === 'europe' ? flagCanvas('eu') || A.bandFlag(['#003399', '#FFCC00'], 'stars') : isRegion(code) ? A.bandFlag(REGIONS[code].ring, 'bands') : flagCanvas(code));
+export const flagOf = (code) => (code === 'europe' ? flagCanvas('eu') || A.bandFlag(['#003399', '#FFCC00'], 'stars') : isRegion(code) ? A.bandFlag(REGIONS[code].ring, 'bands') : flagCanvas(code));
 
 // ── the globe, cached ──
 const GLOBES = new Map();

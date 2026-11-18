@@ -9,7 +9,8 @@ import { BADGE_LOOKS, loadBadgeAssets } from './globe-badge.js';
 import { REGIONS, placeName } from './country-words.js';
 import { COUNTRIES as FLAG_ROWS } from './capsules/countries.js';
 import { kitFor } from './kit.js';
-import { addLogo, setBadge, badgeMentions, refreshContact, afterCutPlaced, mentionBadges, wholeLogo } from './el2-cmds.js';
+import { addLogo, setBadge, badgeMentions, refreshContact, afterCutPlaced, mentionBadges, wholeLogo, addEndScreen, endScreen, setEndDuration } from './el2-cmds.js';
+import { END_DESIGNS, endById, loadEndAssets } from './endscreen.js';
 import { cutStatus } from './cutout-trans.js';
 import { EL2_IDS } from './el2.js';
 import { badgeBox } from './globe-badge.js';
@@ -146,6 +147,27 @@ function badgeSections(insp, item) {
   return [insp.section('Country badge', ...kids)];
 }
 
+// ── ending screen ──
+function endSections(insp, item) {
+  const ed = insp.ed, s = item.style || {}, ws = ed.context?.().workspace || {};
+  loadEndAssets(s).then(() => ed.preview?.draw?.());
+  const dur = (item.out - item.in) / (item.speed || 1);
+  const photos = [...Object.entries(ws.adPhotos || {}).filter(([, v]) => v).map(([k, v]) => [v, 'Company photo · ' + k]), ...ed.project.media.filter((m) => m.kind === 'image').map((m) => [m.src, m.name])];
+  const photoSel = h('select', { 'aria-label': 'Photo slot', title: 'The picture in the photo slot (Photo + details); none draws a soft stand-in', dataset: { e2Photo: '1' }, on: { change: (e) => { const v = e.target.value || null; writeStyle(insp, item, (st) => { st.photo = v; }, 'Ending screen photo'); loadEndAssets({ ...s, photo: v }).then(() => ed.preview?.draw?.()); } } },
+    h('option', { value: '', selected: !s.photo }, 'None (a drawn stand-in)'), photos.map(([v, l]) => h('option', { value: v, selected: v === s.photo }, l)));
+  const con = s.contact || {}, differs = JSON.stringify(contactOf(ws)) !== JSON.stringify(con);
+  return [insp.section('Ending screen',
+    picker(END_DESIGNS.map((d) => [d.id, d.label]), s.variant || 'corporate', (v) => { writeStyle(insp, item, (st) => { st.variant = v; }, 'Ending screen · ' + endById(v).label, () => ({ name: `🏁 Ending screen · ${v}` })); insp.render(true); }, '.two'),
+    h('div.e2-row', h('span.lbl', 'Slides'), segBtns([['1', '1'], ['2', '2'], ['3', '3']], String(s.slides || 1), (v) => writeStyle(insp, item, (st) => { st.slides = +v; }, 'Ending screen slides'))),
+    h('p.e2-note', 'One card, or 2–3 slides: logo + thank you → contacts → call to action.'),
+    slider({ label: 'Duration', min: 1, max: 10, step: 0.1, value: +dur.toFixed(1), fmt: (v) => v.toFixed(1) + ' s', onInput: (v) => setEndDuration(ed.context(), item.id, v), onDone: () => { insp.seal(); insp.render(true); } }),
+    h('label.row', h('span.lbl', 'Photo'), photoSel),
+    h('div.e2-row', h('span.lbl', 'Colours'), segBtns([['brand', 'Company'], ['theme', 'Theme']], s.palette || 'brand', (v) => writeStyle(insp, item, (st) => { st.palette = v; }, 'Ending screen colours'))),
+    h('div.e2-row', h('span.lbl', 'Words'), segBtns([['en', 'English'], ['ar', 'عربي']], s.lang || 'en', (v) => writeStyle(insp, item, (st) => { st.lang = v; }, 'Ending screen language'))),
+    h('p.e2-note', 'Phone, WhatsApp, website, email and handles come from ⚙ Configure → Contact & social; every word is editable in Text below or by double-clicking it on the video.'),
+    h('button.btn.small', { type: 'button', title: 'Take the contact details from ⚙ Configure → Contact & social again', disabled: !differs, dataset: { e2Refresh: '1' }, on: { click: () => { refreshContact(ed.context(), item.id); insp.seal(); insp.render(true); } } }, differs ? '↻ Use Configure’s contact details' : '✓ Matches Configure'))];
+}
+
 /** the inspector's sections for an el2 element */
 export const handles = (el) => EL2_IDS.has(el);
 export function inspectorSections(insp, item) {
@@ -154,6 +176,7 @@ export function inspectorSections(insp, item) {
   if (el === 'cta') return ctaSections(insp, item);
   if (el === 'logo') return logoSections(insp, item);
   if (el === 'cbadge') return badgeSections(insp, item);
+  if (el === 'endscreen') return endSections(insp, item);
   return [];
 }
 
@@ -171,6 +194,7 @@ export function quickCard(ctx) {
   const box = h('div.e2-quick', { dataset: { e2Quick: '1' } });
   const render = () => {
     const p = ctx.project, ws = ctx.workspace || {}, logo = wholeLogo(p), nB = mentionBadges(p).length;
+    const ends = h('select', { 'aria-label': 'Ending screen look', title: 'The look of the ending screen', dataset: { e2EndLook: '1' } }, END_DESIGNS.map((x) => h('option', { value: x.id, selected: x.id === endScreen(p)?.style?.variant }, x.label)));
     const looks = h('select', { 'aria-label': 'Badge look', title: 'The look of the country badges', dataset: { e2Look: '1' } }, BADGE_LOOKS.map((x) => h('option', { value: x.id }, x.label)));
     clear(box).append(
       h('b', '⚡ One click'),
@@ -181,6 +205,9 @@ export function quickCard(ctx) {
       h('div.e2-row', h('button.btn.small', { type: 'button', title: 'Scan the captions for countries and regions (English, Arabic, Urdu, Hindi) and put a globe badge in the corner for each mention', dataset: { e2Mentions: '1' }, on: { click: () => {
         try { const r = badgeMentions(ctx, { look: looks.value }); toast(r.n ? `${r.n} country badge${r.n === 1 ? '' : 's'}: ${r.codes.map((c) => placeName(c, 'en')).join(', ')} · ⌘Z undoes` : 'No country or region named in the captions', r.n ? 'ok' : 'info', 4200); render(); } catch (e) { toast(e.message, 'error'); }
       } } }, '🌐 Badge every country I mention'), looks),
+      h('div.e2-row', h('button.btn.small', { type: 'button', title: 'A closing card at the end of the reel: logo, phone, WhatsApp, website, call to action (it follows the reel’s length)', dataset: { e2End: '1' }, on: { click: () => {
+        try { const it = addEndScreen(ctx, ends.value); window.kbbEditor?.select?.([it.id]); window.kbbEditor?.showSide?.('inspector'); toast(`Ending screen · ${endById(ends.value).label} · the last ${(it.out - it.in).toFixed(1)} s · ⌘Z undoes`, 'ok'); render(); } catch (e) { toast(e.message, 'error'); }
+      } } }, endScreen(p) ? '🏁 Replace ending screen' : '🏁 Add ending screen'), ends),
       h('p.e2-note', nB ? `${nB} mention badge${nB === 1 ? '' : 's'} on the reel: they follow caption edits.` : 'Contact cards (15 designs) and single badges are in Place elements below.'));
   };
   render();

@@ -128,9 +128,9 @@ const FPS = 30;
   if (want('catalogue')) {
     const cat = await ev(async () => {
       const ids = (el) => window.EL.elementById(el)?.variants || [];
-      const out = { cta: ids('cta'), logo: ids('logo'), cbadge: ids('cbadge'), cut: window.TT.TRANSITIONS.filter((x) => x.cut).map((x) => x.id), drawn: 0, empty: [] };
+      const out = { cta: ids('cta'), logo: ids('logo'), cbadge: ids('cbadge'), endscreen: ids('endscreen'), cut: window.TT.TRANSITIONS.filter((x) => x.cut).map((x) => x.id), drawn: 0, empty: [] };
       const p = window.ED.project, c = document.createElement('canvas'); c.width = 270; c.height = 480; const g = c.getContext('2d', { willReadFrequently: true });
-      for (const el of ['cta', 'logo', 'cbadge']) for (const v of ids(el)) {
+      for (const el of ['cta', 'logo', 'cbadge', 'endscreen']) for (const v of ids(el)) {
         const style = window.EL.elementStyle('europe', el, { variant: v, ws: window.ED.workspace }), box = window.EL.boxFor(el, p.canvas.w, p.canvas.h, v);
         if (el === 'cbadge') await window.GB.loadBadgeAssets(style.code); if (el === 'logo') await window.LG.prepareLogo(window.LG.logoSrcOf(style));
         const it = window.P.createItem('theme.el', { t0: 0, in: 0, out: 4, ...box, style });
@@ -146,6 +146,7 @@ const FPS = 30;
     });
     ok(cat.cta.length >= 12, `${cat.cta.length} contact-card designs (≥ 12): ${cat.cta.join(', ')}`);
     ok(cat.logo.length === 5 && cat.cbadge.length >= 6 && cat.cut.length >= 6, `${cat.logo.length} logo shapes (${cat.logo.join(', ')}), ${cat.cbadge.length} badge looks (${cat.cbadge.join(', ')}), ${cat.cut.length} cut-out transitions (${cat.cut.join(', ')})`);
+    ok(cat.endscreen.length >= 10, `${cat.endscreen.length} ending-screen templates (≥ 10): ${cat.endscreen.join(', ')}`);
     ok(cat.empty.length === 0 && errors.length === 0, `all ${cat.drawn} designs / shapes / looks draw at four moments (none empty${cat.empty.length ? ': ' + cat.empty.join(', ') : ''}), ${errors.length} console errors`);
   }
 
@@ -200,6 +201,44 @@ const FPS = 30;
     const f2 = await ev((id) => window.find(id).style.text?.bothLbl, cta.id);
     ok(dbl?.key === 'bothLbl' && f2 === 'RING US TODAY', `double-click the label on the video: an input opens on it (${dbl?.key} “${dbl?.value}”), typing replaces it → “${f2}”`);
     await shot('cta-on-video-1440x900');
+  }
+
+  // ════════ ending screens ════════
+  if (want('end')) {
+    const end = await ev(async () => {
+      const ed = window.ED, ws = ed.workspace; ws.contactInfo = { phone: '+971 50 123 4567', whatsapp: '+971 55 765 4321', email: 'hello@planetcareers.ae', website: 'planetcareers.ae' }; ws.social = { instagram: '@planetcareers' };
+      const ES = await import('/app/themes/endscreen.js'), steps = window.steps;
+      const s0 = steps(), it = window.C2.addEndScreen(window.CTX, 'corporate'), s1 = steps(), D0 = window.C2.reelEnd2(ed.project);
+      const item = () => window.find(it.id), endOf = (i) => +(i.t0 + (i.out - i.in)).toFixed(3);
+      const a = { t0: item().t0, end: endOf(item()), dur: item().out - item().in, D: D0 };
+      const words = (i, t) => { const dr = [], c = document.createElement('canvas'); c.width = 54; c.height = 96; const g = c.getContext('2d'); g.setTransform(0.05, 0, 0, 0.05, 0, 0); window.EL.drawElement(g, 'endscreen', i, ed.project, { box: { x: 0, y: 0, w: 1080, h: 1920 }, local: t, preview: false, w: 1080, h: 1920 }, null, false, { draws: dr }); return dr.map((d) => d.text); };
+      const w1 = words(item(), 1.6);
+      // a trim of the last clip: the ending screen still closes the reel, in the same undo step
+      const last = window.vclips()[2], s2 = steps(); ed.apply(ed.ops.setItems([{ id: last.id, props: { out: +(last.out - 0.6).toFixed(3) } }], 'Trim')); ed.history.seal();
+      const b = { end: endOf(item()), D: window.C2.reelEnd2(ed.project), steps: steps() - s2 };
+      ed.history.undo(); const c2 = { end: endOf(item()) }; ed.history.redo(); ed.history.undo();
+      // duration 1..10 s, the end kept; the animation re-times: the contacts are on at 60 % of any length, gone at the end
+      const durs = {};
+      for (const d of [1.2, 3, 6]) { window.C2.setEndDuration(window.CTX, it.id, d); ed.history.seal(); const i = item(); durs[d] = { t0: i.t0, end: endOf(i), mid: words(i, d * 0.6).includes('+971 50 123 4567'), out: words(i, d - 0.001).length }; }
+      window.C2.setEndDuration(window.CTX, it.id, 3); ed.history.seal();
+      // three slides: logo + thank you, then the contacts, then the call to action
+      const st = JSON.parse(JSON.stringify(item().style)); st.slides = 3; ed.apply(ed.ops.setItems([{ id: it.id, props: { style: st } }], 'Slides')); ed.history.seal();
+      const sl = [0.6, 1.5, 2.5].map((t) => { const w = words(item(), t); return { thanks: w.some((x) => /THANK YOU/.test(x)), phone: w.includes('+971 50 123 4567'), cta: w.some((x) => /CONSULTATION|SHOP/i.test(x)) }; });
+      st.slides = 1; ed.apply(ed.ops.setItems([{ id: it.id, props: { style: st } }], 'Slides')); ed.history.seal();
+      return { steps: s1 - s0, a, w1, b, c2, durs, sl, id: it.id };
+    });
+    ok(end.steps === 1 && Math.abs(end.a.end - end.a.D) < 0.002 && Math.abs(end.a.dur - 3) < 0.01, `Add ending screen: ONE undo step, the last 3 s of the reel (${end.a.t0}–${end.a.end} s, reel ${end.a.D} s)`);
+    ok(['+971 50 123 4567', '+971 55 765 4321', 'planetcareers.ae', 'hello@planetcareers.ae', '@planetcareers'].every((x) => end.w1.includes(x)), `it shows Configure's phone, WhatsApp, website, email and handle (${end.w1.slice(0, 9).join(' · ')})`);
+    ok(Math.abs(end.b.end - end.b.D) < 0.002 && end.b.steps === 1 && Math.abs(end.c2.end - end.a.end) < 0.002, `a 0.6 s trim of the last clip: it still closes the reel (ends ${end.b.end} = reel ${end.b.D}) in the trim's own undo step; undo puts it back at ${end.c2.end}`);
+    ok(Object.values(end.durs).every((x) => Math.abs(x.end - end.a.D) < 0.002 && x.mid && x.out === 0), `duration 1.2 / 3 / 6 s, the end kept (${Object.entries(end.durs).map(([d, x]) => d + ' s → ' + x.t0 + '–' + x.end).join(', ')}); the animation re-times: contacts on at 60 %, nothing left at the last instant`);
+    ok(end.sl[0].thanks && !end.sl[0].phone && end.sl[1].phone && !end.sl[1].thanks && end.sl[2].cta && !end.sl[2].phone, `3 slides: (1) logo + thank you ${JSON.stringify(end.sl[0])}, (2) contacts ${JSON.stringify(end.sl[1])}, (3) call to action ${JSON.stringify(end.sl[2])}`);
+    // double-click a word of the ending screen on the video
+    await ev((id) => { const it = window.find(id); window.ED.select([id]); window.ED.seek(it.t0 + 1.8); window.ED.showSide?.('inspector'); }, end.id); await page.waitForTimeout(700);
+    const ov = await page.locator('.pv-overlay').boundingBox();
+    const at = await ev(({ id, key }) => { const it = window.find(id), b = window.TX.lastBoxes(id)?.boxes.find((x) => x.key === key), k = window.ED.preview.k; return b && { x: (it.x + b.x + b.w / 2) * k, y: (it.y + b.y + b.h / 2) * k }; }, { id: end.id, key: 'website' });
+    let dbl = null; if (at) { await page.mouse.dblclick(ov.x + at.x, ov.y + at.y); await page.waitForSelector('[data-th-canvas-text]', { timeout: 5000 }).catch(() => {}); dbl = await ev(() => document.querySelector('[data-th-canvas-text]')?.dataset.thCanvasText || null); if (dbl) { await page.keyboard.press('Escape'); } }
+    ok(dbl === 'website', `double-click the website on the ending screen opens its editor (${dbl})`);
+    await reveal('[data-e2]'); await shot('ending-screen-inspector-1440x900');
   }
 
   // ════════ logo badge ════════
@@ -353,13 +392,14 @@ const FPS = 30;
       if (!window.C2.wholeLogo(ed.project)) window.C2.addLogo(window.CTX, 'circle');
       if (!window.items().some((i) => i.style?.el === 'cbadge')) window.TH.placeElement(window.CTX, 'cbadge', { theme: 'country-de', variant: 'flagring', t0: 0, dur: 5.5 });
       window.TT.placeTransition(window.CTX, 'cut-popout', { at: 2, theme: 'europe', dur: 1 });
+      if (!window.C2.endScreen(ed.project)) window.C2.addEndScreen(window.CTX, 'flag');
       await window.V.ensureAnalysis(ed.project); await window.R.prepareRender(ed.project);
-      const r = await window.E.exportMp4(ed.project, ed.media, { quality: 'high', width: 540, height: 960, duration: 4 });
+      const r = await window.E.exportMp4(ed.project, ed.media, { quality: 'high', width: 540, height: 960 });
       const file = `workspaces/${ed.project.workspace}/exports/el2-same.mp4`; await ed.engine.writeFile(file, r.blob);
       return file;
     });
     const out = [];
-    for (const t of [1.0, 1.95, 2.3, 3.2]) {
+    for (const t of [1.0, 1.95, 2.3, 3.2, 4.6]) {
       await ev((t) => window.ED.seek(t), t);
       await page.waitForFunction(() => window.kbbEditor.preview.pending === 0, null, { timeout: 20000 }).catch(() => {});
       await page.waitForTimeout(800);
@@ -369,7 +409,7 @@ const FPS = 30;
       for (const [nm, px] of [['pv', pv], ['ex', ex]]) fs.writeFileSync(path.join(OUT, `same-${t}-${nm}.ppm`), Buffer.concat([Buffer.from('P6\n135 240\n255\n'), Buffer.from(Uint8Array.from(px))]));
       out.push([t, +(s / ex.length).toFixed(2)]);
     }
-    ok(out.every(([, d]) => d < 6), `preview = export with a card, a logo, a badge and a cut-out transition: mean difference ${out.map(([t, d]) => `${t}s ${d}`).join(', ')} (/255, < 6)`);
+    ok(out.every(([, d]) => d < 6), `preview = export with a card, a logo, a badge, a cut-out transition and an ending screen (4.6 s): mean difference ${out.map(([t, d]) => `${t}s ${d}`).join(', ')} (/255, < 6)`);
     await ev(() => { const it = window.items().find((i) => i.type === 'theme.trans'); window.ED.select([it.id]); window.ED.seek(1.95); window.ED.showSide?.('inspector'); }); await page.waitForTimeout(1200);
     await reveal('[data-e2-cut]'); await shot('cut-transition-inspector-1440x900');
   }
@@ -377,7 +417,7 @@ const FPS = 30;
   // ════════ keep: undo, save + reload, old projects ════════
   if (want('keep')) {
     const before = await ev(async () => {
-      const ed = window.ED, mine = window.items().filter((i) => /^(cta|logo|cbadge)$/.test(i.style?.el || '') || /^cut-/.test(i.style?.kind || ''));
+      const ed = window.ED, mine = window.items().filter((i) => /^(cta|logo|cbadge|endscreen)$/.test(i.style?.el || '') || /^cut-/.test(i.style?.kind || ''));
       const r = await window.RENDER(ed.project, 1.95, 0.2);
       return { n: mine.length, json: JSON.stringify(mine.map((i) => [i.id, i.type, i.t0, i.out, i.x, i.y, i.w, i.h, i.style])), px: Array.from(r.d) };
     });
@@ -388,7 +428,7 @@ const FPS = 30;
       const ed = window.kbbEditor; window.ED = ed; window.R = await import('/app/core/render.js'); window.E = await import('/app/core/export.js'); window.V = await import('/app/look/vision.js');
       window.items = () => ed.project.tracks.flatMap((t) => t.items);
       window.RENDER = async (p, t, scale) => { const W = Math.round(p.canvas.w * scale), Hh = Math.round(p.canvas.h * scale), c = document.createElement('canvas'); c.width = W; c.height = Hh; const x = c.getContext('2d', { willReadFrequently: true }); await window.R.prepareRender(p); const f = await window.E.openFrames(p, ed.media, scale); try { await f.load(t); window.R.renderFrame(x, p, t, { scale, source: f.source }); } finally { f.close(); } return { d: x.getImageData(0, 0, W, Hh).data }; };
-      const mine = window.items().filter((i) => /^(cta|logo|cbadge)$/.test(i.style?.el || '') || /^cut-/.test(i.style?.kind || ''));
+      const mine = window.items().filter((i) => /^(cta|logo|cbadge|endscreen)$/.test(i.style?.el || '') || /^cut-/.test(i.style?.kind || ''));
       const r = await window.RENDER(ed.project, 1.95, 0.2);
       return { n: mine.length, json: JSON.stringify(mine.map((i) => [i.id, i.type, i.t0, i.out, i.x, i.y, i.w, i.h, i.style])), px: Array.from(r.d) };
     });
@@ -429,10 +469,12 @@ const FPS = 30;
       await snap('06-country-badges-stamp-neon-uae', mk([el('cbadge', 'stamp', { code: 'ca' }, sq(70, 160, 330)), el('cbadge', 'neon', { code: 'ae', lang: 'ar' }, sq(680, 160, 330))]), 2.2);
       await snap('07-cutout-person-stays-background-swaps', mk([], 'cut-bgswap'), 2.1);
       await snap('08-cutout-text-behind-person', mk([], 'cut-textbehind'), 1.9);
+      const ES = await import('/app/themes/endscreen.js'), es = el('endscreen', 'whatsapp', {}, { x: 0, y: 0, w: 1080, h: 1920 }); await ES.loadEndAssets(es.style);
+      await snap('09-ending-screen-big-whatsapp', mk([es]), 1.8);
       return shots;
     });
     for (const [n, d] of Object.entries(stills)) fs.writeFileSync(path.join(SHOTS, n + '.png'), Buffer.from(d.split(',')[1], 'base64'));
-    ok(Object.keys(stills).length === 8, `8 stills in shots/elements2/: ${Object.keys(stills).join(', ')}`);
+    ok(Object.keys(stills).length === 9, `9 stills in shots/elements2/: ${Object.keys(stills).join(', ')}`);
   }
 
   // ════════ previews: every design, shape, look and transition as a 4 s 432×768 mp4 + poster ════════
@@ -443,6 +485,8 @@ const FPS = 30;
         for (const v of EL2.elementById('cta').variants) list.push({ kind: 'el', el: 'cta', v, name: 'cta-' + v });
         for (const v of EL2.elementById('logo').variants) for (const [co, logo, full] of [['kbb', 'brands/kbb/logo-mark.svg', 'brands/kbb/logo.svg'], ['planet-careers', 'brands/planet-careers/logo-app-icon.png', 'brands/planet-careers/logo.png']]) list.push({ kind: 'el', el: 'logo', v, name: `logo-${v}-${co}`, extra: { logo, logoFull: full } });
         for (const v of EL2.elementById('cbadge').variants) list.push({ kind: 'el', el: 'cbadge', v, name: 'badge-' + v, extra: { code: { glass: 'europe', flat: 'de', flagring: 'gb', neon: 'ae', stamp: 'ca', minimal: 'au' }[v] } });
+        for (const v of EL2.elementById('endscreen').variants) list.push({ kind: 'el', el: 'endscreen', v, name: 'ending-' + v, extra: { code: 'de' } });
+        list.push({ kind: 'el', el: 'endscreen', v: 'gradient', name: 'ending-gradient-3-slides', extra: { slides: 3 } });
         for (const t of TT.TRANSITIONS.filter((x) => x.cut)) list.push({ kind: 'trans', v: t.id, name: 'transition-' + t.id });
         void EL; return list;
       }));
@@ -457,9 +501,9 @@ const FPS = 30;
         if (sp.kind === 'trans') p.tracks[1].items.push(TT.transItem(p, { a: p.tracks[0].items[0], b: p.tracks[0].items[1], t: 2 }, sp.v, { theme: 'europe', dur: TT.transitionById(sp.v).dur * 1.5 }));
         else {
           const st = { ...EL.elementStyle('europe', sp.el, { variant: sp.v, ws: window.ED.workspace }), ...(sp.extra || {}) };
-          const box = sp.el === 'cbadge' ? { x: 90, y: 200, w: 420, h: 554 } : sp.el === 'logo' ? (sp.v === 'pill' ? { x: 190, y: 220, w: 700, h: 270 } : { x: 330, y: 200, w: 420, h: 420 }) : EL.boxFor(sp.el, W, Hh, sp.v);
+          const box = sp.el === 'endscreen' ? { x: 0, y: 0, w: W, h: Hh } : sp.el === 'cbadge' ? { x: 90, y: 200, w: 420, h: 554 } : sp.el === 'logo' ? (sp.v === 'pill' ? { x: 190, y: 220, w: 700, h: 270 } : { x: 330, y: 200, w: 420, h: 420 }) : EL.boxFor(sp.el, W, Hh, sp.v);
           p.tracks[2].items.push(P.createItem('theme.el', { t0: 0.15, in: 0, out: 3.75, ...box, style: st }));
-          if (sp.el === 'logo') await LG.prepareLogo(LG.logoSrcOf(st)); if (sp.el === 'cbadge') await GB.loadBadgeAssets(st.code);
+          if (sp.el === 'logo') await LG.prepareLogo(LG.logoSrcOf(st)); if (sp.el === 'cbadge') await GB.loadBadgeAssets(st.code); if (sp.el === 'endscreen') await (await import('/app/themes/endscreen.js')).loadEndAssets(st);
         }
         const c = document.createElement('canvas'); c.width = 432; c.height = 768; const g = c.getContext('2d'), out = [];
         for (let i = 0; i < 96; i++) { H2.drawMini(g, 432, 768, p, i / 24); out.push(c.toDataURL('image/jpeg', 0.9)); }

@@ -46,7 +46,7 @@ export function contactOf(ws = {}) {
   return {
     phone: num, whatsapp: clean(ci.whatsapp) || num, email: clean(ci.email) || (/\S+@\S+\.\S+/.exec(line) || [])[0] || '', website: site.replace(/^https?:\/\//i, '').replace(/\/$/, ''),
     instagram: handle(so.instagram), tiktok: handle(so.tiktok), snapchat: handle(so.snapchat), youtube: handle(so.youtube), facebook: clean(so.facebook), linkedin: clean(so.linkedin),
-    name: ws.fullName || ws.name || '',
+    name: ws.fullName || ws.name || '', address: clean(ci.address || ws.address || ''),
   };
 }
 const PH = { phone: '+971 XX XXX XXXX', email: 'hello@yourcompany.com', website: 'yourwebsite.com', handle: '@yourhandle' };

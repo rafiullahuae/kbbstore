@@ -74,6 +74,32 @@ export function setBadge(ctx, id, patch, label = 'Logo badge') {
   ctx.history.apply(Object.assign(ops.setItems([{ id, props }], label), { key: 'el2:' + id + ':' + Object.keys(patch).join(',') }));
 }
 
+// ── ending screen ──
+export const endScreen = (p) => all(p).find((x) => x.item.type === 'theme.el' && x.item.style?.el === 'endscreen' && x.item.auto === AUTO_WHOLE)?.item || null;
+/** the ending screen at the end of the reel (replaces the one there, keeping its slides, length, photo and words) */
+export function addEndScreen(ctx, variant = 'corporate', opts = {}) {
+  const p = ctx.project, ws = ctx.workspace || {}, W = p.canvas.w, H = p.canvas.h, th = themeById(themeNow(p)) || themeById('travel');
+  const D = reelEnd2(p); if (!(D > 0.5)) throw new Error('Put a clip on the timeline first: the ending screen closes the reel');
+  const old = endScreen(p), cmds = [];
+  const style = elementStyle(th.id, 'endscreen', { colors: colorsFor(th, 'theme', ws), variant, brand: ws.name || null, logo: ws.logo || null, ws });
+  if (old) for (const k of ['slides', 'photo', 'text', 'lang', 'palette', 'tstyle']) if (old.style?.[k] != null) style[k] = old.style[k];
+  if (opts.slides) style.slides = opts.slides;
+  style.whole = 'end';
+  const dur = Math.min(D, Math.max(1, Math.min(10, opts.dur ?? (old ? (old.out - old.in) : 3))));
+  const item = createItem('theme.el', { t0: r3(D - dur), in: 0, out: r3(dur), x: 0, y: 0, w: W, h: H, auto: AUTO_WHOLE, name: `🏁 Ending screen · ${variant}`, style });
+  if (old) cmds.push(ops.removeItems([old.id], 'Replace ending screen'));
+  const tr = laneFor(p, 'Ending screen', cmds);
+  cmds.push(ops.addItems([{ trackId: tr.id, item }], 'Ending screen'));
+  ctx.history.apply(ops.batch(`Ending screen · ${variant}`, cmds));
+  return item;
+}
+/** an ending screen's length (1–10 s), still closing the reel — ONE step (a slider drag coalesces) */
+export function setEndDuration(ctx, id, d) {
+  const p = ctx.project, it = all(p).find((x) => x.item.id === id)?.item; if (!it) return;
+  const D = it.style?.whole === 'end' && it.auto === AUTO_WHOLE ? reelEnd2(p) : itemEnd(it), dd = Math.min(D, Math.max(1, Math.min(10, d)));
+  ctx.history.apply(Object.assign(ops.setItems([{ id, props: { t0: r3(D - dd), in: 0, out: r3(dd * (it.speed || 1)) } }], 'Ending screen length'), { key: 'el2dur:' + id }));
+}
+
 // ── contact card ──
 export function refreshContact(ctx, id) {
   const it = all(ctx.project).find((x) => x.item.id === id)?.item; if (!it) return null;
@@ -149,6 +175,8 @@ registerHistoryHook({
     const end = reelEnd2(p), cap = capSig(p), set = [], rem = [], add = [];
     // whole-video logo / cards: from 0 to the reel's end
     if (Math.abs(end - st.end) > 1e-3 && end > 0) for (const { item } of all(p)) if (item.auto === AUTO_WHOLE && item.style?.whole === 'span' && Math.abs(itemEnd(item) - end) > 1e-3) set.push({ id: item.id, props: { t0: 0, in: 0, out: r3(end * (item.speed || 1)) } });
+    // ending screens close the reel: their end sits on the reel's end (after a trim, or a new duration)
+    if (end > 0) for (const { item } of all(p)) if (item.auto === AUTO_WHOLE && item.style?.whole === 'end' && Math.abs(itemEnd(item) - end) > 1e-3) { const d = Math.min(end, (item.out - item.in) / (item.speed || 1)); set.push({ id: item.id, props: { t0: r3(end - d), out: r3(item.in + d * (item.speed || 1)) } }); }
     // mention badges: the captions changed -> derive them again with the same settings and place
     if (cap !== st.cap) {
       const cur = mentionBadges(p);
