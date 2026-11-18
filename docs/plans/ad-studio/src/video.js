@@ -45,9 +45,11 @@
   var inited = false, saveT = null, statusEl = null;
   var studioImgs = S.images;
 
-  // ── storage (IndexedDB; memory when the browser refuses) ──
+  // ── storage (IndexedDB; memory when the browser refuses). Inside KBB Studio (src/kbbdisk.js) the projects and their
+  //    clips are files in KBB Studio Data/adstudio/video/ instead: a clip is <id>.bin with its <id>.json beside it ──
   var VS = (function () {
-    var db = null, mem = { p: {}, m: {} };
+    var db = null, mem = { p: {}, m: {} }, dk = null;
+    function dkAll(dir) { return dk.list(dir).then(function (a) { return Promise.all(a.filter(function (e) { return /\.json$/.test(e.name); }).map(function (e) { return dk.getJSON(dir, e.name).catch(function () { return null; }); })); }).then(function (a) { return a.filter(Boolean); }); }
     function open() {
       return new Promise(function (res) {
         try {
@@ -66,15 +68,24 @@
       });
     }
     return {
-      init: function () { return open().then(function (d) { db = d; return d ? 'browser' : 'memory'; }); },
-      kind: function () { return db ? 'browser' : 'memory'; },
-      allMedia: function () { return db ? tx('media', 'readonly', function (s) { return s.getAll(); }).then(function (a) { return a || []; }) : Promise.resolve(Object.keys(mem.m).map(function (k) { return mem.m[k]; })); },
-      putMedia: function (r) { if (db) return tx('media', 'readwrite', function (s) { return s.put(r); }); mem.m[r.id] = r; return Promise.resolve(); },
-      delMedia: function (id) { if (db) return tx('media', 'readwrite', function (s) { return s.delete(id); }); delete mem.m[id]; return Promise.resolve(); },
-      list: function () { var f = function (a) { return (a || []).map(function (p) { return { id: p.id, name: str(p.name, 60), updated: +p.updated || 0 }; }); }; return db ? tx('vprojects', 'readonly', function (s) { return s.getAll(); }).then(f) : Promise.resolve(f(Object.keys(mem.p).map(function (k) { return mem.p[k]; }))); },
-      get: function (id) { return db ? tx('vprojects', 'readonly', function (s) { return s.get(id); }).then(function (r) { return r ? r.doc : null; }) : Promise.resolve(mem.p[id] ? mem.p[id].doc : null); },
-      put: function (d) { var r = { id: d.id, name: d.name, updated: Date.now(), doc: clone(d) }; if (db) return tx('vprojects', 'readwrite', function (s) { return s.put(r); }); mem.p[d.id] = r; return Promise.resolve(); },
-      del: function (id) { if (db) return tx('vprojects', 'readwrite', function (s) { return s.delete(id); }); delete mem.p[id]; return Promise.resolve(); }
+      init: function () {
+        return (window.KBB_DISK ? window.KBB_DISK.init() : Promise.resolve(false)).then(function (on) {
+          if (on) { dk = window.KBB_DISK; return 'disk'; }
+          return open().then(function (d) { db = d; return d ? 'browser' : 'memory'; });
+        });
+      },
+      kind: function () { return dk ? 'disk' : db ? 'browser' : 'memory'; },
+      allMedia: function () {
+        if (dk) return dkAll('video/media').then(function (a) { return Promise.all(a.filter(function (r) { return r && MID.test(r.id); }).map(function (r) { return dk.getBlob('video/media', r.id + '.bin', r.type).then(function (b) { return b ? Object.assign({}, r, { blob: b }) : null; }).catch(function () { return null; }); })); }).then(function (a) { return a.filter(Boolean); });
+        return db ? tx('media', 'readonly', function (s) { return s.getAll(); }).then(function (a) { return a || []; }) : Promise.resolve(Object.keys(mem.m).map(function (k) { return mem.m[k]; })); },
+      putMedia: function (r) {
+        if (dk) { if (!MID.test(r.id)) return Promise.reject(new Error('bad clip id')); var m = { id: r.id, name: r.name, k: r.k, type: r.type, size: r.size }; return dk.put('video/media', r.id + '.bin', r.blob).then(function () { return dk.put('video/media', r.id + '.json', m); }); }
+        if (db) return tx('media', 'readwrite', function (s) { return s.put(r); }); mem.m[r.id] = r; return Promise.resolve(); },
+      delMedia: function (id) { if (dk) return MID.test(id) ? dk.del('video/media', id + '.json').then(function () { return dk.del('video/media', id + '.bin'); }) : Promise.resolve(); if (db) return tx('media', 'readwrite', function (s) { return s.delete(id); }); delete mem.m[id]; return Promise.resolve(); },
+      list: function () { var f = function (a) { return (a || []).map(function (p) { return { id: p.id, name: str(p.name, 60), updated: +p.updated || 0 }; }); }; if (dk) return dkAll('video/projects').then(function (a) { return f(a.filter(function (p) { return VID.test(p.id); })); }); return db ? tx('vprojects', 'readonly', function (s) { return s.getAll(); }).then(f) : Promise.resolve(f(Object.keys(mem.p).map(function (k) { return mem.p[k]; }))); },
+      get: function (id) { if (dk) return VID.test(id) ? dk.getJSON('video/projects', id + '.json').then(function (r) { return r ? r.doc : null; }) : Promise.resolve(null); return db ? tx('vprojects', 'readonly', function (s) { return s.get(id); }).then(function (r) { return r ? r.doc : null; }) : Promise.resolve(mem.p[id] ? mem.p[id].doc : null); },
+      put: function (d) { var r = { id: d.id, name: d.name, updated: Date.now(), doc: clone(d) }; if (dk) return VID.test(d.id) ? dk.put('video/projects', d.id + '.json', r) : Promise.reject(new Error('bad project id')); if (db) return tx('vprojects', 'readwrite', function (s) { return s.put(r); }); mem.p[d.id] = r; return Promise.resolve(); },
+      del: function (id) { if (dk) return VID.test(id) ? dk.del('video/projects', id + '.json') : Promise.resolve(); if (db) return tx('vprojects', 'readwrite', function (s) { return s.delete(id); }); delete mem.p[id]; return Promise.resolve(); }
     };
   })();
   function lsGet(k) { try { return localStorage.getItem('kbbas:' + k); } catch (e) { return null; } }
@@ -252,7 +263,7 @@
   function redo() { if (!fut.length) return; hist.push(lastJSON); lastJSON = fut.pop(); vp = cleanVP(JSON.parse(lastJSON)); coalesceKey = ''; sel = null; clearTimeout(saveT); saveT = setTimeout(saveNow, 900); renderAll(); }
   function saveNow() {
     clearTimeout(saveT); vp.name = str($('v-name').value, 60) || 'Untitled video';
-    return VS.put(vp).then(function () { lsSet('vlast', vp.id); status(VS.kind() === 'browser' ? 'Saved' : 'Kept until you close this tab — this browser does not allow saving', VS.kind() === 'browser' ? 'ok' : 'warn'); listProjects(); }, function (e) { status('Not saved: ' + ((e && e.message) || 'storage refused'), 'warn'); });
+    return VS.put(vp).then(function () { lsSet('vlast', vp.id); status(VS.kind() !== 'memory' ? 'Saved' : 'Kept until you close this tab — this browser does not allow saving', VS.kind() !== 'memory' ? 'ok' : 'warn'); listProjects(); }, function (e) { status('Not saved: ' + ((e && e.message) || 'storage refused'), 'warn'); });
   }
   function openVP(d) { stop(); vp = d; lastJSON = JSON.stringify(vp); hist = []; fut = []; sel = null; ph = 0; $('v-name').value = vp.name; lsSet('vlast', vp.id); renderAll(); seekPreview(); }
 
@@ -833,6 +844,48 @@
     });
   }
 
+  // ── Backup everything / Import backup (studio.js): every video project and its clips as data: URLs, ids KEPT, so
+  //    importing the same backup twice adds nothing the second time. Clips past BK_CAP in total are left out and
+  //    counted (a .json that big would not open again); Export project (.zip) carries those. ──
+  var BK_CAP = 300 * 1048576;
+  function backupPart() {
+    return init().then(function () { return isEmpty(vp) ? null : saveNow(); }).then(function () { return VS.list(); }).then(function (l) { return Promise.all(l.filter(function (q) { return VID.test(q.id); }).map(function (q) { return VS.get(q.id); })); }).then(function (ds) {
+      ds = ds.map(cleanVP).filter(function (d) { return d && !isEmpty(d); }); var used = {}, total = 0, left = 0;
+      ds.forEach(function (d) { d.clips.forEach(function (c) { used[c.m] = 1; }); if (d.au) used[d.au.m] = 1; d.ovs.forEach(function (o) { if (o.im && o.im.indexOf('m:') === 0) used[o.im.slice(2)] = 1; }); });
+      var ids = Object.keys(used).filter(function (id) { return media[id]; });
+      return ids.reduce(function (p, id) {
+        return p.then(function (out) {
+          var m = media[id]; if (total + m.blob.size > BK_CAP) { left++; return out; } total += m.blob.size;
+          return new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { res(fr.result); }; fr.onerror = rej; fr.readAsDataURL(m.blob); })
+            .then(function (data) { out.push({ id: id, name: m.name, type: m.type, size: m.blob.size, data: data }); return out; });
+        });
+      }, Promise.resolve([])).then(function (ms) { return { v: 1, projects: ds, media: ms, left: left }; });
+    });
+  }
+  function restorePart(v) {
+    if (!v || typeof v !== 'object' || !Array.isArray(v.projects)) return Promise.resolve({ added: 0, same: 0 });
+    return init().then(function () {
+      var res = { added: 0, same: 0 }, metas = Array.isArray(v.media) ? v.media.slice(0, 400) : [];
+      return metas.reduce(function (p, raw) {
+        return p.then(function () {
+          var m = cleanMeta(raw); if (!m || media[m.id] || typeof raw.data !== 'string' || !/^data:[a-z0-9.+\/-]+;base64,/.test(raw.data)) return;
+          return fetch(raw.data).then(function (r) { return r.blob(); }).then(function (b) {
+            if (b.size > MAXB[m.k]) return;
+            return register({ id: m.id, name: m.name, k: m.k, type: m.type }, new Blob([b], { type: m.type })).then(function (mm) { return VS.putMedia({ id: mm.id, name: mm.name, k: mm.k, type: mm.type, size: mm.size, blob: mm.blob }).then(function () { return Promise.all([makeThumbs(mm), makePeaks(mm)]).catch(function () {}); }); });
+          }).catch(function () {});
+        });
+      }, Promise.resolve()).then(function () { return VS.list(); }).then(function (have) {
+        var ids = {}; have.forEach(function (q) { ids[q.id] = 1; });
+        return v.projects.slice(0, 200).reduce(function (p, raw) {
+          return p.then(function () {
+            if (!raw || !VID.test(raw.id)) return; if (ids[raw.id]) { res.same++; return; }
+            var d = cleanVP(raw); if (!d || d.id !== raw.id) return; ids[d.id] = 1; res.added++; return VS.put(d);
+          });
+        }, Promise.resolve());
+      }).then(function () { renderBin(); listProjects(); return res; });
+    });
+  }
+
   // ── UI wiring ──
   function status(t, cls) { if (!statusEl) return; statusEl.textContent = t; statusEl.className = 'st ' + (cls || ''); }
   function bindProps() {
@@ -949,8 +1002,8 @@
       var last = lsGet('vlast'); return last && VID.test(last) ? VS.get(last) : null;
     }).then(function (d) {
       openVP(cleanVP(d) || newVP()); listProjects();
-      $('v-where').textContent = VS.kind() === 'browser' ? 'Video projects and their clips save inside this browser (works offline). Export project (Ads → Export) packs them into a .zip.' : 'This browser does not allow saving from this file — export the project before you close it.';
-      status(VS.kind() === 'browser' ? 'Ready · offline' : 'Not saving in this browser', VS.kind() === 'browser' ? 'ok' : 'warn');
+      $('v-where').textContent = VS.kind() === 'disk' ? 'Video projects and their clips are saved in KBB Studio Data on this Mac (adstudio folder): safe through updates and browser resets.' : VS.kind() === 'browser' ? 'Video projects and their clips save inside this browser (works offline). Export project (Ads → Export) packs them into a .zip.' : 'This browser does not allow saving from this file — export the project before you close it.';
+      status(VS.kind() === 'disk' ? 'Ready · saving to KBB Studio Data' : VS.kind() === 'browser' ? 'Ready · offline' : 'Not saving in this browser', VS.kind() !== 'memory' ? 'ok' : 'warn');
       document.documentElement.dataset.vready = '1';
     });
   }
@@ -965,7 +1018,7 @@
   function renderStudioImgsSafe() { if (inited) renderStudioImgs(); }
   document.querySelectorAll('#modesw button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
   window.KBB_VIDEO = {
-    setMode: setMode, init: init, exportPart: exportPart, importPart: importPart,
+    setMode: setMode, init: init, exportPart: exportPart, importPart: importPart, backupPart: backupPart, restorePart: restorePart, store: VS,
     get vp() { return vp; }, get media() { return media; }, get ph() { return ph; }, get sel() { return sel; },
     select: function (k, id) { sel = { k: k, id: id }; renderAll(); }, seek: function (t) { stop(); seekPreview(t); }, split: split, removeSel: removeSel, duplicate: duplicate, changed: changed, undo: undo, redo: redo,
     addText: addText, addOv: addOv, exportVideo: exportVideo, exportStill: exportStill, saveNow: saveNow, total: total, setZoom: setZoom, showTab: showTab, cleanVP: cleanVP,

@@ -167,6 +167,7 @@ To back up everything, copy `KBB Studio Data`.
 | `workspaces/<company>/projects/` | your saved projects, one folder each (the videos you add are copied in). Projects save themselves. |
 | `workspaces/<company>/exports/` | your finished MP4s |
 | `workspaces/<company>/designs/` | saved designs, AI pictures (`images/`, each with its prompt and licence) and saved colour schemes |
+| `adstudio/` | everything you make in **🎨 Ad Studio**: designs (`projects/`), your pictures (`images/`), companies, favourites, brand kits and drafts (`kv/`), video projects and their clips (`video/`) |
 | `library/music/user/` | **your own music** — see below |
 | `library/people/<occupation>/` | worker photos you saved from the 📷 Photos tab, each with a `.json` beside it (photographer, licence, source link) |
 | `brands/<company>/` | the brand kit of any company you add |
@@ -231,7 +232,29 @@ step you can undo with **⌘Z**.
 * **Trending-sound cue sheet** — tap or type the tempo of the sound you will add in Instagram/TikTok (or let the
   studio measure it), and the cuts move onto its beats; a cue sheet and a click guide track are saved in `exports/`.
 
-## 9. Brief → Designs (ad pictures from your own words)
+## 9. 🎨 Ad Studio (the full ad editor: your templates and saved ads)
+
+The **🎨 Ad Studio** tile on the home screen (or **🎨 Ad Studio** in the top bar) opens the same Ad Studio you used as a
+file — KBB, National Day, Planet Careers and Work Abroad templates, companies, multi-select, groups and layers, Video
+mode, the ✂ cut-out — now inside KBB Studio. **◀ KBB Studio** (top left) goes back to the video editor. It opens on the
+company picked in KBB Studio, and a company you switch to there is the one KBB Studio shows next.
+
+Everything it saves goes to `KBB Studio Data/adstudio`, so your ads survive updates, a cleared browser or a different
+browser. **Backup everything (.json)** (Export tab) puts all of it in one file whenever you want a copy.
+
+**Bringing your ads over from the old Ad Studio file (once):**
+1. Open the old **ad-studio.html** the way you always did (double-click it). A pink bar says *"Ad Studio now lives
+   inside KBB Studio"* — press **Backup everything** there (or Export tab → **Backup everything (.json)**). A file
+   `KBB-Ad-Studio-backup-<date>.json` lands in your Downloads. *Use the same browser you made your ads in.*
+2. Start KBB Studio → **🎨 Ad Studio** → press **Import backup…** in the pink bar (or Export tab → **Import backup…**)
+   and choose that file (or just drop it on the page).
+3. It says *"Backup imported: N new design(s)"*. All designs, pictures, companies (with favourites and brand kits),
+   unsaved drafts and video projects are there. Importing the same file again adds nothing twice.
+
+**Ad Studio or Brief → Designs?** Ad Studio is the full editor with your templates and saved ads. Brief → Designs makes
+quick ads from a sentence, and has the TV-style and family templates.
+
+## 10. Brief → Designs (ad pictures from your own words)
 
 On the home screen, **🖼 Brief → Designs**: type what you want, in English or Arabic, the way you would tell a designer —
 *"National Day: 30% off Anua and BoJ, story and post, luxury"*, *"Work abroad: welders wanted for Poland, apply on
@@ -262,7 +285,7 @@ WhatsApp"* — and press **✨ Make designs**.
   colours.
 * In the reel editor, the **🖼 Designs** tab lists your saved designs; **+ Add to reel** puts one at the playhead.
 
-## 10. ⚙ Configure (one page for everything you enter)
+## 11. ⚙ Configure (one page for everything you enter)
 
 **⚙ Configure** (top bar, on the home screen and in the editor): **Companies** (edit kit: logo, colours, fonts) ·
 **Contact & social** (website, phone, WhatsApp, email, Instagram, TikTok …, the button wording in English and Arabic) ·

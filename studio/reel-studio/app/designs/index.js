@@ -15,8 +15,8 @@ registerModule({
     const go = () => import('./screen.js').then((m) => m.openDesigns(document.getElementById('app'), { home, brief: ta.value.trim(), auto: !!ta.value.trim() }));
     // a start tile like the home screen's own (editor.css .tile-head / .tile-actions): the two buttons share the row
     // evenly and wrap when it is narrow, never squeezing each other (17 Nov: "✨ Make de" clipped under "Open Designs")
-    ap(el, h('div.tile-head', h('span.tile-ic', { 'aria-hidden': 'true' }, '🖼'), h('div', h('h2', 'Brief → Designs'), h('small', 'Ads in your kit, from a sentence'))),
-      h('p.muted.tile-note', 'Describe an ad in your own words (English or Arabic). You get 6–8 designs — story, post and square — checked against the design rules, ready to edit and export.'),
+    ap(el, h('div.tile-head', h('span.tile-ic', { 'aria-hidden': 'true' }, '🖼'), h('div', h('h2', 'Brief → Designs'), h('small', 'Quick ads from a sentence · TV-style and family templates'))),
+      h('p.muted.tile-note', 'Describe an ad in your own words (English or Arabic). You get 6–8 designs — story, post and square — checked against the design rules, ready to edit and export. Your saved ads and full templates are in 🎨 Ad Studio.'),
       ta, h('div.tile-actions', h('button.btn.primary#home-designs', { on: { click: go } }, '✨ Make designs'), h('button.btn', { on: { click: () => import('./screen.js').then((m) => m.openDesigns(document.getElementById('app'), { home })) } }, '🗂 Open Designs')));
   },
   panel: (el, ctx) => {

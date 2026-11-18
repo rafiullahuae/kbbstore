@@ -236,3 +236,37 @@ func TestPrefsMerge(t *testing.T) {
 		t.Fatal("prefs not in the data folder")
 	}
 }
+
+// adstudio/ (the Ad Studio's designs, 18 Nov): written to and read from the data folder only, deletable inside but
+// never as a whole, and created at start so a fresh data folder has it
+func TestAdStudioRoot(t *testing.T) {
+	s := dataServer(t)
+	s.setupData("")
+	if st, err := os.Stat(filepath.Join(s.data, "adstudio")); err != nil || !st.IsDir() {
+		t.Fatal("setupData did not create adstudio/ in the data folder")
+	}
+	if w := call(s, "PUT", "/api/write?path=adstudio/projects/dabc123.json", `{"id":"dabc123"}`); w.Code != 200 {
+		t.Fatalf("write: %d %s", w.Code, w.Body)
+	}
+	if readAll(t, filepath.Join(s.data, "adstudio", "projects", "dabc123.json")) != `{"id":"dabc123"}` {
+		t.Fatal("an Ad Studio design did not land in the data folder")
+	}
+	if _, err := os.Stat(filepath.Join(s.root, "adstudio")); err == nil {
+		t.Fatal("an Ad Studio write touched the app folder")
+	}
+	if w := call(s, "GET", "/adstudio/projects/dabc123.json", ""); w.Code != 200 || w.Body.String() != `{"id":"dabc123"}` {
+		t.Fatalf("read back: %d %s", w.Code, w.Body)
+	}
+	if w := call(s, "GET", "/api/list?path=adstudio/projects", ""); !strings.Contains(w.Body.String(), "dabc123.json") {
+		t.Fatalf("list: %s", w.Body)
+	}
+	if w := call(s, "POST", "/api/delete?path=adstudio", ""); w.Code != 403 {
+		t.Fatalf("the whole adstudio folder must not be deletable: %d", w.Code)
+	}
+	if w := call(s, "POST", "/api/delete?path=adstudio/projects/dabc123.json", ""); w.Code != 200 {
+		t.Fatalf("delete one design: %d %s", w.Code, w.Body)
+	}
+	if w := call(s, "PUT", "/api/write?path=adstudio/../settings/x.json", "{}"); w.Code != 403 {
+		t.Fatalf("traversal out of adstudio: %d", w.Code)
+	}
+}

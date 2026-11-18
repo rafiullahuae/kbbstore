@@ -17,6 +17,8 @@
 //     folder, ~/Downloads, ~/Desktop, ~/Documents, ~/Applications, ~/.Trash) and their models are brought over the same
 //     way. A KBB Studio folder is one with engine/kbbstudio-mac-* and models/manifest.json.
 //   - Everything moved is logged to the Terminal window and to <data>/migration.log.
+//   - adstudio/ (18 Nov) belongs to the Ad Studio (app/adstudio): its designs, companies, pictures and video projects.
+//     Data folder only, like workspaces/; nothing to move, it never lived in an app folder.
 //   - Without -data (the test harnesses) the data folder IS the app folder, exactly as before.
 package main
 
@@ -82,7 +84,7 @@ func (s *server) moved(lg io.Writer, format string, a ...any) {
 
 // setupData creates the data folder and moves into it what it lacks. Called once at start, before serving.
 func (s *server) setupData(home string) {
-	for _, d := range []string{"workspaces", "models", "library", "brands"} {
+	for _, d := range []string{"workspaces", "models", "library", "brands", "adstudio"} {
 		_ = os.MkdirAll(filepath.Join(s.dataDir(), d), 0o755)
 	}
 	_ = os.MkdirAll(filepath.Join(s.dataDir(), "settings"), 0o700)

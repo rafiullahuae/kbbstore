@@ -9,6 +9,7 @@ import { loadRecipes } from './bin.js';
 import { stopStudio } from './editor.js';
 import { openSetup } from './setup.js';
 import { listModules } from '../core/modules.js';
+import { adStudioButton, adStudioTile } from '../adstudio/entry.js';
 
 export async function renderHome(root, { onOpen, onDropFiles }) {
   clear(root);
@@ -44,6 +45,7 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
       h('div.grow'),
       h('button.btn.ghost#configure-btn', { title: 'Companies, keys, Claude, models, folders, languages', on: { click: () => import('../settings/configure.js').then((m) => m.openConfigure('companies', { onClose: rerender })) } }, '⚙ Configure'),
       h('button.btn.ghost', { title: 'Download the AI models (once)', on: { click: () => openSetup() } }, '🧠 Models'),
+      adStudioButton(),
       h('div.sep'),
       h('button.btn.ghost.stop-btn', { title: `Stop ${APP_NAME}`, on: { click: () => stopStudio() } }, '⏻ Stop')),
     h('main.home-main',
@@ -62,6 +64,7 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
           h('div.row', h('span.lbl', 'Shape'), seg(Object.keys(ASPECTS).map((k) => [k, k, ASPECTS[k].label]), aspect, (v) => { aspect = v; }, '.aspect')),
           h('div.tile-foot', h('button.btn.primary.big', { on: { click: () => create(null) } }, '＋ Create reel'))),
         h('section.card.drop-card', drop),
+        adStudioTile(), // the full Ad Studio (app/adstudio): templates, saved ads, companies, video, cut-out
         // module cards (core/modules.js `home`)
         ...listModules().filter((m) => typeof m.home === 'function').map((m) => {
           const el = h('section.card.mod-card', { dataset: { modHome: m.id } });
