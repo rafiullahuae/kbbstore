@@ -2,7 +2,8 @@
 // everything a <video> element cannot do smoothly: speed ramps, slow motion with frame blending, reverse, freeze
 // frames and high-frame-rate footage (every real frame of a 120 fps clip at 0.25×).
 //
-//   const fs = await FrameStream.open(url, { maxW, budgetMB })
+//   const fs = await FrameStream.open(url, { maxW, budgetMB, proxy })   proxy: the preview may drop to a 1/2 or 1/4
+//                                resolution copy when full copies miss the frame budget (frames-engine.js); never the export
 //   fs.target(srcT, dir, rate)   where the playhead is (dir +1 forward, -1 reverse, 0 still) — decoding runs ahead of it
 //                                in that direction in the background (never one seek per frame)
 //   fs.pick(srcT)                -> { a, b, w, exact } decoded frames around srcT, now (never waits): a = the frame
@@ -18,7 +19,7 @@
 // decoder's own frames are closed at once, so the decoder never stalls for lack of buffers. Reverse decodes a GOP at a
 // time from its keyframe and keeps it, so each frame is decoded once, not once per displayed frame.
 
-import { loadMp4box, describeTrack } from './media.js';
+import { loadMp4box, describeTrack, decoderConfig } from './media.js';
 
 const CHUNK = 1 << 20;
 
@@ -43,9 +44,7 @@ export async function loadIndex(url) {
   if (err) throw err;
   if (!info || !info.videoTracks.length) throw new Error('no video track');
   const track = info.videoTracks[0], trak = file.getTrackById(track.id);
-  const config = { codec: track.codec.startsWith('vp08') ? 'vp8' : track.codec, codedWidth: track.video.width, codedHeight: track.video.height, description: describeTrack(file, track.id) };
-  const sup = await VideoDecoder.isConfigSupported(config);
-  if (!sup.supported) throw new Error('decoder does not support ' + track.codec);
+  const config = await decoderConfig({ codec: track.codec.startsWith('vp08') ? 'vp8' : track.codec, codedWidth: track.video.width, codedHeight: track.video.height, description: describeTrack(file, track.id) });
   const raw = trak.samples || [];
   if (!raw.length) throw new Error('no samples');
   const base = Math.min(...raw.map((s) => s.cts));
@@ -85,6 +84,7 @@ export class FrameStream {
       for (const ts of d.list) { const b = this.cache.get(ts); if (b) this._close(b); this.cache.delete(ts); }
       this.keys = this.keys.filter((ts) => !gone.has(ts));
     } else if (d.op === 'error') { this.err = new Error(d.message); console.warn('[frames]', d.message); }
+    else if (d.op === 'proxy') this.proxy = { k: d.k, copyMs: d.copyMs, need: d.need };   // the preview went to its 1/k proxy copy
     this.wake?.();
   }
   _close(b) { let pinned = false; for (const p of this.pins.values()) if (p === b) pinned = true; if (pinned) this.dead.add(b); else b.close(); }

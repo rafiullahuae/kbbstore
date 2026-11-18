@@ -66,6 +66,8 @@ are for features coming in the next update, so you can leave them unticked for n
   ramping**. The same on the timeline: **right-click a clip → Speed**, and **Shift-drag a clip's edge** to stretch it
   instead of trimming. Captions, stickers, theme elements and transitions on the clip stay on the same moment of the
   footage; the clips after it move up or along. iPhone slo-mo (120/240 fps) shows every real frame when slowed.
+  4K footage is decoded on the Mac's hardware decoder; where a machine has none and the monitor cannot keep up, the
+  monitor alone switches to a half- or quarter-size copy of the frames (the export always uses every full-size frame).
 * **🎙 Enhance voice** (in **Do it for me**, and **🔊 Audio → ✨ Enhance voice**): background noise (fans, air-con,
   traffic, wind, music beds), mains hum (50/60 Hz, found by itself), room echo, voice EQ, de-ess, compression and
   −14 LUFS social loudness with a true-peak limiter at −1 dBTP. **Strength** goes from *Light* (noise −14 dB) to

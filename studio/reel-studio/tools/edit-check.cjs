@@ -6,7 +6,8 @@
 //   captions  after a cut the missing words are gone, the later ones shift EXACTLY, a line spanning the cut is re-split,
 //             a piece left too short joins its neighbour, the translated track follows, line positions survive
 //   follow    moving a clip carries its captions; theme elements and transitions follow cuts and moves; a lifted cut
-//             loses its transition, a rippled one re-anchors it; music, b-roll and markers stay put
+//             loses its transition, a rippled one re-anchors it; b-roll rides its clip (Remove silences too); music
+//             and markers stay put
 //   drag      between tracks, a new overlay track above the top one (z-order), insert vs overwrite on the main track,
 //             snapping (playhead, caption lines, beats; ⌘ = free), multi-select drag, drops from the bin / Finder
 //   misc      linked audio + Unlink, ONE undo step per edit, save/reload, an old project fixture opens unchanged and
@@ -174,6 +175,25 @@ const W = 1440, HH = 900;
     return { same: manual === auto, mDur, aDur, keptId, n, diff: manual === auto ? '' : manual.slice(0, 200) + ' ≠ ' + auto.slice(0, 200) };
   });
   ok(r.same && Math.abs(r.mDur - r.aDur) < 1e-3 && r.keptId && r.n === 1, `Remove silences cuts like a manual ripple delete: identical captions (words, lines, positions, translated track), same length (${r.aDur.toFixed(2)} s), the first piece keeps its clip id (transitions and elements still find it), one undo step ${r.diff}`);
+  // after Remove silences, b-roll stays on the words it shows (the auto b-roll is placed on a spoken word, its card and
+  // name in one group with it) and nothing holds the shorter reel open; music stays where it is. Before 2026-11-18 the
+  // b-roll clip stayed at its old time — 2 s off its word here, while its card (a shape) moved — and a b-roll near the
+  // end held the export open past the pictures.
+  r = await ev(async () => {
+    const AC = await import('/app/auto/commands.js'), p = ED.project, mid = p.media[0].id, ov = p.tracks.find((t) => t.kind === 'overlay');
+    const wide = p.media.find((m) => m.name === 'wide.mp4'), g = 'gbroll';
+    const clip = P.createItem('clip', { media: wide.id, t0: 9, in: 0, out: 1.5, x: 100, y: 100, w: 500, h: 280, muted: true, volume: 0, auto: 'content.broll', group: g, name: 'B-roll' });
+    const card = P.createItem('shape', { t0: 9, in: 0, out: 1.5, x: 0, y: 0, w: 1080, h: 1920, group: g, auto: 'content.broll', style: { shape: 'rect', fill: '#fff' }, name: 'B-roll card' });
+    const late = P.createItem('clip', { media: wide.id, t0: 18, in: 0, out: 1.5, x: 100, y: 100, w: 500, h: 280, muted: true, volume: 0, name: 'B-roll late' });
+    ED.apply(ED.ops.addItems([{ trackId: ov.id, item: card }, { trackId: ov.id, item: clip }, { trackId: ov.id, item: late }], 'B-roll')); ED.history.seal();
+    const s0 = steps(), d0 = ED.duration();
+    ED.apply(AC.removeCutsCommand(p, mid, [{ t0: 4, t1: 6 }])); ED.history.seal();
+    const f = (id) => P.findItem(ED.project, id).item;
+    const res = { clip: f(clip.id).t0, card: f(card.id).t0, late: P.itemEnd(f(late.id)), dur: ED.duration(), d0, pics: Math.max(...vt().map((c) => P.itemEnd(c))), n: steps() - s0 };
+    ED.history.undo(); ED.history.undo();
+    return res;
+  });
+  ok(Math.abs(r.clip - 7) < 1e-3 && Math.abs(r.card - 7) < 1e-3 && Math.abs(r.late - 17.5) < 1e-3 && Math.abs(r.dur - r.pics) < 1e-3 && r.n === 1, `Remove silences (−2 s before them): the b-roll clip and its card stay together on their word (9 → ${r.clip} / ${r.card} s), the late b-roll ends at ${r.late} s, the reel ends with its pictures (${r.dur.toFixed(2)} s, was ${r.d0.toFixed(2)}); one undo step`);
 
   // ── 3. lift of a middle chunk (the gap stays) ──
   r = await ev(() => {
@@ -252,6 +272,36 @@ const W = 1440, HH = 900;
   ok(Math.abs(r.s2.move.tr[1] - (r.s2.move.tr[0] - 1)) < 1e-3 && Math.abs(r.s2.move.el[1] - (r.s2.move.el[0] - 1)) < 1e-3 && r.s2.move.centred, `moving the first clip to the end: the transition stays centred on its cut (${r.s2.move.tr[0]} → ${r.s2.move.tr[1]} s) and the sticker rides its clip (${r.s2.move.el[0]} → ${r.s2.move.el[1]} s)`);
   ok(r.s3.tr === false, 'lifting a clip (the cut becomes a gap) removes the transition that sat on it');
   ok(r.s4.ok, 'ripple-deleting a clip re-anchors its transition onto the new cut, centred on it');
+
+  // ── 5b. what a THEME placed follows the cuts too (auto 'theme'): the wipe on every cut stays centred on its cut and
+  //    goes with it, the theme's title rides its clip. Before 2026-11-18 edit-follow skipped every auto 'theme' item:
+  //    after a ripple delete the wipes sat 1 s after their cuts, over the middle of a clip, and a lifted cut kept its wipe.
+  r = await ev(async () => {
+    const A = await import('/app/themes/apply.js'), ctx = ED.context(), find = (id) => P.findItem(ED.project, id)?.item;
+    const s0 = steps();
+    await A.setWhole(ctx, 'wipe', true, { theme: 'travel' });   // a wipe on every cut, ONE step, auto 'theme'
+    const wipes = ED.project.tracks.flatMap((t) => t.items).filter((i) => i.type === 'theme.el' && i.style?.el === 'wipe').map((i) => i.id);
+    const title = P.createItem('theme.el', { t0: 9, in: 0, out: 2, auto: 'theme', x: 0, y: 0, w: 1080, h: 400, name: 'Theme title', style: { el: 'title', theme: 'travel' } });
+    ED.apply(ED.ops.addItems([{ trackId: ED.project.tracks.find((t) => t.kind === 'text').id, item: title }], 'Theme title'));
+    const mid = (id) => { const w = find(id); return w ? r3(w.t0 + P.itemDur(w) / 2) : null; };
+    const cutTimes = () => EO.cutsOf(ED.project).map((c) => r3(c.t));
+    ED.history.seal();
+    const b0 = { wipes: wipes.map(mid), cuts: cutTimes(), title: find(title.id).t0, n: steps() };
+    ED.apply(EO.rangeCmd(ED.project, 1, 2, { ripple: true }));
+    const b1 = { wipes: wipes.map(mid), cuts: cutTimes(), title: find(title.id).t0, n: steps() };
+    ED.history.undo();
+    // lift the middle piece: both of its cuts become gaps — their wipes go; undo brings them back where they were
+    const v = vt(), m = v[1];
+    ED.apply(EO.rangeCmd(ED.project, m.t0, P.itemEnd(m), { ripple: false }));
+    const b2 = { left: wipes.filter((id) => find(id)).length };
+    ED.history.undo();
+    const b3 = { wipes: wipes.map(mid) };
+    while (steps() > s0) ED.history.undo();
+    return { b0, b1, b2, b3, n0: s0 };
+  });
+  ok(r.b0.wipes.length === 2 && JSON.stringify(r.b0.wipes) === JSON.stringify(r.b0.cuts), `whole video · wipe on every cut: ${r.b0.wipes.length} wipes centred on the cuts (${r.b0.wipes.join(', ')} s)`);
+  ok(r.b1.wipes.every((w, i) => r.b1.cuts.includes(w) && Math.abs(w - (r.b0.wipes[i] - 1)) < 1e-3) && Math.abs(r.b1.title - (r.b0.title - 1)) < 1e-3 && r.b1.n === r.b0.n + 1, `a ripple delete before them: the theme's wipes stay centred on their cuts (${r.b0.wipes.join(', ')} → ${r.b1.wipes.join(', ')} s) and the theme's title rides its clip (${r.b0.title} → ${r.b1.title} s), one undo step (+${r.b1.n - r.b0.n})`);
+  ok(r.b2.left === 0 && JSON.stringify(r.b3.wipes) === JSON.stringify(r.b0.wipes), `lifting the clip between the cuts takes their wipes off (${r.b2.left} left); undo puts them back on the cuts (${r.b3.wipes.join(', ')} s)`);
 
   // ── 6. drag & drop: new overlay track above the top, insert vs overwrite, snapping, the indicator ──
   await ev(() => { ED.showSide('inspector'); ED.timeline.fit(); });
@@ -380,6 +430,52 @@ const W = 1440, HH = 900;
   r = await ev((before) => { const v = vt(); const d = P.itemEnd(v[0]) - before[0][2]; return { d, shifts: before.slice(1).map(([id, t0]) => (v.find((c) => c.id === id)?.t0 ?? NaN) - t0), contiguous: v.every((c, i) => !i || Math.abs(P.itemEnd(v[i - 1]) - c.t0) < 1e-3), label: ED.history.undoLabel }; }, r);
   ok(r.d < -0.5 && r.shifts.every((s) => Math.abs(s - r.d) < 1e-3) && r.contiguous && r.label === 'Ripple trim', `Alt + trim: the clip gets ${(-r.d).toFixed(2)} s shorter and every clip after it moves up by the same (${r.shifts.map((s) => s.toFixed(2)).join(', ')}), no gap`);
   await ev(() => ED.history.undo());
+
+  // ── 6d. ripple trim of the LEFT edge of a retimed clip (a ramp): the clip keeps its start, loses the trimmed time at
+  //    its head, and everything after it moves up by the same. Before 2026-11-18 the retimed path moved the clip's start
+  //    right instead (its end stayed put), so nothing rippled and a gap opened in front of it.
+  r = await ev(async () => {
+    const SP = await import('/app/editor/speed.js'), c = vt()[0];
+    SP.setPreset(ED, c.id, 'slowmo-hit'); ED.history.seal();   // the ramp ripples the clips after it (no overlap)
+    ED.select([]); return { id: c.id, before: vt().map((x) => [x.id, x.t0, P.itemEnd(x)]), whole: structuredClone(P.findItem(ED.project, c.id).item), s: steps() };
+  });
+  await settle(); await ev((id) => ED.select([id]), r.id); await settle(); g = await geo();
+  {
+    const lb = await page.locator(`.tl-item[data-id="${r.id}"] .trim.l`).boundingBox();
+    await page.keyboard.down('Alt');
+    await page.mouse.move(lb.x + lb.width / 2, lb.y + lb.height / 2); await page.mouse.down();
+    await page.keyboard.up('Alt');
+    await page.mouse.move(lb.x + lb.width / 2 + 1 * g.pps, lb.y + lb.height / 2, { steps: 6 }); await page.mouse.up(); await settle();
+  }
+  r = await ev(({ id, before, whole, s }) => {
+    const v = vt(), c = v.find((x) => x.id === id), cut = before[0][2] - P.itemEnd(c);   // seconds taken off
+    // the frames that stay keep their timing: the clip now shows at t what it showed at t + cut
+    const D = P.itemDur(c), err = Math.max(...Array.from({ length: 30 }, (_, k) => { const t = c.t0 + D * (k + 0.5) / 30; return Math.abs(P.srcTime(c, t) - P.srcTime(whole, t + cut)); }));
+    const res = { before, after: v.map((x) => [x.id, x.t0, P.itemEnd(x)]), start: c.t0, start0: before[0][1], cut, err, shifts: before.slice(1).map(([bid, t0]) => (v.find((x) => x.id === bid)?.t0 ?? NaN) - t0), contiguous: v.every((x, i) => !i || Math.abs(P.itemEnd(v[i - 1]) - x.t0) < 1e-3), label: ED.history.undoLabel, n: steps() - s };
+    ED.history.undo(); ED.history.undo();
+    return res;
+  }, r);
+  ok(r.start === r.start0 && r.cut > 0.5 && r.shifts.every((x) => Math.abs(x + r.cut) < 1e-3) && r.contiguous && r.err < 1e-6 && r.label === 'Ripple trim' && r.n === 1, `Alt + trim the LEFT edge of a ramped clip: it keeps its start (${r.start} s), ${r.cut.toFixed(2)} s come off its head and every clip after it moves up by the same (${r.shifts.map((x) => x.toFixed(2)).join(', ')}), no gap; the frames that stay keep their ramp timing (max error ${r.err.toExponential(1)} s); one undo step${r.n === 1 ? '' : ' (' + r.n + ')'}`);
+  if (process.env.DBG) console.log(JSON.stringify(r));
+
+  // ── 6e. a clip dragged off the main track onto an overlay track becomes a picture-in-picture (the box a bin drop gives
+  //    it there), in the same undo step as the move. Before 2026-11-18 it kept its full-frame box and covered the reel.
+  r = await ev(async () => {
+    const IT = await import('/app/editor/items.js'), v = vt(), c = v[v.length - 1], main = ED.project.tracks.find((t) => t.kind === 'video');
+    const ov = ED.project.tracks.find((t) => t.kind === 'overlay'), s0 = steps(), box0 = { x: c.x, y: c.y, w: c.w, h: c.h };
+    ED.apply(EO.placeCmd(ED.project, [{ id: c.id, item: c, fromTrackId: main.id }], 2, { trackId: ov.id }, 'free', { label: 'Move' }).cmd); ED.history.seal();
+    const it = P.findItem(ED.project, c.id), want = IT.clipFromMedia(ED.project, P.findMedia(ED.project, c.media), 'overlay', 2);
+    const res = { track: it.track.kind, box: { x: it.item.x, y: it.item.y, w: it.item.w, h: it.item.h }, want: { x: want.x, y: want.y, w: want.w, h: want.h }, box0, n: steps() - s0 };
+    ED.history.undo(); const back = P.findItem(ED.project, c.id);
+    res.undo = back.track.kind === 'video' && back.item.x === box0.x && back.item.w === box0.w && back.item.h === box0.h;
+    // a box the owner framed himself (not the full frame) is his: it moves as it is
+    ED.apply(ED.ops.setItem(c.id, { x: 100, y: 200, w: 500, h: 900 }, 'Frame')); ED.history.seal();
+    ED.apply(EO.placeCmd(ED.project, [{ id: c.id, item: P.findItem(ED.project, c.id).item, fromTrackId: main.id }], 2, { trackId: ov.id }, 'free', { label: 'Move' }).cmd); ED.history.seal();
+    const k = P.findItem(ED.project, c.id).item; res.kept = k.x === 100 && k.y === 200 && k.w === 500 && k.h === 900;
+    ED.history.undo(); ED.history.undo();
+    return res;
+  });
+  ok(r.track === 'overlay' && JSON.stringify(r.box) === JSON.stringify(r.want) && r.n === 1 && r.undo && r.kept, `main track → overlay track: the clip becomes a picture-in-picture ${JSON.stringify(r.box)} (full frame was ${JSON.stringify(r.box0)}; the same box as a bin drop), ONE undo step that also restores the full frame; a box the owner framed himself is kept`);
 
   // ── 7. multi-select drag ──
   const two = await ev(() => { const tr = ED.project.tracks.find((t) => t.kind === 'text'); const a = P.createItem('text', { t0: 12, in: 0, out: 1, text: 'A', name: 'A' }), b2 = P.createItem('sticker', { t0: 13.5, in: 0, out: 1, text: '✨', name: 'B' }); ED.apply(ED.ops.batch('two', [ED.ops.addItems([{ trackId: tr.id, item: a }]), ED.ops.addItems([{ trackId: ED.project.tracks.find((t) => t.kind === 'overlay').id, item: b2 }])])); ED.select([]); return [a.id, b2.id]; });

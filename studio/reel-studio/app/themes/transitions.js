@@ -74,10 +74,24 @@ function maskPath(kind, K, p, W, H) {
   return null;
 }
 
+/** the kit a transition draws in: its own theme's, else the reel's */
+const kitOfTrans = (item, project) => { const s = item.style || {}; return kitFor(themeById(s.theme) ? s.theme : project.tracks.flatMap((x) => x.items).find((i) => i.type === 'theme.overlay')?.style?.theme || 'travel', s.colors || null); };
+/**
+ * Where a mask kind (map, landmark) shows the other clip at timeline t: { path (canvas units), before, p }, or null for
+ * the cover kinds. The same path drawTrans clips with: before the cut the incoming clip shows inside it, after the cut
+ * the outgoing one outside it (tools/th-check.cjs probes the pixels it holds).
+ */
+export function transitionMask(item, project, t) {
+  const B = project.tracks.flatMap((x) => x.items).find((i) => i.id === item.style?.b); if (!B) return null;
+  const W = project.canvas.w, H = project.canvas.h, dur = Math.max(0.05, (item.out - item.in) / (item.speed || 1));
+  const p = Math.max(0, Math.min(1, 0.5 + (t - B.t0) / dur)), path = maskPath(item.style?.kind || 'slabs', kitOfTrans(item, project), p, W, H);
+  return path ? { path, p, before: t < B.t0 } : null;
+}
+
 // ── drawing ──
 function drawTrans(ctx, item, t, project, env) {
   const sides = transitionSides(ctx, item, t, project, env); if (!sides) return;
-  const s = item.style || {}, K = kitFor(themeById(s.theme) ? s.theme : project.tracks.flatMap((x) => x.items).find((i) => i.type === 'theme.overlay')?.style?.theme || 'travel', s.colors || null);
+  const s = item.style || {}, K = kitOfTrans(item, project);
   const W = project.canvas.w, H = project.canvas.h, u = Math.min(W, H), { p, before } = sides, kind = s.kind || 'slabs';
   const otherOn = (clipPath, inverse) => {   // draw the other side through a clip (device px canvas, drawn in canvas units)
     ctx.save();
@@ -89,7 +103,10 @@ function drawTrans(ctx, item, t, project, env) {
   const mask = maskPath(kind, K, p, W, H);
   if (mask) {
     if (before) otherOn(mask, false); else if (p < 0.97) otherOn(mask, true);
-    ctx.save(); ctx.lineJoin = 'round'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = u * 0.012; ctx.shadowColor = rgba(K.colors.accent === '#ffffff' ? '#ffd166' : K.colors.accent, 0.9); ctx.shadowBlur = u * 0.03;
+    ctx.save(); ctx.lineJoin = 'round'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = u * 0.012; ctx.shadowColor = rgba(K.colors.accent === '#ffffff' ? '#ffd166' : K.colors.accent, 0.9);
+    // shadowBlur is in device pixels (the transform does not scale it): scaled here, the glow is the same share of the
+    // frame in the monitor (0.2–0.5×) as in the export, instead of 2–5× wider and over the clip inside the shape
+    { const m = ctx.getTransform(); ctx.shadowBlur = u * 0.03 * Math.hypot(m.a, m.b); }
     ctx.globalAlpha *= clamp((1 - p) * 4) * clamp(p * 8); ctx.stroke(mask); ctx.restore();
     A.glint(ctx, W * 0.5, H * 0.5, u * 0.12 * Math.sin(Math.PI * p), Math.sin(Math.PI * p) * 0.8, '#ffffff');
     return;

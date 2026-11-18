@@ -134,7 +134,7 @@ const vOf = (y) => VMIN * Math.pow(VMAX / VMIN, 1 - (y - PAD) / (CH - 2 * PAD));
 const xOf = (u) => PAD + u * (CW - 2 * PAD);
 const uOf = (x) => (x - PAD) / (CW - 2 * PAD);
 
-export function curveEditor(ed, id, onChange) {
+export function curveEditor(ed, id, onChange, onDone) {
   const cv = h('canvas.sp-curve', { width: CW * 2, height: CH * 2, tabindex: '0', title: 'Drag a point to change the speed there · double-click to add or remove a point', 'aria-label': 'Speed curve' });
   const live = () => findItem(ed.project, id)?.item;
   const ptsOf = (it) => (hasCurve(it) ? it.curve.pts.map((p) => p.slice()) : [[0, it?.speed || 1], [1, it?.speed || 1]]);
@@ -179,7 +179,7 @@ export function curveEditor(ed, id, onChange) {
     pts[drag] = [drag === 0 ? 0 : drag === pts.length - 1 ? 1 : Math.min(hi, Math.max(lo, p.u)), Math.round(p.v * 100) / 100];
     apply(pts, 'Speed curve');
   });
-  const end = () => { if (drag >= 0) ed.history.seal(); drag = -1; pts0 = null; };
+  const end = () => { const was = drag >= 0; if (was) ed.history.seal(); drag = -1; pts0 = null; if (was) onDone?.(); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
   cv.addEventListener('dblclick', (e) => {
     base = clone(ed.project); const it = findItem(base, id)?.item; if (!it) return;
@@ -187,7 +187,7 @@ export function curveEditor(ed, id, onChange) {
     if (k > 0 && k < pts.length - 1) pts.splice(k, 1);
     else if (k < 0) { const p = at(e); pts.push([p.u, Math.round(curveV(pts, p.u) * 100) / 100]); pts.sort((x, y) => x[0] - y[0]); }
     else return;
-    apply(pts, 'Speed curve'); ed.history.seal();
+    apply(pts, 'Speed curve'); ed.history.seal(); onDone?.();
   });
   draw();
   return { el: cv, draw };
@@ -197,9 +197,12 @@ export function curveEditor(ed, id, onChange) {
 export function speedSection(insp, item, m) {
   const ed = insp.ed, id = item.id, isClip = item.type === 'clip' && m?.kind === 'video';
   const info = h('small.muted.sp-info');
-  const curve = isClip ? curveEditor(ed, id, () => note()) : null;
-  function note() {
+  // while a curve point is dragged the inspector does not rebuild (the canvas holds the pointer): the length in the
+  // header, the Custom slider and this note follow live, and the panel is rebuilt once the point is let go
+  const curve = isClip ? curveEditor(ed, id, () => note(true), () => insp.render(true)) : null;
+  function note(live = false) {
     const it = findItem(ed.project, id)?.item; if (!it) return;
+    if (live) { sl.value = it.speed || 1; slv.textContent = fmtSpeed(it.speed || 1); insp.refreshHead?.(); }
     const S = it.out - it.in, D = itemDur(it);
     const fps = m?.fps || 30, hi = fps >= 50 ? ` · ${Math.round(fps)} fps source: real frames down to ${fmtSpeed(Math.max(0.05, 30 / fps))}` : '';
     info.textContent = it.freeze ? `Holds one frame for ${fmtDur(D)}` : `${fmtDur(S)} of footage plays in ${fmtDur(D)}${hasCurve(it) ? ` (average ${fmtSpeed(S / Math.max(1e-6, D))})` : ''}${hi}`;

@@ -16,7 +16,7 @@
 
 import { ops } from '../core/history.js';
 import { itemDur, itemEnd, srcTime, tlTime, uid, clone, findTrack, findMedia, createTrack, createItem, VISUAL_KINDS, AUDIO_KINDS } from '../core/project.js';
-import { fits } from './items.js';
+import { fits, clipFromMedia } from './items.js';
 import { splitProps } from '../core/retime.js';
 
 const EPS = 1e-4;
@@ -279,6 +279,15 @@ export function placeCmd(p, moving, t0, target, mode = 'free', { insert = null, 
     if (cut) cmds.push(cut);
   }
   if (shifts.size) cmds.push(ops.setItems([...shifts].map(([id, t]) => ({ id, props: { t0: t } })), label));
+  // a clip lifted off the main track onto an overlay track becomes a picture-in-picture: the box a drop from the bin
+  // gives it there (a box the owner framed himself, anything but the full frame, is kept)
+  const pip = main ? block.filter((m) => m.id && m.fromTrackId === main.id && m.item.type === 'clip' && m.item.media).flatMap((m) => {
+    const kind = (m.trackId === targetId ? tgt : findTrack(p, m.trackId))?.kind, it = m.item, c = p.canvas, md = findMedia(p, it.media);
+    if (!kind || kind === 'video' || !md || !(it.x <= 1 && it.y <= 1 && it.x + it.w >= c.w - 1 && it.y + it.h >= c.h - 1)) return [];
+    const b = clipFromMedia(p, md, kind, it.t0);
+    return [{ id: it.id, props: { x: b.x, y: b.y, w: b.w, h: b.h } }];
+  }) : [];
+  if (pip.length) cmds.push(ops.setItems(pip, label));
   // the moving items themselves
   const moves = block.filter((m) => m.id).map((m) => ({ id: m.id, t0: (Math.max(0, T + m.rel)), trackId: m.trackId }));
   if (moves.length) cmds.push(ops.moveItems(moves, label));
