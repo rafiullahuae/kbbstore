@@ -101,4 +101,6 @@
   window.KBB_DISK = api;
   // the way back to the video editor (the header link, hidden in the standalone file)
   if (token) { var back = document.getElementById('kbb-back'); if (back) back.hidden = false; }
+  // inside KBB Studio the Ad Studio wears the video editor's dark (editor.css is dark only); the standalone file follows the system
+  if (token && !document.documentElement.dataset.theme) document.documentElement.dataset.theme = 'dark';
 })();

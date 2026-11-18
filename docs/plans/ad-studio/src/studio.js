@@ -609,7 +609,8 @@
   function selEl() { return st.sel ? doc.els.filter(function (e) { return e.id === st.sel; })[0] || null : null; }
   function curItems() { return doc.sets[st.fmt][st.set]; }
   function draw() {
-    stage.style.setProperty('--sw', st.fmt === 'story' ? '360px' : st.fmt === 'square' ? '520px' : '470px');
+    stage.style.setProperty('--sw', st.fmt === 'story' ? '360px' : st.fmt === 'square' ? '520px' : '470px');   // phones (one column)
+    zoomFmt();
     var cv = renderCanvas(doc, st.fmt, st.set, 'edit');
     stage.textContent = ''; stage.appendChild(cv); fitText(cv);
     markSel();
@@ -1558,7 +1559,7 @@
   function inSet(t) { var s = setOf(); return s === 'all' || (s === 'planet-careers' ? t.co === 'pc' : t.co !== 'pc'); }
   function visList() { return KT.LIST.filter(function (t) { return inSet(t) && (!st.tcty || !!t.cty); }); }
   function isFav(id) { return co.studio.favs.indexOf(id) >= 0; }
-  function thumbsDirty() { thumbsBuilt = ''; if (st.tab === 'tpl') buildThumbs(); }
+  function thumbsDirty() { thumbsBuilt = ''; if (paneOn('tpl')) buildThumbs(); }
   function buildCats() {
     var h = $('cats'), l = visList(), s = setOf(); h.textContent = '';
     var cs = [['all', 'All']].concat(s === 'kbb' ? KT.CATS.slice(1) : s === 'planet-careers' ? KT.PCCATS : KT.CATS.slice(1).concat(KT.PCCATS), [['fav', '★ Favourites']]);
@@ -1656,13 +1657,98 @@
   function occBar() { var on = !!(doc && doc.occ); $('occw').hidden = !on; if (on) setV($('occ'), doc.occ); }
 
   // ── tabs ──
+  // two panels (18 Nov 2026): the left holds tpl · el (Add + Layers) · prod, the right edit (the picked item's
+  // properties) · style · motion · export. A tab switches its own panel only; Properties brings Elements (Add + Layers)
+  // up on the left, as the one Edit tab showed all three together before.
+  function paneOn(k) { var p = document.querySelector('.pane[data-pane="' + k + '"]'); return !!p && !p.hidden; }
+  function tabIn(k) {
+    var pane = document.querySelector('.pane[data-pane="' + k + '"]'), box = pane && pane.parentNode; if (!box) return;
+    box.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === k)); });
+    box.querySelectorAll('.pane').forEach(function (p) { p.hidden = p.dataset.pane !== k; });
+  }
   function showTab(k) {
+    tabIn(k); if (k === 'edit' && !paneOn('el')) tabIn('el');
     st.tab = k;
-    document.querySelectorAll('.tab').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === k)); });
-    document.querySelectorAll('.pane').forEach(function (p) { p.hidden = p.dataset.pane !== k; });
     if (k === 'tpl') buildThumbs();
   }
   document.querySelectorAll('.tab').forEach(function (b) { b.onclick = function () { showTab(b.dataset.tab); }; });
+
+  // ── the shell (18 Nov 2026, "fit to screen, same like video editor"): panel widths and shut panels, remembered in this
+  //    browser (kbbas:layout: lw / rw / vw px, lc / rc / vc shut); the zoom. The fit itself is CSS (container units on
+  //    .stagewrap); the one measurement here is the host's size, to say what Fit is in % and to step from it. ──
+  var LAY = (function () { try { var v = JSON.parse(localStorage.getItem('kbbas:layout')); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } })();
+  function laySave() { try { localStorage.setItem('kbbas:layout', JSON.stringify(LAY)); } catch (e) {} }
+  var PANELS = { lw: [$('ads-main'), 'lc', $('lp-tg')], rw: [$('ads-main'), 'rc', $('rp-tg')], vw: [$('vgrid'), 'vc', $('vp-tg')] };
+  // under 1180 px the left panel starts shut (the design keeps its room) until he opens or shuts it himself
+  var narrow = window.matchMedia ? window.matchMedia('(min-width:900px) and (max-width:1179px)') : { matches: false };
+  function shut(c) { return typeof LAY[c] === 'boolean' ? LAY[c] : c === 'lc' && narrow.matches; }
+  function layApply() {
+    Object.keys(PANELS).forEach(function (k) {
+      var P = PANELS[k], w = +LAY[k]; if (!P[0]) return;
+      if (w >= 200 && w <= 640) P[0].style.setProperty('--' + k, Math.round(w) + 'px'); else P[0].style.removeProperty('--' + k);
+      P[0].classList.toggle(P[1], shut(P[1])); if (P[2]) P[2].setAttribute('aria-pressed', String(!shut(P[1])));
+    });
+  }
+  if (narrow.addEventListener) narrow.addEventListener('change', layApply);
+  Object.keys(PANELS).forEach(function (k) {
+    var P = PANELS[k]; if (P[2]) P[2].addEventListener('click', function () { LAY[P[1]] = !shut(P[1]); layApply(); laySave(); });
+  });
+  document.querySelectorAll('.rz').forEach(function (h) {
+    h.addEventListener('pointerdown', function (ev) {
+      if (ev.button !== 0) return; ev.preventDefault();
+      var k = h.dataset.rz, panel = h.parentNode, w0 = panel.getBoundingClientRect().width, x0 = ev.clientX, dir = k === 'lw' ? 1 : -1;
+      h.setPointerCapture(ev.pointerId); h.classList.add('on');
+      function mv(e) { LAY[k] = Math.max(200, Math.min(640, Math.round(w0 + (e.clientX - x0) * dir))); layApply(); }
+      function up() { h.classList.remove('on'); h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); laySave(); }
+      h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+    h.addEventListener('dblclick', function () { delete LAY[h.dataset.rz]; layApply(); laySave(); });   // back to the default width
+  });
+  layApply();
+
+  // zoom: 'fit' (CSS: the whole design in its room) or a % of the full-HD file (1080 px wide = 100 %)
+  var ZS = [50, 75, 100, 125, 150, 200, 300, 400], zoom = 'fit', fitPct = 0, swrap = $('stagewrap');
+  function fitNow() { if (!swrap || !swrap.clientWidth) return fitPct; var cs = getComputedStyle(swrap), w = swrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), h = swrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    fitPct = Math.max(1, Math.round(Math.min(w, h * PX[st.fmt][0] / PX[st.fmt][1]) / PX[st.fmt][0] * 100)); return fitPct; }
+  function zoomLabel() { var v = $('zm-v'); if (v) v.textContent = (zoom === 'fit' ? fitNow() : zoom) + '%'; }
+  function zoomFmt() {
+    if (!swrap) return;
+    stage.style.setProperty('--ar', String(PX[st.fmt][0] / PX[st.fmt][1]));
+    if (zoom === 'fit') stage.style.removeProperty('--zw'); else stage.style.setProperty('--zw', PX[st.fmt][0] * zoom / 100 + 'px');
+    if ($('zm-sel')) $('zm-sel').value = String(zoom); zoomLabel();
+  }
+  function setZoom(z) {
+    if (!swrap) return; var cx = (swrap.scrollLeft + swrap.clientWidth / 2) / (swrap.scrollWidth || 1), cy = (swrap.scrollTop + swrap.clientHeight / 2) / (swrap.scrollHeight || 1);
+    zoom = z === 'fit' || ZS.indexOf(+z) < 0 ? 'fit' : +z; zoomFmt();
+    swrap.scrollLeft = cx * swrap.scrollWidth - swrap.clientWidth / 2; swrap.scrollTop = cy * swrap.scrollHeight - swrap.clientHeight / 2;   // keep the middle in the middle
+  }
+  function zoomStep(d) { var cur = zoom === 'fit' ? fitNow() : zoom, l = ZS.filter(function (z) { return d > 0 ? z > cur : z < cur; }); if (l.length) setZoom(d > 0 ? l[0] : l[l.length - 1]); }
+  if (swrap) {
+    $('zm-sel').addEventListener('change', function () { setZoom(this.value); this.blur(); });
+    $('zm-in').onclick = function () { zoomStep(1); }; $('zm-out').onclick = function () { zoomStep(-1); }; $('zm-fit').onclick = function () { setZoom('fit'); };
+    if (window.ResizeObserver) new ResizeObserver(zoomLabel).observe(swrap);
+    // Ctrl/Cmd + wheel (and a trackpad pinch) zooms the design, not the page
+    swrap.addEventListener('wheel', function (ev) { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); zoomStep(ev.deltaY < 0 ? 1 : -1); }, { passive: false });
+    // hold Space (or the middle button) and drag to pan when the design is bigger than its room
+    var panKey = false, pan = null;
+    swrap.addEventListener('pointerdown', function (ev) {
+      if (!(panKey && ev.button === 0) && ev.button !== 1) return;
+      ev.preventDefault(); ev.stopPropagation(); pan = { x: ev.clientX, y: ev.clientY, l: swrap.scrollLeft, t: swrap.scrollTop }; swrap.classList.add('on'); swrap.setPointerCapture(ev.pointerId);
+    }, true);
+    swrap.addEventListener('pointermove', function (ev) { if (!pan) return; swrap.scrollLeft = pan.l - (ev.clientX - pan.x); swrap.scrollTop = pan.t - (ev.clientY - pan.y); });
+    swrap.addEventListener('pointerup', function () { pan = null; swrap.classList.remove('on'); });
+    swrap.addEventListener('pointercancel', function () { pan = null; swrap.classList.remove('on'); });
+    document.addEventListener('keyup', function (ev) { if (ev.key === ' ' && panKey) { panKey = false; swrap.classList.remove('pan'); } });
+    window.addEventListener('blur', function () { panKey = false; swrap.classList.remove('pan'); });
+    document.addEventListener('keydown', function (ev) {
+      if (document.body.dataset.mode === 'video' || /input|select|textarea/i.test((document.activeElement || {}).tagName || '')) return;
+      if ((ev.ctrlKey || ev.metaKey) && !ev.altKey) {
+        if (ev.key === '=' || ev.key === '+') { ev.preventDefault(); zoomStep(1); } else if (ev.key === '-' || ev.key === '_') { ev.preventDefault(); zoomStep(-1); } else if (ev.key === '0') { ev.preventDefault(); setZoom('fit'); }
+        return;
+      }
+      if (ev.key === ' ' && !ev.repeat && (swrap.scrollWidth > swrap.clientWidth || swrap.scrollHeight > swrap.clientHeight)) { ev.preventDefault(); panKey = true; swrap.classList.add('pan'); }
+    });
+  }
 
   // ── saving ──
   $('pname').addEventListener('input', function () { begin(); doc.name = str(this.value, 60) || 'Untitled design'; dirtyMark(); });
@@ -1994,7 +2080,7 @@
       hist = []; fut = []; pending = null;
       if (d) { doc = d; lastSaved = dr.saved ? JSON.stringify(d) : ''; } else { doc = fromTemplate(firstTpl(c)); lastSaved = ''; }
       st.grp = null; setSel([]); st.set = 0; st.tset = ''; st.cat = 'all'; setV($('tf-set'), '');
-      $('pname').value = doc.name; coBar(); buildCats(); thumbsBuilt = ''; undoBtns(); draw(); if (st.tab === 'tpl') buildThumbs(); listMine();
+      $('pname').value = doc.name; coBar(); buildCats(); thumbsBuilt = ''; undoBtns(); draw(); if (paneOn('tpl')) buildThumbs(); listMine();
       if (!quiet) setStatus('Now working on ' + c.name, 'ok');
       return true;
     });

@@ -1,13 +1,13 @@
 /* ── Video mode ── */
 .modesw{flex:none;min-width:150px}
 .modesw button{padding:6px 14px;font-size:13px}
-body[data-mode="video"] .app{max-width:1440px}
+@media (max-width:899px){body[data-mode="video"] .app{max-width:1440px}}
 .vmain{display:grid;gap:10px;min-width:0}
 .vmain.drop{outline:3px dashed var(--sel);outline-offset:4px;border-radius:14px}
 .v-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 #v-name{flex:1 1 140px;min-width:0;max-width:280px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel);font-weight:600}
 .v-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-areas:"work side" "tl tl";gap:12px;align-items:start}
-@media (max-width:860px){.v-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"work" "tl" "side"}}
+@media (max-width:899px){.v-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"work" "tl" "side"}}
 .v-work{grid-area:work;display:grid;gap:8px;min-width:0}
 .v-side{grid-area:side}
 .v-tlw{grid-area:tl;display:grid;gap:6px;min-width:0}
@@ -54,7 +54,7 @@ body[data-mode="video"] .app{max-width:1440px}
 .v-tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg);background:var(--panel)}
 .v-tab:focus-visible{outline:2px solid var(--sel);outline-offset:-2px}
 .v-pane{padding:12px;display:grid;gap:10px;max-height:calc(100vh - 150px);overflow:auto;min-width:0}
-@media (max-width:860px){.v-pane{max-height:none}}
+@media (max-width:899px){.v-pane{max-height:none}}
 .v-pane h3{margin:0;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v-props{display:grid;gap:9px;min-width:0}
 .v-selbox{padding:10px;border:1px solid var(--sel);border-radius:10px;background:var(--soft)}

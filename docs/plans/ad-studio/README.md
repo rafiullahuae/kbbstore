@@ -24,7 +24,28 @@ node tools/check-companies.cjs        # companies, Planet Careers, country picke
 node tools/pc-shots.cjs [ids-regex]   # shots/planet-careers-{1..6}.jpg: every Planet Careers template in post / square / story
 node tools/check-occupations.cjs      # Work Abroad: 44 templates, occupation picker sweep, honest copy, photo slot + cut-out; shots/work-abroad-picker.png
 node tools/wa-shots.cjs [ids-regex]   # shots/work-abroad-{1..5}.jpg: every Work Abroad template in post / square / story
+node tools/check-layout.cjs           # the app shell at 1280×800 … 2560×1440 + 1024, Ads and Video, inside KBB Studio and standalone; PNG pixels vs tools/layout-export-baseline.json
 ```
+
+## Layout (18 Nov 2026) -- fit to screen, like the video editor
+
+The owner: *"can u plz also make the ads studio overall layout fit to screen, same like video editor"*. From 900 px wide
+the studio is an app shell like `studio/reel-studio/app/editor` (editor.css's spacing, radii, type sizes and, inside
+KBB Studio, its dark surfaces): it fills the window exactly and the page never scrolls.
+
+* **Top bar**: ◀ KBB Studio · Ads | Video · company + Edit company · design name · Country / Occupation (when the
+  design has them) · undo, redo, Save and the status line. In Video mode: the video's name, New, undo, redo, Save.
+* **Left panel**: Templates · Elements (Add + Layers) · Products. **Right panel**: Properties (the picked item) · Style ·
+  Motion · Export. Picking something on the ad shows its properties on the right and Add + Layers on the left. Each
+  panel scrolls on its own; drag its inner edge to resize (double-click = default width), the ◧ / ◨ buttons in the
+  bar under the design shut and open them. Widths and shut panels are kept in this browser (`kbbas:layout`). Under
+  1180 px the left panel starts shut.
+* **The design** is fitted to its room (Fit, the default, in CSS); zoom 50–400 % of the full-HD file from the bar
+  under it, Ctrl/Cmd + / − / 0 or Ctrl/Cmd + wheel (pinch); bigger than the room it pans (scroll, or hold Space and
+  drag). **Video mode**: the picture fitted the same way, the timeline along the bottom, the options on the right.
+* Downloads are untouched: the full-HD files are drawn off-screen at 1080 px wide as before (`check-layout` compares
+  their pixels with `tools/layout-export-baseline.json`, made from the build before the change). Before / after:
+  `shots/layout/`.
 
 ## Work Abroad (16 Nov 2026) -- image-first hiring ads
 

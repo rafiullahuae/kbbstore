@@ -379,7 +379,7 @@
 
   // ── preview + playback ──
   var cv, cx, boxes = [], raf = 0, playWall = 0, playT0 = 0, activeClip = null, pvScale = 1;
-  function previewSize() { var W = vp.ab.w, H = vp.ab.h, s = Math.min(1, 960 / Math.max(W, H)); pvScale = s; if (cv.width !== Math.round(W * s) || cv.height !== Math.round(H * s)) { cv.width = Math.round(W * s); cv.height = Math.round(H * s); } }
+  function previewSize() { var W = vp.ab.w, H = vp.ab.h, s = Math.min(1, 960 / Math.max(W, H)); pvScale = s; cv.style.setProperty('--var', String(W / H)); /* the CSS fit (#v-cv width) reads the artboard's shape */ if (cv.width !== Math.round(W * s) || cv.height !== Math.round(H * s)) { cv.width = Math.round(W * s); cv.height = Math.round(H * s); } }
   function previewSrc(c) { var m = media[c.m]; return m ? m.el : null; }
   function drawPreview() {
     if (!vp || !cv) return; previewSize(); boxes = [];

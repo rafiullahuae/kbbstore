@@ -1,15 +1,5 @@
   <div class="vmain" id="vmain" hidden>
-    <div class="v-top">
-      <input id="v-name" type="text" maxlength="60" aria-label="Video name" value="Untitled video">
-      <div class="tb">
-        <button class="btn sm" id="v-new" type="button" title="Start a new video (this one is kept)">New</button>
-        <button class="btn ic" id="v-undo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
-        <button class="btn ic" id="v-redo" type="button" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
-        <button class="btn pri" id="v-save" type="button" title="Save (Ctrl+S) — it also saves itself">Save</button>
-        <span class="st" id="v-status" role="status" aria-live="polite"></span>
-      </div>
-    </div>
-    <div class="v-grid">
+    <div class="v-grid" id="vgrid">
       <section class="v-work" aria-label="Video">
         <div class="bar">
           <span class="bar" id="v-ab" role="group" aria-label="Artboard size">
@@ -21,6 +11,7 @@
           <span class="seg v-mini" id="v-bgk" role="group" aria-label="Fill empty space with"><button data-v="blur" type="button">Blur</button><button data-v="color" type="button">Colour</button></span>
           <input type="color" id="v-bgc" aria-label="Background colour">
           <span class="lbl" id="v-abl"></span>
+          <button class="btn ic ptg" id="vp-tg" type="button" aria-pressed="true" title="Show / hide the right panel (media, clip, text, stickers, audio, export)" aria-label="Right panel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M10 2.5v11"/></svg></button>
         </div>
         <div class="v-stage"><canvas id="v-cv" width="540" height="960" aria-label="Video preview — drag a text or sticker to move it, drag the picture to frame it"></canvas></div>
         <div class="v-trans">
@@ -154,6 +145,7 @@
           <p class="note">Made inside this browser — nothing is uploaded. Chrome and Edge make MP4 (H.264) faster than real time; Safari and Firefox record WebM in real time. The size follows the artboard.</p>
           <p class="note">Backup / move to another computer: Ads → Export → Export project. When you have video projects it saves a .zip with the clips inside.</p>
         </div>
+        <div class="rz" data-rz="vw" aria-hidden="true" title="Drag to resize"></div>
       </aside>
     </div>
   </div>
