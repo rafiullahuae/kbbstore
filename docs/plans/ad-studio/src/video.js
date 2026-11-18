@@ -34,9 +34,10 @@
   // accepted files: type -> kind. Extension is the fallback when the browser gives no type (common for .mov / .m4a).
   var TYPES = { 'video/mp4': 'video', 'video/quicktime': 'video', 'video/webm': 'video', 'video/x-m4v': 'video',
     'image/png': 'image', 'image/jpeg': 'image', 'image/webp': 'image',
+    'application/zip': 'seq', 'application/x-zip-compressed': 'seq',
     'audio/mpeg': 'audio', 'audio/mp3': 'audio', 'audio/mp4': 'audio', 'audio/x-m4a': 'audio', 'audio/m4a': 'audio', 'audio/aac': 'audio', 'audio/wav': 'audio', 'audio/x-wav': 'audio', 'audio/wave': 'audio', 'audio/webm': 'audio', 'audio/ogg': 'audio' };
-  var EXT = { mp4: 'video/mp4', m4v: 'video/x-m4v', mov: 'video/quicktime', webm: 'video/webm', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', ogg: 'audio/ogg' };
-  var MAXB = { video: 1024 * 1048576, image: 30 * 1048576, audio: 200 * 1048576 }, MAXDUR = 1800;
+  var EXT = { mp4: 'video/mp4', m4v: 'video/x-m4v', mov: 'video/quicktime', webm: 'video/webm', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', ogg: 'audio/ogg', zip: 'application/zip' };
+  var MAXB = { video: 1024 * 1048576, image: 30 * 1048576, audio: 200 * 1048576, seq: 1024 * 1048576 }, MAXDUR = 1800;
   function extOf(type) { for (var k in EXT) if (EXT[k] === type) return k; return 'bin'; }
 
   // ── state ──
@@ -108,7 +109,8 @@
     if (o.t === 'logo') { c.col = hex(o.col, '#FFFFFF'); }
     if (o.t === 'prod') { if (!has(D.prods, o.p)) return null; c.p = o.p; c.sh = num(o.sh, 0, 100, 50); }
     if (o.t === 'pay') c.pay = has({ both: 1, tabby: 1, tamara: 1 }, o.pay) ? o.pay : 'both';
-    if (o.t === 'img') { if (typeof o.im !== 'string') return null; var mm = /^m:(.*)$/.exec(o.im), ss = /^s:(.*)$/.exec(o.im); if (!(mm && MID.test(mm[1])) && !(ss && SIMG.test(ss[1]))) return null; c.im = o.im; }
+    if (o.t === 'img') { if (typeof o.im !== 'string') return null; var mm = /^m:(.*)$/.exec(o.im), ss = /^s:(.*)$/.exec(o.im); if (!(mm && MID.test(mm[1])) && !(ss && SIMG.test(ss[1]))) return null; c.im = o.im; var bq = mm && cleanBgr(o.bgr); if (bq) c.bgr = bq; }
+    if (o.bh === true) c.bh = true;          // drawn behind the video (shows through a cut-out or a see-through clip)
     return c;
   }
   function cleanVP(r) {
@@ -118,9 +120,11 @@
       fps: FPS_LIST.indexOf(+r.fps) >= 0 ? +r.fps : 30, clips: [], ovs: [], au: null };
     (Array.isArray(r.clips) ? r.clips.slice(0, 400) : []).forEach(function (c) {
       if (!c || !MID.test(c.m) || !media[c.m] || media[c.m].k === 'audio') return;
-      var m = media[c.m], hi = m.k === 'video' ? m.dur : 600, a = num(c.a, 0, hi, 0), b = num(c.b, 0, hi, m.k === 'video' ? m.dur : IMG_DEFAULT);
+      var m = media[c.m], hi = isTimed(m) ? m.dur : 600, a = num(c.a, 0, hi, 0), b = num(c.b, 0, hi, isTimed(m) ? m.dur : IMG_DEFAULT);
       if (b - a < MIN) return;
-      o.clips.push({ id: EID.test(c.id) && c.id[0] === 'c' ? c.id : uid('c'), m: c.m, a: r3(a), b: r3(b), fit: c.fit === 'fit' ? 'fit' : 'fill', z: num(c.z, .2, 5, 1), px: num(c.px, -100, 100, 0), py: num(c.py, -100, 100, 0), r: num(c.r, -180, 180, 0), mute: c.mute === true, vol: num(c.vol, 0, 200, 100) });
+      var q = { id: EID.test(c.id) && c.id[0] === 'c' ? c.id : uid('c'), m: c.m, a: r3(a), b: r3(b), fit: c.fit === 'fit' ? 'fit' : 'fill', z: num(c.z, .2, 5, 1), px: num(c.px, -100, 100, 0), py: num(c.py, -100, 100, 0), r: num(c.r, -180, 180, 0), mute: c.mute === true, vol: num(c.vol, 0, 200, 100) };
+      var bq = m.k !== 'seq' && cleanBgr(c.bgr); if (bq) q.bgr = bq;
+      o.clips.push(q);
     });
     (Array.isArray(r.ovs) ? r.ovs.slice(0, 200) : []).forEach(function (x) { var c = cleanOv(x); if (c) o.ovs.push(c); });
     var u = r.au;
@@ -128,6 +132,16 @@
       var md = media[u.m].dur, a2 = num(u.a, 0, md, 0), b2 = num(u.b, 0, md, md);
       if (b2 - a2 >= MIN) o.au = { m: u.m, a: r3(a2), b: r3(b2), o: r3(num(u.o, -3600, 3600, 0)), vol: num(u.vol, 0, 200, 100), fi: num(u.fi, 0, 10, 0), fo: num(u.fo, 0, 10, 0) };
     }
+    return o;
+  }
+  // 🧍 background removal on a clip or a picture / video layer (absent = untouched, so every older project draws as it did):
+  //   key person | subject | chroma, mode none (transparent) | color | gradient, the edge settings of the video editor's bg.js
+  function cleanBgr(b) {
+    if (!b || typeof b !== 'object' || !has({ person: 1, subject: 1, chroma: 1 }, b.key)) return null;
+    var o = { key: b.key, mode: has({ none: 1, color: 1, gradient: 1 }, b.mode) ? b.mode : 'none', color: hex(b.color, '#16161C'),
+      colors: [hex(b.colors && b.colors[0], '#E8306F'), hex(b.colors && b.colors[1], '#1F1B1E')],
+      feather: r3(num(b.feather, 0, 1, BGD.feather)), grow: r3(num(b.grow, -1, 1, BGD.grow)), smooth: r3(num(b.smooth, 0, 1, BGD.smooth)), wrap: r3(num(b.wrap, 0, 1, BGD.wrap)) };
+    if (b.key === 'chroma') { o.keyColor = hex(b.keyColor, '#20C040'); o.tol = r3(num(b.tol, 0, 1, BGD.tol)); o.soft = r3(num(b.soft, 0, 1, BGD.soft)); o.spill = r3(num(b.spill, 0, 1, BGD.spill)); }
     return o;
   }
   function cleanMeta(r) {
@@ -162,6 +176,7 @@
     });
   }
   function makeThumbs(m) {
+    if (m.k === 'seq') return seqThumbs(m);
     if (m.k === 'image') { var c = mk('canvas'); c.height = 64; c.width = Math.max(8, Math.round(64 * m.w / m.h)); c.getContext('2d').drawImage(m.el, 0, 0, c.width, c.height); m.thumbs = [{ t: 0, c: c }]; return Promise.resolve(); }
     if (m.k !== 'video') return Promise.resolve();
     var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = m.url; var n = Math.max(2, Math.min(40, Math.ceil(m.dur))), out = [];
@@ -179,7 +194,7 @@
     }).catch(function () { return null; });
   }
   function makePeaks(m) {
-    if (m.k === 'image') { m.peaks = null; return Promise.resolve(); }
+    if (m.k === 'image' || m.k === 'seq') { m.peaks = null; return Promise.resolve(); }
     return decodeAudio(m).then(function (buf) {
       if (!buf) { m.peaks = null; m.silent = true; return; }
       var per = 50, n = Math.ceil(buf.duration * per), d0 = buf.getChannelData(0), d1 = buf.numberOfChannels > 1 ? buf.getChannelData(1) : d0, step = buf.sampleRate / per, pk = new Float32Array(n), mx = 0;
@@ -189,7 +204,8 @@
   }
   function register(rec, blob) {
     var m = { id: rec.id, name: rec.name, k: rec.k, type: rec.type, size: blob.size, blob: blob, url: URL.createObjectURL(blob), thumbs: [], peaks: null };
-    return probe(m).then(function (el) { m.el = el; if (el.tagName === 'VIDEO' || el.tagName === 'AUDIO') { el.preload = 'auto'; el.addEventListener('seeked', function () { if (!playing) drawPreview(); }); } media[m.id] = m; return m; },
+    if (m.k === 'seq') return openSeq(m).then(function () { m.alpha = true; media[m.id] = m; return m; }, function (e) { URL.revokeObjectURL(m.url); throw e; });
+    return probe(m).then(function (el) { m.el = el; if (el.tagName === 'VIDEO' || el.tagName === 'AUDIO') { el.preload = 'auto'; el.addEventListener('seeked', function () { if (!playing) drawPreview(); }); } if (m.k !== 'audio') m.alpha = seeThrough(m, el); media[m.id] = m; return m; },
       function (e) { URL.revokeObjectURL(m.url); throw e; });
   }
   function importFiles(list) {
@@ -226,7 +242,7 @@
   function selOv() { return sel && sel.k === 'ov' ? vp.ovs.filter(function (o) { return o.id === sel.id; })[0] : null; }
   function addClip(mid, quiet) {
     var m = media[mid]; if (!m || m.k === 'audio') return;
-    var c = cleanVP({ clips: [{ id: uid('c'), m: mid, a: 0, b: m.k === 'video' ? m.dur : IMG_DEFAULT }] }).clips[0]; if (!c) return;
+    var c = cleanVP({ clips: [{ id: uid('c'), m: mid, a: 0, b: isTimed(m) ? m.dur : IMG_DEFAULT }] }).clips[0]; if (!c) return;
     vp.clips.push(c); sel = { k: 'clip', id: c.id }; if (!quiet) changed('add');
   }
   function setMusic(mid, quiet) { var m = media[mid]; if (!m) return; vp.au = { m: mid, a: 0, b: r3(m.dur), o: 0, vol: 100, fi: 0, fo: 0 }; sel = { k: 'au' }; if (!quiet) changed('music'); }
@@ -267,8 +283,128 @@
   }
   function openVP(d) { stop(); vp = d; lastJSON = JSON.stringify(vp); hist = []; fut = []; sel = null; ph = 0; $('v-name').value = vp.name; lsSet('vlast', vp.id); renderAll(); seekPreview(); }
 
+  // ── 18 Nov 2026: cut-outs and see-through media ──
+  // 🧍 Remove background reuses the video editor's own code (src/cutlook.js: KBB_LOOK = app/look's shader and mask filter):
+  // the masks are computed ONCE per media (person 30 / subject 10 grid frames a second, as vision.js), offline, then every
+  // frame -- preview, still and export alike -- only samples them through maskAt()'s temporal filter and runs the shader.
+  // See-through media (the video editor's WebM with alpha, its PNG-sequence .zip, a transparent PNG) are drawn as they
+  // are: Chrome decodes VP9 alpha (WebM AlphaMode 1 + BlockAdditional) in a <video>, and drawImage keeps the alpha.
+  var LK = window.KBB_LOOK, CUT = window.KBB_CUT;
+  var BGD = LK ? LK.BG_DEFAULTS : { feather: .1, grow: 0, smooth: .5, wrap: .3, tol: .1, soft: .08, spill: .6 };
+  function isTimed(m) { return !!m && (m.k === 'video' || m.k === 'seq'); }
+  // can it be see-through? Only a WebM (VP8/VP9 alpha), a PNG or a WebP can; an MP4 / MOV / JPEG never is. Then the first
+  // frame is looked at (32 x 32 is enough); a frame not painted yet reads as all-transparent and counts as see-through,
+  // which only means the Empty-space fill is drawn behind it
+  function seeThrough(m, el) {
+    if (!/webm|png|webp/.test(m.type)) return false;
+    try { var c = mk('canvas'); c.width = 32; c.height = 32; var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(el, 0, 0, 32, 32); var d = x.getImageData(0, 0, 32, 32).data; for (var i = 3; i < d.length; i += 4) if (d[i] < 250) return true; } catch (e) {}
+    return false;
+  }
+  // PNG sequence (.zip of RGBA frames, the video editor's "PNG sequence" export, 30 fps): the PNGs stay compressed in
+  // memory; the preview decodes them at its own size a few frames ahead (90 kept), the export at full size, one at a time
+  var SEQ_FPS = 30, SEQ_MAX = 9000;
+  function seqNames(z) { return Object.keys(z.files).filter(function (k) { return !z.files[k].dir && /\.png$/i.test(k) && !/(^|\/)(__MACOSX|\.)/.test(k); }).sort(); }
+  function openSeq(m) {
+    if (!window.JSZip) return Promise.reject(new Error('this file has no zip reader'));
+    return JSZip.loadAsync(m.blob).then(function (z) {
+      var names = seqNames(z); if (!names.length) throw new Error('no PNG frames in that .zip');
+      if (names.length > SEQ_MAX) throw new Error('more than ' + SEQ_MAX + ' frames');
+      return Promise.all(names.map(function (n) { return z.file(n).async('arraybuffer').then(function (b) { return new Blob([b], { type: 'image/png' }); }); }));
+    }).then(function (bl) {
+      return createImageBitmap(bl[0]).then(function (bm) {
+        var w = bm.width, h = bm.height; bm.close();
+        if (!w || !h || w > 4096 || h > 4096) throw new Error('frames larger than 4096 px');
+        m.frames = bl; m.fps = SEQ_FPS; m.dur = bl.length / SEQ_FPS; m.w = w; m.h = h; m.pv = new Map(); m.pend = Object.create(null);
+      }, function () { throw new Error('its first frame is not a picture'); });
+    });
+  }
+  function seqThumbs(m) {
+    var n = Math.max(1, Math.min(12, m.frames.length)), out = [];
+    return Array.from({ length: n }).reduce(function (p, _, i) {
+      return p.then(function () { var k = Math.floor((i + .5) * m.frames.length / n); return createImageBitmap(m.frames[k], { resizeHeight: 64, resizeWidth: Math.max(8, Math.round(64 * m.w / m.h)) }).then(function (bm) { var c = mk('canvas'); c.width = bm.width; c.height = 64; c.getContext('2d').drawImage(bm, 0, 0); bm.close(); out.push({ t: k / m.fps, c: c }); }); });
+    }, Promise.resolve()).then(function () { m.thumbs = out; }).catch(function () {});
+  }
+  function seqIdx(m, local) { return Math.max(0, Math.min(m.frames.length - 1, Math.floor(local * m.fps + 1e-6))); }
+  function seqLoad(m, i) {
+    if (m.pv.has(i)) return Promise.resolve(m.pv.get(i)); if (m.pend[i]) return m.pend[i];
+    var L = vp ? Math.max(vp.ab.w, vp.ab.h) * Math.min(1, 960 / Math.max(vp.ab.w, vp.ab.h)) : 960, k = Math.min(1, L / Math.max(m.w, m.h));
+    return (m.pend[i] = createImageBitmap(m.frames[i], { resizeWidth: Math.max(1, Math.round(m.w * k)), resizeHeight: Math.max(1, Math.round(m.h * k)), resizeQuality: 'medium' }).then(function (bm) {
+      delete m.pend[i]; m.pv.set(i, bm);
+      if (m.pv.size > 90) { var old = m.pv.keys().next().value, ob = m.pv.get(old); m.pv.delete(old); if (ob && ob.close) ob.close(); }
+      if (!playing) drawPreview(); return bm;
+    }, function () { delete m.pend[i]; return null; }));
+  }
+  function seqPreview(m, local) {
+    var i = seqIdx(m, local); if (m.pv.has(i)) return m.pv.get(i);
+    seqLoad(m, i); for (var d = 1; d < 15; d++) if (m.pv.has(i - d)) return m.pv.get(i - d);
+    return null;
+  }
+  function seqAhead(m, local) { var i = seqIdx(m, local); for (var d = 1; d <= 10 && i + d < m.frames.length; d++) if (!m.pv.has(i + d) && !m.pend[i + d] && Object.keys(m.pend).length < 6) seqLoad(m, i + d); }
+  // a layer: a picture, a video or a sequence from the media bin over the clips; a moving one loops
+  function ovMedia(o) { var mm = o.t === 'img' && /^m:(.*)$/.exec(o.im); return mm ? media[mm[1]] || null : null; }
+  function layerLocal(o, m, t) { var d = isTimed(m) ? Math.max(.04, m.dur) : 0; return d ? Math.max(0, t - o.s) % d : 0; }
+  function layerEl(m) { if (!m.lel) { var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url; v.addEventListener('seeked', function () { if (!playing) drawPreview(); }); m.lel = v; } return m.lel; }
+  function hasMoving() { return vp.clips.some(function (c) { return media[c.m] && media[c.m].k === 'seq'; }) || vp.ovs.some(function (o) { return isTimed(ovMedia(o)); }); }
+
+  // the picture of a clip / layer with its background removed (the shared GL canvas) or, without a mask yet, as it is
+  var skipMask = Object.create(null), drawK = 1;
+  function cutSrc(it, m, src, local, dw, dh, x) {
+    var b = it.bgr; if (!b || !CUT || !LK) return src;
+    var mask = null;
+    // the mask of the very frame on show (a <video>'s own time), so a picture that lags or leads the playhead while it
+    // plays never gets another instant's outline; the export seeks every frame of a cut-out clip, so there they are equal
+    var mt = m.k === 'image' ? 0 : src.tagName === 'VIDEO' ? src.currentTime : local;
+    if (b.key !== 'chroma') { mask = LK.maskAt(m.id, mt, b.key, b.smooth); if (!mask) { wantMasks(); return src; } }
+    var tr = x.getTransform(), sc = Math.hypot(tr.a, tr.b) || 1;
+    return CUT.pass(src, m.w, m.h, { key: b.key, mode: b.mode, mask: mask, color: b.color, colors: b.colors, feather: b.feather, grow: b.grow, wrap: b.wrap,
+      keyColor: b.keyColor, tol: b.tol, soft: b.soft, spill: b.spill, work: Math.max(dw, dh) * sc * drawK }) || src;
+  }
+  // the grid frames each (media, kind) needs: a clip's trimmed span (± 0.2 s), a layer's whole media, a picture's one frame
+  function maskNeeds() {
+    var need = Object.create(null), F = LK ? LK.MASK_FPS : {};
+    function add(m, kind, a, b) {
+      var key = m.id + '|' + kind, n = need[key] || (need[key] = { key: key, mid: m.id, kind: kind, ks: {} }), fps = F[kind];
+      if (m.k === 'image') { n.ks[0] = 1; return; }
+      var k1 = Math.min(Math.floor(m.dur * fps), Math.ceil((b + .2) * fps)); for (var k = Math.max(0, Math.floor((a - .2) * fps)); k <= k1; k++) n.ks[k] = 1;
+    }
+    vp.clips.forEach(function (c) { var m = media[c.m]; if (c.bgr && c.bgr.key !== 'chroma' && m && m.k !== 'seq') add(m, c.bgr.key, c.a, c.b); });
+    vp.ovs.forEach(function (o) { var m = ovMedia(o); if (o.bgr && o.bgr.key !== 'chroma' && m && m.k !== 'seq') add(m, o.bgr.key, 0, m.dur || 0); });
+    return Object.keys(need).map(function (k) { var n = need[k], rec = LK.MASKS.get(k); n.ks = Object.keys(n.ks).map(Number).filter(function (q) { return !rec || !rec.frames.has(q); }).sort(function (a, b) { return a - b; }); return n; })
+      .filter(function (n) { return n.ks.length && !skipMask[n.key]; });
+  }
+  function grabber(m) {
+    if (m.k === 'image') return { get: function () { return Promise.resolve(m.el); }, free: function () {} };
+    var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url;
+    var ready = new Promise(function (r) { if (v.readyState >= 2) r(); else { v.onloadeddata = r; v.onerror = r; } });
+    return { get: function (t) { return ready.then(function () { return seekTo(v, Math.min(t, m.dur - .02)); }).then(function () { return v; }); }, free: function () { v.removeAttribute('src'); v.load(); } };
+  }
+  var maskJob = null, maskAsk = false, maskStats = null;
+  function wantMasks() { if (maskJob || maskAsk || !vp || !CUT) return; maskAsk = true; setTimeout(function () { maskAsk = false; if (maskNeeds().length) ensureMasks(true); }, 0); }
+  // analyse what the project's cut-outs need and is not cached (one at a time; the export waits for it)
+  function ensureMasks(quiet) {
+    if (!CUT || !LK || !vp) return Promise.resolve();
+    if (maskJob) return maskJob.then(function () { return maskNeeds().length ? ensureMasks(quiet) : null; });
+    var jobs = maskNeeds(); if (!jobs.length) return Promise.resolve();
+    var t0 = performance.now(), frames = 0;
+    var run = jobs.reduce(function (p, j) {
+      return p.then(function () {
+        var m = media[j.mid]; if (!m) return;
+        return (j.kind === 'subject' ? CUT.subjectState() : Promise.resolve('ready')).then(function (s) {
+          if (s !== 'ready') { skipMask[j.key] = 1; status(s === 'standalone' ? 'Main subject (products) needs KBB Studio — that clip shows uncut here. Person and Green screen work offline.' : 'The main-subject model is not installed: 🧍 Remove background → 📦 Main subject downloads it.', 'warn'); return; }
+          var g = grabber(m), label = j.kind === 'subject' ? 'Finding the main subject… ' : 'Finding the person… ';
+          status(label + '0%');
+          return CUT.analyse({ mid: j.mid, kind: j.kind, ks: j.ks, grab: g.get, progress: function (f) { status(label + Math.round(f * 100) + '%'); } })
+            .then(function (n) { g.free(); frames += n; }, function (e) { g.free(); skipMask[j.key] = 1; throw e; });
+        });
+      });
+    }, Promise.resolve());
+    maskJob = run.then(function () { maskJob = null; maskStats = { frames: frames, ms: Math.round(performance.now() - t0) }; if (frames) status('Background removed — ' + frames + ' frames analysed in ' + (maskStats.ms / 1000).toFixed(1) + ' s · Ctrl+Z undoes it', 'ok'); if (!playing) drawPreview(); },
+      function (e) { maskJob = null; status('Background removal stopped: ' + ((e && e.message) || 'try again'), 'warn'); if (!playing) drawPreview(); });
+    return maskJob;
+  }
+
   // ── drawing: one function for preview, still frame and export ──
-  var imgCache = Object.create(null);
+  var imgCache = Object.create(null), curLayer = null, curT = 0;
   function imgFor(key, src) { var c = imgCache[key]; if (c) return c.ok ? c.im : null; c = imgCache[key] = { im: new Image(), ok: false }; c.im.onload = function () { c.ok = true; if (!playing) drawPreview(); }; c.im.src = src; return null; }
   function svgImg(ic, col, vb) {
     var e = ICONS[ic]; if (!e) return null;
@@ -278,7 +414,7 @@
   function ovImage(o) {
     if (o.t === 'prod') return imgFor('p:' + o.p, D.prods[o.p].src);
     if (o.t === 'icon') return svgImg(o.ic, o.col);
-    if (o.t === 'img') { var mm = /^m:(.*)$/.exec(o.im); if (mm) { var m = media[mm[1]]; return m && m.k === 'image' ? m.el : null; } var s = studioImgs[o.im.slice(2)]; return s ? imgFor('s:' + o.im, s.src) : null; }
+    if (o.t === 'img') { var mm = /^m:(.*)$/.exec(o.im); if (mm) { var m = media[mm[1]]; if (!m) return null; return curLayer ? curLayer(o, m, layerLocal(o, m, curT)) : m.k === 'image' ? m.el : null; } var s = studioImgs[o.im.slice(2)]; return s ? imgFor('s:' + o.im, s.src) : null; }
     return null;
   }
   function ease(p) { return 1 - Math.pow(1 - p, 3); }
@@ -347,7 +483,9 @@
       x.fillStyle = o.col; x.textBaseline = 'middle'; x.textAlign = 'left'; x.direction = 'ltr'; x.fillText('K-Beauty Bliss', l0 + lw + fpx2 * .4, fpx2 * .05); x.restore();
       return [w, lh3 * sc2];
     }
-    var im2 = ovImage(o), ar = im2 && im2.naturalWidth ? im2.naturalHeight / im2.naturalWidth : (o.t === 'prod' ? 1 / D.prods[o.p].a : 1), h2 = w * ar;
+    var im2 = ovImage(o), m2 = ovMedia(o), iw = m2 && m2.w ? m2.w : im2 && (im2.naturalWidth || im2.videoWidth || im2.width), ih = m2 && m2.h ? m2.h : im2 && (im2.naturalHeight || im2.videoHeight || im2.height);
+    var ar = im2 && iw ? ih / iw : (o.t === 'prod' ? 1 / D.prods[o.p].a : 1), h2 = w * ar;
+    if (im2 && m2 && o.bgr) im2 = cutSrc(o, m2, im2, layerLocal(o, m2, curT), w, h2, x);
     if (o.t === 'prod' && o.sh) { x.shadowColor = 'rgba(0,0,0,' + (.45 * o.sh / 100).toFixed(3) + ')'; x.shadowBlur = w * .08 * o.sh / 100; x.shadowOffsetY = w * .03 * o.sh / 100; }
     if (im2) x.drawImage(im2, -w / 2, -h2 / 2, w, h2);
     x.shadowColor = 'transparent';
@@ -357,33 +495,42 @@
   function drawFrame(x, W, H, t, srcOf, boxes) {
     x.save(); x.globalAlpha = 1;                     // drawn in artboard pixels: the caller's transform scales it (preview) or not (export) x.shadowColor = 'transparent'; x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'low';
     var h = vp.clips.length ? clipAt(Math.min(t, total() - 1e-4)) : null, c = h && h.c, m = c && media[c.m], src = m && srcOf(c, h.local), sw = m && m.w, sh = m && m.h;
+    curLayer = srcOf.layer || null; curT = t;
     if (src && sw) {
       var s = (c.fit === 'fit' ? Math.min(W / sw, H / sh) : Math.max(W / sw, H / sh)) * c.z, dw = sw * s, dh = sh * s, cx0 = W / 2 + c.px / 100 * W, cy0 = H / 2 + c.py / 100 * H;
-      var covers = c.r % 360 === 0 && cx0 - dw / 2 <= .5 && cy0 - dh / 2 <= .5 && cx0 + dw / 2 >= W - .5 && cy0 + dh / 2 >= H - .5;   // nothing shows behind: skip the background
+      var covers = !m.alpha && !(c.bgr && c.bgr.mode === 'none') && c.r % 360 === 0 && cx0 - dw / 2 <= .5 && cy0 - dh / 2 <= .5 && cx0 + dw / 2 >= W - .5 && cy0 + dh / 2 >= H - .5;   // nothing shows behind: skip the background
       if (!covers && vp.bg.k === 'blur') {          // blur fill: the frame squeezed to a few pixels (darkened there) and stretched back -- the same in every browser
         tiny = tiny || mk('canvas'); tiny.width = 24; tiny.height = Math.max(8, Math.round(24 * H / W)); var tx = tiny.getContext('2d');
         var cs = Math.max(tiny.width / sw, tiny.height / sh); tx.drawImage(src, (tiny.width - sw * cs) / 2, (tiny.height - sh * cs) / 2, sw * cs, sh * cs); tx.fillStyle = 'rgba(0,0,0,.28)'; tx.fillRect(0, 0, tiny.width, tiny.height);
         x.drawImage(tiny, 1, 1, tiny.width - 2, tiny.height - 2, -W * .02, -H * .02, W * 1.04, H * 1.04);
       } else if (!covers) { x.fillStyle = vp.bg.c; x.fillRect(0, 0, W, H); }
-      if (c.r % 360 === 0) x.drawImage(src, cx0 - dw / 2, cy0 - dh / 2, dw, dh);
-      else { x.save(); x.translate(cx0, cy0); x.rotate(c.r * Math.PI / 180); x.drawImage(src, -dw / 2, -dh / 2, dw, dh); x.restore(); }
-    } else { x.fillStyle = vp.bg.k === 'color' ? vp.bg.c : '#000000'; x.fillRect(0, 0, W, H); }
+      drawOvs(x, W, H, t, boxes, true);              // the layers set to "Behind the video"
+      var cs = cutSrc(c, m, src, h.local, dw, dh, x);
+      if (c.r % 360 === 0) x.drawImage(cs, cx0 - dw / 2, cy0 - dh / 2, dw, dh);
+      else { x.save(); x.translate(cx0, cy0); x.rotate(c.r * Math.PI / 180); x.drawImage(cs, -dw / 2, -dh / 2, dw, dh); x.restore(); }
+    } else { x.fillStyle = vp.bg.k === 'color' ? vp.bg.c : '#000000'; x.fillRect(0, 0, W, H); drawOvs(x, W, H, t, boxes, true); }
+    drawOvs(x, W, H, t, boxes, false);
+    x.restore(); curLayer = null;
+  }
+  function drawOvs(x, W, H, t, boxes, behind) {
     vp.ovs.forEach(function (o) {
-      if (t < o.s || t >= o.e) return; var a = animAt(o, t);
+      if (t < o.s || t >= o.e || !o.bh !== !behind) return; var a = animAt(o, t);
       x.save(); x.globalAlpha = Math.max(0, Math.min(1, a.a * o.op / 100)); x.translate(o.x / 100 * W, (o.y / 100 + a.dy) * H); x.rotate(o.r * Math.PI / 180); x.scale(a.sc, a.sc);
       var bx = drawOv(x, o, W, H); x.restore();
       if (boxes) boxes.push({ id: o.id, x: o.x / 100 * W, y: o.y / 100 * H, w: bx[0], h: bx[1], r: o.r });
     });
-    x.restore();
   }
 
   // ── preview + playback ──
   var cv, cx, boxes = [], raf = 0, playWall = 0, playT0 = 0, activeClip = null, pvScale = 1;
   function previewSize() { var W = vp.ab.w, H = vp.ab.h, s = Math.min(1, 960 / Math.max(W, H)); pvScale = s; cv.style.setProperty('--var', String(W / H)); /* the CSS fit (#v-cv width) reads the artboard's shape */ if (cv.width !== Math.round(W * s) || cv.height !== Math.round(H * s)) { cv.width = Math.round(W * s); cv.height = Math.round(H * s); } }
-  function previewSrc(c) { var m = media[c.m]; return m ? m.el : null; }
+  function previewSrc(c, local) { var m = media[c.m]; return !m ? null : m.k === 'seq' ? seqPreview(m, local) : m.el; }
+  previewSrc.layer = function (o, m, local) { return m.k === 'video' ? layerEl(m) : m.k === 'seq' ? seqPreview(m, local) : m.el; };
   function drawPreview() {
     if (!vp || !cv) return; previewSize(); boxes = [];
-    cx.save(); cx.scale(pvScale, pvScale); drawFrame(cx, vp.ab.w, vp.ab.h, ph, previewSrc, boxes); cx.restore();
+    // a cut-out is worked at the size the monitor really shows (less while playing), never above the export's
+    var r = cv.getBoundingClientRect(); drawK = r.width ? Math.min(1, r.width * (window.devicePixelRatio || 1) / cv.width) : 1; if (playing) drawK = Math.min(drawK, .75);
+    cx.save(); cx.scale(pvScale, pvScale); drawFrame(cx, vp.ab.w, vp.ab.h, ph, previewSrc, boxes); cx.restore(); drawK = 1;
     var o = selOv(), b = o && boxes.filter(function (q) { return q.id === o.id; })[0];
     if (b) { cx.save(); cx.scale(pvScale, pvScale); cx.translate(b.x, b.y); cx.rotate(b.r * Math.PI / 180); cx.strokeStyle = '#2F7BFF'; cx.setLineDash([12, 8]); cx.lineWidth = 3 / pvScale; cx.strokeRect(-b.w / 2 - 6, -b.h / 2 - 6, b.w + 12, b.h + 12); cx.restore(); }
     $('v-tc').textContent = tc(ph) + ' / ' + tc(total());
@@ -397,6 +544,17 @@
       if (play) { want.muted = c.mute; want.volume = Math.min(1, c.vol / 100); if (clipChanged || Math.abs(want.currentTime - h.local) > .25) want.currentTime = h.local; if (want.paused) want.play().catch(function () {}); }
       else if (Math.abs(want.currentTime - h.local) > .001) want.currentTime = h.local;
     }
+    if (m && m.k === 'seq' && play) seqAhead(m, h.local);
+    // layers: a video layer has its own element, kept in step with the playhead (looping); a sequence decodes ahead
+    var inUse = {};
+    vp.ovs.forEach(function (o) {
+      var lm = ovMedia(o); if (!isTimed(lm) || t < o.s || t >= o.e) return; var lt = layerLocal(o, lm, t);
+      if (lm.k === 'seq') { if (play) seqAhead(lm, lt); return; }
+      var e = layerEl(lm); inUse[lm.id] = 1;
+      if (play) { if (Math.abs(e.currentTime - lt) > .25) e.currentTime = lt; if (e.paused) e.play().catch(function () {}); }
+      else if (Math.abs(e.currentTime - lt) > .001) { if (!e.paused) e.pause(); e.currentTime = lt; }
+    });
+    Object.keys(media).forEach(function (k) { var e = media[k].lel; if (e && !inUse[k] && !e.paused) e.pause(); });
     var u = vp.au, ae = u && media[u.m] && media[u.m].el;
     if (ae) {
       var at = t - u.o + u.a, len = u.b - u.a, rel = t - u.o;
@@ -413,7 +571,7 @@
     ph = t; syncMedia(t, true); drawPreview(); raf = requestAnimationFrame(tick);
   }
   function play() { if (playing || !vp || total() <= 0) return; if (ph >= total() - .05) ph = 0; playing = true; activeClip = null; playT0 = ph; playWall = performance.now(); $('v-play').textContent = '❚❚'; $('v-play').setAttribute('aria-label', 'Pause'); raf = requestAnimationFrame(tick); }
-  function stop() { playing = false; cancelAnimationFrame(raf); Object.keys(media).forEach(function (k) { var e = media[k].el; if (e && e.pause && !e.paused) e.pause(); }); var b = $('v-play'); if (b) { b.textContent = '▶'; b.setAttribute('aria-label', 'Play'); } }
+  function stop() { playing = false; cancelAnimationFrame(raf); Object.keys(media).forEach(function (k) { [media[k].el, media[k].lel].forEach(function (e) { if (e && e.pause && !e.paused) e.pause(); }); }); var b = $('v-play'); if (b) { b.textContent = '▶'; b.setAttribute('aria-label', 'Play'); } }
   function seekPreview(t) { if (t != null) ph = Math.max(0, Math.min(total(), t)); if (playing) { playT0 = ph; playWall = performance.now(); activeClip = null; } else syncMedia(ph, false); drawPreview(); }
   function tc(t) { t = Math.max(0, t || 0); var m = Math.floor(t / 60), s = t - m * 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s.toFixed(2); }
   function step(n) { stop(); var f = 1 / vp.fps; seekPreview(Math.round(ph / f) * f + n * f); }
@@ -457,7 +615,7 @@
       el.dataset.id = c.id; el.dataset.drag = 'clip'; el.style.left = (OFF + st[i] * pps) + 'px'; el.style.width = Math.max(4, (c.b - c.a) * pps) + 'px';
       el.title = m.name + ' · ' + tc(c.b - c.a);
       var w = Math.min(4000, Math.max(4, Math.round((c.b - c.a) * pps))), can = mk('canvas', 'v-th'); can.width = w; can.height = 46; paintClip(can, c, m); el.appendChild(can);
-      var nm = mk('span', 'v-cn', (c.mute && m.k === 'video' ? '🔇 ' : '') + m.name); el.appendChild(nm);
+      var nm = mk('span', 'v-cn', (c.mute && m.k === 'video' ? '🔇 ' : '') + (c.bgr ? '✂ ' : '') + m.name); el.appendChild(nm);
       var l = mk('i', 'v-ed l'); l.dataset.drag = 'trimL'; var r = mk('i', 'v-ed r'); r.dataset.drag = 'trimR'; el.appendChild(l); el.appendChild(r);
       vt.appendChild(el);
     });
@@ -485,7 +643,7 @@
     var p = mk('div', 'v-ph'); p.id = 'v-ph'; tlIn.appendChild(p); movePlayhead();
     $('v-zoomv').textContent = Math.round(pps) + ' px/s';
   }
-  function ovLabel(o) { return o.t === 'text' || o.t === 'badge' ? (o.txt || '…').replace(/\n/g, ' ') : o.t === 'prod' ? D.prods[o.p].n : o.t === 'icon' ? ICONS[o.ic][0] : o.t === 'pay' ? 'tabby / tamara' : o.t === 'logo' ? 'Logo' : 'Picture'; }
+  function ovLabel(o) { var lm = ovMedia(o); return o.t === 'text' || o.t === 'badge' ? (o.txt || '…').replace(/\n/g, ' ') : o.t === 'prod' ? D.prods[o.p].n : o.t === 'icon' ? ICONS[o.ic][0] : o.t === 'pay' ? 'tabby / tamara' : o.t === 'logo' ? 'Logo' : lm ? (o.bgr ? '✂ ' : '') + lm.name : 'Picture'; }
   function paintClip(can, c, m) {
     var x = can.getContext('2d'), H = can.height, th = m.thumbs || [];
     x.fillStyle = m.k === 'image' ? '#3A3340' : '#2B2630'; x.fillRect(0, 0, can.width, H);
@@ -581,7 +739,8 @@
       $('vs-badge').hidden = o.t !== 'badge'; if (o.t === 'badge') { setv('vs-btxt', o.txt); setv('vs-shape', o.shape); setv('vs-btc', o.tc); }
       $('vs-payr').hidden = o.t !== 'pay'; if (o.t === 'pay') setv('vs-pay', o.pay);
     }
-    ['vt', 'vs'].forEach(function (p) { if (!o) return; setv(p + '-s', o.s); setv(p + '-e', o.e); setv(p + '-ain', o.ain); setv(p + '-aout', o.aout); setv(p + '-op', o.op); setv(p + '-r', o.r); });
+    renderBgr();
+    ['vt', 'vs'].forEach(function (p) { if (!o) return; setv(p + '-bh', !!o.bh); setv(p + '-s', o.s); setv(p + '-e', o.e); setv(p + '-ain', o.ain); setv(p + '-aout', o.aout); setv(p + '-op', o.op); setv(p + '-r', o.r); });
     $('va-none').hidden = !!u; $('va-props').hidden = !u;
     if (u) { $('va-name').textContent = media[u.m].name; setv('va-vol', u.vol); setv('va-fi', u.fi); setv('va-fo', u.fo); setv('va-o', u.o); setv('va-a', u.a); setv('va-b', u.b); $('va-volv').textContent = u.vol + '%';
       var wc = $('va-wave'); wc.width = 600; wc.height = 60; var x = wc.getContext('2d'); x.clearRect(0, 0, 600, 60); paintWave(wc, media[u.m], 0, media[u.m].dur, '#7C5CFF'); x.fillStyle = 'rgba(124,92,255,.15)'; x.fillRect(u.a / media[u.m].dur * 600, 0, (u.b - u.a) / media[u.m].dur * 600, 60); }
@@ -599,11 +758,12 @@
       var m = media[id], it = mk('div', 'v-bi'), th = mk('div', 'v-bt');
       if (m.thumbs && m.thumbs[0]) { var c = mk('canvas'); c.width = m.thumbs[0].c.width; c.height = 64; c.getContext('2d').drawImage(m.thumbs[0].c, 0, 0); th.appendChild(c); } else th.textContent = m.k === 'audio' ? '♪' : m.k === 'image' ? '🖼' : '🎬';
       it.appendChild(th); var nm = mk('span', 'v-bn', m.name); nm.title = m.name; it.appendChild(nm);
-      it.appendChild(mk('span', 'v-bd', m.k === 'image' ? m.w + '×' + m.h : tc(m.dur) + (m.k === 'video' ? ' · ' + m.w + '×' + m.h : '')));
+      it.appendChild(mk('span', 'v-bd', (m.k === 'image' ? m.w + '×' + m.h : tc(m.dur) + (m.k !== 'audio' ? ' · ' + m.w + '×' + m.h : '')) + (m.k === 'seq' ? ' · PNG sequence' : '') + (m.alpha ? ' · see-through' : '')));
       var bs = mk('div', 'v-bb');
       if (m.k === 'audio') { var u = mk('button', 'btn sm', 'Use as music'); u.type = 'button'; u.onclick = function () { setMusic(id); showTab('audio'); }; bs.appendChild(u); }
       else { var a = mk('button', 'btn sm', '+ Timeline'); a.type = 'button'; a.onclick = function () { addClip(id); }; bs.appendChild(a); }
       if (m.k === 'image') { var ov = mk('button', 'btn sm', 'Overlay'); ov.type = 'button'; ov.onclick = function () { addOv({ t: 'img', im: 'm:' + id, w: 30 }); }; bs.appendChild(ov); }
+      if (isTimed(m)) { var ly = mk('button', 'btn sm', '+ Layer'); ly.type = 'button'; ly.title = 'Over the clips, from the playhead (a see-through cut-out stays see-through)'; ly.onclick = function () { addLayer(id); }; bs.appendChild(ly); }
       var x = mk('button', 'btn sm', '✕'); x.type = 'button'; x.title = 'Remove from the media bin'; x.setAttribute('aria-label', 'Remove ' + m.name); x.onclick = function () { removeMedia(id); }; bs.appendChild(x);
       it.appendChild(bs); bin.appendChild(it);
     });
@@ -612,11 +772,17 @@
     var used = vp.clips.some(function (c) { return c.m === id; }) || (vp.au && vp.au.m === id) || vp.ovs.some(function (o) { return o.im === 'm:' + id; });
     if (used && !confirm('This file is used in the video. Remove it and its clips?')) return;
     stop(); vp.clips = vp.clips.filter(function (c) { return c.m !== id; }); if (vp.au && vp.au.m === id) vp.au = null; vp.ovs = vp.ovs.filter(function (o) { return o.im !== 'm:' + id; });
-    var m = media[id]; delete media[id]; if (m) { if (m.el && m.el.pause) m.el.pause(); URL.revokeObjectURL(m.url); }
+    var m = media[id]; delete media[id]; if (m) { if (m.el && m.el.pause) m.el.pause(); if (m.lel) { m.lel.pause(); m.lel.removeAttribute('src'); m.lel.load(); } if (m.pv) m.pv.forEach(function (b) { if (b.close) b.close(); }); if (LK) { LK.drop(id + '|person'); LK.drop(id + '|subject'); } URL.revokeObjectURL(m.url); }
     VS.delMedia(id).catch(function () {}); sel = null; ph = Math.min(ph, total()); changed('rm');
+  }
+  function addLayer(id) {     // a moving layer: its own length from the playhead, as large as the frame allows
+    var m = media[id]; if (!m) return; var a = m.w / m.h, fw = vp.ab.w / vp.ab.h, w = a >= fw ? 100 : r3(100 * a / fw);
+    var t0 = ph, T = total(), e = vp.clips.length ? Math.min(T, t0 + m.dur) : t0 + m.dur; if (e - t0 < MIN) e = t0 + m.dur;
+    addOv({ t: 'img', im: 'm:' + id, w: w, s: r3(t0), e: r3(e), ain: 'none', aout: 'none' }); showTab('stick');
   }
   function addOv(o) {
     var t0 = ph, T = total(), base = { id: uid('o'), s: r3(t0), e: r3(t0 + (T - t0 >= 1 ? Math.min(4, T - t0) : 4)), x: 50, y: 50 };
+    if (o.s != null) { base.s = o.s; base.e = o.e; }
     var c = cleanOv(Object.assign(base, o)); if (!c) return; vp.ovs.push(c); sel = { k: 'ov', id: c.id }; changed('addov');
   }
   function listProjects() {
@@ -675,8 +841,29 @@
   function xui(on) { xbusy = on; $('vx-go').disabled = on; $('vx-png').disabled = on; $('vx-cancel').hidden = !on; $('vx-bar').hidden = !on; }
   function exportSources() {   // export-only elements: the preview's own stay where they are
     var els = {};
-    vp.clips.forEach(function (c) { var m = media[c.m]; if (els[c.m]) return; if (m.k === 'image') els[c.m] = m.el; else { var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url; els[c.m] = v; } });
+    function vid(m) { var v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = m.url; return v; }
+    vp.clips.forEach(function (c) { var m = media[c.m]; if (els[c.m] || m.k === 'seq') return; if (m.k === 'image') els[c.m] = m.el; else els[c.m] = vid(m); });
+    vp.ovs.forEach(function (o) { var m = ovMedia(o); if (m && m.k === 'video') els['o:' + o.id] = vid(m); });     // each video layer its own
     return Promise.all(Object.keys(els).map(function (id) { var v = els[id]; return v.tagName === 'VIDEO' ? new Promise(function (r) { if (v.readyState >= 2) r(); else { v.onloadeddata = r; v.onerror = r; } }) : 0; })).then(function () { return els; });
+  }
+  // the export's frame at t: the clip's and every layer's video seeked there, sequence frames decoded at full size
+  function exportSrc(els, cur) {
+    var f = function (c) { var m = media[c.m]; return m && m.k === 'seq' ? cur.c : els[c.m]; };
+    f.layer = function (o, m) { return m.k === 'video' ? els['o:' + o.id] : m.k === 'seq' ? cur[o.id] : m.el; };
+    return f;
+  }
+  function prepAt(t, els, cur) {
+    Object.keys(cur).forEach(function (k) { if (cur[k] && cur[k].close) cur[k].close(); delete cur[k]; });
+    if (t < 0) return Promise.resolve();
+    var ps = [], h = vp.clips.length ? clipAt(Math.min(t, total() - 1e-4)) : null, m = h && media[h.c.m];
+    if (m && m.k === 'video') ps.push(seekTo(els[h.c.m], h.local + .001));
+    if (m && m.k === 'seq') ps.push(createImageBitmap(m.frames[seqIdx(m, h.local)]).then(function (b) { cur.c = b; }, function () {}));
+    vp.ovs.forEach(function (o) {
+      var lm = ovMedia(o); if (!isTimed(lm) || t < o.s || t >= o.e) return; var lt = layerLocal(o, lm, t);
+      if (lm.k === 'video') ps.push(seekTo(els['o:' + o.id], lt + .001));
+      else ps.push(createImageBitmap(lm.frames[seqIdx(lm, lt)]).then(function (b) { cur[o.id] = b; }, function () {}));
+    });
+    return Promise.all(ps);
   }
   function freeSources(els) { Object.keys(els).forEach(function (id) { var v = els[id]; if (v.tagName === 'VIDEO') { v.removeAttribute('src'); v.load(); } }); }
   function fontsReady() { var fams = {}; vp.ovs.forEach(function (o) { if (o.fn) fams[(o.fi ? 'italic ' : '') + o.fw + ' 40px "' + FONTS[o.fn] + '"'] = 1; }); fams['700 40px Poppins'] = 1; return Promise.all(Object.keys(fams).map(function (f) { return document.fonts.load(f, 'Aa ب').catch(function () {}); })).then(function () { return document.fonts.ready; }); }
@@ -694,7 +881,8 @@
   function exportWC(T) {
     var W = vp.ab.w, H = vp.ab.h, fps = vp.fps, N = Math.max(1, Math.round(T * fps)), br = Math.round(Math.min(40e6, W * H * fps * ($('vx-q').value === 'high' ? .26 : .14))), t0 = performance.now(), audioOn = wantAudio();
     var muxer, venc, aenc, err = null, els, tm = {};
-    return Promise.all([pickCodecs(W, H, fps, br, audioOn), fontsReady(), exportSources()]).then(function (r) {
+    var cur = {};
+    return Promise.all([pickCodecs(W, H, fps, br, audioOn), fontsReady(), exportSources(), ensureMasks()]).then(function (r) {
       var vc = r[0][0], ac = r[0][1], noSound = false; els = r[2]; if (!vc) throw new Error('this browser has no H.264 encoder for ' + W + '×' + H);
       if (audioOn && !ac) { if (recType()) { freeSources(els); els = null; return exportRec(T); } noSound = true; }   // never drop the sound quietly
       progress(.01, audioOn ? 'Mixing the sound…' : 'Encoding…'); tm.prep = performance.now() - t0;
@@ -708,7 +896,7 @@
         }
         var can = mk('canvas'); can.width = W; can.height = H; var x = can.getContext('2d', { alpha: false }), i = 0, st = starts(), seeks = 0;
         var note = (abuf ? (ac.mux === 'aac' ? 'H.264 + AAC' : 'H.264 + Opus (no AAC encoder in this browser)') : 'H.264, no sound') + (noSound ? ' — this browser cannot encode sound' : '');
-        function srcOf(c) { return els[c.m]; }
+        var srcOf = exportSrc(els, cur), moving = hasMoving();
         function check() { if (err) throw err; if (xcancel) throw cancelled(); }
         tm.emit = 0; tm.draw = 0; tm.cbs = 0; tm.pauses = 0;
         function emit(t) {
@@ -725,7 +913,7 @@
             check(); if (i >= upto) return Promise.resolve();
             var t = i / fps, h = vp.clips.length ? clipAt(Math.min(t, T - 1e-4)) : null, m = h && media[h.c.m];
             if (m && m.k === 'video') seeks++;
-            return (m && m.k === 'video' ? seekTo(els[h.c.m], h.local + .001) : Promise.resolve()).then(function () { emit(t); return drain(); }).then(loop);
+            return prepAt(t, els, cur).then(function () { emit(t); return drain(); }).then(loop);
           })();
         }
         // fast: the clip PLAYS (muted, 0.2x-2x, as fast as this computer keeps up without dropping a frame) and each decoded frame is caught with requestVideoFrameCallback
@@ -759,7 +947,8 @@
         function clips(k) {
           check(); if (k >= vp.clips.length) return seekFrames(N);
           var c = vp.clips[k], m = media[c.m], upto = k === vp.clips.length - 1 ? N : Math.min(N, Math.ceil((st[k] + c.b - c.a) * fps - 1e-6));
-          return (m.k === 'video' && canPlay && upto - i > 3 ? playFrames(c, st[k], upto) : seekFrames(upto)).then(function () { return clips(k + 1); });
+          // exact seeks (no fast play-through) where a frame must be the very frame: a cut-out clip, moving layers
+          return (m.k === 'video' && canPlay && !moving && !c.bgr && upto - i > 3 ? playFrames(c, st[k], upto) : seekFrames(upto)).then(function () { return clips(k + 1); });
         }
         return clips(0).then(function () {
           tm.frames = performance.now() - t0; check(); return venc.flush().then(function () { return aenc ? aenc.flush() : 0; }).then(function () {
@@ -768,11 +957,11 @@
           });
         });
       });
-    }).then(function (r) { if (els) freeSources(els); return r; }, function (e) { if (els) freeSources(els); try { if (venc && venc.state !== 'closed') venc.close(); if (aenc && aenc.state !== 'closed') aenc.close(); } catch (x) {} throw e; });
+    }).then(function (r) { if (els) freeSources(els); prepAt(-1, {}, cur); return r; }, function (e) { if (els) freeSources(els); prepAt(-1, {}, cur); try { if (venc && venc.state !== 'closed') venc.close(); if (aenc && aenc.state !== 'closed') aenc.close(); } catch (x) {} throw e; });
   }
   function exportRec(T) {     // fallback: MediaRecorder, real time
     var W = vp.ab.w, H = vp.ab.h, type = recType(), els, actx, audioOn = wantAudio();
-    return Promise.all([fontsReady(), exportSources(), audioOn ? mixAudio(T) : null]).then(function (r) {
+    return Promise.all([fontsReady(), exportSources(), audioOn ? mixAudio(T) : null, ensureMasks()]).then(function (r) {
       els = r[1]; var abuf = r[2], can = mk('canvas'); can.width = W; can.height = H; var x = can.getContext('2d'), stream = can.captureStream(vp.fps);
       if (abuf) { actx = new (window.AudioContext || window.webkitAudioContext)(); var dst = actx.createMediaStreamDestination(), s = actx.createBufferSource(); s.buffer = abuf; s.connect(dst); dst.stream.getAudioTracks().forEach(function (t) { stream.addTrack(t); }); s.start(); }
       var rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: Math.min(16e6, W * H * 4) }), chunks = [];
@@ -785,7 +974,9 @@
           if (xcancel || t >= T) { Object.keys(els).forEach(function (k) { if (els[k].pause) els[k].pause(); }); rec.stop(); return; }
           var h = clipAt(Math.min(t, T - 1e-4)), v = h && els[h.c.m];
           if (v && v.tagName === 'VIDEO') { if (active !== h.c.id || Math.abs(v.currentTime - h.local) > .25) { v.currentTime = h.local; active = h.c.id; } if (v.paused) v.play().catch(function () {}); }
-          drawFrame(x, W, H, t, function (c) { return els[c.m]; }, null); progress(t / T, 'Recording ' + t.toFixed(1) + ' / ' + T.toFixed(1) + ' s — keep this tab open');
+          vp.ovs.forEach(function (o) { var lm = ovMedia(o), le = els['o:' + o.id]; if (!lm || t < o.s || t >= o.e) return; var lt = layerLocal(o, lm, t); if (lm.k === 'seq') seqAhead(lm, lt); else if (le) { if (Math.abs(le.currentTime - lt) > .25) le.currentTime = lt; if (le.paused) le.play().catch(function () {}); } });
+          var rs = function (c, local) { var cm = media[c.m]; return cm && cm.k === 'seq' ? seqPreview(cm, local) : els[c.m]; }; rs.layer = function (o, lm, lt) { return lm.k === 'video' ? els['o:' + o.id] : lm.k === 'seq' ? seqPreview(lm, lt) : lm.el; };
+          drawFrame(x, W, H, t, rs, null); progress(t / T, 'Recording ' + t.toFixed(1) + ' / ' + T.toFixed(1) + ' s — keep this tab open');
           requestAnimationFrame(frame);
         }
         rec.start(250); requestAnimationFrame(frame);
@@ -795,10 +986,11 @@
   function exportStill() {
     if (xbusy) return Promise.resolve(null); stop(); var W = vp.ab.w, H = vp.ab.h, t = ph, els;
     xui(true); progress(.2, 'Drawing the frame…');
-    return Promise.all([fontsReady(), exportSources()]).then(function (r) {
-      els = r[1]; var h = vp.clips.length ? clipAt(Math.min(t, total() - 1e-4)) : null;
-      return (h && media[h.c.m].k === 'video' ? seekTo(els[h.c.m], h.local + .001) : Promise.resolve()).then(function () {
-        var can = mk('canvas'); can.width = W; can.height = H; drawFrame(can.getContext('2d'), W, H, t, function (c) { return els[c.m]; }, null);
+    var cur = {};
+    return Promise.all([fontsReady(), exportSources(), ensureMasks()]).then(function (r) {
+      els = r[1];
+      return prepAt(t, els, cur).then(function () {
+        var can = mk('canvas'); can.width = W; can.height = H; drawFrame(can.getContext('2d'), W, H, t, exportSrc(els, cur), null); prepAt(-1, {}, cur);
         return new Promise(function (res) { can.toBlob(res, 'image/png'); });
       });
     }).then(function (b) { freeSources(els); return S.Store.save(fileBase() + '-frame-' + tc(t).replace(/[:.]/g, '-') + '.png', b).then(function () { progress(1, 'Frame saved · PNG ' + W + '×' + H); return b; }); })
@@ -915,6 +1107,7 @@
     onOv('vs', '-w', function (o, e) { o.w = num(e.value, 2, 200, 30); }); onOv('vs', '-col', function (o, e) { o.col = hex(e.value, o.col); });
     onOv('vs', '-btxt', function (o, e) { o.txt = str(e.value, 300); }); onOv('vs', '-shape', function (o, e) { if (has(BADGES, e.value)) o.shape = e.value; }, 'change'); onOv('vs', '-btc', function (o, e) { o.tc = hex(e.value, o.tc); });
     onOv('vs', '-pay', function (o, e) { o.pay = has({ both: 1, tabby: 1, tamara: 1 }, e.value) ? e.value : 'both'; }, 'change');
+    ['vt', 'vs'].forEach(function (p) { onOv(p, '-bh', function (o, e) { if (e.checked) o.bh = true; else delete o.bh; }, 'change'); });
     $('vt-presets').addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (!b) return; var o = selOv(); var P = TSTYLE[b.dataset.k]; if (o && o.t === 'text') { Object.assign(o, P); changed('preset'); } else addText(Object.assign({}, P)); });
     $('vt-add-en').onclick = function () { addText({ txt: 'Glow Week · up to 50% off' }); };
     $('vt-add-ar').onclick = function () { addText({ txt: 'تخفيضات الجمعة البيضاء', fn: 'cairo', fw: 900 }); };
@@ -925,6 +1118,71 @@
     onAu('va-a', function (u, e) { u.a = r3(num(e.value, 0, u.b - MIN, u.a)); }, 'change'); onAu('va-b', function (u, e) { u.b = r3(num(e.value, u.a + MIN, media[u.m].dur, u.b)); }, 'change');
     $('va-rm').onclick = function () { vp.au = null; sel = null; changed('aurm'); };
     $('va-allmute').onclick = function () { var all = vp.clips.every(function (q) { return q.mute || media[q.m].k !== 'video'; }); vp.clips.forEach(function (q) { q.mute = !all; }); changed('allmute'); status(all ? 'Clip sound is back on' : 'Sound removed from every clip', 'ok'); };
+  }
+  // what the panel works on: the selected clip, or the selected picture / video layer (a PNG sequence is a cut-out already)
+  function bgrTarget() {
+    var c = selClip(); if (c) { var m = media[c.m]; return m && m.k !== 'seq' ? { it: c, m: m, clip: true } : null; }
+    var o = selOv(), lm = o && ovMedia(o); return lm && lm.k !== 'seq' ? { it: o, m: lm, clip: false } : null;
+  }
+  function brandCols() { var b = S.brand() || {}; return [hex(b.c1, '#E8306F'), hex(b.c2, '#1F1B1E')]; }
+  // the green / blue screen colour, measured from a frame's border by the video editor's autoKeyColor (bg.js)
+  function measureKey(T) {
+    var g = grabber(T.m);
+    return g.get(T.clip ? T.it.a + .05 : .05).then(function (src) {
+      var c = mk('canvas'); c.width = 64; c.height = 64; var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(src, 0, 0, 64, 64);
+      var d = x.getImageData(0, 0, 64, 64).data, px = new Float32Array(64 * 64 * 3); for (var i = 0, j = 0; i < d.length; i += 4, j += 3) { px[j] = d[i] / 255; px[j + 1] = d[i + 1] / 255; px[j + 2] = d[i + 2] / 255; }   // 0..1, as analyze.js samples
+      g.free(); return LK.autoKeyColor(px, 64).toUpperCase();
+    }, function (e) { g.free(); throw e; });
+  }
+  function removeBg(key) {
+    var T = bgrTarget(); if (!T || !CUT || !LK) return Promise.resolve(null);
+    key = has({ person: 1, subject: 1, chroma: 1 }, key) ? key : 'person';
+    var it = T.it, prev = it.bgr;
+    var pre = key !== 'subject' ? Promise.resolve() : CUT.subjectState().then(function (s) {
+      if (s === 'standalone') throw new Error('Main subject (products) needs KBB Studio — open this video there. Person and Green screen work here, offline.');
+      if (s === 'error') throw new Error('KBB Studio’s cut-out model could not start');
+      if (s === 'missing') { status('Getting the cut-out model (4.6 MB, once)…'); return CUT.installSubject(function (f) { status('Getting the cut-out model… ' + Math.round(f * 100) + '%'); }); }
+    });
+    return pre.then(function () { return key === 'chroma' && !(prev && prev.key === 'chroma') ? measureKey(T) : null; }).then(function (kc) {
+      var b = cleanBgr(Object.assign({ mode: 'none', colors: brandCols(), color: brandCols()[1] }, prev || {}, { key: key }, kc ? { keyColor: kc } : {}));
+      delete skipMask[T.m.id + '|' + key];
+      it.bgr = b; changed('bgr-key');
+      status(key === 'chroma' ? 'Green screen keyed (' + b.keyColor + ') — Ctrl+Z undoes it' : 'Removing the background…');
+      return ensureMasks().then(function () { return b; });
+    }).catch(function (e) { status('Background not removed: ' + ((e && e.message) || 'try again'), 'warn'); return null; });
+  }
+  function setBgr(patch, key) { var T = bgrTarget(); if (!T || !T.it.bgr) return; T.it.bgr = cleanBgr(Object.assign({}, T.it.bgr, patch)); changed(key || 'bgr'); }
+  function renderBgr() {
+    var box = $('v-bgr'); if (!box) return; var T = bgrTarget();
+    box.hidden = !T || !CUT; if (!T || !CUT) return;
+    // right under the clip's / layer's name, where it is seen first
+    var home = T.clip ? $('vc-props') : $('vs-props'), at = home.firstElementChild && home.firstElementChild.nextElementSibling; if (box.parentNode !== home) home.insertBefore(box, at);
+    var b = T.it.bgr, st = CUT.inside() ? null : 'standalone';
+    document.querySelectorAll('#vb-key button').forEach(function (x) { x.setAttribute('aria-pressed', String(!!b && b.key === x.dataset.v)); if (x.dataset.v === 'subject') x.hidden = st === 'standalone'; });
+    $('vb-on').hidden = !b;
+    $('vb-note').textContent = st === 'standalone' ? 'Products (📦 Main subject) need KBB Studio. Person and Green screen work here, offline. ' + (b ? 'Transparent shows the Empty-space fill and any layer set to “Behind the video”.' : '')
+      : b ? (b.mode === 'none' ? 'Transparent: the Empty-space fill (top bar) and any layer set to “Behind the video” show through.' : 'Ctrl+Z undoes · ↺ Restore background brings it back.')
+      : 'Keeps the person, the product or what is in front of a green screen. Analysed once per clip, on this computer.';
+    if (!b) return;
+    document.querySelectorAll('#vb-mode button').forEach(function (x) { x.setAttribute('aria-pressed', String(b.mode === x.dataset.v)); });
+    $('vb-col-r').hidden = b.mode !== 'color'; $('vb-grad-r').hidden = b.mode !== 'gradient';
+    setv('vb-col', b.color); setv('vb-g1', b.colors[0]); setv('vb-g2', b.colors[1]);
+    setv('vb-fea', Math.round(b.feather * 100)); setv('vb-grow', Math.round(b.grow * 100)); setv('vb-smo', Math.round(b.smooth * 100)); setv('vb-wrap', Math.round(b.wrap * 100));
+    $('vb-feav').textContent = Math.round(b.feather * 100); $('vb-growv').textContent = Math.round(b.grow * 100); $('vb-smov').textContent = Math.round(b.smooth * 100); $('vb-wrapv').textContent = Math.round(b.wrap * 100);
+    $('vb-wrap-r').hidden = b.mode === 'none'; $('vb-smo-r').hidden = b.key === 'chroma'; $('vb-chroma').hidden = b.key !== 'chroma';
+    if (b.key === 'chroma') { setv('vb-kc', b.keyColor); setv('vb-tol', Math.round(b.tol * 100)); setv('vb-spill', Math.round(b.spill * 100)); }
+  }
+  function bindBgr() {
+    $('vb-key').addEventListener('click', function (ev) { var x = ev.target.closest('button'); if (x) removeBg(x.dataset.v); });
+    $('vb-mode').addEventListener('click', function (ev) { var x = ev.target.closest('button'); if (x) setBgr({ mode: x.dataset.v }, 'bgr-mode'); });
+    $('vb-off').onclick = function () { var T = bgrTarget(); if (!T || !T.it.bgr) return; delete T.it.bgr; changed('bgr-off'); status('Background restored — Ctrl+Z removes it again', 'ok'); };
+    [['vb-fea', 'feather', 100], ['vb-grow', 'grow', 100], ['vb-smo', 'smooth', 100], ['vb-wrap', 'wrap', 100], ['vb-tol', 'tol', 100], ['vb-spill', 'spill', 100]].forEach(function (q) {
+      $(q[0]).addEventListener('input', function () { var o = {}; o[q[1]] = +this.value / q[2]; setBgr(o, q[0]); });
+    });
+    $('vb-col').addEventListener('input', function () { setBgr({ color: this.value }, 'vb-col'); });
+    $('vb-g1').addEventListener('input', function () { var T = bgrTarget(); if (T && T.it.bgr) setBgr({ colors: [this.value, T.it.bgr.colors[1]] }, 'vb-g1'); });
+    $('vb-g2').addEventListener('input', function () { var T = bgrTarget(); if (T && T.it.bgr) setBgr({ colors: [T.it.bgr.colors[0], this.value] }, 'vb-g2'); });
+    $('vb-kc').addEventListener('input', function () { setBgr({ keyColor: this.value }, 'vb-kc'); });
   }
   var TSTYLE = {
     bold: { fn: 'poppins', fw: 900, tc: '#FFFFFF', pill: false, ol: 0, sh: 60, fi: false, up: true },
@@ -975,7 +1233,7 @@
     $('vx-go').onclick = function () { exportVideo(); }; $('vx-png').onclick = function () { exportStill(); }; $('vx-cancel').onclick = function () { xcancel = true; };
     $('vx-fps').onchange = function () { vp.fps = FPS_LIST.indexOf(+this.value) >= 0 ? +this.value : 30; changed('fps'); };
     $('vx-noaudio').onchange = function () { renderPanels(); };
-    bindProps(); buildStickers(); bindPreview(); bindTimeline();
+    bindProps(); bindBgr(); buildStickers(); bindPreview(); bindTimeline();
     document.addEventListener('keydown', function (ev) {
       if (document.body.dataset.mode !== 'video') return;
       var inField = /input|select|textarea/i.test((document.activeElement || {}).tagName || ''), mod = ev.ctrlKey || ev.metaKey, k = ev.key.toLowerCase();
@@ -1022,6 +1280,7 @@
     get vp() { return vp; }, get media() { return media; }, get ph() { return ph; }, get sel() { return sel; },
     select: function (k, id) { sel = { k: k, id: id }; renderAll(); }, seek: function (t) { stop(); seekPreview(t); }, split: split, removeSel: removeSel, duplicate: duplicate, changed: changed, undo: undo, redo: redo,
     addText: addText, addOv: addOv, exportVideo: exportVideo, exportStill: exportStill, saveNow: saveNow, total: total, setZoom: setZoom, showTab: showTab, cleanVP: cleanVP,
+    removeBg: removeBg, setBgr: setBgr, ensureMasks: ensureMasks, get maskStats() { return maskStats; }, drawFrame: function (x, W, H, t) { drawFrame(x, W, H, t, previewSrc, null); }, preview: function () { return cv; }, redraw: function () { drawPreview(); },
     set forceFallback(v) { forceFallback = !!v; renderPanels(); }, set forceSeek(v) { forceSeek = !!v; }, hasWC: hasWC, importFiles: importFiles, play: play, stop: stop
   };
   var start = lsGet('mode'); if (start === 'video' || /[?#&]video\b/.test(location.search + location.hash)) {

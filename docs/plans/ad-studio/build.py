@@ -89,6 +89,32 @@ def safe(js, what):
     return js
 
 
+# ✂ Cut-out / background removal (18 Nov 2026): the video editor's own code, read from studio/reel-studio/app/look at build
+# time and inlined (it is never copied by hand, so the two cannot drift): gl.js whole (the WebGL2 engine and its 'look'
+# shader: matte refinement, chroma key, spill, light wrap), looks.js's neutral BASE, vision.js's v2 mask store and temporal
+# filter (MASK_FPS, nearest, temporal, maskAt) and bg.js's BG_DEFAULTS / BG_KEYS / autoKeyColor. Each piece is cut out by
+# its own markers; a marker that moves stops the build instead of shipping half a function.
+LOOKD = os.path.normpath(os.path.join(D, '..', '..', '..', 'studio', 'reel-studio', 'app', 'look'))
+def lsrc(n):
+    return open(os.path.join(LOOKD, n)).read()
+def cut(src, start, end, what):
+    i = src.index(start); j = src.index(end, i)
+    return src[i:j]
+def unexport(js):
+    assert not re.search(r'^\s*import\b', js, re.M), 'look code with an import cannot be inlined'
+    return re.sub(r'^export (const|function|class|let) ', r'\1 ', js, flags=re.M)
+_gl, _vi, _bg, _lk = lsrc('gl.js'), lsrc('vision.js'), lsrc('bg.js'), lsrc('looks.js')
+LOOK = '\n'.join([
+    '(function () {', "'use strict';", '// ── studio/reel-studio/app/look/gl.js ──', unexport(_gl),
+    '// ── looks.js: BASE ──', unexport(cut(_lk, 'export const BASE = {', '\n};', 'BASE') + '\n};'),
+    '// ── vision.js: v2 masks ──', unexport(cut(_vi, 'export const MASK_FPS', '\n', 'MASK_FPS')), unexport(cut(_vi, 'const MASKS = new Map();', '\n', 'MASKS')),
+    unexport(cut(_vi, 'const nearest = ', '\n', 'nearest')), unexport(cut(_vi, '// ── v2 masks: temporal filter ──', 'export const hasMask', 'temporal')),
+    '// ── bg.js ──', unexport(cut(_bg, 'export const BG_DEFAULTS', '\n', 'BG_DEFAULTS')), unexport(cut(_bg, 'export const BG_KEYS', '\n', 'BG_KEYS')),
+    unexport(cut(_bg, 'export function autoKeyColor', '\n}\n', 'autoKeyColor') + '\n}'),
+    # forget one mask track (a clip analysed again): its frames and every cached filtered frame of it
+    'function drop(key) { MASKS.delete(key); for (const k of [...tCache.keys()]) if (k.startsWith(key + \':\')) tCache.delete(k); blend2.delete(key); }',
+    'window.KBB_LOOK = { gl, blurs, BASE, MASKS, MASK_FPS, maskAt, drop, BG_DEFAULTS, BG_KEYS, autoKeyColor };',
+    '})();'])
 WA = open(os.path.join(D, 'src', 'templates-wa.js')).read()
 assert WA.count('/*OCC*/[]') == 1 and WA.count('/*OSECT*/[]') == 1
 WA = WA.replace('/*OCC*/[]', json.dumps(OCCS, ensure_ascii=False, separators=(',', ':'))).replace('/*OSECT*/[]', json.dumps(OSECT, separators=(',', ':')))
@@ -103,6 +129,8 @@ parts = {
     '/*VIDEO_CSS*/': open(os.path.join(D, 'src', 'video.css')).read(),
     '/*VIDEO_HTML*/': open(os.path.join(D, 'src', 'video.html')).read(),
     '/*VIDEO*/': safe(open(os.path.join(D, 'src', 'video.js')).read(), 'the video editor'),
+    '/*LOOK*/': safe(LOOK, 'the look engine'),
+    '/*CUTLOOK*/': safe(open(os.path.join(D, 'src', 'cutlook.js')).read(), 'the cut-out engine'),
     '/*KBBDISK*/': safe(open(os.path.join(D, 'src', 'kbbdisk.js')).read(), 'the KBB Studio storage'),
     '/*TEMPLATES*/': safe(open(os.path.join(D, 'src', 'templates.js')).read().replace('/*PC*/', open(os.path.join(D, 'src', 'templates-pc.js')).read() + '\n' + WA, 1), 'templates'),
     '/*APP*/': safe(app, 'the editor'),

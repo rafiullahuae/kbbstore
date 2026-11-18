@@ -123,6 +123,8 @@ async function dl(p, click) { const [d] = await Promise.all([p.waitForEvent('dow
       geo: { post: { a1: { x: 'NaN', y: 1e12, w: -5 } } }, bg: { k: 'image', img: 'https://evil.example/bg.png', c1: 'expression(alert(1))', pat: '"><script>' },
       sets: { post: [[{ p: 'https://evil.example/p.png', x: 1 }, { p: 'dalba', x: 1, y: 1, w: 10 }]] } }] };
   const ef = path.join(TMP, 'evil.json'); fs.writeFileSync(ef, JSON.stringify(evil));
+  // the clean-browser import above already says "Imported ...": clear it, or this wait passes before the hostile file is read
+  await o2.p.evaluate(() => { document.getElementById('status').textContent = ''; });
   await o2.p.setInputFiles('#xp-in', ef); await o2.p.waitForFunction(() => /Imported|Not imported/.test(document.getElementById('status').textContent));
   const ev = await o2.p.evaluate(() => { const d = window.KBB_STUDIO.doc, a1 = d.els.find((e) => e.id === 'a1');
     return { n: d.els.map((e) => e.id), txt: document.querySelector('#stage .el[data-id="a1"] .tx') && document.querySelector('#stage .el[data-id="a1"] .tx').textContent, imgs: document.querySelectorAll('#stage img[src="x"]').length, col: a1.col, fill: a1.fill, fn: a1.fn, fs: a1.fs, bg: d.bg, prods: d.sets.post[0].map((i) => i.p), g: d.geo.post.a1, ic: Object.prototype.hasOwnProperty.call(d.els.find((e) => e.id === 'a3'), 'ic') ? 'kept' : undefined, brand: window.KBB_STUDIO.brand() }; });
