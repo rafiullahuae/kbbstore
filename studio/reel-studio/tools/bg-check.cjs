@@ -29,7 +29,7 @@ const H = require('./studio-harness.cjs');
 
 const ROOT = H.ROOT, OUT = path.join(ROOT, 'tools', 'out', 'bg'), STUDIO = path.join(OUT, 'studio'), BASESTUDIO = path.join(OUT, 'studio-base'), SHOTS = path.join(ROOT, 'shots', 'bg');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const BASE = arg('base', '350279b8a'), SUBJECT = !process.argv.includes('--no-subject'), EDITOR_ONLY = process.argv.includes('--editor-only');
+const BASE = arg('base', '350279b8a'), SUBJECT = !process.argv.includes('--no-subject'), EDITOR_ONLY = process.argv.includes('--editor-only') || process.argv.includes('--legacy-only');
 fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(SHOTS, { recursive: true });
 const ff = (...a) => execFileSync('ffmpeg', ['-v', 'error', '-y', ...a], { maxBuffer: 1 << 30 });
 let failures = 0; const results = [], numbers = {};
@@ -383,6 +383,7 @@ const b64u8 = (s) => { const b = Buffer.from(s, 'base64'); return new Uint8Array
   numbers.speedMs = speed;
   ok(speed.v2 < speed.v1 * 3 + 30, `look pass at 1080×1920 (SwiftShader, CPU): v1 ${speed.v1} ms, v2 ${speed.v2} ms, v2 transparent ${speed['v2 transparent']} ms per frame (masks come from the cache; a Mac GPU runs this in a few ms)`);
 
+  }
   // ── 2. an old (v1) project draws exactly as the tree before this lane drew it ──
   try {
     fs.rmSync(BASESTUDIO, { recursive: true, force: true }); fs.mkdirSync(path.join(BASESTUDIO, 'models'), { recursive: true });
@@ -392,7 +393,7 @@ const b64u8 = (s) => { const b = Buffer.from(s, 'base64'); return new Uint8Array
     fs.copyFileSync(path.join(ROOT, 'models', 'manifest.json'), path.join(BASESTUDIO, 'models', 'manifest.json'));
     const eb = await H.startEngine(BASESTUDIO);
     const pb = await context.newPage();
-    await pb.goto(eb.url + '/app/'); await pb.waitForSelector('.home', { timeout: 30000 });
+    await pb.goto(eb.url + '/app/'); await pb.waitForLoadState('load'); await pb.waitForTimeout(1500);   // only its modules are used
     const legacyFrames = async (pg) => pg.evaluate(async () => {
       const LK = await import('/app/look/index.js'), R = await import('/app/core/render.js'), E = await import('/app/core/export.js'), P = await import('/app/core/project.js'), MS = (await import('/app/core/media.js')).MediaStore;
       const p = P.createProject({ aspect: '9:16' }), m = { id: 'm-p', kind: 'video', name: 'presenter.mp4', src: 'library/bg-test/presenter.mp4', dur: 8, w: 1080, h: 1920, fps: 30, hasAudio: true };
@@ -418,7 +419,7 @@ const b64u8 = (s) => { const b = Buffer.from(s, 'base64'); return new Uint8Array
     await pb.close(); await H.stopEngine(eb);
   } catch (err) { ok(false, 'old-project comparison could not run: ' + err.message); }
 
-  }
+  if (process.argv.includes('--legacy-only')) { await browser.close(); await H.stopEngine(e); process.exit(failures ? 1 : 0); }
   if (!CH) { const kc = '#259d4a'; CH = { type: 'look.bg', q: 2, key: 'chroma', keyColor: kc, tol: 0.1, soft: 0.08, spill: 0.6, feather: 0.1, grow: 0, smooth: 0.5 }; }
   // ── 3. the editor: one click, every mode, placement, exports, history ──
   await page.setInputFiles('.home-drop input[type=file]', pres.file);
@@ -590,8 +591,37 @@ const b64u8 = (s) => { const b = Buffer.from(s, 'base64'); return new Uint8Array
     fs.writeFileSync(fa, Buffer.from(r[0].split(',')[1], 'base64')); fs.writeFileSync(fb, Buffer.from(r[1].split(',')[1], 'base64'));
     ff('-i', fa, '-i', fb, '-filter_complex', "[0][1]hstack=inputs=2,drawtext=text='before':x=20:y=20:fontsize=34:fontcolor=white:box=1:boxcolor=black@0.5,drawtext=text='after':x=560:y=20:fontsize=34:fontcolor=white:box=1:boxcolor=black@0.5", path.join(SHOTS, name + '.png'));
   };
-  await still('bg-still-presenter-over-landmark', 'presenter', 8, { type: 'look.bg', q: 2, key: 'person', mode: 'landmark', country: 'fr', feather: 0.1, smooth: 0.5, wrap: 0.35 }, 1.2);
-  await still('bg-still-green-screen-over-picture', 'green', 4, Object.assign({}, CH, { mode: 'gradient', colors: ['#C6395F', '#2A2228'], wrap: 0.3 }), 1.0);
+  // the classic portrait ad: a landmark scene on the track below, the presenter transparent over it, placed bottom right
+  {
+    const scene = await ev(async () => {
+      const img = await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = '/brands/planet-careers/countries/landmarks/eiffel.svg'; });
+      const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; const x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, 1920); g.addColorStop(0, '#2b5fa8'); g.addColorStop(0.55, '#f2a65a'); g.addColorStop(1, '#3a2340'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1920);
+      const sun = x.createRadialGradient(760, 760, 0, 760, 760, 520); sun.addColorStop(0, 'rgba(255,236,190,0.9)'); sun.addColorStop(1, 'rgba(255,236,190,0)'); x.fillStyle = sun; x.fillRect(0, 0, 1080, 1920);
+      if (img) { x.globalAlpha = 0.92; x.drawImage(img, -140, 360, 1100, 1100 * (img.naturalHeight || 1) / (img.naturalWidth || 1)); x.globalAlpha = 1; }
+      x.fillStyle = '#ffffff'; x.font = '800 92px sans-serif'; x.fillText('Work in', 70, 230); x.fillStyle = '#ffd166'; x.fillText('France', 70, 340);
+      return c.toDataURL('image/png');
+    });
+    fs.writeFileSync(path.join(LIB, 'landmark-fr.png'), Buffer.from(scene.split(',')[1], 'base64'));
+    const r = await ev(async () => {
+      const p = window.PROJ('presenter', 8), it = p.tracks.find((x) => x.kind === 'video').items[0], media = new window.MS({ getProject: () => p, engine: null });
+      const c = document.createElement('canvas'); c.width = 540; c.height = 960; const x = c.getContext('2d');
+      const f0 = await window.E.openFrames(p, media, 0.5); await f0.load(1.2); window.R.renderFrame(x, p, 1.2, { scale: 0.5, source: f0.source }); const a = c.toDataURL('image/png'); f0.close();
+      const m = { id: 'm-scene', kind: 'image', name: 'landmark-fr.png', src: 'library/bg-test/landmark-fr.png', w: 1080, h: 1920 };
+      p.media.push(m);
+      const tr = window.P.createTrack('overlay', 'Background'); tr.items.push(window.P.createItem('clip', { media: m.id, t0: 0, in: 0, out: 8, x: 0, y: 0, w: 1080, h: 1920 }));
+      p.tracks.unshift(tr);
+      Object.assign(it, { x: 300, y: 560, w: 780, h: 1360, fx: [{ type: 'look.bg', q: 2, key: 'person', mode: 'none', feather: 0.1, smooth: 0.5 }] });
+      await window.LK.ensureAnalysis(p);
+      const f = await window.E.openFrames(p, media, 0.5); await f.load(1.2); window.R.renderFrame(x, p, 1.2, { scale: 0.5, source: f.source }); const b = c.toDataURL('image/png'); f.close();
+      return [a, b];
+    });
+    const fa = path.join(OUT, 'ad-a.png'), fb = path.join(OUT, 'ad-b.png');
+    fs.writeFileSync(fa, Buffer.from(r[0].split(',')[1], 'base64')); fs.writeFileSync(fb, Buffer.from(r[1].split(',')[1], 'base64'));
+    ff('-i', fa, '-i', fb, '-filter_complex', "[0][1]hstack=inputs=2,drawtext=text='before':x=20:y=20:fontsize=34:fontcolor=white:box=1:boxcolor=black@0.5,drawtext=text='after':x=560:y=20:fontsize=34:fontcolor=white:box=1:boxcolor=black@0.5", path.join(SHOTS, 'bg-still-presenter-over-landmark.png'));
+  }
+  await still('bg-still-presenter-landmark-mode', 'presenter', 8, { type: 'look.bg', q: 2, key: 'person', mode: 'landmark', country: 'fr', feather: 0.1, smooth: 0.5, wrap: 0.35 }, 1.2);
+  await still('bg-still-green-screen-over-brand-gradient', 'green', 4, Object.assign({}, CH, { mode: 'gradient', colors: ['#C6395F', '#2A2228'], wrap: 0.3 }), 1.0);
   if (subjectOK) await still('bg-still-product-over-brand-gradient', 'product', 4, { type: 'look.bg', q: 2, key: 'subject', mode: 'gradient', colors: ['#C6395F', '#2A2228'], feather: 0.2, smooth: 0.5, wrap: 0.25 }, 2.0);
   ok(fs.existsSync(path.join(SHOTS, 'bg-still-presenter-over-landmark.png')), 'before/after stills written to shots/bg/');
 

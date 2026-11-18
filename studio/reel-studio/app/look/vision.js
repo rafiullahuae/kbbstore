@@ -222,7 +222,7 @@ export function maskCoverageAt(mediaId, t, kind = 'person', smooth = 0.5) { cons
 export const hasSeg = (id) => SEG.has(id);
 export const hasFace = (id) => FACE.has(id);
 /** share of the frame the person covers at t (0..1), for the checks and the panel */
-export function coverageAt(mediaId, t) { const m = segAt(mediaId, t); if (!m) return null; let s = 0; for (let i = 0; i < m.data.length; i++) s += m.data[i] > 127 ? 1 : 0; return s / m.data.length; }
+export function coverageAt(mediaId, t) { const m = segAt(mediaId, t) || maskAt(mediaId, t, 'person'); if (!m) return null; let s = 0; for (let i = 0; i < m.data.length; i++) s += m.data[i] > 127 ? 1 : 0; return s / m.data.length; }
 export function forget(mediaId) {
   SEG.delete(mediaId); FACE.delete(mediaId); for (const k of [...smoothCache.keys()]) if (k.startsWith(mediaId + ':')) smoothCache.delete(k);
   for (const k of [...MASKS.keys()]) if (k.startsWith(mediaId + '|')) MASKS.delete(k);

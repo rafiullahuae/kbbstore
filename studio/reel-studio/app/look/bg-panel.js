@@ -54,7 +54,7 @@ export function bgControls(ctx, { live = false, ids = () => undefined, chipCls =
     if (r.keyColor) st.keyColor = r.keyColor;
     rerender();
     const cov = r.coverage.filter((x) => x != null), what = st.key === 'subject' ? 'subject' : 'person';
-    if (st.mode === 'none') return `Transparent on ${r.clips} clip${r.clips > 1 ? 's' : ''}: what is on the tracks below shows through (a “Background” track is under it to drop b-roll or a photo on)`;
+    if (st.mode === 'none') return `Transparent on ${r.clips} clip${r.clips > 1 ? 's' : ''}: what is on the tracks below shows through (drop b-roll, a photo or a theme scene on the track under it)`;
     if (st.key === 'chroma') return `Green screen keyed on ${r.clips} clip${r.clips > 1 ? 's' : ''} (key ${r.keyColor})`;
     return cov.length ? `Background replaced on ${r.clips} clip${r.clips > 1 ? 's' : ''} (${what} ${Math.round(cov[0] * 100)}% of the frame)` : 'Background effect added';
   });
