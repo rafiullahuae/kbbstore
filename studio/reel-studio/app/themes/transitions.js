@@ -21,6 +21,7 @@ import { HERO } from './landmarks2.js';
 import { LANDMARKS } from '../auto/countries/landmarks.js';
 import { FAM_PAL } from './families.js';
 import { tx, textBegin, textEnd, setLastBoxes } from './text.js';
+import { CUT_TRANSITIONS, CUT_WORDS, drawCutTrans, isCutKind } from './cutout-trans.js';
 
 const { clamp, easeIO, easeOut, easeIn, TAU, mix, rgba } = A;
 
@@ -38,6 +39,8 @@ export const TRANSITIONS = [
   { id: 'fam-cv', label: 'CV page slide', icon: '📄', dur: 0.9, note: 'A CV page slides up over the cut and away', fam: 'careers' },
   { id: 'fam-suitcase', label: 'Suitcase open', icon: '🧳', dur: 1.0, note: 'A suitcase snaps shut and opens on the next clip', fam: 'travel' },
   { id: 'fam-sunrise', label: 'Sunrise wipe', icon: '🌅', dur: 1.1, note: 'The sun rises, fills the frame and clears on the next clip', fam: 'future' },
+  // the cut-out transitions (2026-11, ./cutout-trans.js): they use the person in the clips
+  ...CUT_TRANSITIONS,
 ];
 export const transitionById = (id) => TRANSITIONS.find((x) => x.id === id) || null;
 
@@ -94,6 +97,7 @@ function drawTrans(ctx, item, t, project, env) {
   const sides = transitionSides(ctx, item, t, project, env); if (!sides) return;
   const s = item.style || {}, K = kitOfTrans(item, project);
   const W = project.canvas.w, H = project.canvas.h, u = Math.min(W, H), { p, before } = sides, kind = s.kind || 'slabs';
+  if (isCutKind(kind)) { drawCutTrans(ctx, item, t, project, env, sides, K, { txt: s.text || {} }); return; }
   const otherOn = (clipPath, inverse) => {   // draw the other side through a clip (device px canvas, drawn in canvas units)
     ctx.save();
     const path = new Path2D(); if (inverse) path.rect(-W, -H, W * 3, H * 3); path.addPath(clipPath);
@@ -261,6 +265,7 @@ registerLayer('theme.trans', (ctx, item, t, project, env) => {
 /** the words each kind of transition draws, by key, with their defaults (the inspector lists them; the drawing uses them) */
 export const TRANS_WORDS = {
   page: (K) => ({ visas: 'VISAS', stamp: (K.city || K.name || '').toUpperCase(), stampCode: K.iata || '✈', approved: 'APPROVED', date: 'DD · MM · YYYY' }),
+  'cut-textbehind': (K) => CUT_WORDS['cut-textbehind'](K),
   ticket: (K) => ({ brand: 'BOARDING PASS', from: K.fromCode, to: K.iata, flightLbl: 'FLIGHT', flight: 'PC 0001', gateLbl: 'GATE', gate: '--', seatLbl: 'SEAT', seat: '--', dateLbl: 'DATE', date: 'DD MMM' }),
 };
 /** a transition's text fields: [{key, def}] ([] for a kind that draws no words) */

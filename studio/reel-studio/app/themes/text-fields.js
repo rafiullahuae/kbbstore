@@ -22,6 +22,10 @@ const LABELS = {
   hiring: 'Banner', hiringAr: 'Banner (Arabic)', greet: 'Small line', tag: 'Tag', time: 'Time', headline: 'Headline', sub: 'Subline',
   crawl: 'Crawl text', crawlTag: 'Crawl label', country: 'Country', note: 'Footnote', skills: 'Skills', seal: 'Seal', doc: 'Document',
   scroll: 'Scroll', tagline: 'Tagline', logoTop: 'Logo slot · top', logoBottom: 'Logo slot · bottom', badge: 'Badge', status: 'Status', mat: 'Door mat', v: 'Value',
+  // contact cards and badges (./el2.js)
+  waLbl: 'Label · WhatsApp', bothLbl: 'Label · call or WhatsApp', mailLbl: 'Label · email', snapLbl: 'Label · Snapchat', ytLbl: 'Label · YouTube', scanLbl: 'Label · scan', scanSub: 'Under the label',
+  consultLbl: 'Headline', consultSub: 'Subline', tapLbl: 'Button', callRow: 'Row label · call', waRow: 'Row label · WhatsApp', whatsapp: 'WhatsApp number', email: 'Email', website: 'Website',
+  instagram: 'Handle', tiktok: 'TikTok handle', snapchat: 'Snapchat handle', youtube: 'YouTube channel', qr: 'QR link', countryUr: 'Country (Urdu)', countryHi: 'Country (Hindi)', stampSub: 'Stamp line',
 };
 const PER_EL = { ticket: { brand: 'Card title', from: 'From (code)', to: 'To (code)' }, counter: { label: 'Label' }, bulletin: { label: 'Top label' }, split: { label: 'Top label' } };
 const SERIES = { s: 'Step', g: 'Goal', w: 'Word', p: 'Point', c: 'Card', r: 'Row', l: 'Line', role: 'Role', k: 'Key', d: 'Day' };

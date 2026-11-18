@@ -324,8 +324,8 @@ export function placeElement(ctx, el, opts = {}) {
     item = createItem('theme.overlay', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || 4), x: 0, y: 0, w: W, h: H, name: 'Theme overlay · ' + th.name, style });
   } else {
     const def = elementById(el); if (!def) throw new Error('No such element: ' + el);
-    const style = elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, text: opts.text, brand: ws?.name || null, logo: ws?.logo || null });
-    item = createItem('theme.el', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || def.dur), ...(opts.box || boxFor(el, W, H)), name: `${def.icon} ${def.label}${opts.variant ? ' · ' + opts.variant : ''} · ${th.name}`, style });
+    const style = elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, text: opts.text, brand: ws?.name || null, logo: ws?.logo || null, ws });
+    item = createItem('theme.el', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || def.dur), ...(opts.box || boxFor(el, W, H, opts.variant)), name: `${def.icon} ${def.label}${opts.variant ? ' · ' + opts.variant : ''} · ${th.name}`, style });
   }
   // the row it was dropped on when that row is free at that time, else the first free overlay row, else a new one
   const t1 = item.t0 + (item.out - item.in), free = (t) => !t.items.some((i) => i.t0 < t1 - 0.001 && itemEnd(i) > item.t0 + 0.001);
@@ -362,8 +362,8 @@ export async function setWhole(ctx, el, on, opts = {}) {
     add.push({ trackId: tt.id, item: createItem('theme.overlay', { t0: 0, in: 0, out: r3(D), x: 0, y: 0, w: W, h: H, auto: TAG, name: 'Theme · ' + th.name, style }) });
   } else {
     const def = elementById(el); if (!def) throw new Error('No such element: ' + el);
-    const style = (whole) => elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, whole, brand: ws?.name || null, logo: ws?.logo || null });
-    const mk = (t0, dur, whole) => createItem('theme.el', { t0: r3(Math.max(0, t0)), in: 0, out: r3(dur), ...boxFor(el, W, H), auto: TAG, name: `${def.icon} ${def.label} · whole video · ${th.name}`, style: style(whole) });
+    const style = (whole) => elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, whole, brand: ws?.name || null, logo: ws?.logo || null, ws });
+    const mk = (t0, dur, whole) => createItem('theme.el', { t0: r3(Math.max(0, t0)), in: 0, out: r3(dur), ...boxFor(el, W, H, opts.variant), auto: TAG, name: `${def.icon} ${def.label} · whole video · ${th.name}`, style: style(whole) });
     const lane = def.box === 'full' && el !== 'grade' ? (p.tracks.find((t) => t.kind === 'overlay' && !t.locked && !t.theme) || tt) : tt;
     if (def.whole === 'span') add.push({ trackId: lane.id, item: mk(0, D, 'span') });
     else if (def.whole === 'start') add.push({ trackId: lane.id, item: mk(0, Math.min(def.dur, D), 'start') });

@@ -42,7 +42,11 @@ export const maskKind = (f) => (f && f.type === 'look.bg' && (f.q || 1) >= 2 && 
 const usesKind = (kind) => (it) => (it.fx || []).some((f) => maskKind(f) === kind);
 const usesCover = (project) => {
   const ids = new Set();
-  for (const tr of project.tracks) for (const it of tr.items) if (it.type === 'look.transition' && it.style?.kind === 'cover') ids.add(it.style.a);
+  for (const tr of project.tracks) for (const it of tr.items) {
+    if (it.type === 'look.transition' && it.style?.kind === 'cover') ids.add(it.style.a);
+    // the cut-out transitions (themes/cutout-trans.js) need the person on both sides of their cut
+    else if (it.type === 'theme.trans' && /^cut-/.test(it.style?.kind || '')) { ids.add(it.style.a); ids.add(it.style.b); }
+  }
   return (it) => ids.has(it.id);
 };
 

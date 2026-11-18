@@ -9,6 +9,7 @@ import { FAMILIES, FAMILY_LABELS, FAMILY_ICONS } from './fam.js';
 import { hoverPreview, themeSpec, elementSpec, transSpec, hoverToggles, css as hoverCss, drawMini } from './hover.js';
 import { TRANSITIONS, placeTransition, cutsOf as cutPairs } from './transitions.js';
 import { recipeById } from '../auto/recipes/recipes.js';
+import { quickCard, cutPlaced } from './el2-panel.js';
 
 let cssDone = false;
 function css() {
@@ -150,7 +151,7 @@ export function mountPanel(el, ctx) {
     if (overlayOf(ctx.project)) sel.disabled = true;
     // country transitions: drag one onto a cut, ＋ puts it on the cut nearest the playhead, or one click for every cut
     const tdrag = (kind) => (e) => { e.dataTransfer.setData('application/x-kbb-theme-trans', JSON.stringify({ kind, theme: th.id })); e.dataTransfer.effectAllowed = 'copy'; };
-    const tput = (kind, all) => { try { const its = placeTransition(ctx, kind, { at: ctx.playhead?.() ?? 0, all, theme: th.id }); if (!all) window.kbbEditor?.select?.([its[0].id]); toast(`${TRANSITIONS.find((x) => x.id === kind)?.label} on ${its.length > 1 ? `all ${its.length} cuts` : 'the nearest cut'} · ⌘Z undoes`, 'ok'); } catch (e) { toast(e.message, 'error'); } };
+    const tput = (kind, all) => { try { const its = placeTransition(ctx, kind, { at: ctx.playhead?.() ?? 0, all, theme: th.id }); if (!all) window.kbbEditor?.select?.([its[0].id]); toast(`${TRANSITIONS.find((x) => x.id === kind)?.label} on ${its.length > 1 ? `all ${its.length} cuts` : 'the nearest cut'} · ⌘Z undoes`, 'ok'); if (/^cut-/.test(kind)) cutPlaced(ctx, its); } catch (e) { toast(e.message, 'error'); } };
     const nCuts = cutPairs(ctx.project).length;
     const trows = TRANSITIONS.map((d) => {
       const chip = h('button.th-elchip', { type: 'button', draggable: 'true', title: `${d.label} — drag it onto a cut on the timeline, or click ＋ for the cut nearest the playhead`, dataset: { trans: d.id }, on: { dragstart: tdrag(d.id), click: () => tput(d.id, false) } }, h('span', d.icon), h('span', h('b', d.label), h('small', d.note)));
@@ -200,13 +201,15 @@ export function mountPanel(el, ctx) {
     if (!list.length) grid.append(h('p.th-note', 'No theme matches.'));
   }
 
-  function render() { renderOpts(); renderApplied(); renderPlace(); renderSuggest(); renderGrid(); }
+  // the one-click card: logo badge, a badge for every country the captions name (./el2-panel.js)
+  const quick = quickCard(ctx);
+  function render() { renderOpts(); renderApplied(); quick.render(); renderPlace(); renderSuggest(); renderGrid(); }
   root.append(
     h('div.insp-head', h('b', '✨ Themes'), h('p.th-note', `${THEMES.length} broadcast themes: complete packages that keep off faces and captions. Hover a tile to preview it, click to apply (⌘Z undoes).`)),
-    hoverToggles({ mine: true }), suggBox, appliedBox, placeBox, optBox, h('h4', 'All themes'), search, chips, grid);
+    hoverToggles({ mine: true }), suggBox, appliedBox, quick.el, placeBox, optBox, h('h4', 'All themes'), search, chips, grid);
   render();
   let pend = 0, lastSig = '';
-  const sig = () => { const it = overlayOf(ctx.project); return [it?.id, JSON.stringify(it?.style.layers || {}), it?.style.intensity, it?.style.colorMode, ctx.project.recipe, ctx.project.captions?.words?.length, themeItems(ctx.project).filter((x) => x.item.style?.whole || x.item.type === 'theme.overlay').map((x) => x.item.style?.el || 'ov').join(',')].join('|'); };
+  const sig = () => { const it = overlayOf(ctx.project); return [it?.id, JSON.stringify(it?.style.layers || {}), it?.style.intensity, it?.style.colorMode, ctx.project.recipe, ctx.project.captions?.words?.length, themeItems(ctx.project).filter((x) => x.item.style?.whole || x.item.type === 'theme.overlay').map((x) => x.item.style?.el || 'ov').join(','), ctx.project.tracks.flatMap((t) => t.items).filter((i) => i.auto === 'el2' || i.auto === 'cbadge').map((i) => i.style?.variant).join(',')].join('|'); };
   offs.push(ctx.bus.on('project:change', () => { if (pend) return; pend = requestAnimationFrame(() => { pend = 0; const s2 = sig(); if (s2 !== lastSig) { lastSig = s2; if (!root.contains(document.activeElement) || document.activeElement?.type !== 'range') render(); } }); }));
   lastSig = sig();
   return { destroy() { for (const off of offs) off?.(); thumbIO.disconnect(); } };
