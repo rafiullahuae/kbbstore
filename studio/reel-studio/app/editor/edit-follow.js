@@ -1,13 +1,15 @@
 // KBB Studio — what hangs off the clips follows the edit (a core/history.js follow-up hook: the same undo step).
 //
-//   elements   theme elements, text, stickers and shapes placed over a clip on the main track ride with that clip: their
-//              start is anchored to the MEDIA time under it (clip id + source second), so a trim, split, ripple delete,
-//              re-order or move of the clips carries them to where that moment of the recording now plays. An element
+//   elements   theme elements, text, stickers, shapes and b-roll (a clip on an overlay track: the auto b-roll is put on
+//              the word it shows, with its card and name in one group) placed over a clip on the main track ride with
+//              that clip: their start is anchored to the MEDIA time under it (clip id + source second), so a trim,
+//              split, ripple delete (Remove silences too), re-order or move of the clips carries them to where that
+//              moment of the recording now plays. An element
 //              whose moment was cut away stays where it is (or moves with its clip's start when the clip itself moved).
 //              The elements a theme placed (auto 'theme': title, lower third, signature) ride their clip the same way.
-//              Not followed: b-roll clips, sound (music, voice-over, SFX), markers, whole-video theme items (overlay,
-//              grade, intro, end card: themes/followReel re-derives those), cutaways and captions (their own hooks),
-//              and anything on a locked track.
+//              Not followed: clips on a second video track, sound (music, voice-over), markers, whole-video theme
+//              items (overlay, grade, intro, end card: themes/followReel re-derives those), cutaways and captions
+//              (their own hooks), and anything on a locked track.
 //   transitions on a cut (theme.trans, look.transition: style.a / style.b = the clip ids either side) stay centred on
 //              their cut. When the cut changes they re-anchor: the incoming clip keeps its transition (it gets whatever
 //              clip now ends where it starts), else the outgoing one keeps it; when there is no cut there any more (a
@@ -22,7 +24,7 @@ import { itemDur, itemEnd, clone, srcTime } from '../core/project.js';
 import { retimeSig } from '../core/retime.js';
 import { mainTrack, cutsOf, isTransition, transitionOnCut, tlOf } from './edit-ops.js';
 
-const FOLLOW_TYPES = new Set(['theme.el', 'text', 'sticker', 'shape']);
+const FOLLOW_TYPES = new Set(['theme.el', 'text', 'sticker', 'shape', 'viral.placeholder']);
 const EPS = 0.02;
 
 /** clips on the main track, as plain snapshots */
@@ -37,7 +39,7 @@ const isWipe = (it) => it.type === 'theme.el' && (it.style?.el === 'wipe' || it.
 // re-derived by themes/followReel; the elements a theme placed on a moment (title, lower third, signature) ride their
 // clip like the owner's own; a sound effect rides its moment like an element
 const followsClip = (tr, it) => !tr.locked && !it.style?.whole && !(it.auto === 'theme' && it.type !== 'theme.el') && !isWipe(it) &&
-  ((FOLLOW_TYPES.has(it.type) && tr.kind !== 'video') || (it.type === 'audio' && tr.kind === 'sfx' && !tr.voice && !it.unlinkedFrom));
+  ((FOLLOW_TYPES.has(it.type) && tr.kind !== 'video') || (it.type === 'clip' && tr.kind === 'overlay') || (it.type === 'audio' && tr.kind === 'sfx' && !tr.voice && !it.unlinkedFrom));
 /** cuts on every video track (a theme puts a wipe on each): [{ a, b, t }] */
 function videoCuts(p) {
   const out = [];

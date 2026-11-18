@@ -6,7 +6,8 @@
 //   captions  after a cut the missing words are gone, the later ones shift EXACTLY, a line spanning the cut is re-split,
 //             a piece left too short joins its neighbour, the translated track follows, line positions survive
 //   follow    moving a clip carries its captions; theme elements and transitions follow cuts and moves; a lifted cut
-//             loses its transition, a rippled one re-anchors it; music, b-roll and markers stay put
+//             loses its transition, a rippled one re-anchors it; b-roll rides its clip (Remove silences too); music
+//             and markers stay put
 //   drag      between tracks, a new overlay track above the top one (z-order), insert vs overwrite on the main track,
 //             snapping (playhead, caption lines, beats; ⌘ = free), multi-select drag, drops from the bin / Finder
 //   misc      linked audio + Unlink, ONE undo step per edit, save/reload, an old project fixture opens unchanged and
@@ -174,6 +175,25 @@ const W = 1440, HH = 900;
     return { same: manual === auto, mDur, aDur, keptId, n, diff: manual === auto ? '' : manual.slice(0, 200) + ' ≠ ' + auto.slice(0, 200) };
   });
   ok(r.same && Math.abs(r.mDur - r.aDur) < 1e-3 && r.keptId && r.n === 1, `Remove silences cuts like a manual ripple delete: identical captions (words, lines, positions, translated track), same length (${r.aDur.toFixed(2)} s), the first piece keeps its clip id (transitions and elements still find it), one undo step ${r.diff}`);
+  // after Remove silences, b-roll stays on the words it shows (the auto b-roll is placed on a spoken word, its card and
+  // name in one group with it) and nothing holds the shorter reel open; music stays where it is. Before 2026-11-18 the
+  // b-roll clip stayed at its old time — 2 s off its word here, while its card (a shape) moved — and a b-roll near the
+  // end held the export open past the pictures.
+  r = await ev(async () => {
+    const AC = await import('/app/auto/commands.js'), p = ED.project, mid = p.media[0].id, ov = p.tracks.find((t) => t.kind === 'overlay');
+    const wide = p.media.find((m) => m.name === 'wide.mp4'), g = 'gbroll';
+    const clip = P.createItem('clip', { media: wide.id, t0: 9, in: 0, out: 1.5, x: 100, y: 100, w: 500, h: 280, muted: true, volume: 0, auto: 'content.broll', group: g, name: 'B-roll' });
+    const card = P.createItem('shape', { t0: 9, in: 0, out: 1.5, x: 0, y: 0, w: 1080, h: 1920, group: g, auto: 'content.broll', style: { shape: 'rect', fill: '#fff' }, name: 'B-roll card' });
+    const late = P.createItem('clip', { media: wide.id, t0: 18, in: 0, out: 1.5, x: 100, y: 100, w: 500, h: 280, muted: true, volume: 0, name: 'B-roll late' });
+    ED.apply(ED.ops.addItems([{ trackId: ov.id, item: card }, { trackId: ov.id, item: clip }, { trackId: ov.id, item: late }], 'B-roll')); ED.history.seal();
+    const s0 = steps(), d0 = ED.duration();
+    ED.apply(AC.removeCutsCommand(p, mid, [{ t0: 4, t1: 6 }])); ED.history.seal();
+    const f = (id) => P.findItem(ED.project, id).item;
+    const res = { clip: f(clip.id).t0, card: f(card.id).t0, late: P.itemEnd(f(late.id)), dur: ED.duration(), d0, pics: Math.max(...vt().map((c) => P.itemEnd(c))), n: steps() - s0 };
+    ED.history.undo(); ED.history.undo();
+    return res;
+  });
+  ok(Math.abs(r.clip - 7) < 1e-3 && Math.abs(r.card - 7) < 1e-3 && Math.abs(r.late - 17.5) < 1e-3 && Math.abs(r.dur - r.pics) < 1e-3 && r.n === 1, `Remove silences (−2 s before them): the b-roll clip and its card stay together on their word (9 → ${r.clip} / ${r.card} s), the late b-roll ends at ${r.late} s, the reel ends with its pictures (${r.dur.toFixed(2)} s, was ${r.d0.toFixed(2)}); one undo step`);
 
   // ── 3. lift of a middle chunk (the gap stays) ──
   r = await ev(() => {
