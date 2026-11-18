@@ -16,7 +16,7 @@ import { suggestEmoji } from './emoji.js';
 import * as C from './commands.js';
 import { LANGS } from './stt.js';
 import { SPEECH_MODELS } from './models.js';
-import { autoCaptions } from './auto.js';
+import { autoCaptions, captionScope, uncaptionedClips } from './auto.js';
 import { TAG_MODES, DEFAULT_TAG_MODE, TAG_ICON } from './nonspeech.js';
 import { vocabFor } from './vocab.js';
 import { alignEdit } from './script.js';
@@ -64,18 +64,34 @@ export function mountCaptionPanel(el, ctx) {
   const barLabel = h('span', { class: 'rs-cap-barlabel' });
   const cancelBtn = h('button', { class: 'rs-cap-btn ghost', onclick: () => running?.abort() }, 'Cancel');
   const progress = h('div', { class: 'rs-cap-progress', hidden: true }, barLabel, bar, cancelBtn);
-  const goBtn = h('button', { class: 'rs-cap-btn primary', onclick: runAuto }, '💬 Auto captions');
+  const goBtn = h('button', { class: 'rs-cap-btn primary', onclick: () => runAuto() }, '💬 Auto captions');
+  // Whole video / Selected clips: follows the timeline selection (a clip selected -> Selected clips), he can change it
+  const scopeSel = h('select', { class: 'rs-cap-in', 'data-k': 'capScope', 'aria-label': 'Caption what', title: 'Caption the whole video, or only the clips selected on the timeline' },
+    h('option', { value: 'all' }, 'Whole video'), h('option', { value: 'selected' }, 'Selected clips'));
+  const newBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'caption-new-clips', onclick: () => runAuto(uncaptionedClips(P()).map((c) => c.it.id)) }, 'Caption the new clips');
+  const newRow = h('div', { class: 'rs-cap-row rs-cap-new', hidden: true }, h('span', { class: 'rs-cap-muted' }), newBtn);
+  function renderScope(follow) {
+    const sc = captionScope(ctx);
+    if (follow) scopeSel.value = sc.scope;
+    const list = scopeSel.value === 'selected' ? sc.selected : sc.all, names = list.map((c) => c.name).join(', ');
+    goBtn.title = scopeSel.value === 'selected'
+      ? (list.length ? `Captions for ${list.length} selected clip${list.length === 1 ? '' : 's'} (${names}); the rest stay as they are` : 'Select a clip on the timeline first')
+      : `Captions for the whole video (${list.length} clip${list.length === 1 ? '' : 's'})`;
+    const fresh = uncaptionedClips(P());
+    newRow.hidden = !fresh.length;
+    newRow.firstChild.textContent = fresh.length ? `No captions yet: ${fresh.map((c) => c.name).join(', ')}` : '';
+  }
 
-  async function runAuto() {
+  async function runAuto(clips) {
     if (running) return;
     running = new AbortController();
-    progress.hidden = false; goBtn.disabled = true;
+    progress.hidden = false; goBtn.disabled = true; newBtn.disabled = true;
     const set = (label, f) => { barLabel.textContent = label || ''; bar.firstChild.style.width = f == null ? '0' : Math.round(f * 100) + '%'; };
     try {
-      await autoCaptions(ctx, { model: modelSel.value, lang: langSel.value, signal: running.signal, onProgress: set });
+      await autoCaptions(ctx, { model: modelSel.value, lang: langSel.value, signal: running.signal, onProgress: set, ...(clips ? { clips } : { scope: scopeSel.value }) });
     } catch (e) {
       if (e.name !== 'AbortError') ctx.toast?.('Captions failed: ' + e.message, 'error');
-    } finally { running = null; progress.hidden = true; goBtn.disabled = false; }
+    } finally { running = null; progress.hidden = true; goBtn.disabled = false; newBtn.disabled = false; }
   }
 
   // Music & sound tags (per project, undoable)
@@ -413,7 +429,7 @@ export function mountCaptionPanel(el, ctx) {
     h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel),
     vocabBox);
   const trBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'open-translate', title: 'Translate the captions (Urdu, Arabic, English, Hindi …)', onclick: () => show('translate') }, '🌐 Translate');
-  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, trBtn, settings), progress),
+  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, scopeSel, trBtn, settings), newRow, progress),
     tabs, transcriptPane, scriptPane, stylePane, translatePane);
 
   let queued = false;
@@ -422,6 +438,7 @@ export function mountCaptionPanel(el, ctx) {
     requestAnimationFrame(() => {
       queued = false;
       if (sel >= cap().words.length) sel = cap().words.length - 1;
+      renderScope(false);
       tagSel.value = cap().soundTags || DEFAULT_TAG_MODE;
       tagChip.textContent = '· ♪ ' + (TAG_MODES.find((m) => m.id === tagSel.value)?.label || '');
       if (tab === 'transcript') renderList();
@@ -431,7 +448,8 @@ export function mountCaptionPanel(el, ctx) {
     });
   };
   if (ctx.bus) {
-    offs.push(ctx.bus.on('project:change', refresh), ctx.bus.on('project:load', () => { sel = -1; refresh(); }),
+    offs.push(ctx.bus.on('project:change', refresh), ctx.bus.on('project:load', () => { sel = -1; refresh(); renderScope(true); }),
+      ctx.bus.on('selection', () => renderScope(true)),
       ctx.bus.on('playhead', (e) => tab === 'transcript' && markNow(e.t)),
       ctx.bus.on('captions:possel', () => { for (const r of list.querySelectorAll('.rs-cap-line')) r.classList.toggle('pos-sel', posSel.has(lineKey('', r.dataset.line))); }),
       ctx.bus.on('workspace', () => { renderVocab(); if (tab === 'style') gallery.render(); }));
@@ -440,7 +458,8 @@ export function mountCaptionPanel(el, ctx) {
   function saveMeta() { if (ctx.ops?.setProject) ctx.history.apply(ctx.ops.setProject({ meta: { ...(P().meta || {}), captions: { model: modelSel.value, lang: langSel.value } } }, 'Caption settings')); }
 
   loadCaptionFonts().then(() => tab === 'style' && gallery.draw(1.2, true));
-  renderVocab();
+  renderVocab(); renderScope(true);
+  scopeSel.onchange = () => renderScope(false);
   show('transcript');
   return {
     show, refresh, runAuto, edit, gallery, get script() { return script; }, get translate() { return trView; },
