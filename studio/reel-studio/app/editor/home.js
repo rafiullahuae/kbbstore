@@ -10,6 +10,7 @@ import { stopStudio } from './editor.js';
 import { openSetup } from './setup.js';
 import { listModules } from '../core/modules.js';
 import { adStudioButton, adStudioTile } from '../adstudio/entry.js';
+import { searchBox } from './search-ui.js';
 
 export async function renderHome(root, { onOpen, onDropFiles }) {
   clear(root);
@@ -42,7 +43,7 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
     h('header.topbar.home-top',
       h('div.brand', h('span.logo-dot', '▶'), h('b', APP_NAME)),
       workspaceSwitcher({ onSwitch: rerender }),
-      h('div.grow'),
+      searchBox(),
       h('button.btn.ghost#configure-btn', { title: 'Companies, keys, Claude, models, folders, languages', on: { click: () => import('../settings/configure.js').then((m) => m.openConfigure('companies', { onClose: rerender })) } }, '⚙ Configure'),
       h('button.btn.ghost', { title: 'Download the AI models (once)', on: { click: () => openSetup() } }, '🧠 Models'),
       adStudioButton(),
