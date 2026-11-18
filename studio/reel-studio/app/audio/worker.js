@@ -3,8 +3,10 @@
 //   master  {channels:[L,R], target}    -> {channels, report}  platform loudness (BS.1770) + true-peak limiter
 //   measure {channels:[L,R]}            -> {lufs, tp}
 //   stretch {channels, segs:[{a,b,rate,len}]} -> {wav}         pitch-kept speed pieces (WSOLA), joined, 16-bit WAV
+//   retime  {channels, from, item, len} -> {channels}          a retimed clip's sound (speed, ramp, reverse; pitch kept or tape)
 import * as D from './dsp.js';
 import { createRnnoise } from './rnnoise.js';
+import { srcTime, speedAt, speedGain } from '../core/retime.js';
 
 let rnP = null;
 const rnnoise = () => (rnP ||= createRnnoise(new URL('../../vendor/rnnoise-0.2.1/rnnoise.wasm', import.meta.url).href).catch((e) => { rnP = null; throw e; }));
@@ -51,6 +53,17 @@ self.onmessage = async (e) => {
       const join = (parts) => { const n = parts.reduce((a, p) => a + p.length, 0), o = new Float32Array(n); let off = 0; for (const p of parts) { o.set(p, off); off += p.length; } return o; };
       const wav = D.wav(outs.map(join), 48000);
       result = { wav }; transfer = [wav];
+    } else if (op === 'retime') {
+      // a retimed clip's sound: item = {in, out, speed, curve, reverse, keepPitch, rampMute}, channels = the source from
+      // sample `from` (the item's source range plus a little margin), len = its timeline length in samples
+      const { channels, from, item, len } = args, sr = 48000, it = Object.assign({}, item, { t0: 0 });
+      const n = channels[0].length;
+      if (it.reverse) for (const c of channels) c.reverse();
+      const pos = it.reverse ? (i) => (n - 1) - (srcTime(it, i / sr) * sr - from) : (i) => srcTime(it, i / sr) * sr - from;
+      const curved = !!(it.curve && it.curve.pts && it.curve.pts.length >= 2);
+      const gain = (i) => speedGain(curved ? speedAt(it, i / sr) : (it.speed || 1), curved && it.rampMute);
+      const out = D.retime(channels, pos, len, it.keepPitch !== false, gain, sr);
+      result = { channels: out }; transfer = out.map((c) => c.buffer);
     } else throw new Error('unknown op ' + op);
     self.postMessage({ id, result }, transfer);
   } catch (err) { self.postMessage({ id, error: String(err && err.message || err) }); }

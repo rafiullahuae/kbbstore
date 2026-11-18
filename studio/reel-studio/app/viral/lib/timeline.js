@@ -4,7 +4,7 @@
 //                               shortened (never chopped), captions, markers and fx times follow.
 //   insertGap(p, at, d)         open d seconds at `at` (everything from `at` on moves right; spanning items stretch)
 //   mapTime(ranges)             t -> t' after the cut
-import { uid, clone, itemDur, itemEnd, findMedia } from '../../core/project.js';
+import { uid, clone, itemDur, itemEnd, findMedia, tlTime } from '../../core/project.js';
 
 const EPS = 1e-6;
 
@@ -113,7 +113,7 @@ export const clipAt = (p, t) => mainClips(p).find((c) => t >= c.t0 - EPS && t < 
 export function srcToTimeline(p, mediaId, ranges) {
   const out = [];
   for (const c of mainClips(p)) if (c.media === mediaId) for (const [a, b] of ranges) {
-    const s = Math.max(a, c.in), e = Math.min(b, c.out); if (e > s) out.push([c.t0 + (s - c.in) / (c.speed || 1), c.t0 + (e - c.in) / (c.speed || 1)]);
+    const s = Math.max(a, c.in), e = Math.min(b, c.out); if (e > s) { const x = tlTime(c, s), y = tlTime(c, e); out.push([Math.min(x, y), Math.max(x, y)]); }
   }
   return out.sort((x, y) => x[0] - y[0]);
 }

@@ -1,7 +1,7 @@
 // KBB Studio · content · geometry: where things sit ON THE CANVAS over time (faces seen in the source, products and
 // stickers on the overlay track), so captions, pops and titles can stay off them. Pure apart from reading the project.
 import { boxAt } from '../../core/render.js';
-import { isActive, findMedia } from '../../core/project.js';
+import { isActive, findMedia, srcTime } from '../../core/project.js';
 
 export const area = (r) => Math.max(0, r.w) * Math.max(0, r.h);
 export function inter(a, b) {
@@ -41,7 +41,7 @@ export function obstaclesAt(project, t, faces = {}, { skip } = {}) {
       if (!isActive(it, t) || skip?.has(it.id)) continue;
       const m = it.media ? findMedia(project, it.media) : null;
       if (tr.kind === 'video' && m && faces[m.id]) {
-        const f = faceAt(faces[m.id], it.in + (t - it.t0) * (it.speed || 1));
+        const f = faceAt(faces[m.id], srcTime(it, t));
         if (f) {
           const a = sourceToCanvas(it, m, t, f.x - f.w / 2, f.y - f.h / 2), b = sourceToCanvas(it, m, t, f.x + f.w / 2, f.y + f.h / 2);
           out.push({ ...grow({ x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y }, 0.35), kind: 'face' });

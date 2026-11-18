@@ -96,6 +96,10 @@ export class MediaStore {
     const out = { dur: isFinite(el.duration) ? el.duration : 0, w: el.videoWidth || 0, h: el.videoHeight || 0 };
     el.removeAttribute('src'); el.load();
     if (m.kind === 'video') {
+      // the real frame rate (an iPhone slo-mo clip is 120 or 240 fps): read from the file's sample table
+      if (typeof VideoDecoder === 'function' && /\.(mp4|mov|m4v)(\||$)/i.test((m.name || '') + '|' + m.src)) {
+        try { const ix = await (await import('./frames.js')).openIndex(url); if (ix.fps > 1) out.fps = Math.round(ix.fps * 100) / 100; } catch { /* keep 30 */ }
+      }
       try { out.hasAudio = !!(await this.decodeAudio(m.id, m)); } catch { out.hasAudio = false; }
     } else out.hasAudio = true;
     return out;
@@ -208,6 +212,14 @@ export class MediaStore {
     }
     return SeekReader.open(this.url(m));
   }
+
+  /** a FrameStream (core/frames.js) over the media's frames: decoder-ordered reads for ramps, slow motion, reverse,
+   *  freeze (null when the file or the browser cannot do it — callers then use the element / openReader) */
+  async openStream(id, opts = {}) {
+    const m = this.media(id);
+    if (!m || m.kind !== 'video' || typeof VideoDecoder !== 'function' || !/\.(mp4|mov|m4v)(\||$)/i.test((m.name || '') + '|' + m.src)) return null;
+    try { return await (await import('./frames.js')).FrameStream.open(this.url(m), opts); } catch (e) { console.warn('[media] frame stream unavailable:', e.message); return null; }
+  }
 }
 
 export function seekExact(el, t) {
@@ -260,7 +272,7 @@ class Mp4FrameReader {
     file.setExtractionOptions(track.id, null, { nbSamples: 1e7 });
     file.start(); file.flush();
     if (!samples.length) throw new Error('no samples');
-    const config = { codec: track.codec.startsWith('vp08') ? 'vp8' : track.codec, codedWidth: track.video.width, codedHeight: track.video.height, description: describe(file, track.id) };
+    const config = { codec: track.codec.startsWith('vp08') ? 'vp8' : track.codec, codedWidth: track.video.width, codedHeight: track.video.height, description: describeTrack(file, track.id) };
     const sup = await VideoDecoder.isConfigSupported(config);
     if (!sup.supported) throw new Error('decoder does not support ' + track.codec);
     const base = Math.min(...samples.map((s) => s.cts));
@@ -314,7 +326,7 @@ class Mp4FrameReader {
   close() { for (const f of this.frames) f.close(); this.frames = []; try { this.dec.close(); } catch {} }
 }
 
-function describe(file, trackId) {
+export function describeTrack(file, trackId) {
   const trak = file.getTrackById(trackId);
   for (const entry of trak.mdia.minf.stbl.stsd.entries) {
     const box = entry.avcC || entry.hvcC || entry.vpcC || entry.av1C;

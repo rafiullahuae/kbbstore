@@ -3,6 +3,7 @@
 // and exports two PNGs: the 9:16 reel cover (1080×1920) and the 3:4 Instagram grid cover (1080×1440).
 import { luma, sharpness } from '../auto/lib/video.js';
 import { exportsDir } from '../core/config.js';
+import { srcTime } from '../core/project.js';
 import { FONT_FAMILIES } from '../captions/fonts.js';
 import { brandPop, contrast, rgbHex, lum } from './lib/catalogue.js';
 import { mainVideo, ops } from './lib/items.js';
@@ -18,7 +19,7 @@ export async function pickFrames(ctx, { n = 18, keep = 3 } = {}) {
   const { item, media } = mv, dur = (item.out - item.in) / (item.speed || 1), out = [];
   const oc = new OffscreenCanvas(160, Math.max(2, Math.round(160 * (media.h || 9) / (media.w || 16)))), g = oc.getContext('2d', { willReadFrequently: true });
   for (let i = 0; i < n; i++) {
-    const tl = item.t0 + dur * (0.06 + 0.88 * i / Math.max(1, n - 1)), src = item.in + (tl - item.t0) * (item.speed || 1);
+    const tl = item.t0 + dur * (0.06 + 0.88 * i / Math.max(1, n - 1)), src = srcTime(item, tl);
     const bm = await ctx.media.frameAt(media.id, src, 480);
     g.drawImage(bm, 0, 0, oc.width, oc.height);
     const d = g.getImageData(0, 0, oc.width, oc.height), y = luma({ w: oc.width, h: oc.height, data: d.data });

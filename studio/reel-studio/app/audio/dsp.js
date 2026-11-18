@@ -219,6 +219,67 @@ export function stretch(x, rate, sr = 48000) {
   return y;
 }
 
+/**
+ * Sound for a retimed clip (speed, speed ramp, reverse), any rate curve, exact length.
+ *   channels  source samples [L, R] (a slice of the media)
+ *   pos(i)    source position (samples, into the slice, fractional) for output sample i — increasing; a reversed clip
+ *             passes the slice reversed and a mirrored pos, so the same code plays it backwards
+ *   len       output length (samples)
+ *   keepPitch true: WSOLA (40 ms grains, 50 % overlap, ±10 ms search) — pitch kept at every speed; the grain offsets
+ *             are found ONCE on the mono sum and used for both channels, so the stereo image never wobbles.
+ *             false: "tape" — resampled along pos, pitch follows the speed.
+ *   gain(i)   0..1 per output sample (speed limits, "mute while ramping"); applied in 64-sample steps, linearly
+ *             interpolated, so a fade to silence never clicks.
+ */
+export function retime(channels, pos, len, keepPitch = true, gain = null, sr = 48000) {
+  const nC = channels.length, X = channels, n = X[0].length, out = X.map(() => new Float32Array(len));
+  if (!keepPitch) {
+    for (let i = 0; i < len; i++) {
+      const f = pos(i), k = Math.floor(f), u = f - k;
+      if (k < 0 || k >= n) continue;
+      for (let c = 0; c < nC; c++) { const x = X[c]; out[c][i] = x[k] * (1 - u) + (k + 1 < n ? x[k + 1] : 0) * u; }
+    }
+  } else {
+    const N = Math.round(0.04 * sr) & ~1, Hs = N / 2, tol = Math.round(0.01 * sr);
+    const mono = nC > 1 ? (() => { const m = new Float32Array(n); for (let c = 0; c < nC; c++) { const x = X[c]; for (let i = 0; i < n; i++) m[i] += x[i]; } return m; })() : X[0];
+    const win = new Float32Array(N); for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N);
+    const norm = new Float32Array(len + N), acc = X.map(() => new Float32Array(len + N));
+    let prev = -1;
+    for (let o = 0; o < len; o += Hs) {
+      const nominal = Math.round(pos(o));
+      let best = nominal;
+      if (prev >= 0) {
+        // the grain whose start best continues the previous grain's natural continuation
+        const nat = prev + Hs; let bc = -Infinity;
+        if (Math.abs(nat - nominal) <= tol) best = nat;                          // ~1×: keep the sound untouched
+        else for (let d = -tol; d <= tol; d += 2) {
+          const s = nominal + d; if (s < 0 || s + Hs >= n) continue;
+          let cc = 0; for (let i = 0; i < Hs; i += 4) cc += (mono[nat + i] || 0) * mono[s + i];
+          if (cc > bc) { bc = cc; best = s; }
+        }
+      }
+      for (let i = 0; i < N && o + i < len + N; i++) {
+        const k = best + i; norm[o + i] += win[i];
+        if (k < 0 || k >= n) continue;
+        for (let c = 0; c < nC; c++) acc[c][o + i] += X[c][k] * win[i];
+      }
+      prev = best;
+    }
+    for (let c = 0; c < nC; c++) { const a = acc[c], y = out[c]; for (let i = 0; i < len; i++) y[i] = norm[i] > 1e-3 ? a[i] / norm[i] : 0; }
+  }
+  if (gain) {
+    const B = 64;
+    let g0 = gain(0);
+    for (let s = 0; s < len; s += B) {
+      const g1 = gain(Math.min(len - 1, s + B)), e = Math.min(len, s + B);
+      if (g0 === 1 && g1 === 1) { g0 = g1; continue; }
+      for (let i = s; i < e; i++) { const g = g0 + (g1 - g0) * ((i - s) / B); for (let c = 0; c < nC; c++) out[c][i] *= g; }
+      g0 = g1;
+    }
+  }
+  return out;
+}
+
 /** linear resample by a ratio (used for a muted-pitch "tape" speed change) */
 export function resample(x, rate) {
   const n = Math.max(1, Math.round(x.length / rate)), y = new Float32Array(n);

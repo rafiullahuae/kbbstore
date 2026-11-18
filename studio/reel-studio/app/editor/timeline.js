@@ -2,7 +2,9 @@
 // marquee-select of clips, markers, waveforms, thumbnails, lock/mute/hide.
 
 import { ops } from '../core/history.js';
-import { findMedia, findTrack, itemDur, itemEnd, createTrack, VISUAL_KINDS } from '../core/project.js';
+import { findMedia, findTrack, findItem, itemDur, itemEnd, createTrack, VISUAL_KINDS, srcTime, clone } from '../core/project.js';
+import { trimProps, stretchProps, MAX_SPEED } from '../core/retime.js';
+import { speedBadge, clipMenu, retimeCommand, fmtSpeed } from './speed.js';
 import { h, clear, toast, fmtDur } from './ui.js';
 import { fits } from './items.js';
 import { listTimelineStrips } from '../core/modules.js';
@@ -148,8 +150,10 @@ export class Timeline {
     const ed = this.ed, pps = this.pps, m = it.media ? findMedia(ed.project, it.media) : null;
     const w = Math.max(4, itemDur(it) * pps);
     const label = it.type === 'text' ? (it.text || 'Text').split('\n')[0] : it.type === 'sticker' ? it.text : it.name || m?.name || it.type;
-    const el = h('div.tl-item.t-' + it.type + (m ? '.m-' + m.kind : ''), { dataset: { id: it.id }, style: { left: it.t0 * pps + 'px', width: w + 'px' }, title: `${label} · ${fmtDur(itemDur(it))}${it.speed !== 1 ? ' · ' + it.speed + '×' : ''}` },
-      h('span.it-lbl', (it.speed !== 1 ? `${it.speed}× ` : '') + label),
+    const badge = speedBadge(it);
+    const el = h('div.tl-item.t-' + it.type + (m ? '.m-' + m.kind : ''), { dataset: { id: it.id }, style: { left: it.t0 * pps + 'px', width: w + 'px' }, title: `${label} · ${fmtDur(itemDur(it))}${badge ? ' · ' + badge : ''}${m && m.kind !== 'image' ? ' · right-click: Speed · Shift-drag an edge: stretch' : ''}` },
+      badge && w > 34 ? h('span.sp-badge', { 'aria-label': 'Speed ' + badge }, badge) : null,
+      h('span.it-lbl', label),
       h('div.trim.l', { dataset: { trim: 'l' } }), h('div.trim.r', { dataset: { trim: 'r' } }));
     if (it.group) el.classList.add('grouped');
     if (m && (m.kind === 'video' || m.kind === 'image') && w > 24) {
@@ -169,7 +173,7 @@ export class Timeline {
     const x = c.getContext('2d');
     const tw = list[0].bitmap.width * (H / list[0].bitmap.height);
     for (let px = 0; px < c.width; px += tw) {
-      const st = it.in + ((px + tw / 2) / this.pps) * (it.speed || 1);
+      const st = srcTime(it, it.t0 + (px + tw / 2) / this.pps);
       let best = list[0]; for (const th of list) if (Math.abs(th.t - st) < Math.abs(best.t - st)) best = th;
       x.drawImage(best.bitmap, px, 0, tw, H);
     }
@@ -184,7 +188,7 @@ export class Timeline {
     x.fillStyle = m.kind === 'audio' ? 'rgba(255,255,255,.75)' : 'rgba(120,230,190,.9)';
     const vol = Math.min(1.5, it.volume ?? 1);
     for (let px = 0; px < c.width; px++) {
-      const st = it.in + (px / this.pps) * (it.speed || 1);
+      const st = srcTime(it, it.t0 + px / this.pps);
       const v = (peaks[Math.floor(st * 50)] || 0) * vol;
       const bh = Math.max(1, v * H);
       x.fillRect(px, m.kind === 'audio' ? (H - bh) / 2 : H - bh, 1, bh);
@@ -250,10 +254,10 @@ export class Timeline {
     if (itEl) {
       e.preventDefault();
       const id = itEl.dataset.id;
-      if (e.shiftKey || e.metaKey || e.ctrlKey) { ed.select([id], 'toggle'); return; }
+      if ((e.shiftKey && !tgt.dataset.trim) || e.metaKey || e.ctrlKey) { ed.select([id], 'toggle'); return; }
       if (!ed.sel.has(id)) ed.select([id]);
       const trim = tgt.dataset.trim;
-      return trim ? this.dragTrim(e, id, trim) : this.dragMove(e, id);
+      return trim ? (e.shiftKey ? this.dragStretch(e, id, trim) : this.dragTrim(e, id, trim)) : this.dragMove(e, id);
     }
     if (tgt.closest('.tl-lane') || tgt === this.content || tgt === this.scroll) { e.preventDefault(); this.dragMarquee(e); }
   }
@@ -295,6 +299,18 @@ export class Timeline {
     const s0 = { t0: it.t0, in: it.in, out: it.out }, sp = it.speed || 1;
     const pts = this.snapPoints(new Set([id]));
     const x0 = e.clientX, MIN = 0.1;
+    if (hasSrc && (it.curve || it.reverse || it.freeze)) {
+      // a ramp, a reversed clip or a hold: trim through its time mapping, so the frames that stay keep their timing
+      const end0 = itemEnd(it), it0 = clone(it);
+      this.track(e, (ev) => {
+        let dt = (ev.clientX - x0) / this.pps;
+        const edge = side === 'l' ? s0.t0 + dt : end0 + dt, sd = this.snapT([edge], pts); dt += sd; this.showSnapLine(sd ? edge + sd : null);
+        const a = side === 'l' ? Math.max(0, Math.min(end0 - MIN, s0.t0 + dt)) : s0.t0, b = side === 'l' ? end0 : Math.max(s0.t0 + MIN, end0 + dt);
+        const props = trimProps(it0, a, b, it.freeze ? Infinity : (m.dur || Infinity));
+        ed.apply(ops.setItems([{ id, props }], 'Trim'));
+      });
+      return;
+    }
     this.track(e, (ev) => {
       let dt = (ev.clientX - x0) / this.pps;
       let props;
@@ -313,6 +329,25 @@ export class Timeline {
       }
       ed.apply(ops.setItems([{ id, props }], 'Trim'));
     });
+  }
+
+  /** Shift-drag on a clip's edge: retime it — the same footage stretched or squeezed to the new length (later clips ripple) */
+  dragStretch(e, id, side) {
+    const ed = this.ed, hit = ed.selectedItems().find((x) => x.item.id === id) || null;
+    const it = hit?.item; if (!it || hit.track.locked) return;
+    const base = clone(ed.project), t00 = it.t0, end0 = itemEnd(it), x0 = e.clientX, pts = this.snapPoints(new Set([id]));
+    const tip = h('div.sp-stretch-tip'); this.content.appendChild(tip);
+    this.track(e, (ev) => {
+      let dt = (ev.clientX - x0) / this.pps;
+      const edge = side === 'l' ? t00 + dt : end0 + dt, sd = this.snapT([edge], pts); dt += sd; this.showSnapLine(sd ? edge + sd : null);
+      let d = side === 'l' ? end0 - Math.max(0, t00 + dt) : end0 + dt - t00;
+      const S = it.out - it.in; d = Math.max(S / MAX_SPEED, Math.min(S / 0.1, d));
+      const props = Object.assign(stretchProps(it, d), side === 'l' ? { t0: end0 - d } : {});
+      if (props.speed < 1 && it.smooth == null && it.type === 'clip') props.smooth = 'blend';
+      ed.apply(retimeCommand(base, id, props, 'Stretch'));
+      tip.textContent = (it.curve ? 'avg ' : '') + fmtSpeed(props.speed) + ' · ' + fmtDur(d);
+      tip.style.transform = `translateX(${(side === 'l' ? end0 - d : t00 + d) * this.pps + HEAD_W}px)`;
+    }, () => tip.remove());
   }
 
   dragMarquee(e) {
@@ -374,6 +409,17 @@ export class Timeline {
     }
   }
 }
+
+// right-click a clip: the Speed menu (editor/speed.js)
+document.addEventListener('contextmenu', (e) => {
+  const el = e.target.closest?.('.tl-item'); const ed = window.kbbEditor;
+  if (!el || !ed) return;
+  const it = findItem(ed.project, el.dataset.id)?.item; if (!it || !(it.type === 'clip' || it.type === 'audio')) return;
+  const m = it.media ? findMedia(ed.project, it.media) : null; if (!m || m.kind === 'image') return;
+  e.preventDefault();
+  if (!ed.sel.has(it.id)) ed.select([it.id]);
+  clipMenu(ed, it.id, e.clientX, e.clientY);
+});
 
 // right-click a marker to remove it
 document.addEventListener('contextmenu', (e) => {

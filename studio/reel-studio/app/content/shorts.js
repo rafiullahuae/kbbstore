@@ -2,7 +2,7 @@
 // the best self-contained 20–60 s moment of each (lib/shorts-plan.js) → a finished 9:16 reel per moment, saved as its
 // own project in the company: reframed onto the speaker, captions in the viral look, a hook on screen for the first
 // seconds, the company's CTA at the end. Batch export writes them all.
-import { createProject, createItem, normalizeProject, findMedia, fitBox, clone, uid } from '../core/project.js';
+import { createProject, createItem, normalizeProject, findMedia, fitBox, clone, uid, srcTime } from '../core/project.js';
 import { MediaStore } from '../core/media.js';
 import { exportMp4 } from '../core/export.js';
 import { exportsDir } from '../core/config.js';
@@ -36,8 +36,9 @@ export async function makeShorts(ctx, opts = {}) {
     if (!p.captions?.words?.length) throw new Error('No speech found in the video');
   }
   const { item, media } = mv;
-  // the transcript in SOURCE time of the long clip
-  const words = p.captions.words.map((w) => ({ ...w, t0: item.in + (w.t0 - item.t0) * (item.speed || 1), t1: item.in + (w.t1 - item.t0) * (item.speed || 1) })).filter((w) => w.t0 >= item.in - 0.05 && w.t1 <= item.out + 0.05);
+  // the transcript in SOURCE time of the long clip (a ramp / reverse maps through core/retime.js; words off the clip fall out)
+  const toSrc = (t) => (item.curve || item.reverse ? (t < item.t0 || t > item.t0 + (item.out - item.in) / (item.speed || 1) ? -1e9 : srcTime(item, t)) : item.in + (t - item.t0) * (item.speed || 1));
+  const words = p.captions.words.map((w) => ({ ...w, t0: toSrc(w.t0), t1: toSrc(w.t1) })).filter((w) => w.t0 >= item.in - 0.05 && w.t1 <= item.out + 0.05);
   let energy = null;
   try {
     const a = await ctx.media.decodeAudio(media.id);

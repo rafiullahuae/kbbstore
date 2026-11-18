@@ -16,6 +16,7 @@ import { Bin } from './bin.js';
 import { exportDialog } from './exportdlg.js';
 import { clipFromMedia, trackEnd, reflowTo } from './items.js';
 import { prepareRender } from '../core/render.js';
+import { splitProps } from '../core/retime.js';
 
 /** a right-column tab label "🎨 Look" as an icon over a word (editor.css .side-tab); textContent stays "🎨 Look" */
 function sideLabel(text) {
@@ -305,9 +306,10 @@ export class Editor {
     if (!targets.length) { toast('Move the playhead over a clip to split it'); return; }
     const cmds = [], newIds = [];
     for (const { track, item } of targets) {
-      const cut = item.in + (t - item.t0) * (item.speed || 1);
-      const right = clone(item); right.id = uid('i'); right.t0 = t; right.in = cut; right.fadeIn = 0; right.kf = {};
-      cmds.push(ops.setItem(item.id, { out: cut, fadeOut: 0 }, 'Split'));
+      // through the speed ramp / reverse / freeze, so both halves play exactly what the whole clip played
+      const { left, right: rp } = splitProps(item, t);
+      const right = Object.assign(clone(item), rp); right.id = uid('i'); right.fadeIn = 0; right.kf = {};
+      cmds.push(ops.setItem(item.id, Object.assign(left, { fadeOut: 0 }), 'Split'));
       cmds.push(ops.addItems([{ trackId: track.id, item: right, index: track.items.indexOf(item) + 1 }]));
       newIds.push(right.id);
     }

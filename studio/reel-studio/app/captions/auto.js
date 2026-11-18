@@ -6,7 +6,7 @@ import { ensureModel, DEFAULT_MODEL, SPEECH_MODELS } from './models.js';
 import { buildLines } from './model.js';
 import { setCaptions } from './commands.js';
 import { styleForWorkspace } from './styles.js';
-import { createItem, itemDur, findMedia, tracksOfKind } from '../core/project.js';
+import { createItem, itemDur, findMedia, tracksOfKind, srcTime } from '../core/project.js';
 import { cleanNonSpeech, DEFAULT_TAG_MODE } from './nonspeech.js';
 import { vocabFor, promptFor, correctTerms } from './vocab.js';
 
@@ -33,9 +33,9 @@ export async function timelineSpeech(project, media) {
   const end = Math.max(...parts.map((p) => p.it.t0 + itemDur(p.it)));
   const out = new Float32Array(Math.ceil(end * SR));
   for (const { it, pcm } of parts) {
-    const sp = it.speed || 1, n = Math.floor(itemDur(it) * SR), o = Math.floor(it.t0 * SR), src0 = it.in * SR;
+    const sp = it.speed || 1, n = Math.floor(itemDur(it) * SR), o = Math.floor(it.t0 * SR), src0 = it.in * SR, mapped = !!(it.curve || it.reverse);
     for (let i = 0; i < n; i++) {
-      const s = Math.floor(src0 + i * sp);
+      const s = mapped ? Math.floor(srcTime(it, it.t0 + i / SR) * SR) : Math.floor(src0 + i * sp);   // ramps / reverse through core/retime.js
       if (s >= pcm.length) break;
       out[o + i] += pcm[s] * (it.volume ?? 1);
     }

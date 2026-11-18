@@ -10,6 +10,9 @@
 import { Muxer, ArrayBufferTarget } from '../../vendor/mp4-muxer-5.2.2.mjs';
 import { renderFrame, activeItems, prepareRender, evalProp } from './render.js';
 import { projectDuration, findMedia, itemDur, srcTime } from './project.js';
+import { retimedSound, needsRetimedSound } from './retime-audio.js';
+import { usesFrameStream, blendWeight, speedAt } from './retime.js';
+import { blendInto } from './frames.js';
 
 export const QUALITY = {
   small: { label: 'Small file', bpp: 0.07 },
@@ -69,14 +72,25 @@ export async function mixAudio(project, media, T) {
   const ctx = new OfflineAudioContext(2, Math.ceil(T * SR), SR);
   let any = false;
   for (const { item, track, media: m } of list) {
-    const a = await media.decodeAudio(m.id);
-    if (!a) continue;
-    const buf = a.buffer, sp = item.speed || 1;
-    const start = Math.max(0, item.t0), skip = Math.max(0, -item.t0) * sp;
-    const off = item.in + skip, len = Math.min(item.out, buf.duration) - off;
+    if (item.freeze) continue;                       // a freeze frame is a silent hold
+    let buf, off, len;
+    const start = Math.max(0, item.t0);
+    if (needsRetimedSound(item)) {
+      // speed, ramp or reverse: the clip's sound rendered at its timeline length (pitch kept unless he turned it off) —
+      // the very buffer the preview monitor plays
+      buf = await retimedSound(media, item, m);
+      if (!buf) continue;
+      off = Math.max(0, -item.t0); len = buf.duration - off;
+    } else {
+      const a = await media.decodeAudio(m.id);
+      if (!a) continue;
+      buf = a.buffer;
+      const skip = Math.max(0, -item.t0);
+      off = item.in + skip; len = Math.min(item.out, buf.duration) - off;
+    }
     if (len <= 0 || start >= T) continue;
     const s = ctx.createBufferSource(), g = ctx.createGain();
-    s.buffer = buf; s.playbackRate.value = sp;
+    s.buffer = buf;
     s.connect(g); g.connect(ctx.destination);
     const v = item.volume * (track.volume ?? 1), d = itemDur(item);
     const fi = Math.min(item.fadeIn || 0, d), fo = Math.min(item.fadeOut || 0, d);
@@ -151,7 +165,7 @@ export async function exportMp4(project, media, opts = {}) {
   const venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: (e) => { err = e; } });
   venc.configure(vc);
   let aenc = null;
-  const readers = new Map();
+  const readers = new Map(), streams = new Map();
   try {
     if (abuf) {
       aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: (e) => { err = e; } });
@@ -171,6 +185,19 @@ export async function exportMp4(project, media, opts = {}) {
     const frames = new Map();
     const source = (item) => frames.get(item.id) || null;
     const readerFor = async (id) => { if (!readers.has(id)) readers.set(id, await media.openReader(id)); return readers.get(id); };
+    // one decoder stream per media for the retimed items, its frames as large as the export draws them (≤ the source)
+    const blendCans = new Map();
+    const needW = new Map();
+    for (const tr of project.tracks) for (const it of tr.items) {
+      const m = it.media && usesFrameStream(it) ? findMedia(project, it.media) : null; if (!m || !m.w || !m.h) continue;
+      const c = it.crop || { l: 0, t: 0, r: 0, b: 0 }, k = Math.max(it.w / (m.w * (1 - c.l - c.r) || 1), it.h / (m.h * (1 - c.t - c.b) || 1)) * scale * Math.max(1, it.zoom?.from || 1, it.zoom?.to || 1);
+      needW.set(m.id, Math.max(needW.get(m.id) || 0, Math.min(m.w, Math.ceil(m.w * k * 1.05))));
+    }
+    const streamFor = async (m) => {
+      if (!streams.has(m.id)) streams.set(m.id, media.openStream ? await media.openStream(m.id, { maxW: needW.get(m.id) || m.w, budgetMB: 640 }) : null);
+      return streams.get(m.id);
+    };
+    const flowInterp = project.tracks.some((tr) => tr.items.some((i) => i.smooth === 'flow')) ? (await import('./flow.js').catch(() => null))?.interpolate : null;
 
     for (let i = 0; i < N; i++) {
       check();
@@ -179,6 +206,24 @@ export async function exportMp4(project, media, opts = {}) {
       for (const { item } of activeItems(project, t)) {
         if (!item.media) continue;
         const m = findMedia(project, item.media); if (!m || m.kind === 'audio') continue;
+        if (m.kind === 'video' && usesFrameStream(item)) {
+          // ramps, reverse, freeze, smooth slow motion: frames from the decoder stream, blended exactly like the preview
+          const fs = await streamFor(m);
+          if (fs) {
+            const st = srcTime(item, t), bw = blendWeight(item, t);
+            const r = await fs.frameAt(st, bw != null, item.freeze ? 0 : item.reverse ? -1 : 1, Math.max(0.05, speedAt(item, t)));
+            if (r?.a) {
+              let pic = r.a;
+              if (bw != null && r.b && r.w > 0.002) {
+                let c = blendCans.get(item.id);
+                if (!c) { c = new OffscreenCanvas(r.a.width, r.a.height); blendCans.set(item.id, c); }
+                pic = item.smooth === 'flow' && flowInterp ? (await flowInterp(r.a, r.b, r.w, c)) : blendInto(c, r.a, r.b, r.w);
+              }
+              frames.set(item.id, pic);
+              continue;
+            }
+          }
+        }
         const r = await readerFor(m.id);
         if (r) frames.set(item.id, await r.frame(m.kind === 'image' ? 0 : srcTime(item, t)));
       }
@@ -202,6 +247,7 @@ export async function exportMp4(project, media, opts = {}) {
     return { blob, note, frames: N, audio: abuf ? ac.mux : null, seconds: secs };
   } finally {
     for (const r of readers.values()) r?.close();
+    for (const s of streams.values()) s?.close();
     try { if (venc.state !== 'closed') venc.close(); } catch {}
     try { if (aenc && aenc.state !== 'closed') aenc.close(); } catch {}
   }

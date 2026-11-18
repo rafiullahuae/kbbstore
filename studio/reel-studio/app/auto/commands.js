@@ -1,7 +1,7 @@
 // KBB Studio · automation → project commands. Every result is ONE undoable step (core/history.js ops.batch),
 // so the owner reviews it on the timeline and Ctrl+Z takes it all back.
 import { ops } from '../core/history.js';
-import { createItem, uid, tracksOfKind, findMedia, fitBox, itemEnd, clone } from '../core/project.js';
+import { createItem, uid, tracksOfKind, findMedia, fitBox, itemEnd, clone, tlTime } from '../core/project.js';
 import { keepRanges } from './lib/plan.js';
 import { duckKeys } from './lib/music.js';
 import { cropToItemKf } from './lib/video.js';
@@ -156,7 +156,7 @@ export function removeCutsCommand(p, mediaId, cuts) {
 export function speechOnTimeline(p, mediaId, speech) {
   const out = [];
   for (const tr of p.tracks) if (tr.kind === 'video') for (const c of tr.items) if (c.media === mediaId) for (const [a, b] of speech) {
-    const s = Math.max(a, c.in), e = Math.min(b, c.out); if (e > s) out.push([c.t0 + (s - c.in) / (c.speed || 1), c.t0 + (e - c.in) / (c.speed || 1)]);
+    const s = Math.max(a, c.in), e = Math.min(b, c.out); if (e > s) { const x = tlTime(c, s), y = tlTime(c, e); out.push([Math.min(x, y), Math.max(x, y)]); }
   }
   return out.sort((x, y) => x[0] - y[0]);
 }

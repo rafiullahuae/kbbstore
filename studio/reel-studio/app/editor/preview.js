@@ -3,7 +3,11 @@
 // Shift/Ctrl-click, snapping guides, safe-area guides.
 
 import { renderFrame, activeItems, boxAt, fadeAt, evalProp } from '../core/render.js';
-import { findItem, findMedia, srcTime, isActive, safeAreas } from '../core/project.js';
+import { findItem, findMedia, srcTime, isActive, safeAreas, itemEnd, speedAt } from '../core/project.js';
+import { previewStream, usesFrameStream, blendWeight } from '../core/retime.js';
+import { needsRetimedSound, retimedSoundNow } from '../core/retime-audio.js';
+import { blendInto } from '../core/frames.js';
+import { PreviewAudio } from './preview-audio.js';
 import { ops } from '../core/history.js';
 import { seekExact } from '../core/media.js';
 import { canvasGrab, drawCanvasOverlays, canvasHover, canvasMenu } from '../core/modules.js';
@@ -41,8 +45,15 @@ export class Preview {
     el.addEventListener('dragleave', () => el.classList.remove('drop'));
     el.addEventListener('drop', (e) => { el.classList.remove('drop'); if (e.dataTransfer?.files.length) { e.preventDefault(); ed.importFiles([...e.dataTransfer.files]); } });
     this.pending = 0;
+    this.streams = new Map(); this.held = new Map(); this.blendCans = new Map(); this.awaiting = new Set();
+    this.fallback = new Set(); this.lagN = new Map();
+    this.audio = new PreviewAudio();
   }
-  destroy() { this.stop(); this.ro.disconnect(); for (const el of this.mediaEls()) { el.pause?.(); } }
+  destroy() {
+    this.stop(); this.ro.disconnect(); for (const el of this.mediaEls()) { el.pause?.(); }
+    for (const s of this.streams.values()) if (s && s.close) s.close();
+    this.streams.clear(); this.audio.close();
+  }
 
   layout() {
     const c = this.ed.project.canvas, wrap = this.stage.parentElement;
@@ -62,26 +73,61 @@ export class Preview {
   // ── media sync (preview only; export reads exact frames itself) ──
   mediaEls() { return [...this.ed.media.els.values()]; }
 
+  /**
+   * Bring every source in step with timeline time t.
+   *  · plain clips and constant speed: the <video> plays at the clip's speed and is steered SOFTLY onto the clock (its
+   *    rate nudged by up to ±25 %), so it never falls into a seek-per-frame loop at 2–3×; only a real jump re-seeks.
+   *  · ramps, reverse, freeze and smooth slow motion: a decoder stream (core/frames.js) reads the frames in order,
+   *    ahead of the playhead in the direction of play; source() picks (and blends) the exact frames.
+   *  · the sound of any retimed clip: the rendered buffer (core/retime-audio.js, the export's own) on Web Audio.
+   */
   sync(t) {
-    const p = this.ed.project, playing = this.ed.playing, rate = this.ed.rate || 1;
-    const used = new Set();
+    const p = this.ed.project, playing = this.ed.playing, rate = this.ed.rate || 1, store = this.ed.media;
+    const used = new Set(), sounds = [];
     for (const track of p.tracks) {
       for (const item of track.items) {
-        if (!item.media || !isActive(item, t)) continue;
+        if (!item.media) continue;
+        const active = isActive(item, t);
         const m = findMedia(p, item.media); if (!m || m.kind === 'image') continue;
-        const el = this.ed.media.element(m.id); if (!el) continue;
+        // the retimed sound: rendered once (prewarmed for every retimed item, so it is ready), played from Web Audio
+        if (needsRetimedSound(item) && m.hasAudio && !item.muted && !track.muted) {
+          const buf = retimedSoundNow(store, item, m);
+          if (playing && rate === 1 && buf && t < itemEnd(item) && item.t0 - t < 0.35) sounds.push({ item, track, buf });
+        }
+        if (!active) continue;
+        if (m.kind === 'video' && this.useStream(item, m)) {
+          const fs = this.streamFor(m);
+          if (fs) {
+            // decode ahead for the fastest speed coming up in the next half second (a ramp that is about to speed up)
+            const v = playing ? Math.max(speedAt(item, t), speedAt(item, t + 0.25), speedAt(item, t + 0.5)) * rate : 1;
+            // paused on a reversed clip: keep the GOP below decoded too, so pressing play starts at once
+            fs.target(srcTime(item, t), item.freeze ? 0 : item.reverse ? -1 : playing ? 1 : 0, v, !playing);
+            if (this.preroll) this.prerollStreams.push([fs, srcTime(item, t)]);
+            continue;
+          }
+          if (fs === undefined) continue;          // opening: source() holds the last picture meanwhile
+        }
+        const el = store.element(m.id); if (!el) continue;
         used.add(el);
         const want = srcTime(item, t);
-        const audible = playing && !track.muted && !item.muted && m.hasAudio && rate === 1;
+        const rendered = needsRetimedSound(item) && rate === 1 && retimedSoundNow(store, item, m);
+        const audible = playing && !track.muted && !item.muted && m.hasAudio && rate === 1 && !rendered && !item.reverse;
         // a media whose sound was replaced (media.audio, e.g. a cleaned voice) plays it from a second element
-        const alt = this.ed.media.audioElement?.(m);
+        const alt = store.audioElement?.(m);
         if (alt) used.add(alt);
+        const v = Math.max(0.0625, Math.min(16, speedAt(item, t) * rate));
         for (const x of alt ? [el, alt] : [el]) {
           x.muted = !audible || (alt && x === el);
           x.volume = Math.max(0, Math.min(1, evalProp(item, 'volume', t) * (track.volume ?? 1) * fadeAt(item, t)));   // kf.volume = ducking
           if (playing) {
-            x.playbackRate = (item.speed || 1) * rate;
-            if (Math.abs(x.currentTime - want) > 0.25 || x.paused && x.readyState < 2) x.currentTime = want;
+            x.preservesPitch = item.keepPitch !== false;
+            const err = want - x.currentTime;
+            if (Math.abs(err) > Math.max(0.3, 0.25 * v) || x.paused && x.readyState < 2) { x.currentTime = want; x.playbackRate = v; }
+            else {
+              // steer, don't seek: remove the error over ~0.4 s of timeline; a deadband of half a frame keeps the rate still
+              const fd = 1 / (m.fps || 30), r = Math.abs(err) < fd * 0.5 ? v : Math.max(v * 0.75, Math.min(v * 1.25, v + err / 0.4));
+              if (Math.abs(x.playbackRate - r) > v * 0.004) x.playbackRate = Math.max(0.0625, Math.min(16, r));
+            }
             if (x.paused) x.play().catch(() => {});
           } else {
             if (!x.paused) x.pause();
@@ -94,10 +140,66 @@ export class Preview {
       }
     }
     for (const el of this.mediaEls()) if (!used.has(el) && el.pause && !el.paused) el.pause();
+    if (playing) this.audio.sync(t, sounds); else this.audio.stop();
+    return used;
   }
 
-  source = (item) => {
+  /** the decoder stream for a media: the stream, undefined while it opens (a redraw follows), null when unavailable */
+  streamFor(m) {
+    const s = this.streams.get(m.id);
+    if (s && s.then) return undefined;
+    if (s !== undefined) return s;
+    // frames about as large as the monitor shows them (a portrait canvas over a landscape clip shows its full height)
+    const c = this.ed.project.canvas, k = Math.max(c.w / (m.w || c.w), c.h / (m.h || c.h)) * (this.scale || 0.5);
+    const maxW = Math.min(m.w || 1920, Math.ceil((m.w || 1920) * Math.min(1, k * 1.5)));
+    const p = this.ed.media.openStream(m.id, { maxW, budgetMB: 384 }).then((fs) => { this.streams.set(m.id, fs); this.draw(); return fs; }, () => { this.streams.set(m.id, null); });
+    this.streams.set(m.id, p);
+    return undefined;
+  }
+
+  /**
+   * Read this item from the decoder stream? Ramps, reverse, freeze and smooth slow motion always do. A plain constant
+   * speed does too — every tick then shows its exact frame — unless this machine's decoder cannot keep up with it (4K at
+   * 2–3× without a hardware decoder): after 8 ticks more than 2.5 frames behind, that clip goes back to the <video>
+   * element for the rest of the play, which drops frames instead of falling behind the clock.
+   */
+  useStream(item, m) { return previewStream(item, m) && !(this.fallback.has(item.id) && !usesFrameStream(item)); }
+  noteLag(item, lag) {
+    if (!this.ed.playing || usesFrameStream(item)) return;
+    const n = lag > 2.5 ? (this.lagN.get(item.id) || 0) + 1 : 0;
+    this.lagN.set(item.id, n);
+    if (n > 8) { this.fallback.add(item.id); this.lagN.delete(item.id); }
+  }
+
+  source = (item, st) => {
     const m = findMedia(this.ed.project, item.media); if (!m) return null;
+    if (m.kind === 'video' && this.useStream(item, m)) {
+      const fs = this.streamFor(m);
+      if (fs !== null) {
+        const t = st ?? srcTime(item, this.ed.t), wantB = !!blendWeight(item, this.ed.t);
+        const r = fs?.pick(t);
+        const settle = () => {
+          if (!fs || this.ed.playing || this.awaiting.has(item.id)) return;
+          this.awaiting.add(item.id); this.pending++;
+          fs.frameAt(t, wantB, item.reverse && !item.freeze ? -1 : 0).catch(() => {}).finally(() => { this.awaiting.delete(item.id); this.pending--; this.draw(); });
+        };
+        if (r?.a) {
+          let pic = r.a, at = r.ats / 1e6;
+          if (wantB && r.b && r.exact) {
+            let c = this.blendCans.get(item.id); if (!c) { c = document.createElement('canvas'); this.blendCans.set(item.id, c); }
+            pic = blendInto(c, r.a, r.b, r.w); at = t;
+          }
+          pic.__srcT = at;
+          if (this.ed.playing) this.noteLag(item, Math.abs(t - r.ats / 1e6) * fs.fps - 1);
+          if (pic === r.a) fs.pin(item.id, pic);
+          if (!r.exact || (wantB && !r.b)) settle();
+          this.held.set(item.id, pic);
+          return pic;
+        }
+        settle();
+        return this.held.get(item.id) || null;    // hold the last picture while the decoder catches up
+      }
+    }
     const el = this.ed.media.element(m.id);
     if (!el) return null;
     if (el.tagName === 'IMG') return el.complete && el.naturalWidth ? el : (el.decode?.().then(() => this.draw(), () => {}), null);
@@ -118,19 +220,27 @@ export class Preview {
   }
 
   // ── playback clock ──
-  start() { this.restartClock(); this.loop(); }
+  // A short pre-roll (≤ 400 ms) holds the clock until the <video>s it plays are actually running and the decoder streams
+  // hold the first frame, so picture, sound and
+  // timeline start together instead of the picture trailing the clock by its start-up delay.
+  start() { this.restartClock(); this.preroll = performance.now(); this.prerollStreams = []; this.loop(); }
   restartClock() { this.clock0 = performance.now(); this.t0 = this.ed.t; }
-  stop() { cancelAnimationFrame(this.loopRaf); this.loopRaf = 0; for (const el of this.mediaEls()) if (el.pause && !el.paused) el.pause(); }
+  stop() { cancelAnimationFrame(this.loopRaf); this.loopRaf = 0; this.preroll = 0; this.fallback.clear(); this.lagN.clear(); for (const el of this.mediaEls()) if (el.pause && !el.paused) el.pause(); this.audio.stop(); }
   loop = () => {
     const ed = this.ed;
     if (!ed.playing) return;
     const T = ed.duration();
-    let t = this.t0 + ((performance.now() - this.clock0) / 1000) * (ed.rate || 1);
+    let t = this.preroll ? this.t0 : this.t0 + ((performance.now() - this.clock0) / 1000) * (ed.rate || 1);
     if (t >= T) { t = T; ed.t = t; ed.pause(); ed.timeline.renderPlayhead(); return; }
     ed.t = t;
     // the playhead on the bus while playing too (10 a second is plenty for the transcript's "now" word)
     if (Math.abs(t - (this.lastEmit ?? -1)) >= 0.1) { this.lastEmit = t; ed.bus.emit('playhead', { t, playing: true }); }
-    this.sync(t);
+    this.lastUsed = this.sync(t);
+    if (this.preroll) {
+      const ready = [...this.lastUsed].every((x) => !x.paused && x.readyState >= 3) && this.prerollStreams.every(([fs, st]) => fs.pick(st)?.exact);
+      if (ready || performance.now() - this.preroll > 400) { this.preroll = 0; this.restartClock(); }
+      this.prerollStreams = [];
+    }
     renderFrame(this.ctx, ed.project, t, { scale: this.scale, preview: true, source: this.source });
     this.timeEl.textContent = `${fmtTime(t)} / ${fmtTime(T)}`;
     this.playBtn.textContent = '❚❚';

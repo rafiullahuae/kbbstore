@@ -7,6 +7,7 @@ import { FILTER_PRESETS, boxAt } from '../core/render.js';
 import { h, clear, slider, field, select, seg, fmtDur } from './ui.js';
 import { STICKERS } from './items.js';
 import { bounds } from './preview.js';
+import { speedSection } from './speed.js';
 // the design-family elements (their placeholder words and trades), read once the themes module has loaded
 let FAM_ELS = null; import('../themes/elements.js').then((m) => { FAM_ELS = m.ELEMENTS.filter((d) => d.fam); }).catch(() => {});
 
@@ -128,12 +129,8 @@ export class Inspector {
   }
 
   timingPanel(item, m) {
-    const speeds = [['0.25', '¼×'], ['0.5', '½×'], ['1', '1×'], ['1.5', '1.5×'], ['2', '2×'], ['3', '3×']];
-    this.el.append(this.section('Speed',
-      seg(speeds, String(item.speed || 1), (v) => { this.set(item, { speed: +v }, 'Speed'); this.seal(); }),
-      slider({ label: 'Custom', min: 0.1, max: 4, step: 0.05, value: item.speed || 1, fmt: (v) => v.toFixed(2) + '×', onInput: (v) => this.set(item, { speed: v }, 'Speed'), onDone: this.seal }),
-      m && m.kind !== 'image' ? h('small.muted', `Uses ${fmtDur(item.out - item.in)} of ${fmtDur(m.dur)} source`) : null,
-    ));
+    // speed, ramps (presets + curve), smooth slow motion, reverse, freeze, sound options — editor/speed.js
+    this.el.append(speedSection(this, item, m));
   }
 
   audioPanel(item) {
