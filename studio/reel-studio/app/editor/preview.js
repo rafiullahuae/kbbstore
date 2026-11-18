@@ -297,6 +297,8 @@ export class Preview {
   onDbl(e) {
     const hit = this.hitTest(this.toCanvas(e));
     if (hit?.item.type === 'text') { this.ed.select([hit.item.id]); this.ed.inspector.focusText(); }
+    // a theme element's words: edit them in place on the video (themes/text-edit.js)
+    else if (hit && /^theme\.(el|sting|outro|trans)$/.test(hit.item.type)) { const p = this.toCanvas(e); import('../themes/text-edit.js').then((m) => m.editOnCanvas(this, hit.item, p)); }
   }
 
   onDown(e) {

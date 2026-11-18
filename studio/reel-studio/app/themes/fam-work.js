@@ -6,7 +6,7 @@ import { def, ez, pop, lerp, iso, prism } from './fampieces.js';
 const { TAU, clamp, easeOut, rnd, fr, mix, rgba } = A;
 const tradeName = (r, o) => (o.ar ? TRADES[r]?.ar : TRADES[r]?.en) || r;
 
-def('worker', { fam: 'occupations', name: 'Worker portrait in uniform', nameAr: 'صورة عامل بزيّه', style: 'Warm flat', words: { role: ['', ''] }, roles: true,
+def('worker', { fam: 'occupations', name: 'Worker portrait in uniform', nameAr: 'صورة عامل بزيّه', style: 'Warm flat', words: { role: ['', ''] }, roles: true, defaults: (K, role) => ({ role: TRADES[role || 'nurse']?.en || '' }),
   draw(c, w, h, t, o) {
     const role = o.role || 'nurse', k = ez(t, 0.15, 0.9), rise = (1 - k) * h * 0.25;
     c.save(); c.beginPath(); c.rect(0, 0, w, h); c.clip();
@@ -20,7 +20,7 @@ def('worker', { fam: 'occupations', name: 'Worker portrait in uniform', nameAr: 
     if (tk > 0.01 && lab) { c.save(); c.translate(w * 0.06, h * (w > h * 1.1 ? 0.9 : 0.74)); c.scale(tk, tk); c.font = `900 ${Math.round(u * 0.06)}px ${A.FONT_UI}`; const tw = Math.min(w * 0.8, c.measureText(lab).width + u * 0.08); shadowed(c, u * 0.03, u * 0.01, 'rgba(0,0,0,0.3)', () => { c.fillStyle = o.P.a; rrect(c, 0, -u * 0.075, tw, u * 0.1, u * 0.05); c.fill(); }); T(c, lab, tw / 2, -u * 0.006, u * 0.055, { col: bestOn(o.P.a), weight: 900, maxW: tw * 0.9 }); c.restore(); }
   } });
 
-def('trades', { fam: 'occupations', dir: true, name: 'Pick your trade', nameAr: 'اختر مهنتك', style: 'Swiss grid', words: {},
+def('trades', { fam: 'occupations', dir: true, name: 'Pick your trade', nameAr: 'اختر مهنتك', style: 'Swiss grid', words: {}, defaults: () => Object.fromEntries(TRADE_IDS.map((r) => ['trade_' + r, TRADES[r].en])),
   draw(c, w, h, t, o) {
     const P = o.P, u = Math.min(w, h), ratio = w / h, cols = ratio > 1.4 ? 5 : ratio > 0.9 ? 4 : 3, rows = ratio > 1.4 ? 3 : ratio > 0.9 ? 3 : ratio > 0.7 ? 4 : 4;
     c.fillStyle = P.paper; c.fillRect(0, 0, w, h);
@@ -38,7 +38,7 @@ def('trades', { fam: 'occupations', dir: true, name: 'Pick your trade', nameAr: 
       c.save(); c.beginPath(); A.rr(c, 0, 0, tw, th, u * 0.02); c.clip();
       workerPortrait(c, role, tw, th * 0.86, t + i, P, { scale: 1.25, noPlace: false, pose: i });
       c.fillStyle = picked ? P.ink : '#ffffff'; c.fillRect(0, th * 0.8, tw, th * 0.2);
-      T(c, tradeName(role, o), tw / 2, th * 0.95, Math.min(th * 0.1, tw * 0.13), { col: picked ? '#ffffff' : P.ink, weight: 900, maxW: tw * 0.92 });
+      T(c, o.words['trade_' + role] || tradeName(role, o), tw / 2, th * 0.95, Math.min(th * 0.1, tw * 0.13), { col: picked ? '#ffffff' : P.ink, weight: 900, maxW: tw * 0.92 });
       c.restore();
       if (picked) { c.strokeStyle = P.ink; c.lineWidth = u * 0.012; rrect(c, 0, 0, tw, th, u * 0.02); c.stroke(); }
       c.restore();
@@ -84,7 +84,7 @@ def('day', { fam: 'occupations', dir: true, name: 'A day in the life', nameAr: '
     if (ck > 0.01) { c.save(); c.translate(cx, cy); c.scale(ck, ck); shadowed(c, u * 0.03, u * 0.01, 'rgba(0,0,0,0.25)', () => { c.fillStyle = '#ffffff'; c.beginPath(); c.arc(0, 0, cr, 0, TAU); c.fill(); }); c.strokeStyle = P.d; c.lineWidth = cr * 0.12; c.beginPath(); c.arc(0, 0, cr * 0.9, 0, TAU); c.stroke(); for (let j = 0; j < 12; j++) { const a = (j / 12) * TAU; c.fillStyle = P.ink; c.beginPath(); c.arc(Math.cos(a) * cr * 0.7, Math.sin(a) * cr * 0.7, cr * 0.04, 0, TAU); c.fill(); } const a = -Math.PI / 2 + clamp(t / 3.6) * TAU * 0.9 + (t > 3.6 ? (t - 3.6) * 0.3 : 0); c.strokeStyle = P.a; c.lineWidth = cr * 0.1; c.lineCap = 'round'; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a) * cr * 0.62, Math.sin(a) * cr * 0.62); c.stroke(); c.strokeStyle = P.ink; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a / 12 - 1) * cr * 0.42, Math.sin(a / 12 - 1) * cr * 0.42); c.stroke(); c.restore(); }
   } });
 
-def('morph', { fam: 'occupations', name: 'Uniforms that morph', nameAr: 'زيّ يتحوّل من مهنة لأخرى', style: 'Duotone', words: {}, roles: true,
+def('morph', { fam: 'occupations', name: 'Uniforms that morph', nameAr: 'زيّ يتحوّل من مهنة لأخرى', style: 'Duotone', words: {}, defaults: () => Object.fromEntries(TRADE_IDS.map((r) => ['trade_' + r, TRADES[r].en])), roles: true,
   draw(c, w, h, t, o) {
     const P = o.P, u = Math.min(w, h), first = o.role || 'nurse', base = TRADE_IDS.filter((r) => r !== first);
     const seq = [base[2], base[5], base[8], first, base[0], base[3], base[6], base[9], base[1], base[4], base[7], base[10]].filter(Boolean);
@@ -99,7 +99,7 @@ def('morph', { fam: 'occupations', name: 'Uniforms that morph', nameAr: 'زيّ 
     if (wipe < 1) { fig(prev); c.save(); c.beginPath(); c.arc(cx, cy + R * 0.3, Math.max(0.1, wipe * R * 2.2), 0, TAU); c.clip(); fig(cur); c.restore(); c.strokeStyle = rgba('#ffffff', 1 - wipe); c.lineWidth = u * 0.012; c.beginPath(); c.arc(cx, cy + R * 0.3, wipe * R * 2.2, 0, TAU); c.stroke(); }
     else fig(cur);
     // the trade's name, big
-    const lab = tradeName(cur, o).toUpperCase(), fs = Math.min(u * 0.12, w * 0.14), k = clamp(f / 0.25);
+    const lab = String(o.words['trade_' + cur] || tradeName(cur, o)).toUpperCase(), fs = Math.min(u * 0.12, w * 0.14), k = clamp(f / 0.25);
     c.save(); c.globalAlpha *= k; c.fillStyle = P.b; const by = Math.min(h - fs * 0.6, cy + R + fs * 0.9); rrect(c, w * 0.08, by - fs * 1.05, w * 0.84, fs * 1.4, fs * 0.25); c.fill(); T(c, lab, w / 2, by, fs, { col: P.ink, font: o.ar ? 'ui' : 'display', weight: o.ar ? 900 : 400, maxW: w * 0.78 }); c.restore();
   } });
 

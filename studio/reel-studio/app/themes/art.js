@@ -8,6 +8,7 @@
 // packs' Natural Earth maps (public domain), flags from flag-icons (MIT), both already in brands/planet-careers.
 import { HERO, MATS, SIL_MAT } from './landmarks2.js';
 import { LANDMARKS } from '../auto/countries/landmarks.js';
+import { textActive, textStyle, fitText, fontOf, drawPlain, noteBox } from './text.js';
 
 export const TAU = Math.PI * 2;
 export const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -35,7 +36,11 @@ function newCanvas(w, h) {
   return typeof document !== 'undefined' ? Object.assign(document.createElement('canvas'), { width: w, height: h }) : new OffscreenCanvas(w, h);
 }
 /** paint once into an offscreen canvas of w×h device px, reuse while the key is the same (LRU of 48) */
+let PROBE = null;
+/** while the text fields are discovered (themes/text-fields.js) nothing is painted into, or evicted from, the cache */
+export const setArtProbe = (on) => { PROBE = on ? PROBE || newCanvas(8, 8) : null; };
 export function cached(key, w, h, paint, gpu = false) {
+  if (PROBE) return PROBE;
   if (gpu) key += ':gpu';
   let rec = CACHE.get(key);
   if (!rec) {
@@ -355,7 +360,7 @@ export function globe(c, cx, cy, r, { lon0, lat0 = 22, pal, from, to, prog = 1, 
     const pr = r * 0.035, pulse = fr(t * 0.9 + k * 0.5);
     c.strokeStyle = rgba(arcCol, 1 - pulse); c.lineWidth = Math.max(1, r * 0.01); c.beginPath(); c.arc(p.x, p.y, pr * (1 + 2.6 * pulse), 0, TAU); c.stroke();
     c.fillStyle = '#ffffff'; c.beginPath(); c.arc(p.x, p.y, pr, 0, TAU); c.fill(); c.fillStyle = arcCol; c.beginPath(); c.arc(p.x, p.y, pr * 0.55, 0, TAU); c.fill();
-    if (label) { const fs = r * 0.11; c.font = `700 ${Math.round(fs)}px ${FONT_UI}`; c.textAlign = 'center'; c.textBaseline = 'bottom'; const tw = c.measureText(label).width + fs * 0.7; c.fillStyle = 'rgba(8,12,30,0.78)'; c.beginPath(); rr(c, p.x - tw / 2, p.y - pr * 2 - fs * 1.25, tw, fs * 1.2, fs * 0.3); c.fill(); c.fillStyle = '#ffffff'; c.fillText(label, p.x, p.y - pr * 2 - fs * 0.13); }
+    if (label) { const fs = r * 0.11; c.font = `700 ${Math.round(fs)}px ${FONT_UI}`; c.textAlign = 'center'; c.textBaseline = 'bottom'; const tw = c.measureText(label).width + fs * 0.7; c.fillStyle = 'rgba(8,12,30,0.78)'; c.beginPath(); rr(c, p.x - tw / 2, p.y - pr * 2 - fs * 1.25, tw, fs * 1.2, fs * 0.3); c.fill(); rawText(c, label, p.x, p.y - pr * 2 - fs * 0.13, fs, { weight: 700, col: '#ffffff', align: 'center', base: 'bottom' }); }
   };
   const p0 = proj(from[0], from[1], lon0, lat0), p1 = proj(to[0], to[1], lon0, lat0);
   pin({ x: cx + p0.x * r, y: cy + p0.y * r, z: p0.z }, labels[0], 0);
@@ -382,17 +387,29 @@ export function plane(c, x, y, s, rot, col = '#ffffff', shadow = true) {
 /** big kinetic English type: each letter rises out of a mask with a stagger and a little overshoot; returns its width */
 export function kineticText(c, text, x, y, size, p, { col = '#ffffff', align = 'center', maxW = 1e9, stagger = 0.06, shadow = true, font = FONT_EN, weight = '400', track = 0.02 } = {}) {
   text = String(text || '').toUpperCase(); if (!text) return 0;
-  let fs = size; c.font = `${weight} ${Math.round(fs)}px ${font}`;
-  let w = c.measureText(text).width + track * fs * text.length;
-  if (w > maxW) { fs *= maxW / w; c.font = `${weight} ${Math.round(fs)}px ${font}`; w = maxW; }
+  // a theme element's text pass (./text.js): its key, the element's text style, fitting the owner's long words
+  const d = textActive() ? textStyle({ kind: 'kinetic', text, x, y, size, col, align, weight, family: font, maxW, track, shadow }) : null;
+  let fs = size, w;
+  if (d?.custom) {
+    fitText(c, d); text = d.text; fs = d.size; col = d.col; align = d.align; x = d.x; track = d.track; shadow = d.shadow !== false;
+    c.font = fontOf(d, fs); w = c.measureText(text).width + track * fs * text.length;
+  } else {
+    c.font = `${weight} ${Math.round(fs)}px ${font}`;
+    w = c.measureText(text).width + track * fs * text.length;
+    if (w > maxW) { fs *= maxW / w; c.font = `${weight} ${Math.round(fs)}px ${font}`; w = maxW; }
+  }
   let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  if (d) noteBox(c, { ...d, x: cx, y, size: fs, align: 'left' }, w);
   c.save(); c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+  if (d?.custom && d.alpha < 1) c.globalAlpha *= d.alpha;
   c.beginPath(); c.rect(cx - fs, y - fs * 1.05, w + fs * 2, fs * 1.32); c.clip();
-  const n = text.length;
+  const n = text.length, outline = d?.custom ? d.outline : null;
+  if (outline) { c.lineJoin = 'round'; c.strokeStyle = outline; c.lineWidth = Math.max(1, fs * 0.1); }
   for (let i = 0; i < n; i++) {
     const ch = text[i], cw = c.measureText(ch).width, k = back(clamp((p - i * stagger / Math.max(1, n / 8)) / 0.5));
     const dy = (1 - k) * fs * 1.1;
     if (shadow) { c.fillStyle = 'rgba(0,0,0,0.28)'; c.fillText(ch, cx + fs * 0.03, y + dy + fs * 0.04); }
+    if (outline) c.strokeText(ch, cx, y + dy);
     c.fillStyle = col; c.fillText(ch, cx, y + dy);
     cx += cw + track * fs;
   }
@@ -403,17 +420,56 @@ export function kineticText(c, text, x, y, size, p, { col = '#ffffff', align = '
 export function arabicText(c, text, x, y, size, p, { col = '#ffffff', align = 'center', maxW = 1e9, weight = 800, shadow = true } = {}) {
   if (!text) return;
   const k = easeOut(p);
+  const d = textActive() ? textStyle({ kind: 'ar', text: String(text), x, y, size, col, align: align === 'center' ? 'center' : align === 'left' ? 'left' : 'right', weight, family: FONT_AR, maxW, track: 0, shadow: shadow && lum(col) > 0.5 }) : null;
+  if (d?.custom) {
+    fitText(c, d); d.x += (1 - k) * d.size * 0.8;
+    c.save(); c.globalAlpha *= clamp(k); const w = drawPlain(c, d); c.restore();
+    noteBox(c, d, Math.min(d.maxW, w)); return;
+  }
   c.save(); c.globalAlpha *= clamp(k); c.direction = 'rtl'; c.font = `${weight} ${Math.round(size)}px ${FONT_AR}`; c.textAlign = align === 'center' ? 'center' : align === 'left' ? 'left' : 'right'; c.textBaseline = 'alphabetic';
   if (shadow && lum(col) > 0.5) { c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillText(text, x + (1 - k) * size * 0.8 + size * 0.04, y + size * 0.05, maxW); }
-  c.fillStyle = col; c.fillText(text, x + (1 - k) * size * 0.8, y, maxW); c.restore();
+  c.fillStyle = col; c.fillText(text, x + (1 - k) * size * 0.8, y, maxW);
+  if (d) noteBox(c, { ...d, x: x + (1 - k) * size * 0.8 }, Math.min(maxW, c.measureText(text).width));
+  c.restore();
 }
 export function uiText(c, text, x, y, size, { col = '#ffffff', align = 'left', weight = 700, maxW = 1e9, base = 'alphabetic', track = 0 } = {}) {
   if (!text) return 0;
+  const d = textActive() ? textStyle({ kind: 'ui', text: String(text), x, y, size, col, align, weight, family: FONT_UI, maxW, base, track, shadow: false }) : null;
+  if (d?.custom) return styled(c, d);
   c.font = `${weight} ${Math.round(size)}px ${FONT_UI}`; c.textAlign = align; c.textBaseline = base; c.fillStyle = col;
   if (track && 'letterSpacing' in c) c.letterSpacing = `${(size * track).toFixed(1)}px`;
   c.fillText(text, x, y, maxW);
+  const mw = d ? c.measureText(text).width : 0;
   if (track && 'letterSpacing' in c) c.letterSpacing = '0px';
+  if (d) noteBox(c, d, Math.min(maxW, mw));
   return Math.min(maxW, c.measureText(text).width);
+}
+/**
+ * a plain fillText with its own font (counters, big codes, crawls, coin signs): the same pixels as the code it replaced,
+ * and the element's text style when one is set. opts.key ties a derived string (a number counting up) to its field.
+ */
+export function rawText(c, text, x, y, size, { family = FONT_UI, weight = 700, col = '#ffffff', align = 'left', base = 'alphabetic', maxW, key, measure = false } = {}) {
+  if (text == null || text === '') return 0;
+  text = String(text);
+  const d = textActive() ? textStyle({ kind: 'raw', text, x, y, size, col, align, weight, family, maxW: maxW ?? 1e9, base, track: 0, shadow: false, forceKey: key }) : null;
+  if (measure) {   // the width it will draw at (a scrolling crawl's period), nothing drawn
+    if (d?.custom) { fitText(c, d); c.font = fontOf(d, d.size); return c.measureText(d.text).width; }
+    c.font = `${weight} ${Math.round(size)}px ${family}`; return c.measureText(text).width;
+  }
+  if (d?.custom) return styled(c, d);
+  c.font = `${weight} ${Math.round(size)}px ${family}`; c.textAlign = align; c.textBaseline = base; c.fillStyle = col;
+  if (maxW != null) c.fillText(text, x, y, maxW); else c.fillText(text, x, y);
+  const w = Math.min(maxW ?? 1e9, c.measureText(text).width);
+  if (d) noteBox(c, d, w);
+  return w;
+}
+/** a styled string (./text.js): fit, draw, record; leaves the context's font and fill as the plain path would */
+function styled(c, d) {
+  fitText(c, d);
+  const w = Math.min(d.maxW, drawPlain(c, d));
+  c.font = fontOf(d, d.size); c.textAlign = d.align; c.textBaseline = d.base || 'alphabetic'; c.fillStyle = d.col;
+  noteBox(c, d, w);
+  return w;
 }
 
 // ── colour blocks ──
@@ -490,21 +546,25 @@ export function stampMark(c, x, y, r, text, sub, col, rot = -0.2, a = 1, kind = 
   if (kind === 'rect') {
     c.lineWidth = r * 0.07; c.beginPath(); rr(c, -r * 1.25, -r * 0.55, r * 2.5, r * 1.1, r * 0.12); c.stroke();
     c.lineWidth = r * 0.025; c.beginPath(); rr(c, -r * 1.14, -r * 0.45, r * 2.28, r * 0.9, r * 0.08); c.stroke();
-    c.font = `400 ${Math.round(r * 0.48)}px ${FONT_EN}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(text).toUpperCase(), 0, -r * 0.05, r * 2.1);
-    if (sub) { c.font = `700 ${Math.round(r * 0.17)}px ${FONT_UI}`; c.fillText(sub, 0, r * 0.3, r * 2); }
+    rawText(c, String(text).toUpperCase(), 0, -r * 0.05, r * 0.48, { family: FONT_EN, weight: 400, col, align: 'center', base: 'middle', maxW: r * 2.1 });
+    if (sub) rawText(c, sub, 0, r * 0.3, r * 0.17, { weight: 700, col, align: 'center', base: 'middle', maxW: r * 2 });
   } else {
     c.lineWidth = r * 0.08; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.stroke();
     c.lineWidth = r * 0.03; c.beginPath(); c.arc(0, 0, r * 0.78, 0, TAU); c.stroke();
-    const t2 = String(text).toUpperCase(); c.font = `700 ${Math.round(r * 0.17)}px ${FONT_UI}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    // the ring words go round letter by letter: one text-pass entry for the whole ring (its key, style, box)
+    const d = textActive() ? textStyle({ kind: 'raw', text: String(text).toUpperCase(), x: 0, y: 0, size: r * 0.17, col, align: 'center', weight: 700, family: FONT_UI, maxW: 1e9, base: 'middle', track: 0, shadow: false }) : null;
+    const t2 = d?.custom ? d.text : String(text).toUpperCase(); c.font = d?.custom ? fontOf(d, d.size) : `700 ${Math.round(r * 0.17)}px ${FONT_UI}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    if (d?.custom) c.fillStyle = d.col;
     const span = Math.min(Math.PI * 1.3, t2.length * 0.2);
     for (let i = 0; i < t2.length; i++) { const ang = -Math.PI / 2 - span / 2 + (span * (i + 0.5)) / t2.length; c.save(); c.rotate(ang + Math.PI / 2); c.fillText(t2[i], 0, -r * 0.89); c.restore(); }
-    c.font = `400 ${Math.round(r * 0.36)}px ${FONT_EN}`; c.fillText(sub || '✓', 0, 0, r * 1.4);
+    if (d) { noteBox(c, { ...d, x: -r, y: -r, size: (r * 2) / 1.05, align: 'left', base: 'top' }, r * 2); c.fillStyle = col; }
+    rawText(c, sub || '✓', 0, 0, r * 0.36, { family: FONT_EN, weight: 400, col, align: 'center', base: 'middle', maxW: r * 1.4 });
     star(c, -r * 0.55, r * 0.5, r * 0.08); c.fill(); star(c, r * 0.55, r * 0.5, r * 0.08); c.fill();
   }
   c.restore();
 }
 /** an open passport page (w×h) with guilloche lines, a photo box, MRZ lines; returns nothing */
-export function passportPage(c, x, y, w, h, K) {
+export function passportPage(c, x, y, w, h, K, title = 'VISAS') {
   const P = K.colors;
   c.save();
   c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); rr(c, x + w * 0.02, y + h * 0.03, w, h, w * 0.03); c.fill();
@@ -523,7 +583,7 @@ export function passportPage(c, x, y, w, h, K) {
   c.font = `600 ${Math.round(h * 0.045)}px "Courier New", monospace`; c.fillStyle = rgba('#333333', 0.55); c.textAlign = 'left'; c.textBaseline = 'alphabetic';
   c.fillText('P<' + (K.code || 'XXX').toUpperCase() + '<<YOUR<NAME<<<<<<<', x + w * 0.04, y + h * 0.82, w * 0.42); c.fillText('X0000000<0XXX0000000<<<<<<<<', x + w * 0.04, y + h * 0.9, w * 0.42);
   // title on the right page
-  uiText(c, 'VISAS', x + w * 0.75, y + h * 0.12, h * 0.06, { col: rgba(P.primary, 0.55), align: 'center', weight: 800, track: 0.3 });
+  uiText(c, title, x + w * 0.75, y + h * 0.12, h * 0.06, { col: rgba(P.primary, 0.55), align: 'center', weight: 800, track: 0.3 });
   c.restore(); c.restore();
 }
 /** a boarding pass card w×h; p: how much of it is printed (0..1) */
@@ -538,18 +598,17 @@ export function boardingPass(c, x, y, w, h, K, t, txt = {}) {
   const hg = c.createLinearGradient(x, y, x + w, y); hg.addColorStop(0, P.primary); hg.addColorStop(1, mix(P.primary, P.accent, 0.55)); c.fillStyle = hg; c.fillRect(x, y, w, h * 0.26);
   for (let i = 0; i < 3; i++) { c.fillStyle = (K.flag || [])[i] || P.accent; c.fillRect(x + w * (0.9 + i * 0.033), y, w * 0.033, h * 0.26); }
   uiText(c, txt.brand || 'BOARDING PASS', x + w * 0.04, y + h * 0.17, h * 0.1, { col: onColor(P.primary), weight: 800, track: 0.12 });
-  c.font = `400 ${Math.round(h * 0.34)}px ${FONT_EN}`; c.fillStyle = '#10162e'; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
-  c.fillText(from, x + w * 0.04, y + h * 0.68);
-  c.textAlign = 'right'; c.fillText(to, tx - w * 0.04, y + h * 0.68);
-  const mid = (x + w * 0.04 + c.measureText(from).width + tx - w * 0.04 - c.measureText(to).width) / 2;
+  const wf = rawText(c, from, x + w * 0.04, y + h * 0.68, h * 0.34, { family: FONT_EN, weight: 400, col: '#10162e' });
+  const wt = rawText(c, to, tx - w * 0.04, y + h * 0.68, h * 0.34, { family: FONT_EN, weight: 400, col: '#10162e', align: 'right' });
+  const mid = (x + w * 0.04 + wf + tx - w * 0.04 - wt) / 2;
   c.strokeStyle = rgba('#10162e', 0.35); c.lineWidth = Math.max(1, h * 0.012); c.setLineDash([h * 0.04, h * 0.03]); c.beginPath(); c.moveTo(mid - w * 0.08, y + h * 0.56); c.lineTo(mid + w * 0.08, y + h * 0.56); c.stroke(); c.setLineDash([]);
   plane(c, mid, y + h * 0.56, h * 0.09, 0, P.primary, false);
-  const labels = [['FLIGHT', txt.flight || 'PC 0001'], ['GATE', txt.gate || '--'], ['SEAT', txt.seat || '--'], ['DATE', txt.date || 'DD MMM']];
+  const L = txt.lbl || [], labels = [[L[0] ?? 'FLIGHT', txt.flight || 'PC 0001'], [L[1] ?? 'GATE', txt.gate || '--'], [L[2] ?? 'SEAT', txt.seat || '--'], [L[3] ?? 'DATE', txt.date || 'DD MMM']];
   labels.forEach(([k, v], i) => { const lx = x + w * (0.04 + i * 0.165); uiText(c, k, lx, y + h * 0.8, h * 0.065, { col: '#7a8199', weight: 700 }); uiText(c, v, lx, y + h * 0.92, h * 0.085, { col: '#10162e', weight: 800 }); });
   // stub
   c.fillStyle = mix('#ffffff', P.accent, 0.12); c.fillRect(tx, y + h * 0.26, x + w - tx, h * 0.74);
   for (let i = 0; i < 26; i++) { const bw = h * (0.008 + 0.018 * rnd(i, 81)); c.fillStyle = '#10162e'; c.fillRect(tx + w * 0.03 + i * (x + w - tx - w * 0.06) / 26, y + h * 0.36, bw, h * 0.4); }
-  uiText(c, to + ' · ' + (K.city || ''), tx + (x + w - tx) / 2, y + h * 0.92, h * 0.07, { col: '#10162e', align: 'center', weight: 800, maxW: (x + w - tx) * 0.9 });
+  uiText(c, txt.stub ?? to + ' · ' + (K.city || ''), tx + (x + w - tx) / 2, y + h * 0.92, h * 0.07, { col: '#10162e', align: 'center', weight: 800, maxW: (x + w - tx) * 0.9 });
   sheen(c, x, y, w, h, fr(t / 2.4), 0.45);
   c.restore();
   c.fillStyle = '#cfd4df'; for (let i = 1; i < 10; i++) { c.beginPath(); c.arc(tx, y + h * (0.04 + i * 0.096), h * 0.014, 0, TAU); c.fill(); }
@@ -619,7 +678,7 @@ export function coin(c, x, y, r, sign, spin = 1, col = '#f6c445') {
   c.fillStyle = mix(col, '#7a4b00', 0.6); c.beginPath(); c.arc(r * 0.06, r * 0.06, r, 0, TAU); c.fill();
   c.fillStyle = g; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
   c.strokeStyle = mix(col, '#7a4b00', 0.4); c.lineWidth = r * 0.07; c.beginPath(); c.arc(0, 0, r * 0.8, 0, TAU); c.stroke();
-  if (spin > 0) { c.fillStyle = mix(col, '#5a3500', 0.55); c.font = `800 ${Math.round(r * (sign.length > 2 ? 0.55 : sign.length > 1 ? 0.75 : 1.0))}px ${FONT_UI}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(sign, 0, r * 0.05, r * 1.4); }
+  if (spin > 0) rawText(c, sign, 0, r * 0.05, r * (sign.length > 2 ? 0.55 : sign.length > 1 ? 0.75 : 1.0), { weight: 800, col: mix(col, '#5a3500', 0.55), align: 'center', base: 'middle', maxW: r * 1.4 });
   c.restore();
 }
 

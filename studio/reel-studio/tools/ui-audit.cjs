@@ -344,6 +344,15 @@ function measure() {
       await page.click('[data-caps-add-custom="jobs"]'); await page.waitForSelector('.cps-icons button'); await audit('capsules-custom'); await closeModal();
       await page.evaluate(() => { kbbEditor.history.undo(); });
     });
+    // a theme element's Text (words, Arabic beside English, a word's Aa row open) and Text style sections
+    await tryStep('inspector-theme-text', async () => {
+      await page.evaluate(async () => { const TH = await import('/app/themes/index.js'); const it = TH.placeElement(kbbEditor.context(), 'title', { t0: 0, theme: 'country-de' }); kbbEditor.select([it.id]); kbbEditor.showSide('inspector'); });
+      await page.waitForSelector('[data-th-style-sec]'); await page.click('[data-th-aa="title"]'); await page.waitForTimeout(300);
+      await audit('inspector-theme-text');
+      await page.evaluate(() => document.querySelector('[data-th-style-sec]').scrollIntoView({ block: 'start' })); await page.waitForTimeout(200);
+      await audit('inspector-theme-style');
+      await page.evaluate(() => { kbbEditor.history.undo(); });
+    });
     await page.click('.side-tab[data-side="captions"]');
     await page.click('.rs-cap-tabs button[data-tab="transcript"]').catch(() => {});
     await tryStep('export', async () => { await page.click('.export-btn'); await page.waitForSelector('#x-go'); await page.waitForTimeout(400); await audit('export', wsId === 'kbb' ? 'export' : null); await closeModal(); });

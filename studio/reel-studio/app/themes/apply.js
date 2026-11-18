@@ -112,6 +112,7 @@ export async function applyTheme(ctx, id, opts = {}) {
   const faces = opts.faces || (opts.safe === false ? [] : await detectFaces(ctx));
   const style = themeStyle(th, { ...opts, beats, faces }, ws);
   const cmds = [], placed = { overlay: null, sting: null, outro: null, transitions: 0, title: null, signature: null, lower: null, grade: null, sfx: 0 };
+  const kept = keptWords(p, th.id);   // the owner's words on the theme's elements survive applying a theme again
   const old = themeItems(p).map((x) => x.item.id); if (old.length) cmds.push(ops.removeItems(old, 'Replace theme'));
   // the overlay gets its own "Theme" lane right above the video (under the owner's stickers, text and captions);
   // the sting, outro and transitions go on the ordinary overlay track
@@ -128,7 +129,7 @@ export async function applyTheme(ctx, id, opts = {}) {
   const add = [{ trackId: tt.id, item: ov }]; placed.overlay = ov.id;
   // the complete package, one family: grade (whole reel) · intro sting · title card · signature element · lower third ·
   // a colour-slab wipe on every cut · end card with CTA. All theme.* items, all tagged, so the next theme replaces them.
-  const es = (el, extra = {}) => elementStyle(th.id, el, { colors: style.colors, brand: ws?.name || null, logo: ws?.logo || null, ...extra });
+  const es = (el, extra = {}) => withKept(elementStyle(th.id, el, { colors: style.colors, brand: ws?.name || null, logo: ws?.logo || null, ...extra }), kept[el]);
   const el = (type, el2, t0, dur, props = {}) => createItem(type, { t0: r3(t0), in: 0, out: r3(dur), auto: TAG, name: `Theme ${elementById(el2)?.label || el2} · ${name}`, ...boxFor(el2, W, H), ...props });
   if (opts.grade !== false) { const it = el('theme.el', 'grade', 0, D, { style: es('grade', { whole: 'span' }) }); add.unshift({ trackId: tt.id, item: it }); placed.grade = it.id; }
   // a design-family package (th.pkg) opens and closes on its own big compositions instead of the slab sting / end card
@@ -176,10 +177,32 @@ export async function applyTheme(ctx, id, opts = {}) {
     if (placed.title) put(th.sfx.accent, (placed.sting ? 0.8 : 0.3) + 0.1, 0.45, 'title');
     for (const c of cuts.slice(0, 24)) put(th.sfx.transition, c, 0.4, 'transition');
   }
+  // the elements the owner switched on for the whole video come back in the new theme, where they were, with their words
+  for (const { item: o, track: otr } of themeItems(p)) {
+    const ow = o.style?.whole; if (o.type !== 'theme.el' || !ow || /^(grade|wipe)$/.test(o.style.el) || !elementById(o.style.el)) continue;
+    const st = es(o.style.el, { whole: ow, variant: o.style.variant }); if (o.style.caps) st.caps = clone(o.style.caps);
+    add.push({ trackId: otr.id, item: createItem('theme.el', { t0: o.t0, in: 0, out: r3(itemDur(o)), x: o.x, y: o.y, w: o.w, h: o.h, auto: TAG, name: `${elementById(o.style.el).icon} ${elementById(o.style.el).label} · whole video · ${name}`, style: st }) });
+  }
   cmds.push(ops.addItems(add, 'Theme'));
   ctx.history.apply(ops.batch('Theme · ' + name, cmds));
   return { theme: th.id, ...placed, beats: beats.length, faces: faces.length, duration: D };
 }
+
+// words that are the owner's whatever the theme (a name, contact lines, a call to action, added lines); the rest
+// (a country's title, a headline) belongs to the theme they were written for
+const PERSONAL = /^(name|role|line3|brand|cta|ctaAr|phone|web|handle|extra|callLbl|webLbl|followLbl|value|label|note|crawl|crawlTag|headline|sub|p\d)$/;
+const elOfTheme = (it) => (it.type === 'theme.sting' ? 'intro' : it.type === 'theme.outro' ? 'end' : it.type === 'theme.el' ? it.style?.el : null);
+/** el -> {text, tstyle} from the theme items on the reel now: all of it for the same theme, the owner's own words else */
+export function keptWords(p, themeId) {
+  const out = {};
+  for (const { item } of themeItems(p)) {
+    const el = elOfTheme(item), st = item.style || {}; if (!el || out[el]) continue;
+    const same = st.theme === themeId, text = Object.fromEntries(Object.entries(st.text || {}).filter(([k]) => same || PERSONAL.test(k)));
+    if (Object.keys(text).length || st.tstyle) out[el] = { text, tstyle: st.tstyle ? clone(st.tstyle) : null };
+  }
+  return out;
+}
+const withKept = (style, k) => { if (k) { style.text = { ...style.text, ...k.text }; if (k.tstyle) style.tstyle = k.tstyle; } return style; };
 
 /**
  * the title must not sit on the captions or a face: try its own place, then the top band, then the lower band, and keep

@@ -1,15 +1,15 @@
-KBB Studio search check · 2026-11-18T12:19:41.075Z
+KBB Studio search check · 2026-11-18T12:55:40.363Z
 ALL PASS
-     115 states crawled (both companies, folded sections opened): 1531 distinct controls
+     117 states crawled (both companies, folded sections opened): 1599 distinct controls
 PASS coverage: every visible control on every state is in the index (0 missing)
 PASS coverage: every visible control has words (text, aria-label or title) (0 without)
 PASS hover: every indexed visible control has a description (0 without)
-PASS hover: 563 controls really hovered over all states — card shows with words, inside the window, off its control, no native title (0 bad)
-     index: 1490 entries (152 curated + 1338 from the crawl), 6469 words
+PASS hover: 573 controls really hovered over all states — card shows with words, inside the window, off its control, no native title (0 bad)
+     index: 1503 entries (165 curated + 1338 from the crawl), 6745 words
      screenshots → shots/search/
 PASS typo, synonym and Arabic: 28/28 queries put the right result on top
-PASS latency: 529 keystrokes over 1490 entries — median 0.28 ms, p95 0.88 ms, max 1.02 ms (limit 5 ms)
-     in the box: last keystroke searched in 1.39 ms
+PASS latency: 529 keystrokes over 1503 entries — median 0.27 ms, p95 0.88 ms, max 1.05 ms (limit 5 ms)
+     in the box: last keystroke searched in 1.16 ms
 PASS nav “trim” → top “Trim a clip” → ringed “ui-clip.mp4”, focused
 PASS nav “split” → top “Split” → ringed “✂ Split”, focused
 PASS nav “slow motion” → top “Speed” → ringed “Custom1×”, focused
@@ -32,7 +32,9 @@ PASS nav “duplicate” → top “Duplicate” → ringed “⧉ Duplicate”,
 PASS nav “unlink” → top “Unlink” → ringed “🔊 Unlink”, focused
 PASS nav “translate” → top “Translate captions” → ringed “Englishالعربية · Arabicاردو · Urduहिन्दी”, focused
 PASS nav “word sync” → top “Sync words to the voice” → ringed “⏱ Sync words to the voice”, focused
-PASS nav “font” → top “Text: words, font and size” → ringed “Title”, focused
+PASS nav “font” → top “Theme text style: font and size” → ringed “＋”, focused
+PASS nav “edit text” → top “Theme element text (edit the words)” → ringed “＋”, focused
+PASS nav “theme font” → top “Theme text style: font and size” → ringed “＋”, focused
 PASS nav “caption position” → top “Caption position (drag)” → ringed “Search templates”, focused
 PASS nav “themes” → top “Themes” → ringed “✨ Themes”, focused
 PASS nav “transitions” → top “Transitions” → ringed “Whip”, focused
@@ -62,7 +64,7 @@ PASS nav “folders” → top “Folders & storage” → ringed “Open in Fin
 PASS nav “models” → top “Models (AI downloads)” → ringed “🧠 Models”, focused
 PASS nav “ad studio” → Ad Studio → opens the Ad Studio
 PASS nav “designs” → top “Designs screen” → ringed “Brief”, focused
-PASS navigation: 52/52 searches land on the right control, visible and focused
+PASS navigation: 54/54 searches land on the right control, visible and focused
 PASS one-shot action: “Marker” offers Run / Show me where; ⌘↵ ran it (markers 0 → 1)
 PASS hover at 1280×800: 10 edge controls — card inside the window and off the control
 PASS hover at 2560×1440: 10 edge controls — card inside the window and off the control

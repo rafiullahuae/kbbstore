@@ -6,7 +6,7 @@ import { def, ez, pop, flagOf, lmOf, CITIES, sketchLine } from './fampieces.js';
 
 const { TAU, clamp, rnd, fr, mix, rgba } = A;
 
-def('route', { fam: 'travel', dir: true, name: 'Road-trip route map', nameAr: 'خريطة الرحلة', style: 'Warm flat', words: { from: ['HOME', 'الوطن'], to: ['', ''] },
+def('route', { fam: 'travel', dir: true, name: 'Road-trip route map', nameAr: 'خريطة الرحلة', style: 'Warm flat', words: { from: ['HOME', 'الوطن'], to: ['', ''] }, defaults: (K) => ({ to: (K?.city || '').toUpperCase() }),
   draw(c, w, h, t, o) {
     const P = o.P, u = Math.min(w, h), K = o.K, wide = w > h * 1.1;
     c.fillStyle = '#FFF6E0'; c.fillRect(0, 0, w, h);
@@ -35,7 +35,7 @@ def('route', { fam: 'travel', dir: true, name: 'Road-trip route map', nameAr: '�
     c.fillStyle = '#ffffff'; c.beginPath(); c.arc(0, -pr * 1.7, pr * 0.42, 0, TAU); c.fill(); c.restore();
   } });
 
-def('suitcase', { fam: 'travel', name: 'Suitcase opens onto the destination', nameAr: 'حقيبة تنفتح على وجهتك', style: 'Paper-cut', words: { tag: ['', ''] },
+def('suitcase', { fam: 'travel', name: 'Suitcase opens onto the destination', nameAr: 'حقيبة تنفتح على وجهتك', style: 'Paper-cut', words: { tag: ['', ''] }, defaults: (K) => ({ tag: (K?.city || '').toUpperCase() }),
   draw(c, w, h, t, o) {
     const P = o.P, u = Math.min(w, h), K = o.K;
     A.gradRect(c, 0, 0, w, h, [[0, mix(P.a, '#ffffff', 0.45)], [1, mix(P.b, '#ffffff', 0.55)]]);
@@ -119,7 +119,7 @@ def('postcards', { fam: 'travel', name: 'Postcard stack', nameAr: 'مجموعة 
     });
   } });
 
-def('stamps', { fam: 'travel', name: 'Passport stamp collage', nameAr: 'جواز سفر مليء بالأختام', style: 'Sketch that colours in', words: { title: ['PASSPORT', 'جواز السفر'] },
+def('stamps', { fam: 'travel', name: 'Passport stamp collage', nameAr: 'جواز سفر مليء بالأختام', style: 'Sketch that colours in', words: { title: ['PASSPORT', 'جواز السفر'] }, defaults: (K) => { const c0 = (K?.city || 'TORONTO').toUpperCase(); return Object.fromEntries([c0, ...CITIES.filter((x) => x !== c0)].slice(0, 6).map((x, i) => ['city' + (i + 1), x])); },
   draw(c, w, h, t, o) {
     const P = o.P, u = Math.min(w, h), K = o.K;
     c.fillStyle = '#FFFCF2'; c.fillRect(0, 0, w, h);
@@ -139,11 +139,11 @@ def('stamps', { fam: 'travel', name: 'Passport stamp collage', nameAr: 'جواز
     at.forEach(([x, y, r, rot, kind], i) => {
       const d = t - (1.7 + i * 0.27); if (d < -0.12) return;
       const sc = d < 0 ? 2.2 - (1 + d / 0.12) * 1.2 : 1, a = d < 0 ? clamp(1 + d / 0.12) * 0.4 : 1;
-      c.save(); c.translate(px + pw * x, py + ph * y); c.scale(sc, sc); A.stampMark(c, 0, 0, ph * r, cities[i], ['✈', '★', '✓'][i % 3], cols[i], rot, a * 0.9, kind); c.restore();
+      c.save(); c.translate(px + pw * x, py + ph * y); c.scale(sc, sc); A.stampMark(c, 0, 0, ph * r, o.words['city' + (i + 1)] || cities[i], ['✈', '★', '✓'][i % 3], cols[i], rot, a * 0.9, kind); c.restore();
     });
   } });
 
-def('departures', { fam: 'travel', name: 'Departures board', nameAr: 'لوحة المغادرة', style: 'Kinetic split-flap', words: { title: ['DEPARTURES', 'المغادرة'], status: ['BOARDING', 'صعود'] },
+def('departures', { fam: 'travel', name: 'Departures board', nameAr: 'لوحة المغادرة', style: 'Kinetic split-flap', words: { title: ['DEPARTURES', 'المغادرة'], status: ['BOARDING', 'صعود'] }, defaults: (K) => { const c0 = (K?.city || 'TORONTO').toUpperCase(); return Object.fromEntries([c0, ...CITIES.filter((x) => x !== c0)].slice(0, 6).map((x, i) => ['city' + (i + 1), x])); },
   draw(c, w, h, t, o) {
     const P = o.P, u = Math.min(w, h), K = o.K, wide = w > h * 1.1;
     A.gradRect(c, 0, 0, w, h, [[0, mix(P.a, '#ffffff', 0.25)], [1, mix(P.d, '#ffffff', 0.15)]]);
@@ -152,7 +152,7 @@ def('departures', { fam: 'travel', name: 'Departures board', nameAr: 'لوحة �
     c.fillStyle = P.b; rrect(c, bx, by, bw, hh, u * 0.03); c.fill(); c.fillRect(bx, by + hh * 0.5, bw, hh * 0.5);
     A.plane(c, bx + hh * 0.7, by + hh / 2, hh * 0.5, -0.5, P.ink, false);
     T(c, o.words.title, bx + hh * 1.3, by + hh * 0.66, hh * 0.46, { col: P.ink, align: 'left', weight: 900, track: 0.08, maxW: bw * 0.6 });
-    const dest = (K?.city || 'TORONTO').toUpperCase(), list = [dest, ...CITIES.filter((x) => x !== dest)].slice(0, rows), gates = ['A1', 'B4', 'C2', 'D7', 'A3', 'B9'];
+    const dest = (K?.city || 'TORONTO').toUpperCase(), list = [dest, ...CITIES.filter((x) => x !== dest)].slice(0, rows).map((x, i) => String(o.words['city' + (i + 1)] || x).toUpperCase()), gates = ['A1', 'B4', 'C2', 'D7', 'A3', 'B9'];
     const nCh = 10, cw = Math.min((bw * 0.66) / (nCh + 3), rh * 0.62), gap = cw * 0.12, R = 'ABCDEFGHIJKLMNOPRSTUVWXYZ';
     list.forEach((city, r) => {
       const y = by + hh + rh * 0.25 + r * rh, chs = city.padEnd(nCh, ' ').slice(0, nCh) + ' ' + gates[r];

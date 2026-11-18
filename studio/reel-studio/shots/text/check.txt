@@ -1,0 +1,44 @@
+PASS cause 1 fixed: the lower third's fields show the canvas words, “YOUR NAME HERE” / “Your title · Your company” (before: empty)
+PASS cause 1 fixed: no “theme default” placeholder (Empty: this line is hidden)
+PASS the inspector has a Text and a Text style section (Theme element · Text · Text style · Position & size · Fade)
+PASS live: the project follows every keystroke (R → Ra → Raf → Rafi → Rafi  → Rafi K → Rafi Kh → Rafi Kha → Rafi Khan)
+PASS live: the preview's name box changed while typing, before any Enter (mean diff 48.5)
+PASS cause 3 fixed: typing then clicking the timeline keeps the words (role “Visa consultant”, name “Rafi Khan!”)
+PASS one undo step per edit burst: name (with a 0.9 s pause) + role = 2 steps
+PASS undo takes back each burst whole (role, then the name); redo puts both back
+PASS Esc puts the words back (“Rafi Khan!”) and leaves the field
+PASS Enter commits (“Rafi Khan!?”) and leaves the field
+PASS ↺ resets one field to the theme's words (“Your title · Your company”)
+PASS coverage: 46 elements checked (5 bulletin templates, 25 family pieces), 38 draw words, 156 fields in all
+PASS every drawn string has a field, every field shows its words and changes the pixels when edited
+PASS elements without words are only the wordless ones (wipe, confetti, grade, capsules, fam-window, fam-isosite, fam-sunrise, fam-isocity; capsules have their own editor)
+PASS the crawl, the end card (CTA, Arabic CTA, phone, web, handle, company, row labels) and the job roles are all fields
+PASS transitions with words: page turn 5 fields (visas, stamp, stampCode, approved, date), boarding pass 12; editing changes the frame at the cut (895 / 2540 px)
+PASS double-click on the name on the video opens an input there (key name, “Rafi Khan!?”, focused, all selected: true)
+PASS the input sits on the word's own box (centre 713,377 vs word 690,367)
+PASS the inspector field for the same word flashes
+PASS typing on the canvas is live (“Sara Ali”), Enter commits and closes it, ONE undo step (1)
+PASS double-click on the role, type, Esc: the words go back and the editor closes
+PASS a click away from the canvas editor commits (“Click-away keeps”)
+PASS a double-click on the element away from its words focuses its first field (name)
+PASS double-click edits every placeholder in place, its inspector control flashes, Enter keeps it: end.cta “BOOK YOUR FREE CONSULTATION”; end.phone “+971 XX XXX XXXX”; end.web “www.yourwebsite.com”; end.handle “@yourhandle”; bulletin.headline “Your headline here”; breaking.crawl “EUROPE · YOUR HEADLINE HERE · BOOK A FREE CONSULTATION · PLACEHOLDER UPDATE — VERIFY ON THE OFFICIAL WEBSITE · ”; visa.p2 “Point two: edit me”; fam-cv.role “‹Your next role›”; fam-growth.v “XX”; capsules.capsule “Drivers”
+PASS every Text style control changes the render: font 1539px/1st, size 2312px/1st, colour 1876px/1st, bold 2327px/1st, case 583px/1st, italic 1609px/1st, outline 2577px/1st, align 4296px/1st, band 6491px/1st
+PASS the style is stored on the item: {"font":"Playfair Display","scale":1.4,"color":"#c6395f","weight":400,"case":"asis","italic":true,"outline":true,"align":"right"}
+PASS per-field size and colour (name 0.6, #111111): 919 / 193 px changed
+PASS preview = export with a styled, edited lower third (Playfair, 140 %, colours, outline): 1 s 1.95/255, 1.9 s 2/255, 2.6 s 2.05/255 (< 6)
+PASS Reset text style drops every style choice (one click)
+PASS undo brings the text style back; redo/undo are exact
+PASS Use theme colours puts the theme’s band colours back
+PASS + Add line / + Add point: lower → line3 “Third line” (6068 px, field focused); lowerbar → line3 “Third line” (3096 px, field focused); end → extra “Your extra line” (58651 px, field focused); visa → p5 “New point: edit me” (5111 px, field focused)
+PASS + Add text places a Text item on the element: same start 0.5 s and length 6.0 s, just under it, selected with its words focused
+PASS the added Text follows its element (moved +60/−120, +0.5 s → text +60/-120, +0.5 s) in the same undo step, and undo puts both back
+PASS the Text tool button opens the Text tab on the left
+PASS long words shrink, then end in “…”, inside the element: lower.name x217 693/950px …, lower.role x217 550/950px …, title.title x359 538/994px …, title.titleAr x387 492/994px … rtl, end.cta x66 947/1080px …, bulletin.headline x140 789/1080px …, fam-cv.name x391 399/972px …
+PASS Arabic is drawn right to left (direction rtl, right-aligned box inside the element)
+PASS the Arabic field sits beside the English one, right to left, prefilled (“ألمانيا”)
+PASS re-applying Europe keeps the words and style: {"name":"Rafi Khan","scale":1.2,"phone":"+971 50 000 0000","title":"EUROPA","whole":"Whole-video role"}
+PASS applying another theme keeps the personal words (name, the whole-video role) and lets the new theme title itself: {"name":"Rafi Khan","title":null,"whole":"Whole-video role","theme":"country-de"}
+PASS save + reload: words {"name":"Rafi Khan"} and style come back, max pixel difference 0
+PASS an old project (no edited words, no text style) draws pixel-identical to the code before this change: 44 elements × 4 moments
+PASS typing: 7.8 ms per keystroke over 37 keys (writes at most once a frame), 0 long tasks (none > 120 ms); field discovery 1.7 ms, once per selection
+PASS no console errors or theme render warnings

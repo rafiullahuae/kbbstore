@@ -20,6 +20,7 @@ import { flagImage, mapPaths } from './draw.js';
 import { HERO } from './landmarks2.js';
 import { LANDMARKS } from '../auto/countries/landmarks.js';
 import { FAM_PAL } from './families.js';
+import { tx, textBegin, textEnd, setLastBoxes } from './text.js';
 
 const { clamp, easeIO, easeOut, easeIn, TAU, mix, rgba } = A;
 
@@ -149,9 +150,10 @@ function drawTrans(ctx, item, t, project, env) {
       A.gradRect(ctx, 0, 0, W, H, [[0, '#fbf6ea'], [1, '#e8dcc2']]);
       ctx.strokeStyle = rgba(P.primary, 0.12); ctx.lineWidth = u * 0.003;
       for (let i = 0; i < 18; i++) { ctx.beginPath(); for (let q = 0; q <= 30; q++) { const X = (q / 30) * W, Y = H * (0.05 + i * 0.055) + Math.sin(q / 30 * TAU * 2 + i) * H * 0.02; q ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); } ctx.stroke(); }
-      A.uiText(ctx, 'VISAS', W / 2, H * 0.1, u * 0.06, { col: rgba(P.primary, 0.5), align: 'center', weight: 800, track: 0.3 });
-      A.stampMark(ctx, W * 0.5, H * 0.42, u * 0.22, (K.city || K.name || '').toUpperCase(), K.iata || '✈', mix(P.primary, '#1a1a6b', 0.3), -0.2, 0.85, 'round');
-      A.stampMark(ctx, W * 0.5, H * 0.66, u * 0.16, 'APPROVED', 'DD · MM · YYYY', '#1f9d55', 0.1, 0.85, 'rect');
+      const S = { txt: s.text || {} }, D = TRANS_WORDS.page(K);
+      A.uiText(ctx, tx(S, 'visas', D.visas), W / 2, H * 0.1, u * 0.06, { col: rgba(P.primary, 0.5), align: 'center', weight: 800, track: 0.3 });
+      A.stampMark(ctx, W * 0.5, H * 0.42, u * 0.22, tx(S, 'stamp', D.stamp), tx(S, 'stampCode', D.stampCode), mix(P.primary, '#1a1a6b', 0.3), -0.2, 0.85, 'round');
+      A.stampMark(ctx, W * 0.5, H * 0.66, u * 0.16, tx(S, 'approved', D.approved), tx(S, 'date', D.date), '#1f9d55', 0.1, 0.85, 'rect');
       ctx.restore();
       const ex = p < 0.5 ? x0 : x1, dir = p < 0.5 ? 1 : -1;   // the curling edge: a highlight and a cast shadow
       A.gradRect(ctx, ex - (dir > 0 ? 0 : u * 0.08), 0, u * 0.08, H, dir > 0 ? [[0, 'rgba(255,255,255,0.9)'], [1, 'rgba(0,0,0,0.25)']] : [[0, 'rgba(0,0,0,0.25)'], [1, 'rgba(255,255,255,0.9)']], 'h');
@@ -174,7 +176,9 @@ function drawTrans(ctx, item, t, project, env) {
     const draw = (half) => {
       ctx.save(); ctx.translate(W / 2, H / 2); if (!land) ctx.rotate(-Math.PI / 2);
       if (half) { ctx.beginPath(); if (half < 0) ctx.rect(-cw / 2, -ch / 2, cw * 0.72, ch); else ctx.rect(-cw / 2 + cw * 0.72, -ch / 2, cw * 0.28, ch); ctx.clip(); }
-      A.boardingPass(ctx, -cw / 2, -ch / 2, cw, ch, K, t, { from: K.fromCode, to: K.iata });
+      const S = { txt: s.text || {} }, D = TRANS_WORDS.ticket(K), w = (k) => tx(S, k, D[k]);
+      const brand = w('brand'), from = w('from'), to = w('to'), lbl = [w('flightLbl'), w('flight'), w('gateLbl'), w('gate'), w('seatLbl'), w('seat'), w('dateLbl'), w('date')];
+      A.boardingPass(ctx, -cw / 2, -ch / 2, cw, ch, K, t, { from, to, brand, flight: lbl[1], gate: lbl[3], seat: lbl[5], date: lbl[7], lbl: [lbl[0], lbl[2], lbl[4], lbl[6]], stub: tx(S, 'stub', to + ' · ' + (K.city || '')) });
       ctx.restore();
     };
     if (p < 0.5) { const k = easeOut(p / 0.42); ctx.save(); ctx.translate(0, (1 - k) * H * 1.1); ctx.translate(W / 2, H / 2); ctx.rotate((1 - k) * 0.25); ctx.translate(-W / 2, -H / 2); draw(0); ctx.restore(); }
@@ -249,8 +253,23 @@ function famTrans(c, kind, p, W, H, u, t) {
 }
 registerLayer('theme.trans', (ctx, item, t, project, env) => {
   ctx.save(); ctx.translate(-env.box.x, -env.box.y);
-  try { drawTrans(ctx, item, t, project, env); } finally { ctx.restore(); }
+  // the words of a page turn / a boarding pass go through the same text pass as the elements (./text.js)
+  const rec = !!env.preview, prev = textBegin(ctx, item.style?.tstyle, item.style?.text, { rec });
+  try { drawTrans(ctx, item, t, project, env); } finally { const o = textEnd(prev); if (rec && o?.rec) setLastBoxes(item.id, t, o.rec.map((b) => ({ ...b, x: b.x - env.box.x, y: b.y - env.box.y }))); ctx.restore(); }
 });
+
+/** the words each kind of transition draws, by key, with their defaults (the inspector lists them; the drawing uses them) */
+export const TRANS_WORDS = {
+  page: (K) => ({ visas: 'VISAS', stamp: (K.city || K.name || '').toUpperCase(), stampCode: K.iata || '✈', approved: 'APPROVED', date: 'DD · MM · YYYY' }),
+  ticket: (K) => ({ brand: 'BOARDING PASS', from: K.fromCode, to: K.iata, flightLbl: 'FLIGHT', flight: 'PC 0001', gateLbl: 'GATE', gate: '--', seatLbl: 'SEAT', seat: '--', dateLbl: 'DATE', date: 'DD MMM' }),
+};
+/** a transition's text fields: [{key, def}] ([] for a kind that draws no words) */
+export function transTextFields(item, project) {
+  const fn = TRANS_WORDS[item.style?.kind]; if (!fn) return [];
+  const K = kitOfTrans(item, project), D = fn(K), out = Object.entries(D).map(([key, def]) => ({ key, def: String(def) }));
+  if (item.style?.kind === 'ticket') out.push({ key: 'stub', def: (item.style?.text?.to ?? D.to) + ' · ' + (K.city || '') });
+  return out;
+}
 
 // ── placing ──
 /** cuts on the main video track: [{a, b, t}] */
