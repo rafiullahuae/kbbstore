@@ -26,7 +26,7 @@ export function exportDialog(ed) {
   const est = h('small.muted');
   const upd = () => {
     const d = dims(p.canvas.aspect, opt.size);
-    const bps = Math.min(50e6, d.w * d.h * opt.fps * QUALITY[opt.quality].bpp) + 160000;
+    const bps = Math.min(QUALITY[opt.quality].cap || 50e6, d.w * d.h * opt.fps * QUALITY[opt.quality].bpp) + 160000;
     est.textContent = `${d.w}×${d.h} · ${fmtDur(T)} · about ${fmtBytes((bps / 8) * T)} per file`;
   };
   const name = h('input', { value: safe(p.name), 'aria-label': 'File name' });
@@ -46,7 +46,7 @@ export function exportDialog(ed) {
   const body = h('div.export-form',
     checks,
     field('File name', name),
-    field('Size', seg([['720', '720p'], ['1080', '1080p (best for reels)'], ['1440', '1440p']], '1080', (v) => { opt.size = +v; upd(); })),
+    field('Size', seg([['720', '720p'], ['1080', '1080p (best for reels)'], ['1440', '1440p'], ['2160', '4K']], '1080', (v) => { opt.size = +v; upd(); })),
     field('Frame rate', seg([['30', '30 fps'], ['60', '60 fps']], String(opt.fps), (v) => { opt.fps = +v; upd(); })),
     field('Quality', seg(Object.entries(QUALITY).map(([k, q]) => [k, q.label]), 'standard', (v) => { opt.quality = v; upd(); })),
     field('Also export', extras),

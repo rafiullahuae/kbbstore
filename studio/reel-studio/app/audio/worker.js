@@ -1,17 +1,21 @@
 // KBB Studio · audio worker: every heavy sound job runs here, off the UI thread.
 //   voice   {L, R?, opt}                -> {L, R, stats}       noise suppression (RNNoise) + de-hum + EQ + de-ess + level + compress
+//                                                              (opt.v 2: ✨ Enhance voice, voice.js — + room echo, loudness)
 //   master  {channels:[L,R], target}    -> {channels, report}  platform loudness (BS.1770) + true-peak limiter
 //   measure {channels:[L,R]}            -> {lufs, tp}
 //   stretch {channels, segs:[{a,b,rate,len}]} -> {wav}         pitch-kept speed pieces (WSOLA), joined, 16-bit WAV
 //   retime  {channels, from, item, len} -> {channels}          a retimed clip's sound (speed, ramp, reverse; pitch kept or tape)
 import * as D from './dsp.js';
 import { createRnnoise } from './rnnoise.js';
+import { enhanceVoice } from './voice.js';
 import { srcTime, speedAt, speedGain } from '../core/retime.js';
 
 let rnP = null;
 const rnnoise = () => (rnP ||= createRnnoise(new URL('../../vendor/rnnoise-0.2.1/rnnoise.wasm', import.meta.url).href).catch((e) => { rnP = null; throw e; }));
 
 export async function voiceChain(x, opt = {}, rn = null) {
+  // ✨ Enhance voice (settings v2): the switchable chain in voice.js
+  if (opt.v === 2) return enhanceVoice(x, opt, opt.strength > 0 && opt.stages?.noise !== false ? rn || await rnnoise() : null);
   const sr = 48000, stats = { floorBefore: D.noiseFloorDb(x, sr) };
   let y = x;
   if (opt.dehum !== false) { const r = D.dehum(y, sr); y = r.y; stats.hum = r.base; }

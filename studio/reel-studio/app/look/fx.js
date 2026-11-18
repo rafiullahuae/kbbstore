@@ -4,15 +4,35 @@
 //   item.fx {type:'look.grade',   look, amount, wb:[r,g,b], ev, mg:[3], mo:[3]}     colour look + correction + shot match
 //   item.fx {type:'look.touchup', strength (0..1, default .35), eyes (0..1), under (0..1)}   face-landmark skin touch-up
 //   item.fx {type:'look.bg',      mode:'blur'|'color'|'gradient'|'image'|'flag'|'landmark', color, colors:[a,b], src, country}
+//   item.fx {type:'look.adjust',  exp, bri, con, ... , enh}       light / colour / detail sliders + Enhance video (adjust.js)
 //
-// All three run in ONE pass (gl.js `look` program); the first look.* entry in item.fx does the work for the others.
+// All four run in ONE pass (gl.js `look` program); the first look.* entry in item.fx does the work for the others.
 import { registerSourceFx } from '../core/render.js';
-import { srcTime } from '../core/project.js';
+import { srcTime, itemDur } from '../core/project.js';
 import { gl, blurs } from './gl.js';
 import { lookById } from './looks.js';
 import { segAt, facesAt } from './vision.js';
+import { adjustUniforms, wantsUpscale, isNeutral } from './adjust.js';
 
-export const LOOK_FX = ['look.grade', 'look.touchup', 'look.bg'];
+export const LOOK_FX = ['look.grade', 'look.touchup', 'look.bg', 'look.adjust'];
+
+// before / after compare in the preview monitor (never in the export): the untouched source left of a divider at
+// fraction `x` of the frame's width. Not part of the project: a viewing aid, like the safe zones.
+export const COMPARE = { on: false, x: 0.5 };
+export function setCompare(on, x = COMPARE.x) { COMPARE.on = !!on; COMPARE.x = Math.max(0, Math.min(1, x)); }
+/** the frame's x fraction -> the clip source's u (cover fit, crop and Ken Burns zoom as core/render.js draws it) */
+function frameToU(f, item, t, env, sw, sh) {
+  const b = env.box, W = env.w; if (!b || !W) return f;
+  const c = item.crop || { l: 0, t: 0, r: 0, b: 0 }, cw = sw * (1 - c.l - c.r), ch = sh * (1 - c.t - c.b);
+  const s = Math.max(b.w / cw, b.h / ch); let vw = b.w / s, vx = sw * c.l + (cw - vw) / 2;
+  const z = item.zoom;
+  if (z && (z.from !== 1 || z.to !== 1)) {
+    const d = Math.max(0.001, itemDur(item)), q = Math.min(1, Math.max(0, (t - item.t0) / d));
+    const e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2, k = Math.max(1, (z.from || 1) + ((z.to || 1) - (z.from || 1)) * e);
+    const nw = vw / k; vx += (vw - nw) * (z.cx ?? 0.5); vw = nw;
+  }
+  return (vx + ((f * W - b.x) / b.w) * vw) / sw;
+}
 const SET = new Set(LOOK_FX);
 
 // ── face mask from landmarks (R = skin, G = eyes, B = under-eye) ──
@@ -105,19 +125,24 @@ export function processLook(src, item, t, project, env) {
   const g = gl(); if (!g) return null;
   const sw = src.displayWidth || src.videoWidth || src.naturalWidth || src.width, sh = src.displayHeight || src.videoHeight || src.naturalHeight || src.height;
   if (!sw || !sh) return null;
-  let grade = null, touch = null, bg = null;
-  for (const f of item.fx) { if (f.type === 'look.grade') grade = f; else if (f.type === 'look.touchup') touch = f; else if (f.type === 'look.bg') bg = f; }
+  let grade = null, touch = null, bg = null, adj = null;
+  for (const f of item.fx) { if (f.type === 'look.grade') grade = f; else if (f.type === 'look.touchup') touch = f; else if (f.type === 'look.bg') bg = f; else if (f.type === 'look.adjust') adj = f; }
+  if (adj && isNeutral(adj)) adj = null;
+  const cmp = !!(env.preview && COMPARE.on);
+  if (!grade && !touch && !bg && !adj && !cmp) return null;
   const st = srcTime(item, t);
   const look = lookById(grade?.look).p, amount = grade ? grade.amount ?? 1 : 0;
   // working size: what the clip occupies on the output (preview: the monitor; export: the frame), never above the source
-  const want = Math.max(256, Math.min(2160, Math.max(env.box.w, env.box.h) * (env.scale || 1)));
-  const k = Math.min(1, want / Math.max(sw, sh)), W = Math.max(2, Math.round(sw * k)), H = Math.max(2, Math.round(sh * k));
+  // (a clip with "Upscale" is enlarged here, up to the output's size, with a Lanczos filter instead of the bilinear one)
+  const up = wantsUpscale(adj);
+  const want = Math.max(256, Math.min(up ? 3840 : 2160, Math.max(env.box.w, env.box.h) * (env.scale || 1)));
+  const k = Math.min(up ? 4 : 1, want / Math.max(sw, sh)), W = Math.max(2, Math.round(sw * k)), H = Math.max(2, Math.round(sh * k));
   // the source is sampled bilinearly at the working size (the filtering drawImage gives a clip without effects, so
   // what the effects do not touch looks the same); only a strong downscale (the monitor) reads mipmaps
   const srcTex = g.upload('src', src, sw, sh, k < 0.6);
   const faces = touch && (touch.strength ?? 0.35) > 0 && item.media ? facesAt(item.media, st) : null;
   const mask = bg && item.media ? segAt(item.media, st) : null;
-  const needBlur = !!(faces?.length || (mask && bg.mode === 'blur') || (amount && (look.glow > 0 || look.clar > 0)));
+  const needBlur = !!(adj || faces?.length || (mask && bg.mode === 'blur') || (amount && (look.glow > 0 || look.clar > 0)));
   const bl = needBlur ? blurs(g, srcTex, W, H, { large: !!(mask && bg.mode === 'blur') }) : { small: srcTex, large: srcTex };
   const tex = { src: srcTex, blurS: bl.small, blurL: bl.large };
   const u = {
@@ -126,7 +151,10 @@ export function processLook(src, item, t, project, env) {
     Lexp: look.exp, Lcon: look.con, Lsat: look.sat, Lvib: look.vib, Ltemp: look.temp, Ltint: look.tint, Lfade: look.fade, Lbw: look.bw, Lglow: look.glow,
     Lvig: look.vig, Lgrain: look.grain, Lcurve: look.curve, Lclar: look.clar, Lsplit: look.split, Llift: look.lift, Lgamma: look.gamma, Lgain: look.gain, Lsh: look.sh, Lhi: look.hi, Lbwmix: look.bwmix,
     hasFace: 0, hasSeg: 0, bgMode: 0, Ts: 0, Teye: 0, Tunder: 0,
+    hasAdj: 0, upS: 0, cmpOn: 0, cmpU: 0, srcRes: [sw, sh],
   };
+  if (adj) Object.assign(u, adjustUniforms(adj, { upscale: up && k > 1.001 }));
+  if (cmp) Object.assign(u, { cmpOn: 1, cmpU: frameToU(COMPARE.x, item, t, env, sw, sh) });
   if (faces?.length) {
     tex.face = g.upload('face', drawFaceMask(faces, sw / sh), 0, 0);
     Object.assign(u, { hasFace: 1, Ts: touch.strength ?? 0.35, Teye: touch.eyes ?? 0.5, Tunder: touch.under ?? 0.5 });

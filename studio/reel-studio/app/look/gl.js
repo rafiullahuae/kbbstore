@@ -32,6 +32,61 @@ uniform float Lexp, Lcon, Lsat, Lvib, Ltemp, Ltint, Lfade, Lbw, Lglow, Lvig, Lgr
 uniform vec3 Llift, Lgamma, Lgain, Lsh, Lhi, Lbwmix;
 uniform float Ts, Teye, Tunder;
 uniform vec3 bgA, bgB; uniform vec2 bgScale, bgOff;
+// look.adjust (manual light / colour / detail sliders + Enhance video), see adjust.js for the ranges
+uniform int hasAdj, upS, cmpOn; uniform vec3 Again; uniform vec2 srcRes;
+uniform float Abri, Acon, Ahi, Ash, Awh, Abl, Asat, Avib, Asharp, Aclar, Avig, Adn, Askin, Alift, cmpU;
+float skinOf(vec3 c){                          // soft skin-tone mask (YCbCr), any skin colour
+  float y = luma(c), cb = (c.b - y) * .5389 + .5, cr = (c.r - y) * .6350 + .5;
+  vec2 d = (vec2(cb, cr) - vec2(.445, .585)) / vec2(.055, .05);
+  return exp(-dot(d, d) * .5) * smoothstep(.06, .2, y);
+}
+vec3 lanczos(vec2 p){                          // Lanczos-2 (4x4 taps) from the source's own pixel grid: upscaling
+  vec2 tc = p * srcRes - .5, f = fract(tc), b = (floor(tc) + .5) / srcRes; vec3 acc = vec3(0.); float ws = 0.;
+  for (int j = -1; j <= 2; j++) for (int i = -1; i <= 2; i++) {
+    vec2 d = vec2(float(i), float(j)) - f;
+    vec2 w = vec2(d.x == 0. ? 1. : sin(3.14159265 * d.x) * sin(1.5707963 * d.x) / (1.2337006 * d.x * d.x),
+                  d.y == 0. ? 1. : sin(3.14159265 * d.y) * sin(1.5707963 * d.y) / (1.2337006 * d.y * d.y));
+    float ww = w.x * w.y; acc += texture(src, b + vec2(float(i), float(j)) / srcRes).rgb * ww; ws += ww;
+  }
+  return clamp(acc / ws, 0., 1.);
+}
+vec3 srcAt(vec2 p){ return upS == 1 ? lanczos(p) : texture(src, p).rgb; }
+vec3 bilateral(vec2 p, vec3 c0, vec2 px){      // edge-keeping 5x5 denoise; the range kernel widens with the strength
+  float sr = mix(.025, .11, Adn), inv = 1. / (2. * sr * sr); vec3 acc = vec3(0.); float ws = 0.;
+  for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) {
+    vec3 c = texture(src, p + vec2(float(i), float(j)) * px).rgb, d = c - c0;
+    float w = exp(-dot(d, d) * inv - float(i * i + j * j) * .22); acc += c * w; ws += w;
+  }
+  return mix(c0, acc / ws, clamp(Adn * 1.6, 0., 1.));
+}
+vec3 adjust(vec3 c, vec3 bl, float skin, vec2 q){
+  c *= Again; bl *= Again;
+  float L = luma(clamp(bl, 0., 1.));
+  // low-light lift (Enhance): opens the shadows, most where the neighbourhood is dark
+  c = mix(c, pow(max(c, 0.), vec3(1. / (1. + Alift * 1.4))), 1. - smoothstep(0., .6, L));
+  // whites / blacks: the end points of the tone range
+  float bp = -Abl * .07, wp = 1. - Awh * .16; c = (c - bp) / (wp - bp);
+  // brightness: mid-tones (gamma), the ends stay put
+  c = pow(max(c, 0.), vec3(exp2(-Abri * .75)));
+  // shadows / highlights: local, from the neighbourhood's brightness (no flat grey look)
+  float ws = pow(1. - smoothstep(0., .5, L), 2.), wh = pow(smoothstep(.42, 1., L), 1.5);
+  c = Ash > 0. ? mix(c, pow(max(c, 0.), vec3(1. / (1. + Ash * .9))), ws) : c * (1. + Ash * ws * .55);
+  c = Ahi < 0. ? mix(c, c * (1. + Ahi * .42), wh) : mix(c, 1. - (1. - clamp(c, 0., 1.)) * (1. - Ahi * .45), wh);
+  // contrast about mid-grey
+  c = (c - .45) * (1. + Acon * (Acon > 0. ? .65 : .5)) + .45;
+  // clarity: local contrast in the mid-tones
+  float l = luma(clamp(c, 0., 1.));
+  c += (c - bl) * Aclar * .9 * (.35 + 2.6 * l * (1. - l));
+  // saturation / vibrance (vibrance lifts the dull colours first); skin-tone protection holds faces back
+  l = luma(c); float sat = max(max(c.r, c.g), c.b) - min(min(c.r, c.g), c.b);
+  float sk = skin * Askin, satK = 1. + Asat * (Asat > 0. ? 1. - sk * .55 : 1.);
+  float vibK = Avib * (1. - clamp(sat * 1.6, 0., 1.)) * (1. - sk * .75);
+  c = mix(vec3(l), c, max(0., satK + vibK));
+  // vignette (negative darkens the edges, positive lightens them)
+  float v = smoothstep(.25, .9, length((q - .5) * vec2(1., 1.15)));
+  c *= 1. + Avig * v * (Avig < 0. ? .85 : .5);
+  return c;
+}
 vec3 correct(vec3 c){ return max((c * mg + mo) * wb * exp2(ev), 0.); }
 vec3 grade(vec3 c, vec3 bl){
   vec3 c0 = c;
@@ -63,8 +118,23 @@ float segAlpha(vec2 p){
 }
 void main(){
   vec2 px = 1. / res;
-  vec3 orig = texture(src, uv).rgb, c = orig;
+  vec3 orig = srcAt(uv), c = orig;
   vec3 low = texture(blurS, uv).rgb;
+  float skin = 0.;
+  if (hasAdj == 1) {
+    skin = skinOf(orig);
+    // denoise and sharpen work on the SOURCE's pixel grid: the same scene detail at every working size, so the small
+    // preview monitor (which reads the mipmaps, where the grain is already averaged away) is the export scaled down
+    vec2 sp = 1. / srcRes;
+    if (Adn > 0.) { c = bilateral(uv, orig, sp); orig = c; }
+    if (Asharp > 0.) {                                                   // unsharp mask with noise coring, gentler on skin
+      vec3 m4 = .25 * (texture(src, uv + vec2(sp.x, 0.)).rgb + texture(src, uv - vec2(sp.x, 0.)).rgb + texture(src, uv + vec2(0., sp.y)).rgb + texture(src, uv - vec2(0., sp.y)).rgb);
+      vec3 m8 = .5 * (m4 + texture(blurS, uv).rgb);
+      vec3 d = c - mix(m4, m8, .35); float a = length(d);
+      d *= smoothstep(.004 + Adn * .03, .02 + Adn * .06, a);
+      c += d * Asharp * 1.6 * (1. - skin * Askin * .6); orig = c;
+    }
+  }
   if (hasFace == 1 && Ts > 0.) {
     vec4 fm = texture(face, uv);
     float skin = fm.r * Ts, eye = fm.g, under = fm.b;
@@ -77,6 +147,7 @@ void main(){
   }
   c = correct(c);
   vec3 bl = correct(low);
+  if (hasAdj == 1) { c = adjust(c, bl, skin, uv); bl *= Again; }
   vec3 g = grade(c, bl);
   if (bgMode > 0 && hasSeg == 1) {
     float a = segAlpha(uv);
@@ -90,6 +161,7 @@ void main(){
   float vig = smoothstep(.85, .25, length((uv - .5) * vec2(1., 1.15)));
   g *= mix(1., vig, Lvig * amount);
   g += (hash(floor(uv * res) + frame) - .5) * Lgrain * .09 * amount;
+  if (cmpOn == 1 && uv.x < cmpU) g = texture(src, uv).rgb;              // before / after: the untouched source on the left
   o = vec4(clamp(g, 0., 1.), 1.);
 }`,
   // two pictures A (outgoing) and B (incoming), p 0..1 across the transition, the cut at p = .5

@@ -21,6 +21,11 @@ import { PRESETS, textItem } from './text.js';
 import { samplePixels, autoCorrect, stats, matchTransfer } from './analyze.js';
 import { gl } from './gl.js';
 import { lookPanel } from './panel.js';
+import { registerInspectorSection } from '../core/modules.js';
+import { setAdjust, resetAdjust, enhanceVideo, setEnhancePart, enhanceOff, adjustAllLike, adjustOf, adjustTargets } from './enhance.js';
+import { adjustSection } from './adjust-panel.js';
+import { toggleCompare, compareOn } from './compare.js';
+import { SLIDERS, PARTS, adjustUniforms } from './adjust.js';
 
 export { LOOKS, KINDS, CURVES, EASES, PRESETS, processLook, coverageAt, facesAt, cutsOf, gl };
 
@@ -150,7 +155,27 @@ bus.on('project:change', () => {
 registerModule({
   id: 'look', label: 'Look', icon: '🎨',
   tab: { label: '🎨 Look', order: 10 },
-  panel: (el, ctx) => lookPanel(el, ctx, { applyLook, autoColour, matchTo, touchUp, removeBackground, clearFx, addTransitions, matchCut, speedRamp, addText, clipTargets }),
+  panel: (el, ctx) => lookPanel(el, ctx, { applyLook, autoColour, matchTo, touchUp, removeBackground, clearFx, addTransitions, matchCut, speedRamp, addText, clipTargets, enhanceVideo, toggleCompare }),
 });
 
 export { ensureAnalysis, ensureFreezeFrames, hasFace, itemEnd };
+
+// ── Adjust (light, colour, detail) + ✨ Enhance video ──
+export { setAdjust, resetAdjust, enhanceVideo, setEnhancePart, enhanceOff, adjustAllLike, adjustOf, adjustTargets, toggleCompare, compareOn, SLIDERS, PARTS, adjustUniforms };
+registerInspectorSection({
+  id: 'look-adjust',
+  when: (item, track, m) => item.type === 'clip' && !!m && m.kind !== 'audio',
+  render: (ctx, item) => adjustSection(ctx, item),
+});
+// in the editor's "Do it for me" bar: one click on the selected clips (or every clip)
+registerModule({
+  id: 'enhance-video', label: 'Enhance video', icon: '✨',
+  run: async (ctx) => {
+    const r = await enhanceVideo(ctx);
+    const sel = ctx.selection?.() || [], first = r[0];
+    if (first && !sel.length) window.kbbEditor?.select?.([first.id]);   // show what it did: the clip's 🎚 Adjust section
+    window.kbbEditor?.showSide?.('inspector');
+    return `✨ Enhanced ${r.length} clip${r.length === 1 ? '' : 's'}: light, colour, grain and sharpness. Fine-tune in 🎚 Adjust; ◧ Before / after compares.`;
+  },
+});
+
