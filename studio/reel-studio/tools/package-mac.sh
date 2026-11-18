@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds the folder the owner copies to his Mac: dist/KBB Studio/ and dist/KBB Studio.zip
+# Builds the folder the owner copies to his Mac: dist/KBB Studio/ and dist/KBB Studio v<APP_VERSION>.zip
 #   in:  the launcher, the engine for Apple silicon + Intel, the app (captions + automation, the Ad Studio), vendor (transformers.js,
 #        MediaPipe, mp4 muxer/demuxer, caption fonts), brand kits + country packs, the music/SFX libraries, the model
 #        LIST (models/manifest.json) and the README.
@@ -8,8 +8,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 NAME="KBB Studio"   # keep in step with app/core/config.js APP_NAME
+VER="$(sed -n "s/^export const APP_VERSION = '\([^']*\)'.*/\1/p" app/core/config.js)"
+[ -n "$VER" ] || { echo "APP_VERSION not found in app/core/config.js" >&2; exit 1; }
+ZIP="$NAME v$VER.zip"   # the folder inside stays "$NAME", so an update is still: replace the folder
 ./engine/build.sh >/dev/null
-rm -rf "dist/$NAME" "dist/$NAME.zip"
+rm -rf "dist/$NAME" "dist/$NAME.zip" "dist/$NAME v"*.zip
 # no workspaces/ or settings/: the owner's data lives in ~/KBB Studio Data (engine/data.go), never in this folder
 mkdir -p "dist/$NAME/engine" "dist/$NAME/models"
 cp "Start $NAME.command" README.md "GUIDE - keys and what to send.html" "dist/$NAME/"
@@ -33,5 +36,5 @@ if find "dist/$NAME/models" -type f ! -name manifest.json | grep -q .; then echo
 for d in workspaces settings library/music/user library/people; do
   if [ -e "dist/$NAME/$d" ]; then echo "user data ($d) leaked into the package" >&2; exit 1; fi
 done
-(cd dist && zip -qry -X "$NAME.zip" "$NAME")
-du -sh "dist/$NAME" "dist/$NAME.zip"
+(cd dist && zip -qry -X "$ZIP" "$NAME")
+du -sh "dist/$NAME" "dist/$ZIP"

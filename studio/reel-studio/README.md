@@ -5,7 +5,7 @@ download of its speech models, and only after you press **Allow**.
 
 ## 1. Put it on your Mac
 
-Unzip **KBB Studio.zip** and move the **KBB Studio** folder anywhere you like (Documents is fine). Everything the
+Unzip **KBB Studio v<version>.zip** (the version is also shown in ⚙ Configure) and move the **KBB Studio** folder anywhere you like (Documents is fine). Everything the
 studio makes stays inside this folder.
 
 ## 2. Open it the first time
@@ -385,8 +385,8 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
   in `library/sfx/hooks/` from `tools/v-sfx.cjs`; checked end to end by `tools/v-media.cjs` + `tools/v-check.cjs`.
 * `tools/` — `int-media.cjs` + `int-check.cjs` (end-to-end), `check-r1.cjs`, `check-models.cjs [--real]`,
   `r2-check.cjs`, `r3-check.cjs`, `c-media.cjs` + `c-fetch-models.cjs` + `c-check.cjs` (content / Create tab),
-  `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
-  `r2-check.cjs`, `k-check.cjs` + `k-editor.cjs` (captions round), `r3-check.cjs`, `package-mac.sh` (→ `dist/KBB Studio.zip`, models excluded).
+  `package-mac.sh` (→ `dist/KBB Studio v<APP_VERSION>.zip`, models excluded).
+  `r2-check.cjs`, `k-check.cjs` + `k-editor.cjs` (captions round), `r3-check.cjs`, `package-mac.sh` (→ `dist/KBB Studio v<APP_VERSION>.zip`, models excluded).
 * `app/designs/` — Brief → Designs: `lib/brief.js` (rule reader + `validateSpec`), `llm.js` (local Qwen / Claude),
   `lib/copy.js`, `lib/palette.js`, `layouts.js` (10 families, the Ad Studio's family idea ported to canvas px),
   `render.js` (one canvas renderer for thumbnails, editor, rules and export), `rules.js` (the scorer), `generate.js`,
