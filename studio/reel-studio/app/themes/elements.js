@@ -17,6 +17,7 @@ import { themeById } from './themes.js';
 import { drawCapsules, defaultCaps, capsHeight } from './capsules.js';
 import { FAM_PIECES, FAM_PAL, FAMILY_ICONS, FAMILY_LABELS, TRADE_IDS, TRADES, drawFam } from './fam.js';
 import { tx, textBegin, textEnd, setLastBoxes } from './text.js';
+import { EL2_ELEMENTS, EL2_DRAW, el2Style, el2Box } from './el2.js';
 
 const { clamp, easeOut, easeIO, easeIn, back, elastic, TAU, rnd, fr, mix, rgba, onColor } = A;
 
@@ -45,6 +46,8 @@ export const ELEMENTS = [
   { id: 'sticker', label: 'Sticker', icon: '⭐', dur: 3, box: 'sticker', whole: 'span', variants: ['flag', 'visa', 'plane', 'pin', 'coin', 'landmark', 'sparkle'], note: 'Animated sticker set', hidden: true },
   // the design families (2026-11): careers, travel, occupations, bright future -- big compositions, nothing bulletin
   ...famElements(),
+  // contact cards, the logo badge, the country globe badges (2026-11-18, ./el2.js)
+  ...EL2_ELEMENTS,
 ];
 /** one element per family piece: full-screen scenes start the reel, panels can run over the whole video */
 function famElements() {
@@ -60,7 +63,8 @@ const FAM_DEFAULT_ROLE = { 'fam-worker': 'nurse', 'fam-trades': 'welder', 'fam-d
 export const STICKER_LABELS = { flag: 'Flag badge', visa: 'Visa approved', plane: 'Plane', pin: 'Map pin', coin: 'Currency coin', landmark: 'Landmark badge', sparkle: 'Sparkle' };
 
 /** where an element sits by default (canvas px) */
-export function boxFor(el, W, H) {
+export function boxFor(el, W, H, variant) {
+  const xb = el2Box(el, W, H, variant); if (xb) return xb;
   const u = Math.min(W, H), land = W > H * 1.05, cw = (k, max) => Math.min(W * k, u * max);
   const at = (w, h, x, y) => ({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) });
   const top = land ? H * 0.06 : H * 0.075;
@@ -614,6 +618,9 @@ for (const def of ELEMENTS.filter((e) => e.fam)) {
 // ── CAPSULES CAROUSEL (./capsules.js): the item's own model, its time and the music's beats ──
 D.capsules = (c, K, S) => drawCapsules(c, S.style.caps || defaultCaps(), { w: S.w, h: S.h, t: S.tl, tg: S.t, beats: S.beats });
 
+// ── contact cards, logo badge, country globe badges (./el2.js) ──
+Object.assign(D, EL2_DRAW);
+
 export const ELEMENT_DRAW = D;
 
 // ── one renderer for theme.el, theme.sting, theme.outro ──
@@ -635,8 +642,8 @@ registerLayer('theme.sting', (ctx, item, t, project, env) => drawElement(ctx, 'i
 registerLayer('theme.outro', (ctx, item, t, project, env) => drawElement(ctx, 'end', item, project, env));
 
 /** a theme.el item for el at t0 (canvas px box); text placeholders start empty so the kit's words show */
-export function elementStyle(themeId, el, { colors, variant, whole, text, brand, logo } = {}) {
-  return { theme: themeId, el, colors: colors || null, variant: variant || (el === 'sticker' ? 'flag' : elementById(el)?.variants && elementById(el)?.fam ? FAM_DEFAULT_ROLE[el] || 'nurse' : undefined), whole: whole || false, text: text || {}, brand: brand || null, logo: logo || null, ...(el === 'capsules' ? { caps: defaultCaps() } : {}) };
+export function elementStyle(themeId, el, { colors, variant, whole, text, brand, logo, ws } = {}) {
+  return { theme: themeId, el, colors: colors || null, variant: variant || (el === 'sticker' ? 'flag' : elementById(el)?.variants && elementById(el)?.fam ? FAM_DEFAULT_ROLE[el] || 'nurse' : undefined), whole: whole || false, text: text || {}, brand: brand || null, logo: logo || null, ...(el === 'capsules' ? { caps: defaultCaps() } : {}), ...el2Style(el, { ws, variant, theme: themeId }) };
 }
 
 /**

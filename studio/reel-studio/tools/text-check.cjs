@@ -417,6 +417,7 @@ function frameRGB(file, t, w, h) {
     }
     for (const def of EL.ELEMENTS) {
       if (def.id === 'split' || def.id === 'end') continue;   // split reads the canvas behind it; end: fixed (it threw on every frame)
+      if (!OLD.elementById(def.id)) continue;   // an element the old tree did not have (no old project can hold one)
       const it = { id: 'old-' + def.id, type: 'theme.el', t0: 0, in: 0, out: 4, x: 0, y: 0, ...EL.boxFor(def.id, 1080, 1920), style: EL.elementStyle('country-de', def.id, {}) };
       it.x = 0; it.y = 0; const k = 0.3; cv.width = Math.ceil(it.w * k); cv.height = Math.ceil(it.h * k); counts.el++;
       for (const t of [0.3, 1.1, 2.0, 3.3]) {

@@ -253,7 +253,7 @@ export function elementSpec(themeId, el, { variant, canvas, onStop } = {}) {
   p.tracks[0].items.push(clipItem(p, 0, dur + 1));
   let style;
   if (el === 'overlay') { style = themeStyle(th, { intensity: 'bold', faces: [sampleFace(W, H)] }); p.tracks[1].items.push(createItem('theme.overlay', { t0: 0, in: 0, out: dur + 1, x: 0, y: 0, w: W, h: H, style })); }
-  else { style = { ...elementStyle(th.id, el, { variant }), colors: null }; p.tracks[2].items.push(createItem('theme.el', { t0: 0.1, in: 0, out: Math.min(def.dur, dur - 0.2), ...boxFor(el, W, H), style })); }
+  else { style = { ...elementStyle(th.id, el, { variant }), colors: null }; p.tracks[2].items.push(createItem('theme.el', { t0: 0.1, in: 0, out: Math.min(def.dur, dur - 0.2), ...boxFor(el, W, H, variant), style })); }
   let ready = null;
   return { id: 'el:' + themeId + ':' + el + (variant || ''), label: def?.label || 'Theme overlay', aspect: '9:16', canvas, dur, onStop, prepare: () => (ready ||= loadAssets(style)), draw: (g, w, h, t) => drawMini(g, w, h, p, t), project: p };
 }

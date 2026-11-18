@@ -15,6 +15,8 @@ let FAM_ELS = null; import('../themes/elements.js').then((m) => { FAM_ELS = m.EL
 let CAPS_PANEL = null; import('../themes/capsules-panel.js').then((m) => { CAPS_PANEL = m; }).catch(() => {});
 // a theme element's Text and Text style sections (themes/text-panel.js), loaded with the editor the same way
 let TEXT_PANEL = null; import('../themes/text-panel.js').then((m) => { TEXT_PANEL = m; }).catch(() => {});
+// contact cards, the logo badge, country badges and the cut-out transitions (themes/el2-panel.js), loaded the same way
+let EL2_PANEL = null; import('../themes/el2-panel.js').then((m) => { EL2_PANEL = m; }).catch(() => {});
 
 const FONTS = ['system-ui', 'Helvetica Neue', 'Avenir Next', 'Futura', 'Gill Sans', 'Georgia', 'Didot', 'Baskerville', 'Times New Roman', 'Courier New', 'Arial Rounded MT Bold', 'Impact', 'Geeza Pro', 'Damascus', 'Baghdad'];
 const pct = (v) => Math.round(v * 100) + '%';
@@ -168,6 +170,7 @@ export class Inspector {
       const kind = select(T.TRANSITIONS.map((x) => [x.id, x.label]), item.style?.kind || 'slabs', (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.kind = v; this.set(item, { style, name: `${T.TRANSITIONS.find((x) => x.id === v)?.icon || ''} ${T.TRANSITIONS.find((x) => x.id === v)?.label || v}` }, 'Transition kind'); this.seal(); });
       kind.dataset.th = 'kind';
       this.el.append(this.section('Country transition', field('Duration', len), field('Switch', kind), h('small.muted', 'It sits on the cut between two clips: both clips show through it. Delete removes it; Themes → Transitions puts one on every cut.')));
+      if (EL2_PANEL && /^cut-/.test(item.style?.kind || '')) this.el.append(EL2_PANEL.cutTransSection(this, item));
       // a page turn or a boarding pass draws words: they are edited like an element's
       if (TEXT_PANEL && TEXT_PANEL.fieldsFor(item, this.ed.project).length) this.el.append(...TEXT_PANEL.themeTextSections(this, item));
     });
@@ -194,6 +197,7 @@ export class Inspector {
     const fd = this.famDef?.(el);
     if (fd?.variants) kids.push(field('Trade', select(fd.variants.map((v) => [v, fd.variantLabels?.[v] || v]), item.style?.variant || fd.variants[0], (v) => { const style = JSON.parse(JSON.stringify(item.style || {})); style.variant = v; this.set(item, { style }, 'Trade'); this.seal(); })));
     this.el.append(this.section('Theme element', ...kids));
+    if (EL2_PANEL?.handles(el)) this.el.append(...EL2_PANEL.inspectorSections(this, item));
     // every word it draws, prefilled and live, plus its text style (themes/text-panel.js)
     if (el !== 'capsules' && TEXT_PANEL) this.el.append(...TEXT_PANEL.themeTextSections(this, item));
     if (el === 'capsules' && CAPS_PANEL) { const box = h('div', { dataset: { capsInsp: item.id } }); this.el.append(box); CAPS_PANEL.capsulesInspector(this, item, box); }

@@ -1,0 +1,7 @@
+PASS test reel: presenter | b-roll | presenter, cuts at 2.00 and 4.00 s (kbb)
+PASS 9 stills in shots/elements2/: 01-cta-phone-whatsapp, 02-cta-qr-scan-to-chat, 03-cta-book-consultation, 04-logo-badges-kbb-and-planet-careers, 05-country-badges-europe-glass-germany-flagring, 06-country-badges-stamp-neon-uae, 07-cutout-person-stays-background-swaps, 08-cutout-text-behind-person, 09-ending-screen-big-whatsapp
+PASS 50 previews (432×768, 4 s, mp4 + jpg poster) in tools/out/elements2/ in 248 s
+PASS no console errors (0)
+PASS no network outside the engine (0)
+
+ALL PASS · 257 s

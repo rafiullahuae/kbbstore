@@ -14,12 +14,15 @@ import { THEMES, GROUPS, themeById } from './themes.js';
 import { suggestThemes, countryOf } from './suggest.js';
 import { applyTheme, tuneTheme, tuneLayer as tuneL, removeTheme, resyncBeats, followReel, reelEnd, overlayOf, detectFaces, beatsOf, themeStyle, placeElement, setWhole, isWhole, wholeItems, signatureOf } from './apply.js';
 import { recipeById } from '../auto/recipes/recipes.js';
+import { addLogo, setBadge, badgeMentions, refreshContact, mentionBadges } from './el2-cmds.js';
 
 export { THEMES, GROUPS, themeById, suggestThemes, countryOf, detectFaces, beatsOf, overlayOf, themeStyle, followReel, reelEnd, placeElement, setWhole, isWhole, wholeItems, signatureOf };
 export { ELEMENTS, elementById, boxFor } from './elements.js';
 export { kitFor } from './kit.js';
 export { TRANSITIONS, placeTransition, setTransitionDuration, cutsOf as cutPairs, transitionOf } from './transitions.js';
 export { pulseAt, renderThemeLayer, avoidBoxes, loadAssets, INTENSITY, ELEMENT_KINDS } from './draw.js';
+// contact cards, logo badge, country badges (./el2.js) — the commands also register the follow hook
+export { addLogo, setBadge, badgeMentions, refreshContact, mentionBadges };
 
 const textOf = (p) => (p.captions?.words || []).map((w) => w.w).join(' ');
 export function suggest(ctx, limit = 3) {
