@@ -1,0 +1,230 @@
+// KBB Studio — core/search-index.js: the curated half of the search index and of the hover help (the owner, 18 Nov:
+// "if i write trim, it should give the trim option which take me exactly to the trim box … also if possible 1 line
+// description for each search result for the user guide" and "a short description for each function by mouse over").
+//
+// One entry per feature, written from what the code does (README, the controls' own tooltips, the modules' run()):
+//   title   what it is called on screen          where   the breadcrumb ("Inspector → Speed")
+//   desc    one line, a user guide's sentence      more    a second line for the hover card (optional)
+//   syn     the words people use for it           ar      its Arabic name (Arabic queries)
+//   key     its shortcut                           group   Actions | Settings | Panels | Help
+//   go      how to get there (editor/search-nav.js):
+//             screen  'editor' | 'home' | 'configure' | 'designs' | 'models' | 'adstudio'
+//             side    a right-column tab ('inspector', 'captions', 'mod:look' …)   bin  a left tab label ('Music')
+//             cfg     a Configure section id   captab  a Captions sub-tab   modal  'export' | 'shortcuts' | 'company'
+//             need    what must be selected first: 'clip' | 'text' | 'caption' | 'capsules' | 'none'
+//             sec     the folded sections to open, outermost first (by their summary words)
+//             sel     a CSS selector for the control, or label: its words (as core/search-crawl.js reads them)
+//             run     true: a one-shot action (the result offers "Run" and "Show me where")
+//             help    a short how-to shown in a card (Help entries)
+// The crawl (core/search-crawl.js) adds every other control on its own; an entry here wins over the crawl's copy
+// of the same control (matched by `sel`/`label` and place), and lends it its description on hover.
+
+const E = (group, icon, title, where, desc, go, x = {}) => ({ group, icon, title, where, desc, go, ...x });
+const A = 'Actions', S = 'Settings', P = 'Panels', HELP = 'Help';
+const ED = 'editor';
+const ins = (sec, label, x = {}) => ({ screen: ED, side: 'inspector', need: 'clip', sec: [sec], label, ...x });
+const look = (sec, label) => ({ screen: ED, side: 'mod:look', sec: sec ? [sec] : undefined, label });
+const audio = (sec, label) => ({ screen: ED, side: 'mod:audio', sec: sec ? [sec] : undefined, label });
+const viral = (sec, label) => ({ screen: ED, side: 'mod:viral', sec: [sec], label });
+const tl = (label, x = {}) => ({ screen: ED, region: 'section.timeline', label, ...x });
+const cap = (captab, label, x = {}) => ({ screen: ED, side: 'captions', captab, label, ...x });
+const cfg = (sec, label, x = {}) => ({ screen: 'configure', cfg: sec, label, ...x });
+
+export const CATALOGUE = [
+  // ── the editor's top bar ──
+  E(A, '⬇', 'Export', 'Top bar', 'Makes the finished MP4: 720p to 4K, 30 or 60 fps, quality up to Max, plus other shapes if you tick them.', { screen: ED, sel: '.export-btn', run: true }, { key: '⌘E', syn: ['render', 'save video', 'download video', 'mp4', 'output'], ar: 'تصدير', more: 'It warns you first if captions or stickers sit under the platform buttons.' }),
+  E(S, '▭', 'Reel shape (9:16, 1:1, 4:5, 16:9)', 'Top bar', 'Changes the reel’s shape; text, captions and stickers are re-laid out for it.', { screen: ED, sel: '.topbar .aspect' }, { syn: ['aspect ratio', 'format', 'vertical', 'square', 'portrait', 'landscape', 'reel tiktok', 'feed', 'youtube', 'resize'], ar: 'مقاس' }),
+  E(A, '↶', 'Undo', 'Top bar', 'Takes back the last change; every edit and every one-click tool is one step.', { screen: ED, sel: '.topbar .icon-btn[title^="Undo"], .topbar .icon-btn[title="Nothing to undo"]' }, { key: '⌘Z', syn: ['revert', 'go back', 'mistake'], ar: 'تراجع' }),
+  E(A, '↷', 'Redo', 'Top bar', 'Puts back the change you just undid.', { screen: ED, sel: '.topbar .icon-btn[title^="Redo"], .topbar .icon-btn[title="Nothing to redo"]' }, { key: '⇧⌘Z', ar: 'إعادة' }),
+  E(HELP, '⌨', 'Keyboard shortcuts', 'Top bar → ⌨', 'Every key in one sheet: play, split, blade, ranges, nudge, undo, zoom and the rest.', { screen: ED, sel: '.topbar button[title^="Keyboard"]', run: true }, { key: '?', syn: ['keys', 'hotkeys', 'cheat sheet'], ar: 'اختصارات' }),
+  E(S, '✎', 'Reel name', 'Top bar', 'The name of this reel; it is also the export’s file name.', { screen: ED, sel: '.topbar .proj-name' }, { syn: ['rename', 'project name', 'title of reel'] }),
+  E(A, '⏻', 'Stop KBB Studio', 'Top bar', 'Saves, then stops the studio; double-click “Start KBB Studio” to open it again.', { screen: ED, sel: '.stop-btn' }, { syn: ['quit', 'close', 'exit', 'shut down'] }),
+  E(P, '▶', 'Home screen', 'Top bar → KBB Studio', 'Back to Home: new reel, drop a video, Recent reels, Brief → Designs, Ad Studio.', { screen: 'home', sel: '.home-top .brand' }, { syn: ['home', 'start screen', 'recent reels', 'open reel'], ar: 'الرئيسية' }),
+  E(S, '🏢', 'Switch company', 'Top bar → company', 'Picks the company (KBB, Planet Careers …): its brand kit, recipes, music and folders follow.', { screen: ED, sel: '.topbar .ws-switch' }, { syn: ['workspace', 'brand', 'client', 'planet careers', 'kbb'] }),
+
+  // ── Do it for me ──
+  E(A, '💬', 'Auto captions', 'Do it for me', 'Listens to the video on this Mac and writes word-by-word captions in your company’s style.', { screen: ED, sel: '.doit-btn[data-mod="auto-captions"]', run: true }, { syn: ['subtitles', 'transcribe', 'speech to text', 'generate captions', 'caption'], ar: 'ترجمة نصية تلقائية', more: 'Then Sync moves every word to the moment it is said. One undo step.' }),
+  E(A, '✨', 'Auto reel', 'Do it for me', 'Cuts a 30-second reel from your footage with the company’s recipe: the best moments, in order.', { screen: ED, sel: '.doit-btn[data-mod="auto-reel"]', run: true }, { syn: ['auto edit', 'highlights', 'make reel', 'best moments'] }),
+  E(A, '✂️', 'Remove silences', 'Do it for me', 'Finds the pauses in the speech and cuts them out, closing the gaps.', { screen: ED, sel: '.doit-btn[data-mod="remove-silences"]', run: true }, { syn: ['silence', 'pauses', 'dead air', 'gaps', 'jump cut'], ar: 'حذف الصمت' }),
+  E(A, '🎵', 'Add music', 'Do it for me', 'Picks a track from the library that fits the reel and dips it under speech.', { screen: ED, sel: '.doit-btn[data-mod="add-music"]', run: true }, { syn: ['song', 'background music', 'soundtrack', 'bgm'], ar: 'إضافة موسيقى' }),
+  E(A, '🎨', 'Suggest style', 'Do it for me', 'Looks at your video and proposes recipes (style, pace, music) that fit it; Use applies one.', { screen: ED, sel: '.doit-btn[data-mod="suggest-style"]', run: true }, { syn: ['recipe', 'style ideas', 'suggestions'], more: 'Nothing changes until you press “Use this recipe”.' }),
+  E(A, '💥', 'Auto effects', 'Do it for me', 'Adds transitions on the cuts, punch-ins and pops where they help, in one undo step.', { screen: ED, sel: '.doit-btn[data-mod="auto-effects"]', run: true }, { syn: ['effects', 'punch in', 'auto transitions'] }),
+  E(A, '✨', 'Enhance video', 'Do it for me · Inspector → Adjust · Look', 'Measures each clip and fixes exposure and white balance, lifts dark footage, removes grain and sharpens.', { screen: ED, sel: '.doit-btn[data-mod="enhance-video"]', run: true }, { syn: ['improve video', 'fix lighting', 'auto colour', 'brighten', 'denoise video', 'sharpen', 'quality'], ar: 'تحسين الفيديو', more: 'Each part has its own switch in Inspector → Adjust.' }),
+  E(A, '🎙', 'Enhance voice', 'Do it for me · Audio → Enhance voice', 'Cleans the voice: background noise, hum, echo, EQ, de-ess, compression and −14 LUFS loudness.', { screen: ED, sel: '.doit-btn[data-mod="enhance-voice"]', run: true }, { syn: ['noise removal', 'remove noise', 'denoise', 'clean audio', 'background noise', 'hum', 'echo', 'voice', 'microphone'], ar: 'تحسين الصوت', more: 'Strength from Light to Strong; Listen A/B compares before and after.' }),
+  E(A, '🪝', 'Hook builder', 'Do it for me · Viral → Hook builder', 'Writes 10 opening lines from what you say and puts the best one on screen for the first 2 seconds.', { screen: ED, sel: '.doit-btn[data-mod="viral-hook"]', run: true }, { syn: ['hook', 'opening line', 'intro text', 'first seconds'] }),
+  E(A, '🎣', 'Add a hook', 'Do it for me · Viral → Natural hooks', 'Adds a video hook (snap zoom, freeze + scratch, whip-in …) with a matching sound on the first beat.', { screen: ED, sel: '.doit-btn[data-mod="viral-natural"]', run: true }, { syn: ['video hook', 'attention', 'record scratch'] }),
+  E(A, '⚡', 'Tighten', 'Do it for me · Viral → Jump-cut tightening', 'Cuts the breaths and gaps between words, never inside a word, with tiny fades.', { screen: ED, sel: '.doit-btn[data-mod="viral-tighten"]', run: true }, { syn: ['jump cut', 'breaths', 'gaps', 'shorten', 'faster pace'] }),
+  E(A, '🔁', 'Loop ending', 'Do it for me · Viral → Loop ending', 'Blends the last moment into the first frame so the reel replays seamlessly.', { screen: ED, sel: '.doit-btn[data-mod="viral-loop"]', run: true }, { syn: ['loop', 'seamless', 'replay'] }),
+  E(A, '📣', 'CTA', 'Do it for me · Viral → CTA builder', 'Adds a call to action (“Comment VISA”, link in bio, DM, WhatsApp, call) in your colours.', { screen: ED, sel: '.doit-btn[data-mod="viral-cta"]', run: true }, { syn: ['call to action', 'comment', 'link in bio', 'whatsapp'] }),
+
+  // ── left panel ──
+  E(P, '🎞', 'Media', 'Left panel → Media', 'Your videos, photos and music for this reel: add files, then + or drag them onto the timeline.', { screen: ED, bin: 'Media' }, { syn: ['import', 'files', 'upload', 'add video', 'add photo', 'bin'], ar: 'الوسائط' }),
+  E(A, '＋', 'Add videos, photos, music', 'Left panel → Media', 'Opens a file picker; you can also drop files anywhere on the editor.', { screen: ED, bin: 'Media', label: 'Add videos, photos, music or drop files anywhere' }, { syn: ['import', 'upload', 'open file', 'add clip'] }),
+  E(P, '🎵', 'Music library', 'Left panel → Music', 'Royalty-free tracks: ▶ listens, + adds at the playhead, or drag a row onto the timeline.', { screen: ED, bin: 'Music' }, { syn: ['songs', 'tracks', 'soundtrack', 'background music'], ar: 'موسيقى' }),
+  E(P, '🔊', 'Sound effects (SFX)', 'Left panel → SFX', 'Whooshes, hits, pops and risers: ▶ listens, + adds one at the playhead.', { screen: ED, bin: 'SFX' }, { syn: ['sfx', 'whoosh', 'swoosh', 'sound effect', 'ding'], ar: 'مؤثرات صوتية' }),
+  E(P, 'T', 'Text', 'Left panel → Text', 'Adds a title, subtitle, lower third, price tag, call to action or a shape at the playhead.', { screen: ED, bin: 'Text' }, { syn: ['title', 'add text', 'lower third', 'price', 'shape', 'box', 'circle'], ar: 'نص' }),
+  E(P, '✨', 'Stickers', 'Left panel → Stickers', 'Emoji and stickers; Planet Careers also gets flags, maps and country stickers for 33 countries.', { screen: ED, bin: 'Stickers' }, { syn: ['emoji', 'flags', 'country sticker', 'gif'], ar: 'ملصقات' }),
+  E(P, '▦', 'Templates (recipes)', 'Left panel → Templates', 'The company’s recipes: Use sets the style for this reel, Make reel cuts one from your video now.', { screen: ED, bin: 'Templates' }, { syn: ['recipe', 'template', 'preset style'], ar: 'قوالب' }),
+
+  // ── the right column's tabs ──
+  E(P, '⚙', 'Inspector', 'Right panel → Inspector', 'Settings for whatever is selected: speed, sound, adjust, zoom, crop, position; the project when nothing is.', { screen: ED, side: 'inspector', sel: '.side-tab[data-side="inspector"]' }, { syn: ['properties', 'settings', 'selected clip'] }),
+  E(P, '💬', 'Captions', 'Right panel → Captions', 'The transcript, Script, Style templates and Translate: click a word to jump, double-click to correct it.', { screen: ED, side: 'captions', sel: '.side-tab[data-side="captions"]' }, { syn: ['subtitles', 'transcript', 'srt'], ar: 'الترجمة النصية' }),
+  E(P, '🎨', 'Look', 'Right panel → Look', 'Colour looks, Enhance video, skin touch-up, background, transitions, speed ramp and text animation.', { screen: ED, side: 'mod:look', sel: '.side-tab[data-side="mod:look"]' }, { syn: ['colour grade', 'filters', 'lut', 'effects'], ar: 'المظهر', more: 'A look applies to the selected clip, or to every clip with nothing selected.' }),
+  E(P, '✨', 'Themes', 'Right panel → Themes', 'Dresses the whole reel in one click: moving elements, intro, outro, transitions, a title and sounds.', { screen: ED, side: 'mod:themes', sel: '.side-tab[data-side="mod:themes"]' }, { syn: ['theme', 'country theme', 'ramadan', 'eid', 'petals', 'overlay'], ar: 'السمات', more: 'Hover a tile to preview it; click to put it on. ⌘Z takes it off.' }),
+  E(P, '⏱', 'Sync', 'Right panel → Sync', 'Word-perfect captions: every word moved to the moment it is said, plus caption timing and word timing.', { screen: ED, side: 'mod:sync', sel: '.side-tab[data-side="mod:sync"]' }, { syn: ['word sync', 'timing', 'lip sync', 'align'], ar: 'مزامنة' }),
+  E(P, '🎞', 'Cutaways', 'Right panel → Cutaways', 'Show something else while you talk: mark a range, then an image, slide, product, country or occupation.', { screen: ED, side: 'mod:cutaways', sel: '.side-tab[data-side="mod:cutaways"]' }, { syn: ['b-roll', 'broll', 'insert', 'overlay picture'] }),
+  E(P, '🔊', 'Audio', 'Right panel → Audio', 'Enhance voice, ducking, loudness for each platform and sound design (SFX on cuts, beats, risers).', { screen: ED, side: 'mod:audio', sel: '.side-tab[data-side="mod:audio"]' }, { syn: ['sound', 'mix', 'voice'], ar: 'الصوت' }),
+  E(P, '🔥', 'Viral', 'Right panel → Viral', 'Hook builder, natural hooks, retention, tighten, smart zooms, safe zones, loop, CTA, chapters, A/B, claim safety.', { screen: ED, side: 'mod:viral', sel: '.side-tab[data-side="mod:viral"]' }, { syn: ['go viral', 'engagement', 'growth'] }),
+  E(P, '🚀', 'Create', 'Right panel → Create', 'One click each: apply a look, fill dead spots with b-roll, proven formats, series, covers, post copy, every shape, shorts.', { screen: ED, side: 'mod:create', sel: '.side-tab[data-side="mod:create"]' }, { syn: ['cover', 'thumbnail', 'post copy', 'hashtags', 'series', 'teleprompter', 'shorts'] }),
+  E(P, '📷', 'Photos (Pexels / Unsplash)', 'Right panel → Photos', 'Finds free stock photos of workers, cities and scenes on Pexels or Unsplash and saves them to the company.', { screen: ED, side: 'mod:stock-photos', sel: '.side-tab[data-side="mod:stock-photos"]' }, { syn: ['stock photos', 'pexels', 'unsplash', 'worker photos', 'images'], ar: 'صور', more: 'Needs a free Pexels or Unsplash key in Configure → Photo sources.' }),
+  E(P, '🖼', 'Designs (in the editor)', 'Right panel → Designs', 'Your designs for this company, and a way to make matching ones for this reel.', { screen: ED, side: 'mod:designs', sel: '.side-tab[data-side="mod:designs"]' }, { syn: ['poster', 'story', 'post design'] }),
+
+  // ── Inspector: project ──
+  E(S, '🎞', 'Frame rate (30 / 60 fps)', 'Inspector → Format', 'The reel’s frame rate; 60 fps is smoother for motion.', { screen: ED, side: 'inspector', need: 'none', sec: ['Format'], label: '30 fps' }, { syn: ['fps', 'framerate', 'smooth'] }),
+  E(S, '🎨', 'Background colour', 'Inspector → Format', 'The colour behind everything, seen where the video does not fill the frame.', { screen: ED, side: 'inspector', need: 'none', sec: ['Format'], label: 'Background' }, { syn: ['canvas colour', 'bg colour', 'letterbox'], ar: 'لون الخلفية' }),
+
+  // ── Inspector: a clip ──
+  E(S, '⏩', 'Speed', 'Inspector → Speed', '¼× to 3× (or the Custom slider) for the selected clip; the clips after it move along.', ins('Speed', 'Custom speed'), { syn: ['slow motion', 'slowmo', 'fast forward', 'speed up', 'slow down', 'faster', 'slower', 'quicker', 'timelapse', 'playback rate'], ar: 'السرعة', more: 'Right-click a clip on the timeline → Speed does the same; Shift-drag an edge stretches it.' }),
+  E(S, '📈', 'Speed ramp', 'Inspector → Speed', 'Presets (Slow-mo hit, Speed-up, Ramp in/out, Bullet time, Montage) and a curve you shape by dragging points.', ins('Speed', 'Slow-mo hit'), { syn: ['ramp', 'speed curve', 'bullet time', 'velocity'], more: 'Double-click the curve to add or remove a point; the clip’s length follows it.' }),
+  E(S, '🎞', 'Smooth slow motion', 'Inspector → Speed → Slow-mo', 'How in-between frames are made when slowed: Frame blend (live and in export) or Optical flow (export).', ins('Speed', 'Slow-mo'), { syn: ['frame blend', 'optical flow', 'interpolation', 'smooth'] }),
+  E(A, '⏪', 'Reverse', 'Inspector → Speed', 'Plays the selected clip backwards; press again to play it forwards.', ins('Speed', 'Reverse'), { syn: ['backwards', 'rewind', 'reverse clip'], ar: 'عكس' }),
+  E(A, '❄', 'Freeze frame', 'Inspector → Speed', 'Holds the frame under the playhead for 1–5 s: splits the clip, adds the hold, moves the rest on.', ins('Speed', 'Freeze frame'), { syn: ['freeze', 'still', 'hold frame', 'pause frame'], ar: 'تجميد' }),
+  E(S, '🎤', 'Keep pitch', 'Inspector → Speed', 'Keeps a natural voice at any speed instead of chipmunk or slow-mo voices.', ins('Speed', 'Keep pitch (natural voice at any speed)'), { syn: ['pitch', 'chipmunk', 'voice speed'] }),
+  E(S, '🔇', 'Mute sound while ramping', 'Inspector → Speed', 'Silences the clip’s own sound while its speed changes along a ramp.', ins('Speed', 'Mute sound while ramping')),
+  E(S, '🔊', 'Clip volume', 'Inspector → Sound', 'The selected clip’s own volume, 0–200 %, with Mute and fade in / fade out.', ins('Sound', 'Volume'), { syn: ['volume', 'louder', 'quieter', 'gain', 'mute clip', 'fade audio'], ar: 'مستوى الصوت' }),
+  E(S, '🎚', 'Adjust (light, colour, detail)', 'Inspector → Adjust', 'Sliders for exposure, contrast, highlights, shadows, temperature, saturation, sharpness, denoise and vignette.', ins('Adjust', 'Exposure'), { syn: ['brightness', 'contrast', 'exposure', 'saturation', 'temperature', 'white balance', 'colour correction', 'sharpen', 'vignette'], ar: 'ضبط الألوان', more: 'For This clip or All clips; double-click a slider (or ↺) to zero it.' }),
+  E(A, '◧', 'Before / after', 'Inspector → Adjust · Look → Enhance video', 'Splits the preview: the untouched clip on the left, drag the divider to compare.', ins('Adjust', 'Before / after'), { syn: ['compare', 'split view', 'a b'] }),
+  E(S, '🔍', 'Upscale low-res clip', 'Inspector → Adjust', 'Enlarges small clips on export with a sharp Lanczos filter.', ins('Adjust', 'Upscale low-res clip on export'), { syn: ['upscale', 'resolution', 'enlarge', 'low quality'] }),
+  E(S, '🔍', 'Zoom (Ken Burns)', 'Inspector → Zoom (Ken Burns)', 'Slow zoom in, slow zoom out or a punch-in on the selected clip, with start and end amounts.', ins('Zoom (Ken Burns)', 'Slow zoom in'), { syn: ['ken burns', 'zoom in', 'punch in', 'scale animation'], ar: 'تكبير' }),
+  E(S, '✂', 'Crop', 'Inspector → Crop', 'Trims the picture’s edges: left, right, top and bottom.', ins('Crop', 'Left'), { syn: ['crop video', 'cut edges', 'frame edges'], ar: 'اقتصاص' }),
+  E(S, '⌖', 'Position & size', 'Inspector → Position & size', 'X, Y, width and height, Fill / Fit / Centre in the frame, rotate and opacity.', ins('Position & size', 'Fill'), { syn: ['move', 'scale', 'rotate', 'opacity', 'transparency', 'resize', 'fit', 'fill', 'pip', 'picture in picture'], ar: 'الموضع والحجم' }),
+  E(S, '🎛', 'Quick filters', 'Inspector → Quick filters', 'Simple filter presets plus brightness, contrast, saturation, warmth and blur sliders.', ins('Quick filters', 'Brightness'), { syn: ['filter', 'blur', 'warmth', 'black and white', 'sepia'] }),
+  E(S, '🌗', 'Fade in / out', 'Inspector → Fade', 'Fades a text, sticker or picture in and out (0–3 s).', { screen: ED, side: 'inspector', need: 'text', sec: ['Fade'], label: 'Fade in' }, { syn: ['fade', 'appear', 'disappear'] }),
+
+  // ── Inspector: text ──
+  E(S, 'T', 'Text: words, font and size', 'Inspector → Text', 'Edit the text, its font, size (12–260 px), weight, alignment, colours, box, shadow and outline.', { screen: ED, side: 'inspector', need: 'text', sec: ['Text'], label: 'Font' }, { syn: ['font', 'typeface', 'text size', 'bigger text', 'bold', 'outline', 'stroke', 'shadow'], ar: 'الخط', more: 'Select a text on the timeline or the video first; Left panel → Text adds one.' }),
+  E(S, '⏱', 'Text duration', 'Inspector → Timing', 'How long the selected text stays on screen (0.5–30 s).', { screen: ED, side: 'inspector', need: 'text', sec: ['Timing'], label: 'Duration' }, { syn: ['how long', 'length'] }),
+  E(S, '⇤', 'Align & distribute', 'Inspector (several selected)', 'Lines up two or more selected items by their edges or centres, or spaces three evenly.', { screen: ED, side: 'inspector', need: 'multi', sec: ['Align'] }, { syn: ['align', 'distribute', 'line up', 'group'] }),
+
+  // ── timeline ──
+  E(A, '✂', 'Split', 'Timeline toolbar', 'Cuts the selected clip (or everything) at the playhead’s frame.', tl('Split', { run: true }), { key: 'S · ⌘B', syn: ['cut', 'trim', 'split clip', 'divide', 'scissors'], ar: 'قص', more: 'Move the playhead over a clip first.' }),
+  E(A, '✂', 'Trim a clip', 'Timeline → drag a clip’s edge', 'Drag the start or end of a clip on the timeline to trim it; Alt-drag an edge is a ripple trim.', { screen: ED, need: 'clip', sel: 'section.timeline .tl-item.sel', help: 'Drag the selected clip’s left or right edge to trim it (Alt-drag: ripple trim, Shift-drag: stretch its speed). Split (S) or Blade (B) cut at a frame.' }, { syn: ['trim', 'shorten', 'cut the end', 'cut the start', 'ripple trim', 'edge'], ar: 'تقصير', more: 'Split (S) and Blade (B) cut at a frame; Range deletes a marked stretch.' }),
+  E(A, '🔪', 'Blade', 'Timeline toolbar', 'Blade tool: click a clip to cut it at that frame (Shift-click cuts every track).', tl('Blade'), { key: 'B', syn: ['razor', 'cut tool', 'blade tool'] }),
+  E(A, '⌫', 'Range: delete a marked range', 'Timeline toolbar', 'Mark a range with I / O or Shift-drag on the ruler, then delete it: the gap closes (Alt lifts it).', tl('Range'), { key: 'I · O', syn: ['range', 'in out', 'mark in', 'mark out', 'remove part', 'ripple delete'] }),
+  E(A, '⛓', 'Join', 'Timeline toolbar', 'Puts selected pieces of the same clip back together.', tl('Join'), { key: '⌘J', syn: ['rejoin', 'merge clips', 'heal'] }),
+  E(A, '🔊', 'Unlink', 'Timeline toolbar', 'Gives the selected clip’s own sound its own item, so it can move or be deleted separately.', tl('Unlink', { need: 'clip' }), { syn: ['detach audio', 'separate audio', 'unlink audio'] }),
+  E(A, '🗑', 'Delete', 'Timeline toolbar', 'Deletes what is selected; on the main video track the gap closes (Alt keeps it).', tl('Delete'), { key: 'Delete · ⇧Delete', syn: ['remove', 'erase', 'ripple delete'], ar: 'حذف' }),
+  E(A, '⧉', 'Duplicate', 'Timeline toolbar', 'Copies the selected items and places the copy right after them.', tl('Duplicate', { need: 'clip' }), { key: '⌘D', syn: ['copy', 'clone'], ar: 'تكرار' }),
+  E(A, '⚑', 'Marker', 'Timeline toolbar', 'Adds a marker at the playhead; clips snap to markers.', tl('Marker', { run: true }), { key: 'M', syn: ['marker', 'bookmark', 'flag'] }),
+  E(S, '🧲', 'Snap', 'Timeline toolbar', 'Snapping on or off: edges snap to the playhead, clips, markers, caption lines and beats.', tl('Snap'), { key: 'hold ⌘ to drag free', syn: ['snapping', 'magnet', 'magnetic'] }),
+  E(A, '➕', 'Add a track', 'Timeline toolbar', 'Adds another video, overlay, text, music or SFX track.', tl('Add a track'), { syn: ['new track', 'layer', 'overlay track'] }),
+  E(S, '🔍', 'Timeline zoom', 'Timeline toolbar', 'Zooms the timeline in and out; Fit shows the whole reel.', tl('Timeline zoom'), { key: '+ · − · \\', syn: ['zoom timeline', 'fit'] }),
+  E(S, '🔒', 'Lock, hide or mute a track', 'Timeline → track header', 'The track header buttons lock a track, hide it from the picture or mute its sound.', tl('Lock track'), { syn: ['lock', 'hide track', 'mute track', 'solo'] }),
+  E(A, '▣', 'Safe areas', 'Preview', 'Shows where the platforms put their buttons, so nothing important sits under them.', { screen: ED, region: '.monitor', label: 'Safe areas' }, { syn: ['safe zone', 'guides', 'instagram buttons', 'tiktok ui'] }),
+  E(A, '▶', 'Play / pause', 'Preview', 'Plays or pauses the reel; J / K / L go back, stop and play faster.', { screen: ED, region: '.monitor', label: 'Play / pause (Space)' }, { key: 'Space', syn: ['play', 'pause', 'preview'] }),
+
+  // ── captions ──
+  E(S, '⚙', 'Caption settings', 'Captions → Settings', 'Fast or Accurate, the language, music & sound tags and “Words to spell right”.', cap('transcript', null, { sec: ['Settings'] }), { syn: ['caption language', 'accuracy', 'whisper', 'spelling'], more: 'Words to spell right: brand, product, country and visa words heard first.' }),
+  E(S, '🎨', 'Caption style templates', 'Captions → Style', '60 templates with search, categories and ★ favourites; click one to restyle every caption.', cap('style', 'Search templates'), { syn: ['caption style', 'subtitle style', 'karaoke', 'word box', 'hormozi', 'caption font', 'caption colour'], ar: 'نمط الترجمة' }),
+  E(S, '🔠', 'Caption size and font', 'Captions → Style', 'The caption font and its size, colour, weight and highlight for every line.', cap('style', 'Font'), { syn: ['bigger text', 'caption size', 'text size', 'font size', 'caption font', 'larger captions'], ar: 'حجم الخط' }),
+  E(S, '✥', 'Caption position (drag)', 'Preview → drag a caption', 'Drag a caption on the video to move that line; Shift-drag moves them all; arrows nudge it.', { screen: ED, side: 'captions', captab: 'style', label: 'Search templates', help: 'Drag a caption on the video to move that line. Shift-drag moves every line, ⌘-click adds lines to the move, and the arrow keys nudge it. 🎨 Word style / Line style (under a selected word) also has a position.' }, { syn: ['move captions', 'caption placement', 'caption higher', 'caption lower', 'position'] }),
+  E(S, '🎨', 'Word style / Line style', 'Captions → Transcript → a word', 'Changes one word or line: text, size, colour, font, weight, highlight, emoji, animation and position.', cap('transcript', 'Word style'), { syn: ['highlight word', 'one word colour', 'emphasis'] }),
+  E(A, '🌐', 'Translate captions', 'Captions → Translate', 'Turns the captions into another language offline: Replace, Bilingual or a second track.', cap('translate', 'Translate into'), { also: ['Translate'], syn: ['translation', 'arabic', 'arabic captions', 'urdu', 'hindi', 'english', 'bilingual', 'second language'], ar: 'ترجمة', more: 'The first time for a language it asks once to download its model.' }),
+  E(S, '📖', 'Glossary & do-not-translate', 'Captions → Translate', 'Brand and product names kept exactly as written in every translation.', cap('translate', null, { sec: ['Glossary'] }), { syn: ['glossary', 'brand names', 'do not translate'] }),
+  E(A, '📝', 'Script (transcript as text)', 'Captions → Script', 'The whole transcript as paragraphs: edit it and the captions follow; Copy, TXT, SRT or VTT.', cap('script', 'Copy'), { syn: ['script', 'srt', 'vtt', 'txt', 'export subtitles', 'transcript text'], ar: 'النص' }),
+  E(A, '🔎', 'Find and replace in captions', 'Captions → Transcript', 'Replaces a word everywhere in the captions at once.', cap('transcript', 'Find'), { syn: ['find', 'replace', 'correct spelling'] }),
+
+  // ── sync ──
+  E(A, '⏱', 'Sync words to the voice', 'Sync → Word-perfect sync', 'Moves every caption word to the exact moment it is said (a speech model finds each word).', { screen: ED, side: 'mod:sync', sec: ['Word-perfect sync'], label: 'Sync words to the voice' }, { prio: 1, syn: ['word sync', 'align captions', 'caption timing', 'lip sync', 'forced alignment'], ar: 'مزامنة الكلمات' }),
+  E(S, '⏲', 'Caption timing', 'Sync → Timing', 'Shifts all captions earlier or later (± ms) and shows words a little early.', { screen: ED, side: 'mod:sync', sec: ['Timing'], label: 'Caption timing' }, { syn: ['offset', 'delay captions', 'early', 'late'] }),
+  E(S, '〰', 'Word timing', 'Sync → Word timing', 'The sound around the playhead with every word on it: drag a word or its edges.', { screen: ED, side: 'mod:sync', sec: ['Word timing'], label: 'Previous word' }, { syn: ['waveform', 'word edges'] }),
+
+  // ── look ──
+  E(S, '🎨', 'Colour looks', 'Look → Colour look', 'Graded looks (Beauty glow, Teal & orange, Film, Black & white …) with a strength slider.', look('Colour look', 'Beauty glow'), { syn: ['lut', 'grade', 'filter', 'cinematic', 'black and white', 'vintage'], ar: 'ألوان' }),
+  E(A, '✨', 'Auto colour', 'Look → Colour look', 'Sets white balance and exposure, measured from the clip.', look('Colour look', 'Auto colour'), { syn: ['white balance', 'auto correct'] }),
+  E(A, '🎯', 'Match all to this', 'Look → Colour look', 'Matches every other clip’s colour to the selected one.', look('Colour look', 'Match all to this'), { syn: ['colour match', 'match colour'] }),
+  E(S, '💄', 'Skin touch-up', 'Look → Skin touch-up', 'Smooths skin, brightens eyes and under-eyes on faces in the clip.', look('Skin touch-up', 'Smoothing'), { syn: ['beauty', 'smooth skin', 'retouch', 'face'], ar: 'تنعيم البشرة' }),
+  E(A, '🧍', 'Remove background', 'Look → Background', 'Cuts the person out and puts blur, a colour, a brand gradient, a picture, a flag or a landmark behind.', look('Background', 'Remove background'), { syn: ['cutout', 'cut out', 'green screen', 'background remover', 'replace background', 'blur background'], ar: 'إزالة الخلفية' }),
+  E(S, '🔀', 'Transitions', 'Look → Transitions', 'Whip, zoom-through, flash, glitch, slide, spin, luma fade, film burn, dissolve: on every cut or the nearest.', look('Transitions', 'Whip'), { syn: ['transition', 'cut effect', 'dissolve', 'wipe'], ar: 'انتقالات' }),
+  E(A, '🔗', 'Match-cut helper', 'Look → Transitions', 'Moves the next clip’s start to the frame that best continues the motion.', look('Transitions', 'Match-cut helper'), { syn: ['match cut', 'continuity'] }),
+  E(S, '⏩', 'Speed ramp (Look)', 'Look → Speed ramp', 'A curve, easing, slowest and fastest speeds and the sound, applied to the selected clip.', look('Speed ramp', 'Ramp the selected clip'), { syn: ['ramp', 'velocity edit'] }),
+  E(S, '🔤', 'Text animation', 'Look → Text animation', 'Animates the selected text: typewriter, kinetic word stack, highlight sweep, price slam …', look('Text animation', 'Typewriter'), { syn: ['animate text', 'kinetic typography', 'typewriter'] }),
+
+  // ── audio ──
+  E(S, '🎙', 'Noise strength', 'Audio → Enhance voice', 'From Light (noise −14 dB) to Strong (all of it, plus a voice gate).', audio('Enhance voice', 'Strength'), { syn: ['noise reduction', 'denoise amount', 'noise level'] }),
+  E(S, '🎛', 'Audio stages (Advanced)', 'Audio → Enhance voice → Advanced', 'Switches each stage on or off: noise, hum, echo, EQ, de-ess, compression, loudness, limiter.', { screen: ED, side: 'mod:audio', sec: ['Enhance voice', 'Advanced'] }, { syn: ['eq', 'de-ess', 'compressor', 'limiter', 'hum removal', 'echo removal', 'stages'] }),
+  E(A, '🎵', 'Duck music under speech', 'Audio → Enhance voice', 'Dips the music while someone talks (volume keyframes on the music).', audio('Enhance voice', 'Duck music under speech'), { syn: ['ducking', 'sidechain', 'lower music', 'music under voice'] }),
+  E(S, '📏', 'Loudness for the platform', 'Audio → Loudness for the platform', 'Instagram Reels, TikTok, YouTube / Shorts at −14 LUFS, or Off; Measure the mix checks it.', audio('Loudness for the platform', 'Measure the mix now'), { syn: ['lufs', 'loudness', 'normalize', 'volume level'] }),
+  E(A, '💨', 'Sound design', 'Audio → Sound design', 'SFX on every cut, cuts moved to the beat, a riser before the reveal.', audio('Sound design', 'SFX on every cut'), { syn: ['whoosh on cuts', 'beat cuts', 'riser', 'sfx'] }),
+
+  // ── themes ──
+  E(S, '🎚', 'Theme intensity & colours', 'Themes', 'Subtle, Normal or Bold; Theme colours or your Brand kit; pulse on the beat; keep off faces & captions.', { screen: ED, side: 'mod:themes', label: 'Subtle' }, { syn: ['intensity', 'theme colours', 'brand colours'] }),
+  E(S, '🧩', 'Theme elements', 'Themes → Elements', 'Each moving part of the theme: switch it off or change its density, speed or colour.', { screen: ED, side: 'mod:themes', label: 'Add at the playhead' }, { syn: ['elements', 'place elements', 'lower third', 'end card', 'passport stamp', 'boarding pass'] }),
+  E(S, '🔀', 'Country transitions', 'Themes → Transitions', 'Flag sweep, globe zoom, plane, passport page, map iris …: on one cut or All cuts.', { screen: ED, side: 'mod:themes', label: 'All cuts' }, { syn: ['transitions', 'flag transition', 'globe'] }),
+  E(A, '💊', 'Capsules carousel', 'Themes → Place elements', 'Two rows of scrolling pills: jobs on top, countries below; once placed, its controls are in the Inspector.', { screen: ED, side: 'mod:themes', label: 'Capsules carousel' }, { prio: 1, syn: ['capsules', 'pills', 'carousel', 'jobs list', 'countries list', 'ticker'], more: '＋ adds it at the playhead or drag it onto the timeline; tick Whole video for the full reel.' }),
+  E(S, '💊', 'Capsules · theme', 'Inspector → Capsules · theme', '14 looks for the capsules; Use company colours; Language English or عربي.', { screen: ED, side: 'inspector', need: 'capsules', sec: ['Capsules · theme'] }, { syn: ['capsule style', 'capsule look'] }),
+  E(S, '💊', 'Capsules · rows', 'Inspector → Capsules · rows', 'Per row: show, direction, speed and colours; the job and country lists, ＋ Jobs list, ＋ Countries, ＋ Custom.', { screen: ED, side: 'inspector', need: 'capsules', sec: ['Capsules · rows'] }, { syn: ['capsule rows', 'add country', 'add job', 'reorder'] }),
+  E(S, '💊', 'Capsules · size & motion', 'Inspector → Capsules · size & motion', 'Scale, height, text, icon, gap, corners; Smooth, Glide & rest or On the beat; Top / Middle / Bottom.', { screen: ED, side: 'inspector', need: 'capsules', sec: ['Capsules · size & motion'] }, { syn: ['capsule size', 'capsule speed', 'capsule position'] }),
+
+  // ── viral ──
+  E(S, '📈', 'Retention', 'Viral → Retention', 'Scores every second; red stretches show under the ruler; Fix all dead zones adds cuts, punch-ins and pops.', viral('Retention'), { syn: ['retention', 'dead zones', 'boring parts', 'attention'] }),
+  E(S, '🔍', 'Smart zooms', 'Viral → Smart zooms', 'Zooms in on the words you stress; Face in upper third for 16:9 → 9:16.', viral('Smart zooms'), { syn: ['auto zoom', 'reframe', 'face'] }),
+  E(S, '📱', 'Safe zones', 'Viral → Safe zones', 'Shows where Instagram, TikTok, Shorts or Snapchat put buttons and moves captions and stickers out of the way.', viral('Safe zones'), { syn: ['safe area', 'ui overlay', 'platform buttons'] }),
+  E(S, '🔢', 'Chapters & steps', 'Viral → Chapters & steps', 'A progress bar and “STEP 2/4” for list videos.', viral('Chapters & steps'), { syn: ['progress bar', 'steps', 'chapters'] }),
+  E(A, '🅰️', 'A/B variations', 'Viral → A/B variations', 'Three versions with different openers, saved as three MP4s.', viral('A/B variations'), { syn: ['ab test', 'variants', 'versions'] }),
+  E(S, '🛡️', 'Claim safety', 'Viral → Claim safety', 'Flags risky claims (“guaranteed visa”, “cures acne” …) and offers safer wording.', viral('Claim safety'), { syn: ['compliance', 'banned words', 'risky claims'] }),
+
+  // ── cutaways ──
+  E(A, '⇤', 'Mark a cutaway range', 'Cutaways → Mark the range', 'Mark in (I) and Mark out (O) the stretch where something else shows while you keep talking.', { screen: ED, side: 'mod:cutaways', sec: ['1 · Mark the range'], label: 'Mark in (I)' }, { key: 'I · O', syn: ['mark in', 'mark out', 'b-roll range'] }),
+  E(A, '✨', 'Suggest cutaways', 'Cutaways → Auto cutaways', 'Proposes cutaways where you name a product, a price, a country or a job — tick the ones you want.', { screen: ED, side: 'mod:cutaways', sec: ['Auto cutaways'], label: 'Suggest from what I say' }, { syn: ['auto b-roll', 'auto cutaways'] }),
+
+  // ── create ──
+  E(A, '🖼️', 'Cover & grid thumbnail', 'Create → Cover', 'Best frame plus a bold title, checked at 1/6 size on the grid.', { screen: ED, side: 'mod:create', label: 'Make covers' }, { syn: ['thumbnail', 'cover image', 'poster frame'] }),
+  E(A, '✍', 'Write post copy', 'Create → Post copy', 'Writes the post caption and hashtags in English and Arabic.', { screen: ED, side: 'mod:create', label: 'Write post copy' }, { syn: ['caption text', 'hashtags', 'post text', 'description'] }),
+  E(A, '📐', 'Every shape (export all shapes)', 'Create → Every shape', 'One edit re-laid out as 9:16, 4:5, 1:1 and 16:9 and exported.', { screen: ED, side: 'mod:create', label: 'Export all shapes' }, { syn: ['all formats', 'multi format', 'resize all'] }),
+  E(A, '🎬', 'Teleprompter', 'Create → Teleprompter', 'Opens a teleprompter to read your script while recording.', { screen: ED, side: 'mod:create', label: 'Open teleprompter' }, { syn: ['prompter', 'script reader', 'record'] }),
+  E(A, '✂', 'Find the shorts', 'Create → Webinar → shorts', 'Finds the best short clips inside a long video.', { screen: ED, side: 'mod:create', label: 'Find the shorts' }, { syn: ['long video', 'webinar', 'clips', 'highlights'] }),
+
+  // ── photos ──
+  E(S, '🔎', 'Search stock photos', 'Photos → Find worker photos', 'Search Pexels or Unsplash by occupation, words, orientation and region.', { screen: ED, side: 'mod:stock-photos', sec: ['Find worker photos'], label: 'Search photos' }, { syn: ['pexels search', 'unsplash search', 'stock image'] }),
+
+  // ── export dialog ──
+  E(S, '📺', 'Export resolution (720p–4K)', 'Export → resolution', '720p, 1080p (best for reels), 1440p or 4K.', { screen: ED, modal: 'export', label: '4K' }, { syn: ['4k', 'uhd', '1080p', 'resolution', 'export 4k', 'hd'] }),
+  E(S, '🎞', 'Export frame rate', 'Export → fps', '30 or 60 fps for the exported file.', { screen: ED, modal: 'export', label: '60 fps' }, { syn: ['fps export'] }),
+  E(S, '💎', 'Export quality (Max)', 'Export → quality', 'Small file, Standard, High or Max quality.', { screen: ED, modal: 'export', label: 'Max' }, { syn: ['bitrate', 'max quality', 'best quality', 'file size'] }),
+  E(S, '📐', 'Export other shapes', 'Export → Also 1:1 / 4:5 / 16:9', 'Ticks make extra MP4s in the other shapes from the same edit.', { screen: ED, modal: 'export', label: 'Also 1:1' }, { syn: ['square export', 'multiple formats'] }),
+
+  // ── home ──
+  E(A, '🎬', 'New reel', 'Home → New reel', 'Starts an empty reel in your brand kit: name, recipe and shape.', { screen: 'home', label: 'Create reel' }, { syn: ['new project', 'create', 'start'], ar: 'فيديو جديد' }),
+  E(A, '⬇', 'Drop a video', 'Home → Drop a video here', 'Drop a video (or click to choose) and it opens straight in the editor.', { screen: 'home', sel: '.home-drop' }, { syn: ['open video', 'import', 'upload'] }),
+  E(A, '✨', 'Brief → Designs', 'Home → Brief → Designs', 'Type a brief and get 6–8 professional designs in your company’s kit, each checked against design rules.', { screen: 'home', sel: '#home-brief' }, { syn: ['designs', 'poster', 'story design', 'post design', 'social post', 'flyer'], ar: 'تصاميم' }),
+  E(P, '🗂', 'Designs screen', 'Home → Open Designs', 'Your saved designs, sizes, AI pictures, colours, icons and artwork.', { screen: 'designs' }, { syn: ['designs', 'saved designs', 'ad templates'] }),
+  E(P, '🎨', 'Ad Studio', 'Home → Ad Studio', 'The full ad editor: templates (KBB, National Day, Planet Careers, Work Abroad), layers, video mode and ✂ cut-out.', { screen: 'adstudio' }, { syn: ['ads', 'ad editor', 'national day', 'banner', 'flyer'], ar: 'استوديو الإعلانات' }),
+  E(S, '✎', 'Edit company (brand kit)', 'Home → Edit company', 'The company’s brand kit: logo, colours, fonts, industry.', { screen: 'home', modal: 'company', label: 'Upload logo…' }, { also: ['Logo', 'Upload logo…'], syn: ['brand kit', 'logo', 'colours', 'fonts', 'company settings'], ar: 'شعار' }),
+  E(A, '🎬', 'Record', 'Home → Record', 'Record yourself with the camera straight into a reel.', { screen: 'home', label: 'Start recording' }, { syn: ['camera', 'webcam', 'record video'] }),
+
+  // ── configure ──
+  E(P, '⚙', 'Configure', 'Top bar → ⚙', 'Companies, contact & social, Claude, photo sources, models, folders & storage, languages.', { screen: 'configure', cfg: 'companies' }, { syn: ['settings', 'preferences', 'options'], ar: 'الإعدادات' }),
+  E(S, '🏢', 'Companies', 'Configure → Companies', 'Edit each company’s kit (logo, colours, fonts) or add a new company.', cfg('companies', 'Edit kit (logo, colours, fonts)'), { syn: ['brand kit', 'logo', 'new company', 'add company'] }),
+  E(S, '☎', 'Contact & social', 'Configure → Contact & social', 'Phone, WhatsApp, email, website and Instagram / TikTok / Snapchat / YouTube handles used on ads.', cfg('contact', null), { syn: ['phone', 'whatsapp', 'instagram', 'tiktok', 'handles', 'website', 'email', 'call to action'] }),
+  E(S, '✦', 'Connect Claude', 'Configure → Connect Claude', 'Optional Claude key: smarter briefs and Best-quality translation; asks before each use.', cfg('claude', 'Claude API key'), { syn: ['claude key', 'anthropic', 'ai key', 'api key'] }),
+  E(S, '📷', 'Pexels key', 'Configure → Photo sources', 'Paste your free Pexels key, then Save → Test, for the Photos tab.', cfg('photos', 'Pexels API key'), { syn: ['pexels api key', 'photo key', 'stock key'] }),
+  E(S, '📷', 'Unsplash key', 'Configure → Photo sources', 'Paste your free Unsplash Access Key (not the Secret key), then Save → Test.', cfg('photos', 'Unsplash API key'), { syn: ['unsplash api key', 'access key'] }),
+  E(S, '🧠', 'Models (AI downloads)', 'Configure → Models', 'Speech, sync and translation models: download once, remove to free space.', cfg('models', null), { syn: ['models', 'download models', 'whisper', 'ai models', 'disk space'], ar: 'النماذج' }),
+  E(S, '📁', 'Folders & storage', 'Configure → Folders & storage', 'Where projects, exports, designs and the library live; Open in Finder.', cfg('folders', 'Open in Finder'), { syn: ['folder', 'storage', 'where files', 'exports folder', 'finder', 'disk'] }),
+  E(S, '🌐', 'Languages', 'Configure → Languages', 'The default caption language, translation languages to keep ready, and design copy languages.', cfg('languages', 'Caption language'), { syn: ['default language', 'caption language'] }),
+  E(A, '🧠', 'Models download manager', 'Home → Models', 'The download manager for the speech models: pause, resume, retry, every file checked.', { screen: 'models' }, { syn: ['setup', 'download', 'models'] }),
+
+  // ── help (from GUIDE - keys and what to send.html and the README) ──
+  E(HELP, '❓', 'How to get a Pexels key', 'Guide → 1', 'Free account on pexels.com → pexels.com/api → Your API Key → paste in Configure → Photo sources → Save → Test.', cfg('photos', 'How to get this key →'), { syn: ['pexels guide', 'get key'] }),
+  E(HELP, '❓', 'How to get an Unsplash key', 'Guide → 2', 'unsplash.com/developers → Your apps → New Application → copy the Access Key → Save → Test.', cfg('photos', 'How to get this key →'), { syn: ['unsplash guide'] }),
+  E(HELP, '❓', 'How to get a Claude key', 'Guide → 3', 'console.anthropic.com → Billing (small credit) → API Keys → Create Key → paste in Configure → Connect Claude.', cfg('claude', 'How to get this key →'), { syn: ['claude guide', 'anthropic key'] }),
+  E(HELP, '❓', 'What contact details to fill in', 'Guide → 4–5', 'Phone, WhatsApp, email, website, social handles and the call to action you like.', cfg('contact', 'What to fill in →'), { syn: ['contact guide', 'handles'] }),
+  E(HELP, '❓', 'An older engine is running', 'Guide → Updating', 'Close every Terminal window of KBB Studio, then double-click Start KBB Studio in the NEW folder.', { help: 'Close every Terminal window of KBB Studio, then double-click “Start KBB Studio” inside the new folder. Updating is just replacing the KBB Studio folder: your models, companies, projects, keys, music and brand kits live in KBB Studio Data in your home folder, so nothing needs copying.' }, { syn: ['older engine', 'update', 'upgrade', 'new version', 'engine error'] }),
+  E(HELP, '❓', 'How to make Arabic captions', 'Guide', 'Auto captions, then Captions → Translate → To: Arabic (Replace, Bilingual or second track).', cap('translate', 'Translate into'), { syn: ['arabic captions', 'arabic subtitles'], ar: 'ترجمة عربية' }),
+  E(HELP, '❓', 'How to cut out a mistake', 'Guide', 'Mark a range with I and O (or Shift-drag the ruler), then Delete: the gap closes.', tl('Range'), { syn: ['remove mistake', 'cut middle', 'delete part'] }),
+  E(HELP, '❓', 'Where are my files?', 'Guide', 'Your things live in KBB Studio Data in your home folder (Finder → Go → Home); Configure → Folders opens them.', cfg('folders', 'Open in Finder'), { syn: ['where saved', 'files location', 'exports location', 'kbb studio data'] }),
+];
+
+// stable ids, a flag for the ranking, normalised once
+CATALOGUE.forEach((e, i) => { e.id = 'c' + i; e.cat = true; });

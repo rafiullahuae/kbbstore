@@ -10,8 +10,10 @@ import { renderHome } from './home.js';
 import { Editor } from './editor.js';
 import { needsSetup, setupScreen } from './setup.js';
 import { restorePrefs } from '../core/prefs.js';
+import { installHoverHelp } from './hover-help.js';   // the guide card on hover, on every screen from the first (hover-help.js)
 
 const root = document.getElementById('app');
+installHoverHelp();
 document.title = APP_NAME;
 let editor = null;
 
