@@ -403,6 +403,23 @@
    "licenceUrl": "https://huggingface.co/spaces/CompVis/stable-diffusion-license"
   },
   {
+   "id": "subject-cutout",
+   "repo": "BritishWerewolf/U-2-Netp",
+   "purpose": "Cut-out (main subject): cuts a product or object out of a video or photo, offline (Look \u2192 Background)",
+   "owner": "look",
+   "required": false,
+   "size": 4574861,
+   "files": [
+    {
+     "path": "onnx/model.onnx",
+     "size": 4574861,
+     "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8"
+    }
+   ],
+   "group": "Image AI",
+   "licence": "Apache-2.0"
+  },
+  {
    "id": "word-sync",
    "repo": "NewComer00/wav2vec2-xlsr-multilingual-56-ONNX",
    "purpose": "Captions (word-perfect sync): finds the exact moment each caption word is said, in English, Arabic, Urdu and Hindi",

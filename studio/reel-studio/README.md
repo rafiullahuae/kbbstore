@@ -78,6 +78,17 @@ are for features coming in the next update, so you can leave them unticked for n
   **Colour** (temperature, tint, saturation, vibrance) and **Detail** (sharpness, clarity, denoise, vignette), for
   *This clip* or *All clips*; double-click a slider (or ↺) to zero it. **◧ Before / after** splits the preview — drag
   the divider. **Upscale low-res clip on export** enlarges small clips with a sharp Lanczos filter.
+* **🧍 Remove background** (in **Do it for me**, **Inspector → 🎚 Adjust**, and **🎨 Look → Background**): cuts out
+  **🧍 Person** (offline, no download), **📦 Main subject** (a product, a jar, any object — a small 4.6 MB model,
+  U²-Net-p, Apache-2.0, asked for once) or **🟩 Green screen** (key colour measured from the clip, green spill taken
+  off). Behind it: *Blur*, *Colour*, *Brand gradient*, *Picture*, **Another clip** (any video from the media bin, put
+  muted and looped on the track under it), *Flag*, *Landmark* or **None (transparent)** — the person floats over
+  whatever is on the tracks below (b-roll, a photo, a theme scene); with nothing below, a *Background* track is made
+  under it to drop one on. **Inspector → 🧍 Background** changes it for the selected clip in one click: **Edges**
+  (*Feather*, *Shrink / grow*, *Smoothness* = steadier from frame to frame, *Light wrap* = the new background's light
+  on the edge), **Placement** (*Full frame*, *Left*, *Centre*, *Right*, *Size*; or drag it on the video), and **Export
+  with transparency**: **⬇ Cut-out video** (WebM with alpha, for the Ad Studio, Premiere, After Effects, Canva),
+  **⬇ PNG sequence** (a zip), **⬇ This frame (PNG)**, **⬇ Whole reel (WebM)** — saved in the company's exports folder.
 * **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 720p to 4K; 30 or 60 fps; quality up to *Max*; also 1:1,
   4:5 or 16:9 if you tick them).
 

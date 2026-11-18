@@ -9,6 +9,7 @@ import { KINDS } from './transitions.js';
 import { CURVES, EASES, rampPlan } from './ramp.js';
 import { PRESETS } from './text.js';
 import { hoverPreview, lookSpec, transitionSpec } from '../themes/hover.js';
+import { bgControls } from './bg-panel.js';
 
 let cssDone = false;
 export function css() {
@@ -35,7 +36,7 @@ export function css() {
 export function lookPanel(el, ctx, A) {
   css();
   const root = h('div.lk'); el.appendChild(root);
-  const st = { amount: 1, strength: 0.35, eyes: 0.5, under: 0.5, bgMode: 'blur', country: 'gb', trans: 'whip', tdur: 0, curve: 'slow-fast-slow', min: 0.4, max: 2.5, ease: 'sine', audio: 'mute' };
+  const st = { amount: 1, strength: 0.35, eyes: 0.5, under: 0.5, trans: 'whip', tdur: 0, curve: 'slow-fast-slow', min: 0.4, max: 2.5, ease: 'sine', audio: 'mute' };
   const run = async (label, fn) => {
     try { ctx.progress?.(label, null); const r = await fn(); if (typeof r === 'string') toast(r, 'ok'); return r; }
     catch (e) { toast(`${label}: ${e.message || e}`, 'error'); console.warn('[look]', e); }
@@ -104,13 +105,6 @@ export function lookPanel(el, ctx, A) {
     rampInfo.textContent = `${((it.out - it.in) / (it.speed || 1)).toFixed(2)} s → ${p.duration.toFixed(2)} s`;
   }
 
-  const countries = h('select', { 'aria-label': 'Country' }, h('option', { value: 'gb' }, 'United Kingdom'));
-  fetch('/brands/planet-careers/countries/countries.json').then((r) => (r.ok ? r.json() : { countries: [] })).then((j) => {
-    countries.replaceChildren(...(j.countries || []).map((c) => h('option', { value: c.code, selected: c.code === st.country }, c.name)));
-  }).catch(() => {});
-  countries.addEventListener('change', () => { st.country = countries.value; });
-  const images = () => (ctx.project.media || []).filter((m) => m.kind === 'image');
-
   root.append(
     h('div.insp-head', h('b', '🎨 Look'), targetNote),
     sec('Colour look',
@@ -134,19 +128,8 @@ export function lookPanel(el, ctx, A) {
         h('button.btn.primary', { on: { click: () => run('Touch-up', async () => { const r = await A.touchUp(ctx, st); return r.withFaces ? `Touch-up on ${r.withFaces} clip${r.withFaces > 1 ? 's' : ''} with a face` : 'Touch-up added — no face found yet in these clips'; }) } }, '💄 Touch up'),
         h('button.btn', { on: { click: () => run('Touch-up', () => (A.clearFx(ctx, 'look.touchup'), 'Touch-up removed')) } }, 'Remove'))),
     sec('Background',
-      h('p.lk-note', 'Cuts the person out (offline) with clean edges, steady from frame to frame.'),
-      h('div.lk-chips', ...[['blur', 'Blur'], ['color', 'Colour'], ['gradient', 'Brand gradient'], ['image', 'Picture'], ['flag', 'Flag'], ['landmark', 'Landmark']].map(([v, l]) => {
-        const c = h('button.chip' + (v === st.bgMode ? '.on' : ''), { dataset: { bg: v }, on: { click: () => { st.bgMode = v; for (const x of c.parentNode.children) x.classList.toggle('on', x === c); } } }, l); return c; })),
-      h('label.row', h('span.lbl', 'Country'), countries),
-      h('div.lk-btns',
-        h('button.btn.primary', { on: { click: () => run('Background', async () => {
-          const img = images()[0];
-          if (st.bgMode === 'image' && !img) throw new Error('Import a picture first (it is used as the background)');
-          const r = await A.removeBackground(ctx, { mode: st.bgMode, country: st.country, src: img?.src });
-          const cov = r.coverage.filter((x) => x != null);
-          return cov.length ? `Background replaced on ${r.clips} clip${r.clips > 1 ? 's' : ''} (person ${Math.round(cov[0] * 100)}% of the frame)` : 'Background effect added';
-        }) } }, '🧍 Remove background'),
-        h('button.btn', { on: { click: () => run('Background', () => (A.clearFx(ctx, 'look.bg'), 'Background back')) } }, 'Remove'))),
+      h('p.lk-note', 'Cuts out the person, the main subject (a product) or a green screen, offline, with clean steady edges — then puts a new background behind, or nothing (transparent).'),
+      bgControls(ctx, { chipCls: '.lk-chips', ids: () => undefined })),
     sec('Transitions',
       h('div.lk-chips', ...Object.entries(KINDS).map(([k, v]) => { const c = h('button.chip' + (k === st.trans ? '.on' : ''), { dataset: { trans: k }, on: { click: () => { st.trans = k; for (const x of c.parentNode.children) x.classList.toggle('on', x === c); } } }, v.label); return hoverPreview(c, transitionSpec(k, v.label)); })),
       slider({ label: 'Length', min: 0, max: 1.2, step: 0.05, value: 0, fmt: (v) => (v ? v.toFixed(2) + ' s' : 'auto'), onInput: (v) => { st.tdur = v; } }),

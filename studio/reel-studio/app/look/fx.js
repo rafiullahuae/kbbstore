@@ -4,6 +4,8 @@
 //   item.fx {type:'look.grade',   look, amount, wb:[r,g,b], ev, mg:[3], mo:[3]}     colour look + correction + shot match
 //   item.fx {type:'look.touchup', strength (0..1, default .35), eyes (0..1), under (0..1)}   face-landmark skin touch-up
 //   item.fx {type:'look.bg',      mode:'blur'|'color'|'gradient'|'image'|'flag'|'landmark', color, colors:[a,b], src, country}
+//            v2 (q: 2, bg.js): + mode 'none' (transparent) | 'clip' (another clip on the track below, also transparent here),
+//            key 'person'|'subject'|'chroma', feather, grow, smooth, wrap (0..1, grow -1..1), keyColor, tol, soft, spill
 //   item.fx {type:'look.adjust',  exp, bri, con, ... , enh}       light / colour / detail sliders + Enhance video (adjust.js)
 //
 // All four run in ONE pass (gl.js `look` program); the first look.* entry in item.fx does the work for the others.
@@ -11,7 +13,7 @@ import { registerSourceFx } from '../core/render.js';
 import { srcTime, itemDur } from '../core/project.js';
 import { gl, blurs } from './gl.js';
 import { lookById } from './looks.js';
-import { segAt, facesAt } from './vision.js';
+import { segAt, facesAt, maskAt } from './vision.js';
 import { adjustUniforms, wantsUpscale, isNeutral } from './adjust.js';
 
 export const LOOK_FX = ['look.grade', 'look.touchup', 'look.bg', 'look.adjust'];
@@ -118,7 +120,9 @@ export async function loadBackground(fx) {
 }
 
 const hex = (c, d = [0, 0, 0]) => { const m = /^#?([0-9a-f]{6})$/i.exec(c || ''); if (!m) return d; const n = parseInt(m[1], 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
-const BGMODE = { blur: 1, color: 2, gradient: 3, image: 4, flag: 4, landmark: 4 };
+const BGMODE = { blur: 1, color: 2, gradient: 3, image: 4, flag: 4, landmark: 4, none: 5, clip: 5 };
+/** dominant channel of a key colour (0 r, 1 g, 2 b): the one spill suppression pulls back */
+const domOf = (c) => (c[1] >= c[0] && c[1] >= c[2] ? 1 : c[2] >= c[0] ? 2 : 0);
 
 /** the whole look pass for one clip at time t: returns the GL canvas (drawn by the clip layer) or null */
 export function processLook(src, item, t, project, env) {
@@ -141,9 +145,11 @@ export function processLook(src, item, t, project, env) {
   // what the effects do not touch looks the same); only a strong downscale (the monitor) reads mipmaps
   const srcTex = g.upload('src', src, sw, sh, k < 0.6);
   const faces = touch && (touch.strength ?? 0.35) > 0 && item.media ? facesAt(item.media, st) : null;
-  const mask = bg && item.media ? segAt(item.media, st) : null;
-  const needBlur = !!(adj || faces?.length || (mask && bg.mode === 'blur') || (amount && (look.glow > 0 || look.clar > 0)));
-  const bl = needBlur ? blurs(g, srcTex, W, H, { large: !!(mask && bg.mode === 'blur') }) : { small: srcTex, large: srcTex };
+  const v2 = !!bg && (bg.q || 1) >= 2, chroma = v2 && bg.key === 'chroma';
+  const mask = bg && item.media && !chroma ? (v2 ? maskAt(item.media, st, bg.key === 'subject' ? 'subject' : 'person', bg.smooth ?? 0.5) : segAt(item.media, st)) : null;
+  const cutting = !!(mask || chroma);
+  const needBlur = !!(adj || faces?.length || (cutting && bg.mode === 'blur') || (amount && (look.glow > 0 || look.clar > 0)));
+  const bl = needBlur ? blurs(g, srcTex, W, H, { large: !!(cutting && bg.mode === 'blur') }) : { small: srcTex, large: srcTex };
   const tex = { src: srcTex, blurS: bl.small, blurL: bl.large };
   const u = {
     res: [W, H], frame: Math.round(st * 30) % 9973, amount,
@@ -152,6 +158,7 @@ export function processLook(src, item, t, project, env) {
     Lvig: look.vig, Lgrain: look.grain, Lcurve: look.curve, Lclar: look.clar, Lsplit: look.split, Llift: look.lift, Lgamma: look.gamma, Lgain: look.gain, Lsh: look.sh, Lhi: look.hi, Lbwmix: look.bwmix,
     hasFace: 0, hasSeg: 0, bgMode: 0, Ts: 0, Teye: 0, Tunder: 0,
     hasAdj: 0, upS: 0, cmpOn: 0, cmpU: 0, srcRes: [sw, sh],
+    q2: 0, keyMode: 0, kDom: 1, keyCol: [0, 1, 0], kTol: 0.1, kSoft: 0.08, kSpill: 0, eFeather: 0, eGrow: 0, eWrap: 0,
   };
   if (adj) Object.assign(u, adjustUniforms(adj, { upscale: up && k > 1.001 }));
   if (cmp) Object.assign(u, { cmpOn: 1, cmpU: frameToU(COMPARE.x, item, t, env, sw, sh) });
@@ -159,9 +166,14 @@ export function processLook(src, item, t, project, env) {
     tex.face = g.upload('face', drawFaceMask(faces, sw / sh), 0, 0);
     Object.assign(u, { hasFace: 1, Ts: touch.strength ?? 0.35, Teye: touch.eyes ?? 0.5, Tunder: touch.under ?? 0.5 });
   }
-  if (mask) {
-    tex.seg = g.uploadR8('seg', mask.data, mask.w, mask.h);
-    Object.assign(u, { hasSeg: 1, segTexel: [1 / mask.w, 1 / mask.h], bgMode: BGMODE[bg.mode] || 1 });
+  if (cutting) {
+    if (mask) { tex.seg = g.uploadR8('seg', mask.data, mask.w, mask.h); Object.assign(u, { hasSeg: 1, segTexel: [1 / mask.w, 1 / mask.h] }); }
+    u.bgMode = BGMODE[bg.mode] || 1;
+    if (v2) {
+      const kc = hex(bg.keyColor, [0.1, 0.75, 0.25]);
+      Object.assign(u, { q2: 1, keyMode: chroma ? 1 : 0, keyCol: kc, kDom: domOf(kc), kTol: bg.tol ?? 0.1, kSoft: bg.soft ?? 0.08, kSpill: bg.spill ?? 0.6,
+        eFeather: bg.feather ?? 0.1, eGrow: bg.grow ?? 0, eWrap: u.bgMode === 5 ? 0 : bg.wrap ?? 0.3 });
+    }
     if (bg.mode === 'color') u.bgA = hex(bg.color, [0.07, 0.07, 0.1]);
     if (bg.mode === 'gradient') { u.bgA = hex(bg.colors?.[0], [0.78, 0.22, 0.37]); u.bgB = hex(bg.colors?.[1], [0.16, 0.13, 0.16]); }
     if (u.bgMode === 4) {

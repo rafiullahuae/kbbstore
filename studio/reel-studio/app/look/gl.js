@@ -26,12 +26,15 @@ void main(){
   look: COMMON + `
 uniform sampler2D src, blurS, blurL, seg, face, bgTex;
 uniform vec2 res, segTexel; uniform float frame;
-uniform int hasSeg, hasFace, bgMode;           // bgMode 0 none · 1 blur · 2 colour · 3 gradient · 4 image
+uniform int hasSeg, hasFace, bgMode;           // bgMode 0 none · 1 blur · 2 colour · 3 gradient · 4 image · 5 transparent
 uniform vec3 mg, mo, wb; uniform float ev, amount;
 uniform float Lexp, Lcon, Lsat, Lvib, Ltemp, Ltint, Lfade, Lbw, Lglow, Lvig, Lgrain, Lcurve, Lclar, Lsplit;
 uniform vec3 Llift, Lgamma, Lgain, Lsh, Lhi, Lbwmix;
 uniform float Ts, Teye, Tunder;
 uniform vec3 bgA, bgB; uniform vec2 bgScale, bgOff;
+// background removal v2 (look.bg with q >= 2, see bg.js): bgMode 5 = transparent (alpha out); keyMode 0 = the cached
+// mask (person or main subject), 1 = chroma key (green / blue screen) computed here per pixel
+uniform int q2, keyMode, kDom; uniform vec3 keyCol; uniform float kTol, kSoft, kSpill, eFeather, eGrow, eWrap;
 // look.adjust (manual light / colour / detail sliders + Enhance video), see adjust.js for the ranges
 uniform int hasAdj, upS, cmpOn; uniform vec3 Again; uniform vec2 srcRes;
 uniform float Abri, Acon, Ahi, Ash, Awh, Abl, Asat, Avib, Asharp, Aclar, Avig, Adn, Askin, Alift, cmpU;
@@ -116,9 +119,80 @@ float segAlpha(vec2 p){
   }
   return smoothstep(.32, .68, a / ws);
 }
+// ── matte v2 ──
+// joint-bilateral upsampling of the low-res mask (5x5 mask texels, colour-guided), the threshold moved by Shrink/grow
+// and widened by Feather, then local colour-line matting in the edge band: alpha from where the pixel's colour sits
+// between the nearby person colour F and background colour B, which recovers hair strands the 256 px mask cannot hold.
+// fgShift: the pixel's colour with the old background's share taken out (edge decontamination).
+float refineAlpha(vec2 p, out vec3 fgShift){
+  fgShift = vec3(0.);
+  float c = .5 - eGrow * .3, wd = .12 + eFeather * .45;
+  // interior / far background: the 5x5 window is all one side, skip the work
+  float m0 = texture(seg, p).r, mA = texture(seg, p + segTexel * vec2(2.5, 2.5)).r, mB = texture(seg, p + segTexel * vec2(-2.5, 2.5)).r,
+        mC = texture(seg, p + segTexel * vec2(2.5, -2.5)).r, mD = texture(seg, p + segTexel * vec2(-2.5, -2.5)).r;
+  float lo = min(min(min(m0, mA), min(mB, mC)), mD), hi = max(max(max(m0, mA), max(mB, mC)), mD);
+  if (lo > .97 || hi < .03) return smoothstep(c - wd, c + wd, m0);
+  vec3 cc = texture(src, p).rgb; float ws = 0., a = 0., wf = 0., wb = 0.; vec3 F = vec3(0.), B = vec3(0.);
+  for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) {
+    vec2 q = p + vec2(float(i), float(j)) * segTexel;
+    float m = texture(seg, q).r; vec3 cs = texture(src, q).rgb, d = cs - cc;
+    float sp = exp(-float(i * i + j * j) * .22), w = sp * exp(-dot(d, d) * 20.);
+    a += m * w; ws += w;
+    float mf = smoothstep(.75, .97, m) * sp, mb = (1. - smoothstep(.03, .25, m)) * sp;
+    F += cs * mf; wf += mf; B += cs * mb; wb += mb;
+  }
+  float alpha = smoothstep(c - wd, c + wd, a / ws);
+  if (wf > .25 && wb > .25) {
+    F /= wf; B /= wb; vec3 fb = F - B; float L = dot(fb, fb);
+    float band = 1. - abs(alpha * 2. - 1.);
+    if (L > .004 && band > 0.) {
+      float ac = clamp(dot(cc - B, fb) / L, 0., 1.);
+      alpha = mix(alpha, ac, smoothstep(.004, .04, L) * band * .85);
+    }
+    if (alpha > .002 && alpha < .998) {
+      vec3 fe = clamp((cc - (1. - alpha) * B) / max(alpha, .05), 0., 1.);
+      fe = mix(F, fe, smoothstep(.15, .6, alpha));
+      fgShift = fe - cc;
+    }
+  }
+  return alpha;
+}
+float keyDist(vec3 c){
+  float y = luma(c), yk = luma(keyCol);
+  vec2 a = vec2((c.b - y) * .5389, (c.r - y) * .635), b = vec2((keyCol.b - yk) * .5389, (keyCol.r - yk) * .635);
+  return length(a - b) + abs(y - yk) * .12;
+}
+float chromaAlpha(vec2 p){
+  vec2 t = 1. / srcRes;
+  float d = keyDist(texture(src, p).rgb) * .5 + (keyDist(texture(src, p + vec2(t.x, 0.)).rgb) + keyDist(texture(src, p - vec2(t.x, 0.)).rgb)
+          + keyDist(texture(src, p + vec2(0., t.y)).rgb) + keyDist(texture(src, p - vec2(0., t.y)).rgb)) * .125;
+  float tol = max(.005, kTol - eGrow * .06), soft = kSoft * (1. + eFeather * 3.);
+  return smoothstep(tol, tol + soft, d);
+}
+vec3 despill(vec3 c){
+  if (kDom == 1) { float l = max(c.r, c.b); if (c.g > l) c.g = mix(c.g, l, kSpill); }
+  else if (kDom == 2) { float l = max(c.r, c.g); if (c.b > l) c.b = mix(c.b, l, kSpill); }
+  else { float l = max(c.g, c.b); if (c.r > l) c.r = mix(c.r, l, kSpill); }
+  return c;
+}
+float matteAt(vec2 p){
+  if (keyMode == 1) return chromaAlpha(p);
+  return smoothstep(.3, .7, texture(seg, p).r);
+}
+vec3 bgAt(vec2 p){
+  if (bgMode == 1) { vec3 b = correct(texture(blurL, p).rgb); return grade(b, b); }
+  if (bgMode == 2) return bgA;
+  if (bgMode == 3) return mix(bgA, bgB, clamp(p.y + (p.x - .5) * .35, 0., 1.));
+  return texture(bgTex, p * bgScale + bgOff).rgb;
+}
 void main(){
   vec2 px = 1. / res;
-  vec3 orig = srcAt(uv), c = orig;
+  bool cut2 = q2 == 1 && bgMode > 0 && (hasSeg == 1 || keyMode == 1);
+  float matte = 1.; vec3 fgShift = vec3(0.);
+  if (cut2) matte = keyMode == 1 ? chromaAlpha(uv) : refineAlpha(uv, fgShift);
+  vec3 orig = srcAt(uv);
+  if (cut2) orig = keyMode == 1 ? despill(orig) : clamp(orig + fgShift, 0., 1.);
+  vec3 c = orig;
   vec3 low = texture(blurS, uv).rgb;
   float skin = 0.;
   if (hasAdj == 1) {
@@ -149,7 +223,19 @@ void main(){
   vec3 bl = correct(low);
   if (hasAdj == 1) { c = adjust(c, bl, skin, uv); bl *= Again; }
   vec3 g = grade(c, bl);
-  if (bgMode > 0 && hasSeg == 1) {
+  if (cut2 && bgMode != 5) {
+    vec3 bgc = bgAt(uv);
+    if (eWrap > 0. && matte > .002) {
+      // light wrap: the new background's light spills over the person's edge (a ring of 8 taps, ~1.5 % of the frame)
+      vec2 r = vec2(.016 * res.y / res.x, .016) * (1. + eFeather);
+      float wide = 0.; vec3 wc = vec3(0.);
+      for (int i = 0; i < 8; i++) { float an = float(i) * .785398; vec2 q = uv + vec2(cos(an), sin(an)) * r; wide += matteAt(q); wc += bgAt(q); }
+      wide /= 8.; wc /= 8.;
+      float wa = eWrap * matte * clamp((1. - wide) * 1.8, 0., 1.);
+      g = mix(g, 1. - (1. - clamp(g, 0., 1.)) * (1. - wc), wa * .85);
+    }
+    g = mix(bgc, g, matte);
+  } else if (q2 == 0 && bgMode > 0 && hasSeg == 1) {
     float a = segAlpha(uv);
     vec3 bgc;
     if (bgMode == 1) { vec3 b = correct(texture(blurL, uv).rgb); bgc = grade(b, b); }
@@ -161,8 +247,9 @@ void main(){
   float vig = smoothstep(.85, .25, length((uv - .5) * vec2(1., 1.15)));
   g *= mix(1., vig, Lvig * amount);
   g += (hash(floor(uv * res) + frame) - .5) * Lgrain * .09 * amount;
-  if (cmpOn == 1 && uv.x < cmpU) g = texture(src, uv).rgb;              // before / after: the untouched source on the left
-  o = vec4(clamp(g, 0., 1.), 1.);
+  float oa = cut2 && bgMode == 5 ? matte : 1.;                           // transparent: the matte is the picture's alpha
+  if (cmpOn == 1 && uv.x < cmpU) { g = texture(src, uv).rgb; oa = 1.; }  // before / after: the untouched source on the left
+  o = vec4(clamp(g, 0., 1.), oa);
 }`,
   // two pictures A (outgoing) and B (incoming), p 0..1 across the transition, the cut at p = .5
   trans: COMMON + `
@@ -231,7 +318,7 @@ class GL {
   constructor() {
     this.canvas = document.createElement('canvas');
     this.canvas.width = 16; this.canvas.height = 16;
-    const gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false, alpha: false, depth: false, stencil: false });
+    const gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false, alpha: true, depth: false, stencil: false });
     if (!gl) throw new Error('WebGL2 is not available in this browser');
     this.gl = gl;
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);

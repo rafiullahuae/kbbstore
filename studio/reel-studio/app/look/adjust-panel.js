@@ -5,6 +5,7 @@ import { h, clear, seg, toast } from '../editor/ui.js';
 import { SLIDERS, PARTS, fmt } from './adjust.js';
 import { adjustOf, setAdjust, resetAdjust, enhanceVideo, setEnhancePart, enhanceOff, adjustAllLike } from './enhance.js';
 import { toggleCompare, compareOn } from './compare.js';
+import { removeBackground, bgOf } from './bg.js';
 
 let cssDone = false;
 function css() {
@@ -75,6 +76,14 @@ export function adjustSection(ctx, item) {
       e ? h('button.btn', { type: 'button', on: { click: () => run('Enhance', () => { enhanceOff(ctx, opt()); rerender(); }) } }, 'Enhance off') : cmpBtn,
       e ? h('div.wide', { style: { gridColumn: 'span 2' } }, cmpBtn) : null),
     e ? parts : null, note,
+    h('div.adj-btns',
+      h('button.btn.wide', { type: 'button', dataset: { act: 'remove-bg' }, title: 'Cut the person out (offline) and blur what is behind; then pick Colour, Picture, Another clip, Landmark or None (transparent) in 🧍 Background below',
+        on: { click: () => run('Remove background', async () => {
+          const had = bgOf(item);
+          const r = await removeBackground(ctx, Object.assign(had && (had.q || 1) >= 2 ? Object.assign({}, had) : { mode: 'blur', key: 'person' }, scope.all ? { ids: [] } : { ids: [item.id] }));
+          rerender();
+          return `🧍 Background removed on ${r.clips} clip${r.clips === 1 ? '' : 's'}: choose what goes behind in 🧍 Background`;
+        }) } }, bgOf(item) ? '🧍 Remove background again' : '🧍 Remove background')),
     ...group('light', '☀ Light'),
     ...group('colour', '🎨 Colour'),
     ...group('detail', '🔍 Detail'),
