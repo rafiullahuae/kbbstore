@@ -10,6 +10,7 @@ import { h, clear, toast, confirmDialog } from '../editor/ui.js';
 import { state as wsState, companyDialog, wsBadge } from '../editor/workspaces.js';
 import { claudeStatus, claudeSave, claudeDisconnect, claudeRun } from './claude.js';
 import { SOURCES, testUrl } from '../stock/api.js';
+import { searchBox } from '../editor/search-ui.js';
 const ap = (el, ...k) => { el.append(...k.flat(Infinity).filter((x) => x != null && x !== false)); return el; };
 
 const CSS = `
@@ -106,7 +107,7 @@ export function openConfigure(section = 'companies', { onClose } = {}) {
   const close = () => { back.remove(); document.removeEventListener('keydown', onKey, true); onClose?.(); };
   const onKey = (e) => { if (e.key === 'Escape' && !document.querySelector('.modal-back')) { e.stopPropagation(); close(); } };
   const back = h('div.cfg-back', { role: 'dialog', 'aria-label': 'Configure' },
-    h('header.cfg-top', h('span.logo-dot', '⚙'), h('h1', 'Configure'), h('span.cfg-muted', `everything ${APP_NAME} needs, in one place`), h('div.grow'), h('button.btn#cfg-close', { on: { click: close } }, '✕ Close')),
+    h('header.cfg-top', h('span.logo-dot', '⚙'), h('h1', 'Configure'), h('span.cfg-muted', `everything ${APP_NAME} needs, in one place`), searchBox(), h('button.btn#cfg-close', { on: { click: close } }, '✕ Close')),
     h('div.cfg-body', nav, main));
   document.body.appendChild(back);
   document.addEventListener('keydown', onKey, true);

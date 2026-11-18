@@ -1,0 +1,73 @@
+KBB Studio search check · 2026-11-18T12:19:41.075Z
+ALL PASS
+     115 states crawled (both companies, folded sections opened): 1531 distinct controls
+PASS coverage: every visible control on every state is in the index (0 missing)
+PASS coverage: every visible control has words (text, aria-label or title) (0 without)
+PASS hover: every indexed visible control has a description (0 without)
+PASS hover: 563 controls really hovered over all states — card shows with words, inside the window, off its control, no native title (0 bad)
+     index: 1490 entries (152 curated + 1338 from the crawl), 6469 words
+     screenshots → shots/search/
+PASS typo, synonym and Arabic: 28/28 queries put the right result on top
+PASS latency: 529 keystrokes over 1490 entries — median 0.28 ms, p95 0.88 ms, max 1.02 ms (limit 5 ms)
+     in the box: last keystroke searched in 1.39 ms
+PASS nav “trim” → top “Trim a clip” → ringed “ui-clip.mp4”, focused
+PASS nav “split” → top “Split” → ringed “✂ Split”, focused
+PASS nav “slow motion” → top “Speed” → ringed “Custom1×”, focused
+PASS nav “noise” → top “Noise strength” → ringed “StrengthMedium”, focused
+PASS nav “logo” → top “Companies” → ringed “✎ Edit kit (logo, colours, fonts)”, focused
+PASS nav “export 4k” → top “Export resolution (720p–4K)” → ringed “4K”, focused
+PASS nav “capsules” → top “Capsules carousel” → ringed “💊Capsules carouselJob and country pills”, focused
+PASS nav “arabic captions” → top “Translate captions” → ringed “Englishالعربية · Arabicاردو · Urduहिन्दी”, focused
+PASS nav “enhance” → top “Enhance video” → ringed “✨Enhance video”, focused
+PASS nav “speed ramp” → top “Speed ramp” → ringed “🎯 Slow-mo hit”, focused
+PASS nav “reverse” → top “Reverse” → ringed “⏪ Reverse”, focused
+PASS nav “freeze” → top “Freeze frame” → ringed “❄ Freeze frame”, focused
+PASS nav “ducking” → top “Duck music under speech” → ringed “🎵 Duck music under speech”, focused
+PASS nav “safe areas” → top “Safe areas” → ringed “▣ Safe areas”, focused
+PASS nav “frame rate” → top “Frame rate (30 / 60 fps)” → ringed “30 fps”, focused
+PASS nav “background colour” → top “Background colour” → ringed “Background”, focused
+PASS nav “snap” → top “Snap” → ringed “🧲 Snap”, focused
+PASS nav “marker” → top “Marker” → ringed “⚑ Marker”, focused
+PASS nav “duplicate” → top “Duplicate” → ringed “⧉ Duplicate”, focused
+PASS nav “unlink” → top “Unlink” → ringed “🔊 Unlink”, focused
+PASS nav “translate” → top “Translate captions” → ringed “Englishالعربية · Arabicاردو · Urduहिन्दी”, focused
+PASS nav “word sync” → top “Sync words to the voice” → ringed “⏱ Sync words to the voice”, focused
+PASS nav “font” → top “Text: words, font and size” → ringed “Title”, focused
+PASS nav “caption position” → top “Caption position (drag)” → ringed “Search templates”, focused
+PASS nav “themes” → top “Themes” → ringed “✨ Themes”, focused
+PASS nav “transitions” → top “Transitions” → ringed “Whip”, focused
+PASS nav “crop” → top “Crop” → ringed “Left0%”, focused
+PASS nav “zoom ken burns” → top “Zoom (Ken Burns)” → ringed “Slow zoom in”, focused
+PASS nav “volume” → top “Clip volume” → ringed “Volume100%”, focused
+PASS nav “auto captions” → top “Auto captions” → ringed “💬Auto captions”, focused
+PASS nav “remove silences” → top “Remove silences” → ringed “✂️Remove silences”, focused
+PASS nav “music” → top “Music library” → ringed “🎵Music”, focused
+PASS nav “sound effects” → top “Sound effects (SFX)” → ringed “🔊SFX”, focused
+PASS nav “stickers” → top “Stickers” → ringed “✨Stickers”, focused
+PASS nav “colour look” → top “Colour looks” → ringed “Beauty glow”, focused
+PASS nav “remove background” → top “Remove background” → ringed “🧍 Remove background”, focused
+PASS nav “skin” → top “Skin touch-up” → ringed “Smoothing35%”, focused
+PASS nav “loudness” → top “Loudness for the platform” → ringed “📏 Measure the mix now”, focused
+PASS nav “retention” → top “Retention” → ringed “📈Retentionpacing per second”, focused
+PASS nav “hook” → top “Hook builder” → ringed “🪝Hook builder”, focused
+PASS nav “photos” → top “Photos (Pexels / Unsplash)” → ringed “📷 Photos”, focused
+PASS nav “blade” → top “Blade” → ringed “🔪 Blade”, focused
+PASS nav “undo” → top “Undo” → ringed “↶”, focused
+PASS nav “keyboard shortcuts” → top “Keyboard shortcuts” → ringed “⌨”, focused
+PASS nav “shape 9:16” → top “Reel shape (9:16, 1:1, 4:5, 16:9)” → ringed “9:161:14:516:9”, focused
+PASS nav “adjust exposure” → top “Adjust (light, colour, detail)” → ringed “Exposure”, focused
+PASS nav “pexels key” → top “Pexels key” → ringed “Pexels API key”, focused
+PASS nav “contact” → top “Contact & social” → ringed “☎ Contact & social”, focused
+PASS nav “folders” → top “Folders & storage” → ringed “Open in Finder”, focused
+PASS nav “models” → top “Models (AI downloads)” → ringed “🧠 Models”, focused
+PASS nav “ad studio” → Ad Studio → opens the Ad Studio
+PASS nav “designs” → top “Designs screen” → ringed “Brief”, focused
+PASS navigation: 52/52 searches land on the right control, visible and focused
+PASS one-shot action: “Marker” offers Run / Show me where; ⌘↵ ran it (markers 0 → 1)
+PASS hover at 1280×800: 10 edge controls — card inside the window and off the control
+PASS hover at 2560×1440: 10 edge controls — card inside the window and off the control
+PASS top bar at 1280: search 88 px wide (320 px while typing) between “Saved” and the shapes (gaps 10 / 10 px); shapes on one row: true; name 240 px; bar 58 px; no overflow
+PASS top bar at 1440: search 248 px wide (248 px while typing) between “Saved” and the shapes (gaps 10 / 10 px); shapes on one row: true; name 240 px; bar 58 px; no overflow
+PASS top bar at 1920: search 460 px wide (460 px while typing) between “Saved” and the shapes (gaps 144 / 144 px); shapes on one row: true; name 240 px; bar 58 px; no overflow
+PASS top bar at 2560: search 460 px wide (460 px while typing) between “Saved” and the shapes (gaps 464 / 464 px); shapes on one row: true; name 240 px; bar 58 px; no overflow
+PASS console: 0 errors

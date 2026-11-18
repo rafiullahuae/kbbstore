@@ -18,6 +18,7 @@ import { clipFromMedia, trackEnd, reflowTo } from './items.js';
 import { prepareRender } from '../core/render.js';
 import { splitCmd } from './edit-ops.js';   // splits through core/retime.js splitProps (ramps, reverse, freeze)
 import { timelineKey } from './tl-drag.js';
+import { searchBox } from './search-ui.js';   // "Search anything… (⌘K)" in the top bar (search-ui.js)
 
 /** a right-column tab label "🎨 Look" as an icon over a word (editor.css .side-tab); textContent stays "🎨 Look" */
 function sideLabel(text) {
@@ -101,7 +102,7 @@ export class Editor {
       h('button.brand', { title: 'Home', on: { click: () => this.goHome() } }, h('span.logo-dot', '▶'), h('b', APP_NAME)),
       workspaceSwitcher({ onSwitch: () => this.goHome() }),
       this.nameIn, this.status,
-      h('div.grow'),
+      searchBox(),
       this.aspectSeg,
       h('div.sep'),
       this.undoBtn, this.redoBtn,
