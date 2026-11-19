@@ -21,7 +21,9 @@ export class FrameEngine {
   constructor(url, idx, { maxW = 0, budgetMB = 320, proxy = false } = {}, sink) {
     this.url = url; this.idx = idx; this.sink = sink;
     this.proxyOk = !!proxy; this.proxyK = 0; this.copyMs = 0; this.copies = 0; this.bufs = [];   // see _picture()
-    this.bw = maxW && maxW < idx.w ? Math.max(16, Math.round(maxW)) & ~1 : idx.w;
+    // maxW is the width the picture is SHOWN at: a clip turned 90° (a phone portrait clip) shows its coded height across
+    const dispW = idx.rot === 90 || idx.rot === 270 ? idx.h : idx.w;
+    this.bw = maxW && maxW < dispW ? Math.max(16, Math.round(idx.w * maxW / dispW)) & ~1 : idx.w;
     this.bh = Math.max(16, Math.round(this.bw * idx.h / idx.w)) & ~1;
     this.maxFrames = Math.max(8, Math.floor((budgetMB * 1048576) / (this.bw * this.bh * 4)));
     this.have = new Set(); this.keys = [];                // ts (µs) of frames handed over, sorted
@@ -79,6 +81,15 @@ export class FrameEngine {
 
   /** the decoded frame as a picture no wider than asked: the full copy, or the proxy copy once the full one is too slow */
   async _picture(f) {
+    const b = await this._picture0(f);
+    if (!this.idx.rot) return b;
+    // a phone clip shown turned (core/media.js trackRotation): the picture turned as it is meant to be seen
+    const r = this.idx.rot, side = r === 90 || r === 270, c = new OffscreenCanvas(side ? b.height : b.width, side ? b.width : b.height), x = c.getContext('2d');
+    if (r === 90) x.setTransform(0, 1, -1, 0, c.width, 0); else if (r === 180) x.setTransform(-1, 0, 0, -1, c.width, c.height); else if (r === 270) x.setTransform(0, -1, 1, 0, 0, c.height);
+    x.drawImage(b, 0, 0); b.close();
+    return c.transferToImageBitmap();
+  }
+  async _picture0(f) {
     if (this.proxyK) { try { return await this._proxy(f, this.proxyK); } catch { this.proxyK = 0; this.proxyOk = false; } }
     const a = performance.now();
     const b = await createImageBitmap(f, this.bw !== this.idx.w ? { resizeWidth: this.bw, resizeHeight: this.bh, resizeQuality: 'low' } : {});

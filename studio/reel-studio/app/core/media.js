@@ -264,6 +264,33 @@ class SeekReader {
   close() { this.el.removeAttribute('src'); this.el.load(); }
 }
 
+/**
+ * The clockwise turn (0 / 90 / 180 / 270) a video track is SHOWN at: its display matrix (tkhd). An iPhone records a
+ * portrait video as landscape pixels plus "turn 90°"; the browser's <video> applies it, a VideoDecoder does not. The
+ * export read the raw pixels, so every portrait phone clip came out on its side (the owner, 19 Nov: "all clips
+ * rotated"). Every decoded picture is now turned by this before it is drawn (rotateDrawable / frames-engine.js).
+ */
+export function trackRotation(track) {
+  const m = track?.matrix;
+  if (!m || m.length < 5) return 0;
+  const deg = Math.round(Math.atan2(m[1], m[0]) * 180 / Math.PI);
+  return ((Math.round(deg / 90) * 90) % 360 + 360) % 360;
+}
+/** draw `src` (w×h) turned `rot` degrees clockwise into `canvas` (resized to fit); returns the canvas */
+export function rotateInto(canvas, src, w, h, rot) {
+  const side = rot === 90 || rot === 270, W = side ? h : w, H = side ? w : h;
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
+  const c = canvas.getContext('2d');
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  if (rot === 90) c.setTransform(0, 1, -1, 0, W, 0);
+  else if (rot === 180) c.setTransform(-1, 0, 0, -1, W, H);
+  else if (rot === 270) c.setTransform(0, -1, 1, 0, 0, H);
+  c.drawImage(src, 0, 0, w, h);
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  return canvas;
+}
+
 class Mp4FrameReader {
   static async open(url) {
     const MP4Box = await loadMp4box();
@@ -283,7 +310,9 @@ class Mp4FrameReader {
     const config = await decoderConfig({ codec: track.codec.startsWith('vp08') ? 'vp8' : track.codec, codedWidth: track.video.width, codedHeight: track.video.height, description: describeTrack(file, track.id) });
     const base = Math.min(...samples.map((s) => s.cts));
     const list = samples.map((s) => ({ ts: Math.round(((s.cts - base) * 1e6) / s.timescale), dur: Math.round((s.duration * 1e6) / s.timescale), key: s.is_sync, data: s.data }));
-    return new Mp4FrameReader(config, list);
+    const r = new Mp4FrameReader(config, list);
+    r.rot = trackRotation(track);
+    return r;
   }
   constructor(config, list) {
     this.config = config; this.list = list; this.frames = []; this.next = 0; this.flushed = false; this.wake = null; this.err = null;
@@ -321,11 +350,19 @@ class Mp4FrameReader {
     return null;
   }
   async frame(t) {
-    try { return await this._frame(t); } catch (e) {
+    let f;
+    try { f = await this._frame(t); } catch (e) {
       if (!this._software(Math.round(t * 1e6) + 500)) throw e;
       console.warn('[media] hardware decode failed, decoding in software:', e.message || e);
-      return this._frame(t);
+      f = await this._frame(t);
     }
+    if (!f || !this.rot) return f;
+    // a phone clip shown turned (trackRotation): the picture as it is meant to be seen, drawn once per frame
+    if (this.turned?.ts === f.timestamp) return this.turned.canvas;
+    const canvas = this.turned?.canvas || (typeof OffscreenCanvas === 'function' ? new OffscreenCanvas(1, 1) : document.createElement('canvas'));
+    rotateInto(canvas, f, f.displayWidth, f.displayHeight, this.rot);
+    this.turned = { ts: f.timestamp, canvas };
+    return canvas;
   }
   async _frame(t) {
     if (this.err) throw this.err;

@@ -19,7 +19,7 @@
 // decoder's own frames are closed at once, so the decoder never stalls for lack of buffers. Reverse decodes a GOP at a
 // time from its keyframe and keeps it, so each frame is decoded once, not once per displayed frame.
 
-import { loadMp4box, describeTrack, decoderConfig } from './media.js';
+import { loadMp4box, describeTrack, decoderConfig, trackRotation } from './media.js';
 
 const CHUNK = 1 << 20;
 
@@ -51,7 +51,7 @@ export async function loadIndex(url) {
   const samples = raw.map((s) => ({ ts: Math.round(((s.cts - base) * 1e6) / s.timescale), dur: Math.max(1, Math.round((s.duration * 1e6) / s.timescale)), key: !!s.is_sync, off: s.offset, size: s.size }));
   const pts = samples.map((s) => s.ts).sort((a, b) => a - b);
   const span = pts.length > 1 ? (pts[pts.length - 1] - pts[0]) / (pts.length - 1) : 33333;
-  return { config, samples, pts, fps: 1e6 / span, frameDur: span, w: track.video.width, h: track.video.height };
+  return { config, samples, pts, fps: 1e6 / span, frameDur: span, w: track.video.width, h: track.video.height, rot: trackRotation(track) };
 }
 
 const indexCache = new Map();
