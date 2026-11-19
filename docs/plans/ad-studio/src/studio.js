@@ -14,7 +14,7 @@
   // ── built-in art (flags, country outlines, landmark silhouettes, company marks): constant SVG markup made at
   //    build time, packed gzip + base64 (≈140 KB instead of 370), unpacked once at start. An element names a piece
   //    by id ("flag:gb"); nothing stored or imported is ever used as markup. ──
-  var ART = Object.create(null), artMemo = Object.create(null), ARTID = /^(flag|map|lm|mark|fig|oi):[a-z0-9-]{2,24}$/;
+  var ART = Object.create(null), artMemo = Object.create(null), ARTID = /^(flag|map|lm|mark|fig|oi|nd):[a-z0-9-]{2,24}$/;
   function loadArt() {
     try {
       if (!D.art || !window.DecompressionStream) return Promise.resolve();
@@ -41,9 +41,18 @@
   function r2(n) { return Math.round(n * 100) / 100; }
 
   // ── fixed lists (the allowlists every stored value is checked against) ──
-  var FONTS = { inter: 'Inter', poppins: 'Poppins', montserrat: 'Montserrat', playfair: 'Playfair Display', dmserif: 'DM Serif Display', bebas: 'Bebas Neue', dancing: 'Dancing Script', afacad: 'Afacad', cairo: 'Cairo' };
-  var SHAPES = { none: 'None', rect: 'Rectangle', pill: 'Pill', circle: 'Circle', ellipse: 'Oval', ring: 'Ring', arch: 'Arch', burst: 'Burst', star: 'Star', heart: 'Heart', banner: 'Banner', ticket: 'Ticket', blob: 'Blob', glow: 'Soft glow', petal: 'Petal', silk: 'Silk ribbon' };
-  var BORDERED = { rect: 1, pill: 1, circle: 1, ellipse: 1, ring: 1, arch: 1 };
+  var FONTS = { inter: 'Inter', poppins: 'Poppins', montserrat: 'Montserrat', playfair: 'Playfair Display', dmserif: 'DM Serif Display', bebas: 'Bebas Neue', dancing: 'Dancing Script', afacad: 'Afacad', cairo: 'Cairo',
+    bodoni: 'Bodoni Moda', italiana: 'Italiana', jost: 'Jost', cormorant: 'Cormorant Garamond', reemkufi: 'Reem Kufi', messiri: 'El Messiri' };
+  var SHAPES = { none: 'None', rect: 'Rectangle', pill: 'Pill', circle: 'Circle', ellipse: 'Oval', ring: 'Ring', arch: 'Arch', burst: 'Burst', star: 'Star', heart: 'Heart', banner: 'Banner', ticket: 'Ticket', blob: 'Blob', glow: 'Soft glow', petal: 'Petal', silk: 'Silk ribbon', haze: 'Soft blur (colour haze)', glass: 'Frosted glass' };
+  // heading styles (owner, 19 Nov 2026: "National Day" in a multi-colour gradient of the UAE flag, as an option beside the
+  // plain heading). The four colours (hg1-hg4) are the element's own and editable; these are the defaults and where each
+  // sits along the word. 'uae' leaves white out (it would vanish on a light ground); 'uaed' keeps it and outlines the
+  // letters faintly so the white reads on lavender -- English only, an outline draws every overlap inside an Arabic word.
+  var HGS = {
+    uae: { name: 'UAE flag gradient · light background', def: ['#C8102E', '#00843D', '#0B6A35', '#141414'], at: [[0, 0], [0, 14], [1, 44], [2, 60], [3, 86]], sh: 'drop-shadow(0 .025em .035em rgba(0,0,0,.14))' },
+    uaed: { name: 'UAE flag gradient · with white (dusk / dark)', def: ['#E2304D', '#00A34F', '#FFFFFF', '#1B1B1B'], at: [[0, 0], [0, 12], [1, 38], [2, 58], [2, 66], [3, 94]], stroke: '.0115em rgba(70,40,110,.55)', sh: 'drop-shadow(0 .019em .051em rgba(50,25,80,.55))', shAr: 'drop-shadow(0 .02em .067em rgba(50,25,80,.6))' }
+  };
+  var BORDERED = { glass: 1, rect: 1, pill: 1, circle: 1, ellipse: 1, ring: 1, arch: 1 };
   var TYPES = { text: 'Text', btn: 'Button', shape: 'Shape', icon: 'Icon', img: 'Picture', art: 'Flag / landmark / map', pay: 'tabby / tamara', logo: 'Logo', prods: 'Products' };
   var PATS = { none: 'None', dots: 'Dots', grid: 'Grid', stripes: 'Stripes', rays: 'Rays', lattice: 'Lattice', waves: 'Waves', sparkle: 'Sparkles', petals: 'Petals', globe: 'Globe lines', routes: 'Flight routes' };
   var BGK = ['none', 'solid', 'linear', 'radial', 'image'], FITS = ['cover', 'contain', 'tile'];
@@ -130,9 +139,10 @@
     if (typeof e.txt === 'string') o.txt = e.txt.slice(0, 200);
     if (has(FONTS, e.fn)) o.fn = e.fn;
     if ([400, 500, 600, 700, 800, 900].indexOf(+e.fw) >= 0) o.fw = +e.fw;
-    ['fi', 'up', 'hide', 'lock', 'nw', 'ph'].forEach(function (b) { if (e[b] === true) o[b] = true; });
+    ['fi', 'up', 'hide', 'lock', 'nw', 'ph', 'lk'].forEach(function (b) { if (e[b] === true) o[b] = true; });
     NUMP.forEach(function (q) { if (e[q[0]] != null) { var n = num(e[q[0]], q[1], q[2]); if (n !== undefined) o[q[0]] = n; } });
-    ['col', 'fill', 'fill2', 'bc', 'shc'].forEach(function (c) { var v = col(e[c]); if (v) o[c] = v; });
+    ['col', 'fill', 'fill2', 'bc', 'shc', 'hg1', 'hg2', 'hg3', 'hg4'].forEach(function (c) { var v = col(e[c]); if (v) o[c] = v; });
+    if (e.t === 'text' && has(HGS, e.hg)) o.hg = e.hg;              // heading style: the UAE flag's colours through the letters
     if (typeof e.gp === 'string' && ID.test(e.gp) && e.t !== 'prods') o.gp = e.gp;
     if (e.al === 'l' || e.al === 'c' || e.al === 'r') o.al = e.al;
     if (has(SHAPES, e.sh)) o.sh = e.sh;
@@ -160,7 +170,7 @@
   function cleanItem(it) {
     if (!it || !prodOk(it.p)) return null;
     var o = { p: it.p, x: num(it.x, -100, 200, 40), y: num(it.y, -100, 300, 40), w: num(it.w, 1, 150, 12), r: num(it.r, -360, 360, 0), sh: num(it.sh, 0, 100, 55) };
-    o.ss = it.ss === 'sharp' || it.ss === 'glow' ? it.ss : 'soft'; return o;
+    o.ss = it.ss === 'sharp' || it.ss === 'glow' || it.ss === 'reflect' ? it.ss : 'soft'; return o;
   }
   function cleanDoc(raw, imgs) {
     if (!raw || typeof raw !== 'object' || !Array.isArray(raw.els)) return null;
@@ -394,7 +404,7 @@
 
   // ── templates -> designs ──
   function aspectOf(p) { return D.prods[p] ? D.prods[p].a : (images[p.slice(2)] ? images[p.slice(2)].aspect : .5); }
-  function itemFromSlot(s, p) { var a = aspectOf(p), h = s.h, w = h * a; if (w > s.mw) { w = s.mw; h = w / a; } return { p: p, x: r2(s.cx - w / 2), y: r2(s.by - h), w: r2(w), r: s.r || 0, sh: 55, ss: 'soft' }; }
+  function itemFromSlot(s, p) { var a = aspectOf(p), h = s.h, w = h * a; if (w > s.mw) { w = s.mw; h = w / a; } return { p: p, x: r2(s.cx - w / 2), y: r2(s.by - h), w: r2(w), r: s.r || 0, sh: s.sh || 55, ss: s.ss === 'reflect' ? 'reflect' : 'soft' }; }
   function brandPal(P) {
     if (!brand.on) return P;
     var Q = Object.assign({}, P); Q.acc = brand.c1; Q.acc2 = brand.c2; Q.rib = brand.c1; Q.badge = brand.c1; Q.btnTxt = contrast(brand.c1); Q.badgeTxt = contrast(brand.c1); Q.bandTxt = contrast(brand.c1); Q.ribTxt = contrast(brand.c1);
@@ -485,6 +495,7 @@
     var a = aspectOf(it.p);
     n.style.left = it.x + 'cqw'; n.style.top = it.y + 'cqw'; n.style.width = it.w + 'cqw'; n.style.height = (it.w / a) + 'cqw';
     n.style.transform = it.r ? 'rotate(' + it.r + 'deg)' : ''; n.style.filter = prodShadow(it, accent);
+    if (it.ss === 'reflect') n.style.webkitBoxReflect = 'below .4cqw linear-gradient(transparent 62%,rgba(255,255,255,.35))';   // on a glossy floor
   }
   function prodClass(p) { return 'p-' + (D.prods[p] ? p : 'u-' + p.slice(2)); }
   function isAr(s) { return /[؀-ۿ]/.test(s || ''); }
@@ -507,6 +518,8 @@
       if (k === 'circle' || k === 'ellipse') sf.style.borderRadius = '50%';
       else if (k === 'glow') sf.style.background = e.fill === 'transparent' ? 'transparent' : 'radial-gradient(closest-side,' + e.fill + ',' + (e.fill2 || e.fill.slice(0, 7) + '00') + ')';
       else if (k === 'petal') sf.style.borderRadius = '100% 0';
+      else if (k === 'glass') { sf.style.borderRadius = (e.rad || 0) + 'cqw'; sf.style.backdropFilter = sf.style.webkitBackdropFilter = 'blur(2.4cqw) saturate(1.2)'; sf.style.boxShadow = 'inset 0 0 6cqw rgba(255,255,255,.35)'; }   // frosts what is behind it
+      else if (k === 'haze') { sf.style.borderRadius = '50%'; sf.style.filter = 'blur(' + r2(Math.min(g.w, g.h || g.w) * .125) + 'cqw)'; }   // a colour seen through frosted glass
       else if (k === 'ring') { sf.style.borderRadius = '50%'; sf.style.background = 'transparent'; sf.style.border = ((e.bw || 3) / 10) + 'cqw ' + (e.bs || 'solid') + ' ' + (e.bc || e.fill || '#FFFFFF'); }
       else if (k === 'pill') sf.style.borderRadius = '999px';
       else if (k === 'rect') sf.style.borderRadius = (e.rad || 0) + 'cqw';
@@ -528,6 +541,12 @@
       var pd = (e.pd == null ? (box ? 1 : 0) : e.pd) * (g.k || 1);
       if (box) tc.style.padding = pd.toFixed(2) + 'cqw ' + (pd * 1.4).toFixed(2) + 'cqw';
       if (chip) { t.style.background = fillCss(e); t.style.padding = pd.toFixed(2) + 'cqw ' + (pd * 2.4).toFixed(2) + 'cqw'; t.style.borderRadius = e.sh === 'pill' ? '999px' : (e.rad || 0) + 'cqw'; if (e.bw) t.style.border = (e.bw / 10) + 'cqw ' + (e.bs || 'solid') + ' ' + (e.bc || '#000000'); }
+      if (e.t === 'text' && e.hg && HGS[e.hg] && !chip) {
+        var H = HGS[e.hg], hc = [e.hg1, e.hg2, e.hg3, e.hg4].map(function (c, i) { return c && c !== 'transparent' ? c : H.def[i]; });
+        t.style.backgroundImage = 'linear-gradient(100deg,' + H.at.map(function (s) { return hc[s[0]] + ' ' + s[1] + '%'; }).join(',') + ')';
+        t.style.webkitBackgroundClip = 'text'; t.style.backgroundClip = 'text'; t.style.color = 'transparent'; n.style.textShadow = 'none';
+        if (H.stroke && !isAr(e.txt)) t.style.webkitTextStroke = H.stroke;
+      }
       tc.appendChild(t); n.appendChild(tc);
     }
     if (e.t === 'icon') { n.innerHTML = iconSvg(e.ic); n.style.color = e.col || '#111111'; }            // constant markup only
@@ -549,11 +568,19 @@
         if (full) { var fi = mk('img'); fi.src = full; fi.alt = e.txt || co.fullName || co.name; fi.style.height = '2.8em'; lg.appendChild(fi); }
         else { var mk_ = co.mark ? artSrc(co.mark + (lt_ ? '-light' : '')) || artSrc(co.mark) : ''; if (mk_) { var mi = mk('img'); mi.src = mk_; mi.alt = ''; mi.style.height = '1.9em'; lg.appendChild(mi); } lg.appendChild(mk('span', null, e.txt || co.fullName || co.name)); }
       }
+      else if (e.lk) {
+        // the brand kit's full logo (studio/reel-studio/brands/kbb/logo.svg), drawn in the page's own fonts: the lotus in the
+        // kit's rose, the name, and "KOREAN SKINCARE · UAE" under it in spaced capitals
+        var sk = mk('span'); sk.innerHTML = iconSvg('lotus'); var svk = sk.firstChild; svk.setAttribute('viewBox', '0 0 24 18'); svk.style.width = '2.65em'; svk.style.height = '1.98em'; svk.style.color = e.fill && e.fill !== 'transparent' ? e.fill : '#C6395F'; lg.appendChild(svk);
+        var lw = mk('span', 'lkt'); lw.appendChild(mk('span', null, e.txt || 'K-Beauty Bliss'));
+        var tg = mk('span', 'lktg', 'KOREAN SKINCARE · UAE'); tg.style.color = svk.style.color; lw.appendChild(tg); lg.appendChild(lw);
+      }
       else { var sv = mk('span'); sv.innerHTML = iconSvg('lotus'); var svg = sv.firstChild; svg.setAttribute('viewBox', '0 0 24 18'); lg.appendChild(svg); lg.appendChild(mk('span', null, e.txt || 'K-Beauty Bliss')); }
       n.appendChild(lg);
     }
     if (e.op != null && e.op < 100) n.style.opacity = e.op / 100;
     if (e.shd) n.style.filter = shadowCss(e.shd, e.shc);
+    if (e.t === 'text' && e.hg && HGS[e.hg] && !chip) n.style.filter = isAr(e.txt) && HGS[e.hg].shAr || HGS[e.hg].sh;   // its own soft shadow: a text-shadow would muddy the clipped colours
     if (e.lock && mode === 'edit') n.classList.add('lk');
     placeEl(n, e, g);
     return n;
@@ -984,7 +1011,7 @@
   function hex6(c, d) { return c && HEX.test(c) ? c.slice(0, 7) : d; }
   // a colour swatch button shows its colour over a checkerboard (so see-through reads as see-through)
   function paintSw(b, v) { var ok = typeof v === 'string' && (HEX.test(v) || v === 'transparent'); b.firstElementChild.style.setProperty('--c', ok ? v : 'transparent'); b.title = ok ? v : 'None'; }
-  var DEFCOL = { col: '#111111', fill: 'transparent', fill2: 'transparent', bc: '#000000', shc: '#000000' };
+  var DEFCOL = { col: '#111111', fill: 'transparent', fill2: 'transparent', bc: '#000000', shc: '#000000', hg1: '#C8102E', hg2: '#00843D', hg3: '#0B6A35', hg4: '#141414' };
   function panelSel() {
     var keys = selKeys(), multi = keys.length > 1, e = multi ? null : selEl(), props = $('props');
     $('multi').hidden = !multi;
@@ -1009,6 +1036,7 @@
       var on = !!e && n.dataset.show.split(' ').indexOf(e.t) >= 0;
       if (n.dataset.show === 'fill') on = !!e && (e.t === 'shape' || e.t === 'btn' || (e.t === 'text' && e.sh && e.sh !== 'none'));
       if (n.dataset.show === 'border') on = !!e && (e.t === 'shape' || e.t === 'btn') && !!BORDERED[e.sh];
+      if (n.dataset.show === 'hg') on = !!e && e.t === 'text' && !!e.hg;
       n.hidden = !on;
     });
     if (!e) return;
@@ -1017,10 +1045,10 @@
       var p = n.dataset.p, v = e[p];
       if (n.type === 'color') v = hex6(v, p === 'col' ? '#111111' : '#FFFFFF');
       else if (n.type === 'checkbox') v = !!v;
-      else if (v == null) v = { fs: 4, ls: 0, lh: 115, rad: 0, pd: e.t === 'text' ? 0 : 1, op: 100, shd: 0, bw: 0, fw: 700, fn: 'poppins', sh: 'none', bs: 'solid', pay: 'both', ic: 'sparkle', txt: '' }[p];
+      else if (v == null) v = { fs: 4, ls: 0, lh: 115, rad: 0, pd: e.t === 'text' ? 0 : 1, op: 100, shd: 0, bw: 0, fw: 700, fn: 'poppins', sh: 'none', bs: 'solid', pay: 'both', ic: 'sparkle', txt: '', hg: 'none' }[p];
       if (v != null) setV(n, v);
     });
-    props.querySelectorAll('[data-cp]').forEach(function (b) { paintSw(b, e[b.dataset.cp] || DEFCOL[b.dataset.cp]); });
+    props.querySelectorAll('[data-cp]').forEach(function (b) { paintSw(b, e[b.dataset.cp] || hgDef(e, b.dataset.cp) || DEFCOL[b.dataset.cp]); });
     $('v-fs').textContent = (e.fs || 4).toFixed(1);
     props.querySelectorAll('[data-g]').forEach(function (n) { setV(n, g[n.dataset.g] || 0); });
     $('v-r').textContent = (g.r || 0) + '°';
@@ -1031,6 +1059,8 @@
     cutPanel(e);
     $('eres').disabled = !doc.tpl || !tplById[doc.tpl];
   }
+  // a heading-gradient colour the owner has not set shows the style's own default
+  function hgDef(e, p) { var i = ['hg1', 'hg2', 'hg3', 'hg4'].indexOf(p); return i >= 0 && e && HGS[e.hg] ? HGS[e.hg].def[i] : ''; }
   function propVal(n, p) {
     if (n.type === 'checkbox') return n.checked || undefined;
     if (n.type === 'color') { var e = selEl(), old = e && e[p]; var a = old && old.length === 9 ? old.slice(7) : ''; return n.value.toUpperCase() + a; }
@@ -1045,6 +1075,7 @@
       var c = cleanEl(Object.assign({}, e, raw), images); if (!c) return;
       if (raw[n.dataset.p] === undefined) delete e[n.dataset.p]; else if (c[n.dataset.p] !== undefined) e[n.dataset.p] = c[n.dataset.p];
       if (n.dataset.p === 'sh' && e.t === 'text' && e.sh !== 'none' && !e.fill) e.fill = '#FFFFFF';
+      if (n.dataset.p === 'hg' && !c.hg) delete e.hg;
       if (n.dataset.p === 'fs') $('v-fs').textContent = (+n.value).toFixed(1);
     } else if (n.dataset.g) {
       var g = doc.geo[st.fmt][e.id], v = +n.value; if (!isFinite(v)) return;
@@ -1054,7 +1085,7 @@
     else return;
     redrawStageOnly();
     if (ev.type === 'input' && (n.type !== 'range' && n.tagName !== 'TEXTAREA' && n.type !== 'text' && n.type !== 'color')) end();
-    if (n.dataset.p === 'sh') panelSel();
+    if (n.dataset.p === 'sh' || n.dataset.p === 'hg') panelSel();
   });
   $('props').addEventListener('change', function () { end(); layers(); });
   function redrawStageOnly() { var cv = renderCanvas(doc, st.fmt, st.set, 'edit'); stage.textContent = ''; stage.appendChild(cv); fitText(cv); markSel(); dirtyMark(); }
@@ -1064,7 +1095,7 @@
     var b = ev.target.closest('[data-cp],[data-mp]'); if (!b) return;
     if (b.dataset.cp) {
       var e = selEl(), p = b.dataset.cp; if (!e) return;
-      CC.open(b, e[p] || (p === 'fill2' ? e.fill || '#FFFFFF' : DEFCOL[p]), function (v, fin) {
+      CC.open(b, e[p] || (p === 'fill2' ? e.fill || '#FFFFFF' : hgDef(e, p) || DEFCOL[p]), function (v, fin) {
         begin(); var raw = {}; raw[p] = v; var c = cleanEl(Object.assign({}, e, raw), images); if (c && c[p]) e[p] = c[p];
         if (p === 'fill' && e.t === 'text' && (!e.sh || e.sh === 'none')) e.sh = 'rect';
         redrawStageOnly(); paintSw(b, e[p]); if (fin) { end(); panelSel(); layers(); }
@@ -1156,9 +1187,12 @@
   function occName(id) { return has(KT.OCC, id) ? KT.OCC[id].t[0] : id; }
   function toolName(id) { var n = ''; KT.OCCS.some(function (o) { return o.tools.some(function (t) { if (t[0] === id) { n = t[1]; return true; } }); }); return n || id; }
   function artName(id) {
+    if (id.indexOf('nd:') === 0) return 'Celebration · ' + (ND_ART[id] || id.slice(3));
     if (id.indexOf('fig:') === 0) return 'Worker · ' + occName(id.slice(4));
     if (id.indexOf('oi:') === 0) return 'Tool · ' + toolName(id.slice(3));
     var m = /^(flag|map|lm|mark):(.+)$/.exec(id) || [], c = KT.CTRY[m[2]]; if (m[1] === 'lm') { var l = KT.CTRY_LIST.filter(function (x) { return x.lm === m[2]; })[0]; return 'Landmark · ' + (l ? l.lmName : m[2]); } return (m[1] === 'flag' ? 'Flag · ' : m[1] === 'map' ? 'Outline · ' : 'Mark · ') + (c ? c.name : m[2]); }
+  // the National Day pieces (Glass & Dew, Skyline Dusk): drawn at build time in build.py
+  var ND_ART = { 'nd:dew': 'Dew drops', 'nd:dew-tall': 'Dew drops (tall)', 'nd:skyline': 'City skyline', 'nd:fw-1': 'Firework (green)', 'nd:fw-2': 'Firework (red)', 'nd:fw-3': 'Firework (white)', 'nd:fw-4': 'Firework (gold)', 'nd:fw-5': 'Firework (green, small)', 'nd:fw-6': 'Firework (red, small)' };
   function artOptions(sel, first) {
     if (first) { var o0 = mk('option', null, first); o0.value = ''; sel.appendChild(o0); }
     [['flag', 'Flags'], ['map', 'Country outlines'], ['lm', 'Landmarks']].forEach(function (g) {
@@ -1173,6 +1207,9 @@
     var ot = document.createElement('optgroup'), seenT = {}; ot.label = 'Tool icons';
     KT.OCCS.forEach(function (o) { o.tools.forEach(function (t) { if (seenT[t[0]]) return; seenT[t[0]] = 1; var x = mk('option', null, t[1]); x.value = 'oi:' + t[0]; ot.appendChild(x); }); });
     sel.appendChild(ot);
+    var oc = document.createElement('optgroup'); oc.label = 'Celebration';
+    Object.keys(ND_ART).forEach(function (k) { var x = mk('option', null, ND_ART[k]); x.value = k; oc.appendChild(x); });
+    sel.appendChild(oc);
   }
   artOptions($('add-art'), 'Add a flag, outline or landmark…'); artOptions($('p-art'));
   $('add-art').onchange = function (ev) {
@@ -1209,8 +1246,26 @@
       row.onclick = function (ev) { rowClick(ev, row, child ? e.gp : null); };
       host.appendChild(row);
     }
+    // each product of the set on show is its own row under Products (owner, 19 Nov 2026: "each element separate ... full
+    // controls"): a tap selects it (swap, size, turn, shadow in its panel), ▲ ▼ move it in front of / behind its neighbours
+    function prodRows() {
+      var l = curItems();
+      for (var i = l.length - 1; i >= 0; i--) (function (i) {
+        var it = l[i], nmTxt = 'Product ' + (i + 1) + ' — ' + (D.prods[it.p] ? D.prods[it.p].n : 'your picture');
+        var row = mk('div', 'ly pi' + (on['p:' + i] ? ' on' : '')); row.dataset.k = 'p:' + i; row.appendChild(mk('span', 'n', nmTxt));
+        var a = mk('span', 'a');
+        [['▲', 'Bring forward', 1], ['▼', 'Send backward', -1]].forEach(function (q) {
+          var x = mk('button', null, q[0]); x.type = 'button'; x.title = q[1]; x.setAttribute('aria-label', q[1] + ': ' + nmTxt);
+          x.onclick = function (ev) { ev.stopPropagation(); var j = i + q[2]; if (j < 0 || j >= l.length) return; act(function () { var t = l[i]; l[i] = l[j]; l[j] = t; setSel(['p:' + j]); }); };
+          a.appendChild(x);
+        });
+        row.appendChild(a);
+        row.onclick = function (ev) { if (ev.target.closest('.n')) lastRow = { k: '', t: 0 }; rowClick(ev, row, null); };
+        host.appendChild(row);
+      })(i);
+    }
     doc.els.slice().reverse().forEach(function (e) {
-      if (!e.gp) { elRow(e, false); return; }
+      if (!e.gp) { elRow(e, false); if (e.t === 'prods') prodRows(); return; }
       if (done[e.gp]) return; done[e.gp] = 1;
       var gid = e.gp, list = members(gid), open = st.gopen[gid] !== false, gname = (doc.groups[gid] && doc.groups[gid].name) || 'Group';
       var row = mk('div', 'ly grp' + (list.every(function (x) { return on[x.id]; }) ? ' on' : '')); row.dataset.k = 'g:' + gid;
@@ -1314,7 +1369,7 @@
   $('ps-r').oninput = function () { var it = pItem(); if (!it) return; begin(); it.r = num(this.value, -360, 360, 0); $('ps-rv').textContent = it.r + '°'; redrawStageOnly(); };
   $('ps-sh').oninput = function () { var it = pItem(); if (!it) return; begin(); it.sh = num(this.value, 0, 100, 55); redrawStageOnly(); };
   ['ps-r', 'ps-sh'].forEach(function (id) { $(id).onchange = function () { end(); }; });
-  $('ps-ss').onchange = function () { var it = pItem(); if (it) act(function () { it.ss = $('ps-ss').value === 'sharp' || $('ps-ss').value === 'glow' ? $('ps-ss').value : 'soft'; }); };
+  $('ps-ss').onchange = function () { var it = pItem(), v = $('ps-ss').value; if (it) act(function () { it.ss = v === 'sharp' || v === 'glow' || v === 'reflect' ? v : 'soft'; }); };
   function grow(k) { var it = pItem(); if (!it) return; act(function () { var a = aspectOf(it.p), cx = it.x + it.w / 2, by = it.y + it.w / a; it.w = r2(Math.max(2, it.w * k)); it.x = r2(cx - it.w / 2); it.y = r2(by - it.w / a); }); }
   $('ps-sm').onclick = function () { grow(1 / 1.08); }; $('ps-bg').onclick = function () { grow(1.08); };
   $('ps-fr').onclick = function () { var l = curItems(); if (st.psel == null) return; act(function () { l.push(l.splice(st.psel, 1)[0]); setSel(['p:' + (l.length - 1)]); }); };
@@ -1794,10 +1849,37 @@
         if (!IMGID.test(p.id)) return;
         var row = mk('div', 'it'); row.appendChild(mk('span', null, (p.name || 'Untitled') + (p.id === doc.id ? ' (open)' : '')));
         var o = mk('button', 'btn sm', 'Open'); o.type = 'button'; o.onclick = function () { openProject(p.id); }; row.appendChild(o);
+        var du = mk('button', 'btn sm', 'Duplicate'); du.type = 'button'; du.title = 'A full copy of this design, saved beside it'; du.onclick = function () { copyProject(p.id, co.id, ' (copy)'); }; row.appendChild(du);
+        if (cos.length > 1) {
+          // owner, 19 Nov 2026: a design can go to another company (Move) or be given to it as well (Copy)
+          var mv = mk('select', 'sel sm'); mv.setAttribute('aria-label', 'Move or copy "' + (p.name || 'Untitled') + '" to another company');
+          var o0 = mk('option', null, 'Move / copy…'); o0.value = ''; mv.appendChild(o0);
+          [['m', 'Move to'], ['c', 'Copy to']].forEach(function (g) { var og = document.createElement('optgroup'); og.label = g[1]; cos.forEach(function (c) { if (c.id === co.id) return; var oo = mk('option', null, g[1] + ' ' + c.name); oo.value = g[0] + ':' + c.id; og.appendChild(oo); }); mv.appendChild(og); });
+          mv.onchange = function () { var v = /^([mc]):([a-z0-9-]{1,40})$/.exec(mv.value) || []; mv.value = ''; if (!v[1] || !cos.some(function (c) { return c.id === v[2]; })) return; if (v[1] === 'c') copyProject(p.id, v[2], ''); else moveProject(p.id, v[2]); };
+          row.appendChild(mv);
+        }
         var x = mk('button', 'btn sm', 'Delete'); x.type = 'button'; x.onclick = function () { if (!confirm('Delete "' + p.name + '"?')) return; Store.delProject(p.id).then(listMine); }; row.appendChild(x);
         h.appendChild(row);
       });
     }).catch(function () {});
+  }
+  function coName(id) { var c = cos.filter(function (x) { return x.id === id; })[0]; return c ? c.name : id; }
+  // a saved design copied whole (new id; " (copy)" on the name when it stays in this company) -- nothing is opened
+  function copyProject(id, to, suffix) {
+    return Store.getProject(id).then(function (raw) {
+      var d = cleanDoc(raw, images); if (!d) throw new Error('That design could not be read');
+      d.id = uid('d'); d.name = (d.name + (suffix || '')).slice(0, 60); d.co = to;
+      return Store.putProject(d).then(function () { listMine(); setStatus(to === co.id ? 'Duplicated as "' + d.name + '"' : 'Copied "' + d.name + '" to ' + coName(to), 'ok'); return d; });
+    }).catch(function (e) { setStatus('Not copied: ' + ((e && e.message) || 'try again'), 'warn'); return null; });
+  }
+  // a saved design given to another company: the same file (adstudio/projects/<id>.json) with its co changed, the
+  // list caches follow through putProject; the design open here keeps working and now saves to that company
+  function moveProject(id, to) {
+    return Store.getProject(id).then(function (raw) {
+      var d = cleanDoc(raw, images), open = id === doc.id, clean = open && lastSaved === JSON.stringify(doc); if (!d) throw new Error('That design could not be read');
+      d.co = to; if (open) doc.co = to;
+      return Store.putProject(d).then(function () { if (clean) lastSaved = JSON.stringify(doc); listMine(); setStatus('Moved "' + d.name + '" to ' + coName(to), 'ok'); return d; });
+    }).catch(function (e) { setStatus('Not moved: ' + ((e && e.message) || 'try again'), 'warn'); return null; });
   }
   function openProject(id) {
     Store.getProject(id).then(function (raw) {
@@ -1861,7 +1943,13 @@
           var w = it.w * u, h = w / aspectOf(it.p), sh = (it.sh == null ? 55 : it.sh) / 100;
           x.save(); x.globalAlpha = Math.max(0, Math.min(1, a)); x.translate(it.x * u + w / 2, it.y * u + h / 2 + ty); x.rotate(rot * Math.PI / 180); x.scale(sc, sc);
           if (sh) { if (it.ss === 'glow') { x.shadowColor = acc; x.shadowBlur = 2.2 * sh * u * 2; } else { x.shadowColor = 'rgba(0,0,0,' + ((it.ss === 'sharp' ? .55 : .42) * sh).toFixed(2) + ')'; x.shadowBlur = (it.ss === 'sharp' ? .5 : 3.2) * sh * u; x.shadowOffsetY = (it.ss === 'sharp' ? .5 : 1.4) * sh * u; } }
-          x.drawImage(im, -w / 2, -h / 2, w, h); x.restore();
+          x.drawImage(im, -w / 2, -h / 2, w, h);
+          if (it.ss === 'reflect') {     // the stage's box-reflect: the lowest 38% mirrored under the base, fading from .35 to nothing
+            x.shadowColor = 'transparent'; var iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, N = 8, dh = h * .38 / N, gap = .4 * u;
+            for (var q = 0; q < N; q++) { x.save(); x.globalAlpha = Math.max(0, Math.min(1, a)) * .35 * (1 - (q + .5) / N); x.translate(0, h / 2 + gap + (q + .5) * dh); x.scale(1, -1);
+              x.drawImage(im, 0, ih * (1 - (q + 1) * .38 / N), iw, ih * .38 / N, -w / 2, -dh / 2, w, dh); x.restore(); }
+          }
+          x.restore();
         });
       }
       return new Promise(function (res) {
@@ -2297,7 +2385,7 @@
   });
 
   // test hooks (read-only views + the same actions the buttons run)
-  window.KBB_STUDIO = { shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
+  window.KBB_STUDIO = { copyProject: copyProject, moveProject: moveProject, listMine: listMine, shared: { Store: Store, D: D, ICONS: ICONS, iconSvg: iconSvg, FONTS: FONTS, images: images, brand: function () { return brand; }, IMGID: IMGID }, stopPlay: function () { stopPlay(); },
     get doc() { return doc; }, st: st, templates: KT.LIST, useTemplate: function (id, cty) { useTemplate(tplById[id], cty); },
     setCompany: setCompany, company: function () { return co; }, companies: function () { return cos; }, setCountry: setCountry, countries: KT.CTRY_LIST, setOccupation: setOccupation, occupations: KT.OCCS, cutOut: function (k, f) { return cutOutPhoto(selEl(), k, f); }, restorePhoto: function () { restorePhoto(selEl()); }, hasArt: function (id) { return !!ART[id]; }, exportCompany: function (id) { return exportCompany(coById(id) || co); }, importCompany: importCompany, backupAll: backupAll, importBackup: importBackup, art: function () { return Object.keys(ART).length; }, fromTemplate: function (id, cty, occ) { return fromTemplate(tplById[id], co, cty, occ); }, renderFile: renderFile, recordVideo: recordVideo, store: Store, images: images, saveNow: saveNow, cleanDoc: function (r) { return cleanDoc(r, images); }, draw: draw, brand: function () { return brand; },
     selKeys: selKeys, setSel: function (k) { setSel(k); afterSel(); }, itemBox: itemBox, aabb: aabb, docColours: function () { return docColours(doc); } };

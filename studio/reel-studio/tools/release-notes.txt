@@ -2,6 +2,15 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.3.1
+- 4 new National Day ads in Ad Studio: Glass & Dew and Skyline Dusk, line-up and scattered, in English and Arabic, with a UAE flag heading option.
+- Every part of them is its own layer: logo, each line of text, the offer, the button, each product, the blobs, glass, dew, fireworks, skyline and floor.
+- New heading style for any heading: Plain or UAE flag gradient (pick the heading → Heading style), with its four colours editable.
+- Products can stand on a glossy floor with a reflection: pick a product → Shadow style → Soft + reflection.
+- Duplicate a saved design in one click: My saved designs → Duplicate.
+- Move a saved design to another company, or copy it there: My saved designs → Move / copy….
+- Duplicate a video reel in one click: Home → Recent reels → ⧉.
+
 ## 1.3.0
 - Install updates from inside the studio: Configure → Updates → Install update…, then pick the zip. No more replacing the folder.
 - Roll back to the version you had before with one click, if anything looks wrong.

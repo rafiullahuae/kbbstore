@@ -36,7 +36,10 @@ def css():
         if not m:
             raise
         print('fonts: using the fonts inside dist/ad-studio.html (' + type(e).__name__ + ': ' + str(e)[:80] + ')')
-        return m.group(1)
+        have = m.group(1)
+        # a vendored face added since that build (local files: they never need the network)
+        extra = [f for f in _vendored() if f.split(';')[0] + ';' + f.split(';')[1] not in have]
+        return '\n'.join([have] + extra)
 
 
 def _css():
@@ -67,13 +70,23 @@ VENDORED = [('Afacad', '400 700', 'afacad-latin.woff2',
              'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'),
             ('Afacad', '400 700', 'afacad-latin-ext.woff2',
              'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF')]
+# The National Day Glass & Dew / Skyline Dusk ads (19 Nov 2026: the owner approved them from a preview set in these faces):
+# Bodoni Moda 500, Italiana, Jost (variable), Cormorant Garamond 600 italic, and for the Arabic Reem Kufi and El Messiri
+# (variable, Arabic subset). From npm @fontsource 5.3.0 (SIL OFL 1.1, vendor/fonts/OFL-<name>.txt), one subset each.
+LATIN = 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'
+ARABIC = 'U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC'
+VENDORED += [('Bodoni Moda', '500', 'bodoni-moda-latin-500.woff2', LATIN), ('Italiana', '400', 'italiana-latin-400.woff2', LATIN),
+             ('Jost', '400 700', 'jost-latin-wght.woff2', LATIN), ('Cormorant Garamond', '600', 'cormorant-garamond-latin-600-italic.woff2', LATIN, 'italic'),
+             ('Reem Kufi', '400 700', 'reem-kufi-arabic-wght.woff2', ARABIC), ('El Messiri', '400 700', 'el-messiri-arabic-wght.woff2', ARABIC)]
 
 
 def _vendored():
     out = []
-    for fam, w, f, rng in VENDORED:
+    for v in VENDORED:
+        fam, w, f, rng = v[:4]
+        sty = v[4] if len(v) > 4 else 'normal'
         b64 = base64.b64encode(open(os.path.join(D, 'vendor', 'fonts', f), 'rb').read()).decode()
-        out.append(f"@font-face{{font-family:'{fam}';font-style:normal;font-weight:{w};font-display:block;"
+        out.append(f"@font-face{{font-family:'{fam}';font-style:{sty};font-weight:{w};font-display:block;"
                    f"src:url(data:font/woff2;base64,{b64}) format('woff2');unicode-range:{rng}}}")
     return out
 
