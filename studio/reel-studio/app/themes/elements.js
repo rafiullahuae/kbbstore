@@ -630,7 +630,7 @@ export function drawElement(ctx, el, item, project, env, styleOverride, inLayer 
   const T = timing(def, local, dur), W = project.canvas.w, H = project.canvas.h;
   const fn = D[el]; if (!fn) return;
   const beats = s.beats || project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.beats || [];
-  const S = { tl: T.tl, d: T.d, k: T.k, inn: T.inn, out: T.out, w: env.box.w, h: env.box.h, U: Math.min(W, H), t: item.t0 + local, pulse: s.beat === false ? 0 : pulseAt(beats, item.t0 + local), txt: s.text || {}, style: s, brand: s.brand, face: (project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.faces || [])[0] || null, beats, covered: el === 'grade' && !inLayer && (coveredAt(project, item.t0 + local) || overlayAt(project, item.t0 + local)) };
+  const S = { tl: T.tl, d: T.d, k: T.k, inn: T.inn, out: T.out, w: env.box.w, h: env.box.h, U: Math.min(W, H), t: item.t0 + local, pulse: s.beat === false ? 0 : pulseAt(beats, item.t0 + local), txt: s.text || {}, style: s, brand: s.brand, face: (project.tracks?.flatMap((t) => t.items).find((i) => i.type === 'theme.overlay')?.style?.faces || [])[0] || null, beats, covered: el === 'grade' && !inLayer && (coveredAt(project, item.t0 + local) || overlayAt(project, item.t0 + local)), item, project, env };
   ctx.save();
   // the element's text pass (./text.js): text style, fitting, and, in the preview, where each string landed
   const rec = !!env.preview && !opts?.noRec, prev = textBegin(ctx, s.tstyle, S.txt, { rec, fields: opts?.fields, draws: opts?.draws });

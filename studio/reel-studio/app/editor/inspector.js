@@ -199,7 +199,8 @@ export class Inspector {
     this.el.append(this.section('Theme element', ...kids));
     if (EL2_PANEL?.handles(el)) this.el.append(...EL2_PANEL.inspectorSections(this, item));
     // every word it draws, prefilled and live, plus its text style (themes/text-panel.js)
-    if (el !== 'capsules' && TEXT_PANEL) this.el.append(...TEXT_PANEL.themeTextSections(this, item));
+    // (text behind the host has its own look controls: only its words come from here)
+    if (el !== 'capsules' && TEXT_PANEL) this.el.append(...TEXT_PANEL.themeTextSections(this, item).filter((sec) => el !== 'tbehind' || !sec.dataset?.thStyleSec));
     if (el === 'capsules' && CAPS_PANEL) { const box = h('div', { dataset: { capsInsp: item.id } }); this.el.append(box); CAPS_PANEL.capsulesInspector(this, item, box); }
   }
 

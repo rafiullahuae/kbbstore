@@ -3,7 +3,7 @@
 // grid; drawing then only samples the cache, so the preview stays real time and the export draws the very same masks.
 // Temporal smoothing: masks are averaged over neighbouring grid frames (1-2-1) and blended between grid points.
 import { MediaStore } from '../core/media.js';
-import { findMedia } from '../core/project.js';
+import { findMedia, srcTime, itemEnd } from '../core/project.js';
 import { subjectReady, subjectMasks, SUBJECT_SIZE } from './subject.js';
 
 export const SEG_FPS = 15, FACE_FPS = 10, SEG_SIZE = 256, FACE_SIZE = 640;
@@ -51,6 +51,29 @@ const usesCover = (project) => {
 };
 
 /**
+ * "Text behind the host" elements (themes/textbehind.js) need the person (or the main subject) of the clip they stand on,
+ * only over the time they overlap it: the grid indices of media `mediaId` those elements ask for with mask `kind`.
+ */
+export function behindFrames(project, mediaId, fps, kind) {
+  const ks = new Set(), tracks = project.tracks || [];
+  tracks.forEach((tr, ti) => {
+    for (const el of tr.items) {
+      if (el.type !== 'theme.el' || el.style?.el !== 'tbehind' || ((el.style.key === 'subject' ? 'subject' : 'person') !== kind)) continue;
+      const a = el.t0, b = itemEnd(el);
+      for (let j = 0; j < ti; j++) for (const it of tracks[j].items) {
+        if (it.type !== 'clip' || it.media !== mediaId) continue;
+        const lo = Math.max(a, it.t0), hi = Math.min(b, itemEnd(it)); if (hi <= lo) continue;
+        // sample the overlap finely enough to follow speed ramps, then pad one grid step each side
+        const n = Math.max(2, Math.ceil((hi - lo) * fps * 2));
+        for (let i = 0; i <= n; i++) { const s = srcTime(it, lo + (hi - lo) * Math.min(1, i / n) - (i === n ? 1e-4 : 0)), k = Math.floor(s * fps); ks.add(k - 1); ks.add(k); ks.add(k + 1); ks.add(k + 2); }
+      }
+    }
+  });
+  ks.delete(-1);
+  return ks;
+}
+
+/**
  * Analyse what the project needs and is not cached yet. onProgress(label, 0..1).
  * kinds: which analyses to run ('seg', 'face'); default: whatever the project's effects use.
  */
@@ -71,7 +94,7 @@ async function analyse(project, { onProgress, only } = {}) {
     const faceK = neededFrames(project, m.id, FACE_FPS, usesFx('look.touchup')).filter((k) => !FACE.get(m.id)?.frames.has(k));
     const kinds = {};
     for (const kind of ['person', 'subject']) {
-      const rec = MASKS.get(m.id + '|' + kind), ks = neededFrames(project, m.id, MASK_FPS[kind], usesKind(kind)).filter((k) => !rec?.frames.has(k));
+      const rec = MASKS.get(m.id + '|' + kind), ks = [...new Set([...neededFrames(project, m.id, MASK_FPS[kind], usesKind(kind)), ...behindFrames(project, m.id, MASK_FPS[kind], kind)])].sort((x, y) => x - y).filter((k) => k >= 0 && !rec?.frames.has(k));
       if (!ks.length || (kind === 'subject' && !(await subjectReady()))) continue;
       if (m.kind === 'image') ks.splice(1);
       kinds[kind] = ks;
