@@ -14,6 +14,7 @@ import { END_DESIGNS, endById, loadEndAssets } from './endscreen.js';
 import { cutStatus } from './cutout-trans.js';
 import { EL2_IDS } from './el2.js';
 import { badgeBox } from './globe-badge.js';
+import { tbSections, tbQuickRows } from './textbehind-panel.js';
 
 let cssDone = false;
 function css() {
@@ -177,6 +178,7 @@ export function inspectorSections(insp, item) {
   if (el === 'logo') return logoSections(insp, item);
   if (el === 'cbadge') return badgeSections(insp, item);
   if (el === 'endscreen') return endSections(insp, item);
+  if (el === 'tbehind') return tbSections(insp, item);
   return [];
 }
 
@@ -212,6 +214,7 @@ export function quickCard(ctx) {
       h('div.e2-row', h('button.btn.small', { type: 'button', title: 'Scan the captions for countries and regions (English, Arabic, Urdu, Hindi) and put a globe badge in the corner for each mention', dataset: { e2Mentions: '1' }, on: { click: () => {
         try { const r = badgeMentions(ctx, { look: looks.value }); toast(r.n ? `${r.n} country badge${r.n === 1 ? '' : 's'}: ${r.codes.map((c) => placeName(c, 'en')).join(', ')} · ⌘Z undoes` : 'No country or region named in the captions', r.n ? 'ok' : 'info', 4200); render(); } catch (e) { toast(e.message, 'error'); }
       } } }, '🌐 Badge every country I mention'), looks),
+      ...tbQuickRows(ctx, render),
       h('div.e2-row', h('button.btn.small', { type: 'button', title: 'A closing card at the end of the reel: logo, phone, WhatsApp, website, call to action (it follows the reel’s length)', dataset: { e2End: '1' }, on: { click: () => {
         try { const it = addEndScreen(ctx, ends.value, { from: from.value }); window.kbbEditor?.select?.([it.id]); window.kbbEditor?.showSide?.('inspector'); toast(`Ending screen · ${endById(ends.value).label} · the last ${(it.out - it.in).toFixed(1)} s · ⌘Z undoes`, 'ok'); render(); } catch (e) { toast(e.message, 'error'); }
       } } }, endScreen(p) ? '🏁 Replace ending screen' : '🏁 Add ending screen'), ends),

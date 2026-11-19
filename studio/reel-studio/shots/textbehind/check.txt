@@ -1,0 +1,29 @@
+PASS test reel: the drawn presenter, 4.00 s on a 1080×1920 canvas (kbb)
+PASS 🔤 Text behind me: one element, ONE undo step, default word EUROPE (🔤 Text behind · Europe)
+PASS before the person is found the word still draws (13179 px of ink at 270×480), status “pending”, no throw
+PASS the person is found offline (MediaPipe selfie segmenter, 0 ms for the stretch the element covers): status ok
+PASS 🙂 Behind the head: head found at y 552 px, element at y 414 px
+PASS word ∩ person (2347 px): the PERSON shows, mean difference from the frame without the word 0/255 (< 12)
+PASS word outside the person (7039 px): the TEXT shows, mean difference from the plain word 1.34/255 (< 20)
+PASS outside the word (94770 px) the real background is untouched: mean difference 0.019/255
+PASS two lines “JOBS IN / EUROPE”: 2 ink bands (rows 66–100 and 120–198), the top one smaller (box h 583)
+PASS both lines behind the person: word ∩ person 2487 px shows the person (0/255), word alone 11272 px shows the text (1.48/255)
+PASS moving the element +120, +200 px moves the word by 120, 200 px
+PASS resizing to 60% of the frame narrows the word (1012 → 632 px); move and resize are one undo step each and undo puts the box back
+PASS carousel Europe → Australia (1 s per word, loop): at 0.95 s it is EUROPE (differs from the EUROPE render by 0 px, AUSTRALIA 10755), at 1.95 s AUSTRALIA (0 vs 10755), at 2.95 s EUROPE again (0 vs 10755)
+PASS the carousel word is behind the person too (word ∩ person 1561 px, 0.07/255)
+PASS “Select all Europe” in the country picker fills the carousel: 59 words (the 57 European countries, plus Europe and Australia already there) in ONE undo step, 59 rows in the Inspector
+PASS preview = export, two lines + carousel behind the host (EUROPE at 0.6 s, AUSTRALIA at 1.15 s, EUROPE at 1.75 s): mean difference 0.6s 3.14, 1.15s 3.6, 1.75s 3.6 (/255, < 6)
+PASS speed: a 540×960 frame takes 22.17 ms (median) with two lines + carousel behind the host, 11.35 ms without: +10.82 ms (each frame flushed; masks from the cache; budget +12 ms on SwiftShader's software GPU)
+PASS Text behind me for every country I mention: EUROPE 0.2–1.4 s · AUSTRALIA 2–3.2 s in ONE undo step
+PASS each spans the sentence it was said in (“We have jobs in Europe.” 0.2–1.18 s, “And also in Australia!” 2.0–2.78 s; at least 1.2 s on screen)
+PASS “JOBS IN above” puts the top line on each one
+PASS a caption edit (Australia → Canada) follows in the same undo step (EUROPE, CANADA); undo brings AUSTRALIA back
+PASS an Arabic caption gives the word in Arabic: أوروبا
+PASS Themes → Place elements lists “Text behind the host” (drag or ＋, hover preview)
+PASS the word's box is recorded on the monitor (double-click edits it on the video): word
+PASS save + reload draws the same frame (mean difference 0.000/255)
+PASS no console errors
+PASS nothing leaves 127.0.0.1
+
+ALL PASSED in 50 s
