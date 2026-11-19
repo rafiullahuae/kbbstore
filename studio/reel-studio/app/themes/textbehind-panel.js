@@ -1,9 +1,16 @@
-// KBB Studio · themes · TEXT BEHIND THE HOST in the editor: its Inspector sections (status, lines, the word or the
-// carousel, the top line, the look, position and motion, the cut-out edges) and its rows in the ✨ Themes tab's
-// ⚡ One click card. Every change is ONE undo step (a slider drag coalesces into one).
+// KBB Studio · themes · TEXT BEHIND THE HOST in the editor. The owner, 19 Nov: "i want a separate on screen popup holding
+// only those options, currently everything is mixing in one long panel". So:
+//   tbGroups(host, item)   the editor's controls in four groups (words · look · position & motion · cut-out), built for
+//                          the floating editor beside the video (themes/textbehind-popup.js), which holds every change
+//                          as ONE draft until Apply
+//   tbSections(insp, item) the Inspector keeps a one-line summary, the live status and "✎ Edit text behind…"
+//   tbStatusBlock(ed, id)  the cut-out's status, live (progress, done, failed: look/vision.js events)
+//   tbQuickRows(ctx, …)    its rows in the ✨ Themes tab's ⚡ One click card
 import { h, clear, slider, seg, field, modal, toast } from '../editor/ui.js';
-import { TB_FONTS, TB_IN, TB_OUT, TB_CAR, tbOf, tbStatus, carWord, noteSubjectReady, loadTbAssets } from './textbehind.js';
+import { bus } from '../core/bus.js';
+import { TB_FONTS, TB_IN, TB_OUT, TB_CAR, tbOf, tbStatus, carWord, noteSubjectReady, loadTbAssets, defaultWord } from './textbehind.js';
 import { addTextBehind, setTb, setTbStyle, placeTb, sizeTb, textBehindMentions, mentionTbs } from './textbehind-cmds.js';
+import { writeWords } from './text-panel.js';
 import { REGIONS, placeName } from './country-words.js';
 import { COUNTRIES, COUNTRY_GROUPS, CONTINENTS, arabicName, countryCap, continentCap, capId } from './capsules-data.js';
 import { flagSvgs } from './capsules.js';
@@ -36,7 +43,11 @@ function css() {
 .tb-countries label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; }
 .tb-countries img { width: 24px; height: 18px; object-fit: cover; border-radius: 2px; }
 .tb-quick-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.tb-quick-row label { display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; }`));
+.tb-quick-row label { display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; }
+.tb-sum { margin: 0; font-size: 12.5px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.tb-status { display: flex; flex-direction: column; gap: 6px; }
+.tb-prog { width: 100%; height: 6px; }
+.tb-edit { width: 100%; }`));
 }
 
 const cur = (ed, id) => ed.project.tracks.flatMap((t) => t.items).find((i) => i.id === id) || null;
@@ -72,68 +83,120 @@ const PLACES = () => [
   ['Countries', COUNTRIES.filter((r) => !/-/.test(r[0])).map((r) => [r[0], r[1]]).sort((a, b) => a[1].localeCompare(b[1]))],
 ];
 
-/** the Inspector's sections for a Text behind the host element */
+// ── the status line: where the cut-out stands, kept live (the owner, 19 Nov: the line said "Finding the person…" long
+// after the person was found — nothing told it the analysis had finished). It listens to look/vision.js's progress,
+// done and failed events, and lets go of them once it leaves the page.
+let LAST_FAIL = null;   // the last analysis failure (message), until one succeeds
+bus.on('vision:failed', (e) => { LAST_FAIL = e?.message || 'unknown error'; });
+bus.on('vision:done', (e) => { LAST_FAIL = null; if (e?.ran) { try { window.kbbEditor?.preview?.draw?.(); } catch {} } });   // the masks arrived: the monitor shows the words behind him now, whoever asked for them
+
+/** a live status block for the element (status line, progress, the one button that helps now) */
+export function tbStatusBlock(ed, id) {
+  css();
+  const ctx = ed.context();
+  const line = h('p.tb-note', { dataset: { tbStatus: 'pending' } }), bar = h('progress.tb-prog', { max: 1, hidden: true }), btns = h('div.tb-row');
+  const box = h('div.tb-status', { dataset: { tbStatusBox: id } }, line, bar, btns);
+  let busy = false;
+  const find = async () => {
+    if (busy) return; busy = true; paint();
+    try { const { ensureAnalysis } = await import('../look/vision.js'); await ensureAnalysis(ed.project); } catch (e) { toast(e.message, 'error'); }
+    finally { busy = false; ed.preview?.draw?.(); paint(); }
+  };
+  const install = async () => {
+    if (busy) return; busy = true; paint();
+    try { const S = await import('../look/subject.js'); await S.installSubjectModel((f) => { bar.hidden = false; bar.value = f; }); noteSubjectReady(); const { ensureAnalysis } = await import('../look/vision.js'); await ensureAnalysis(ed.project); } catch (e) { toast(e.message, 'error'); }
+    finally { busy = false; ed.preview?.draw?.(); paint(); }
+  };
+  function paint(prog = null) {
+    const it = cur(ed, id); if (!it) return;
+    let st = tbStatus(ed.project, it, ed.t);
+    if (st === 'pending' && LAST_FAIL && !busy && prog == null) st = 'failed';
+    line.dataset.tbStatus = st;
+    line.textContent = st === 'failed' ? `Could not find the person: ${LAST_FAIL}. Try again below.` : st === 'pending' && prog != null ? `Finding the person… ${Math.round(prog * 100)}% (once, offline)` : STATUS[st] || '';
+    bar.hidden = !(st === 'pending' && prog != null); if (prog != null) bar.value = prog;
+    clear(btns);
+    if (st === 'pending' || st === 'failed') btns.append(h('button.btn.small', { type: 'button', disabled: busy, title: 'Find the person in the clip under it now (offline, once)', dataset: { tbFind: '1' }, on: { click: find } }, busy ? '🧍 Finding the person…' : st === 'failed' ? '↻ Try again' : '🧍 Find the person now'));
+    if (st === 'model') {
+      btns.append(h('button.btn.small', { type: 'button', disabled: busy, title: 'Download the main-subject cut-out model (U²-Net-p, Apache-2.0, 4.6 MB) once', dataset: { tbModel: '1' }, on: { click: install } }, '📦 Install the main-subject model'));
+      // installed meanwhile from Look → Background: the cached "not installed" answer is stale
+      import('../look/subject.js').then((S) => S.subjectReady()).then((r) => { if (r) { noteSubjectReady(); ed.preview?.draw?.(); paint(); } }).catch(() => {});
+    }
+  }
+  // the panel that holds it is rebuilt often: it lets go of the bus the first time it hears something after leaving the
+  // page (or straight away if it never made it onto the page)
+  const offs = [], stop = () => { offs.forEach((o) => o()); offs.length = 0; };
+  const live = (fn) => (e) => { if (!box.isConnected) { stop(); return; } fn(e); };
+  queueMicrotask(() => { if (!box.isConnected) stop(); });
+  offs.push(bus.on('vision:progress', live((e) => { if (e?.f != null && e.label) paint(e.f); })), bus.on('vision:done', live(() => paint())), bus.on('vision:failed', live(() => paint())), bus.on('playhead', live((e) => { if (!e?.playing) paint(); })));
+  paint();
+  return box;
+}
+
+/** one line saying what the element shows (the Inspector's summary) */
+export function tbSummaryText(item) {
+  const s = item.style || {}, tb = tbOf(s), t = s.text || {};
+  const top = tb.top.on ? `${t.top ?? 'JOBS IN'} / ` : '';
+  const main = !tb.main ? '' : tb.mode === 'carousel' ? `carousel of ${tb.car.items.length} word${tb.car.items.length === 1 ? '' : 's'} (${TB_CAR.find((x) => x[0] === tb.car.style)?.[1] || ''}, ${tb.car.per.toFixed(1)} s each)` : String(t.word ?? defaultWord(s));
+  return `${top}${main} · ${tb.font} · ${tb.key === 'subject' ? 'main subject' : 'person'} in front`;
+}
+
+/** the Inspector's short section: what it shows, whether the host is cut out yet, and the button to the editor */
 export function tbSections(insp, item) {
   css();
-  const ed = insp.ed, ctx = ed.context(), s = item.style || {}, tb = tbOf(s), id = item.id, W = ed.project.canvas.w;
-  const set = (patch, label, live) => { setTb(ctx, id, patch, label); if (!live) { insp.seal(); insp.render(true); } };
-  const done = () => insp.seal();
-  const out = [];
+  const ed = insp.ed, id = item.id;
+  const open = () => import('./textbehind-popup.js').then((m) => m.openTbEditor(ed, id));
+  return [insp.section('Text behind the host',
+    h('button.btn.primary.tb-edit', { type: 'button', title: 'Open the Text behind editor beside the video: words, look, position and the cut-out, live; Apply or Cancel', dataset: { tbEdit: '1' }, on: { click: open } }, '✎ Edit text behind…'),
+    h('p.tb-sum', { dataset: { tbSummary: '1' } }, tbSummaryText(item)),
+    tbStatusBlock(ed, id),
+    h('p.tb-note', 'Or double-click it on the video or on the timeline.'))];
+}
 
-  // ── status, lines, the word ──
-  const st = tbStatus(ed.project, item, ed.t);
-  const status = h('p.tb-note', { dataset: { tbStatus: st } }, STATUS[st] || '');
-  const findBtn = st === 'pending' ? h('button.btn.small', { type: 'button', title: 'Find the person in the clip under it now (offline, once)', dataset: { tbFind: '1' }, on: { click: async () => {
-    findBtn.disabled = true;
-    try { const { ensureAnalysis } = await import('../look/vision.js'); ctx.progress?.('Finding the person…', 0); await ensureAnalysis(ed.project, { onProgress: (l, f) => ctx.progress?.(l || 'Finding the person…', f) }); } catch (e) { toast(e.message, 'error'); }
-    finally { ctx.progress?.(null); ed.preview?.draw?.(); insp.render(true); }
-  } } }, '🧍 Find the person now') : null;
-  const modelBtn = st === 'model' ? h('button.btn.small', { type: 'button', title: 'Download the main-subject cut-out model (U²-Net-p, Apache-2.0, 4.6 MB) once', dataset: { tbModel: '1' }, on: { click: async () => {
-    modelBtn.disabled = true;
-    try { const S = await import('../look/subject.js'); await S.installSubjectModel((f) => ctx.progress?.('Getting the cut-out model…', f)); noteSubjectReady(); const { ensureAnalysis } = await import('../look/vision.js'); await ensureAnalysis(ed.project, { onProgress: (l, f) => ctx.progress?.(l, f) }); } catch (e) { toast(e.message, 'error'); }
-    finally { ctx.progress?.(null); ed.preview?.draw?.(); insp.render(true); }
-  } } }, '📦 Install the main-subject model') : null;
+/**
+ * The editor's groups for a Text behind the host element: { words, look, pos, cut }, each a list of sections.
+ * host = { ed, ctx, section(title, ...kids), set(item, props, label), seal(), render() } (themes/textbehind-popup.js);
+ * every write goes through the history, which the editor holds as one draft until Apply.
+ */
+export function tbGroups(host, item) {
+  css();
+  const ed = host.ed, ctx = host.ctx, s = item.style || {}, tb = tbOf(s), id = item.id, W = ed.project.canvas.w;
+  const set = (patch, label, live) => { setTb(ctx, id, patch, label); if (!live) { host.seal(); host.render(); } };
+  const done = () => host.seal();
+  const G = { words: [], look: [], pos: [], cut: [] };
 
+  // ── words: the two lines, the word or the carousel ──
+  const text = s.text || {};
+  const wordIn = (key, value, label, def) => {
+    const inp = h('input', { type: 'text', value, dir: 'auto', 'aria-label': label, placeholder: def, title: `${label}: type your own (empty puts “${def}” back)`, dataset: key === 'top' ? { tbpTop: '1' } : { tbpWord: '1' } });
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+    inp.addEventListener('input', () => { const v = inp.value.trim(); writeWords(ed, id, key, v ? inp.value : null, label); });
+    return inp;
+  };
   const placeSel = h('select', { 'aria-label': 'Country or region', title: 'The place the main word names (its name is the default word)', dataset: { tbPlace: '1' }, on: { change: (e) => {
-    const v = e.target.value; setTbStyle(ctx, id, (st2) => { st2.code = v; if (st2.text) delete st2.text.word; }, 'Text behind · ' + placeName(v, 'en'), () => ({ name: `🔤 Text behind · ${placeName(v, 'en')}` })); insp.seal(); insp.render(true);
+    const v = e.target.value; setTbStyle(ctx, id, (st2) => { st2.code = v; if (st2.text) delete st2.text.word; }, 'Text behind · ' + placeName(v, 'en'), () => ({ name: `🔤 Text behind · ${placeName(v, 'en')}` })); host.seal(); host.render();
   } } }, PLACES().map(([g, list]) => h('optgroup', { label: g }, list.map(([v, l]) => h('option', { value: v, selected: v === (s.code || 'europe') }, l)))));
-  const lang = seg([['en', 'EN'], ['ar', 'عربي'], ['ur', 'اردو'], ['hi', 'हिन्दी']], s.lang || 'en', (v) => { setTbStyle(ctx, id, (st2) => { st2.lang = v; if (st2.text) delete st2.text.word; }, 'Text behind language'); insp.seal(); insp.render(true); }, '.tb-lang');
-  const main = [
-    status, findBtn, modelBtn,
+  const lang = seg([['en', 'EN'], ['ar', 'عربي'], ['ur', 'اردو'], ['hi', 'हिन्दी']], s.lang || 'en', (v) => { setTbStyle(ctx, id, (st2) => { st2.lang = v; if (st2.text) delete st2.text.word; }, 'Text behind language'); host.seal(); host.render(); }, '.tb-lang');
+  const lines = [
     h('div.tb-row',
       h('label', { title: 'A smaller line above the main one (e.g. JOBS IN)' }, h('input', { type: 'checkbox', checked: tb.top.on, dataset: { tbTopOn: '1' }, on: { change: (e) => set({ top: { on: e.target.checked } }, e.target.checked ? 'Top line on' : 'Top line off') } }), 'Top line'),
       h('label', { title: 'The big line (a word or a carousel of countries)' }, h('input', { type: 'checkbox', checked: tb.main, dataset: { tbMainOn: '1' }, on: { change: (e) => set({ main: e.target.checked }, e.target.checked ? 'Main line on' : 'Main line off') } }), 'Main line')),
+    tb.top.on ? field('Top words', wordIn('top', text.top ?? 'JOBS IN', 'Top line words', 'JOBS IN')) : null,
     field('Main line', seg([['word', 'One word'], ['carousel', 'Carousel']], tb.mode, (v) => {
       // a carousel starts with the place the word names, so the switch never shows an empty line
       const items = tb.car.items.length ? null : [countryCapOf(s.code || 'europe')];
       set({ mode: v, ...(items && v === 'carousel' ? { car: { items } } : {}) }, v === 'carousel' ? 'Carousel' : 'One word');
     }, '.tb-mode')),
   ];
-  if (tb.mode === 'word') main.push(h('label.row', h('span.lbl', 'Place'), placeSel), h('div.tb-row', h('span.lbl', 'Name in'), lang), h('p.tb-note', 'The word is the place’s name: type your own (any text, English or Arabic) in Text below, or double-click it on the video.'));
+  if (tb.mode === 'word') lines.push(field('Main word', wordIn('word', text.word ?? defaultWord(s), 'Main word', defaultWord(s))), h('label.row', h('span.lbl', 'Place'), placeSel), h('div.tb-row', h('span.lbl', 'Name in'), lang), h('p.tb-note', 'The word is the place’s name until you type your own (English or Arabic).'));
   if (item.auto === 'tbehind') {
     const m = s.mention || {};
-    main.push(h('p.tb-note', `Placed for “${(m.words || []).slice(0, 3).join('”, “')}” in the captions. It follows caption edits; Re-scan applies this look to every one.`),
-      h('button.btn.small', { type: 'button', title: 'Scan the captions again with this element’s look, box and top line', dataset: { tbRescan: '1' }, on: { click: () => { try { const r = textBehindMentions(ctx, {}); toast(`${r.n} text-behind element${r.n === 1 ? '' : 's'} · ⌘Z undoes`, 'ok'); } catch (e) { toast(e.message, 'error'); } } } }, '↻ Re-scan captions'));
+    lines.push(h('p.tb-note', `Placed for “${(m.words || []).slice(0, 3).join('”, “')}” in the captions. It follows caption edits; Re-scan applies this look to every one.`),
+      h('button.btn.small', { type: 'button', title: 'Scan the captions again with this element’s look, box and top line', dataset: { tbRescan: '1' }, on: { click: () => { try { const r = textBehindMentions(ctx, {}); toast(`${r.n} text-behind element${r.n === 1 ? '' : 's'} (kept with Apply)`, 'ok'); host.render(); } catch (e) { toast(e.message, 'error'); } } } }, '↻ Re-scan captions'));
   }
-  out.push(insp.section('Text behind the host', ...main));
+  G.words.push(host.section('Lines', ...lines));
+  if (tb.mode === 'carousel') G.words.push(carouselSection(host, item, tb, set, done));
 
-  // ── the carousel ──
-  if (tb.mode === 'carousel') out.push(carouselSection(insp, item, tb, set, done));
-
-  // ── the top line ──
-  if (tb.top.on) {
-    const topFont = h('select', { 'aria-label': 'Top line font', dataset: { tbTopFont: '1' }, on: { change: (e) => { set({ top: { font: e.target.value } }, 'Top line font'); loadTbAssets(s).then(() => ed.preview?.draw?.()); } } }, TB_FONTS.map(([f, l]) => h('option', { value: f, selected: f === tb.top.font }, l)));
-    const topCol = h('input', { type: 'color', value: tb.top.color || '#ffffff', 'aria-label': 'Top line colour', dataset: { tbTopColor: '1' }, on: { input: (e) => set({ top: { color: e.target.value } }, 'Top line colour', true), change: done } });
-    out.push(insp.section('Top line',
-      h('p.tb-note', 'Its words are in Text below (default “JOBS IN”); double-click it on the video to type over it.'),
-      field('Font', topFont),
-      tag(slider({ label: 'Size', min: 0.12, max: 1, step: 0.01, value: tb.top.size, fmt: pct, onInput: (v) => set({ top: { size: v } }, 'Top line size', true), onDone: done }), 'tbTopSize'),
-      tag(slider({ label: 'Spacing', min: -0.05, max: 0.6, step: 0.01, value: tb.top.track, fmt: pct, onInput: (v) => set({ top: { track: v } }, 'Top line spacing', true), onDone: done }), 'tbTopTrack'),
-      tag(slider({ label: 'Gap', min: -0.2, max: 0.6, step: 0.01, value: tb.top.gap, fmt: pct, onInput: (v) => set({ top: { gap: v } }, 'Gap between lines', true), onDone: done }), 'tbGap'),
-      h('div.tb-row', h('span.lbl', 'Colour'), h('label', { title: 'The same colour or gradient as the main line' }, h('input', { type: 'checkbox', checked: !tb.top.color, dataset: { tbTopSame: '1' }, on: { change: (e) => set({ top: { color: e.target.checked ? null : '#ffffff' } }, 'Top line colour') } }), 'Same as main'), tb.top.color ? topCol : null)));
-  }
-
-  // ── the look ──
+  // ── look: the main line, then the top line's own ──
   const fontSel = h('select', { 'aria-label': 'Font', title: 'Bold display faces (bundled, offline); the Arabic ones draw Arabic words too', dataset: { tbFont: '1' }, on: { change: (e) => { set({ font: e.target.value }, 'Text behind font'); loadTbAssets(s).then(() => ed.preview?.draw?.()); } } }, TB_FONTS.map(([f, l]) => h('option', { value: f, selected: f === tb.font, style: { fontFamily: `"${f}"` } }, l)));
   const presets = fillPresets(ed, s), sig = JSON.stringify(tb.fill);
   const fills = h('div.tb-fills', presets.map(([k, l, f]) => h('button.tb-fill' + (JSON.stringify({ type: f.type, colors: f.colors, dir: f.dir || 'v', hard: !!f.hard }) === sig ? '.on' : ''), { type: 'button', title: `${l} colour${f.type === 'grad' ? ' gradient' : ''}`, dataset: { tbFill: k }, on: { click: async () => {
@@ -141,38 +204,50 @@ export function tbSections(insp, item) {
     if (k === 'flag' || k === 'flagsoft') { await loadBadgeAssets(s.code || 'europe').catch(() => {}); F = { ...f, colors: colorsOf(s.code || 'europe') }; }
     set({ fill: F }, `${l} colour`);
   } } }, h('i', { style: { background: css3(f) } }), l)));
-  const custom = h('input', { type: 'color', value: tb.fill.type === 'solid' ? tb.fill.colors[0] : '#ffffff', 'aria-label': 'Own colour', title: 'Any colour of your own', dataset: { tbColor: '1' }, on: { input: (e) => set({ fill: { type: 'solid', colors: [e.target.value] } }, 'Text behind colour', true), change: done } });
+  const custom = h('input', { type: 'color', value: tb.fill.type === 'solid' ? tb.fill.colors[0] : '#ffffff', 'aria-label': 'Own colour', title: 'Any colour of your own', dataset: { tbColor: '1' }, on: { input: (e) => set({ fill: { type: 'solid', colors: [e.target.value] } }, 'Text behind colour', true), change: () => { done(); host.render(); } } });
   const outCol = h('input', { type: 'color', value: tb.outlineCol, 'aria-label': 'Outline colour', dataset: { tbOutlineCol: '1' }, on: { input: (e) => set({ outlineCol: e.target.value }, 'Outline colour', true), change: done } });
-  out.push(insp.section('Look',
+  G.look.push(host.section('Main line',
     field('Font', fontSel),
     tag(slider({ label: 'Size', min: 0.2, max: 1.6, step: 0.01, value: +(item.w / W).toFixed(2), fmt: pct, onInput: (v) => sizeTb(ctx, id, v), onDone: done }), 'tbSize'),
     tag(slider({ label: 'Spacing', min: -0.05, max: 0.5, step: 0.01, value: tb.track, fmt: pct, onInput: (v) => set({ track: v }, 'Letter spacing', true), onDone: done }), 'tbTrack'),
     fills, h('div.tb-row', h('span.lbl', 'Own colour'), custom),
     h('div.tb-row', tag(slider({ label: 'Outline', min: 0, max: 0.15, step: 0.005, value: tb.outline, fmt: pct, onInput: (v) => set({ outline: v }, 'Outline', true), onDone: done }), 'tbOutline'), outCol),
     tag(slider({ label: 'Shadow', min: 0, max: 1, step: 0.01, value: tb.shadow, fmt: pct, onInput: (v) => set({ shadow: v }, 'Shadow', true), onDone: done }), 'tbShadow'),
-    tag(slider({ label: 'Opacity', min: 0.05, max: 1, step: 0.01, value: item.opacity ?? 1, fmt: pct, onInput: (v) => insp.set(item, { opacity: v }, 'Text behind opacity'), onDone: done }), 'tbOpacity')));
+    tag(slider({ label: 'Opacity', min: 0.05, max: 1, step: 0.01, value: item.opacity ?? 1, fmt: pct, onInput: (v) => host.set(item, { opacity: v }, 'Text behind opacity'), onDone: done }), 'tbOpacity')));
+  if (tb.top.on) {
+    const topFont = h('select', { 'aria-label': 'Top line font', dataset: { tbTopFont: '1' }, on: { change: (e) => { set({ top: { font: e.target.value } }, 'Top line font'); loadTbAssets(s).then(() => ed.preview?.draw?.()); } } }, TB_FONTS.map(([f, l]) => h('option', { value: f, selected: f === tb.top.font }, l)));
+    const topCol = h('input', { type: 'color', value: tb.top.color || '#ffffff', 'aria-label': 'Top line colour', dataset: { tbTopColor: '1' }, on: { input: (e) => set({ top: { color: e.target.value } }, 'Top line colour', true), change: done } });
+    G.look.push(host.section('Top line',
+      field('Font', topFont),
+      tag(slider({ label: 'Size', min: 0.12, max: 1, step: 0.01, value: tb.top.size, fmt: pct, onInput: (v) => set({ top: { size: v } }, 'Top line size', true), onDone: done }), 'tbTopSize'),
+      tag(slider({ label: 'Spacing', min: -0.05, max: 0.6, step: 0.01, value: tb.top.track, fmt: pct, onInput: (v) => set({ top: { track: v } }, 'Top line spacing', true), onDone: done }), 'tbTopTrack'),
+      tag(slider({ label: 'Gap', min: -0.2, max: 0.6, step: 0.01, value: tb.top.gap, fmt: pct, onInput: (v) => set({ top: { gap: v } }, 'Gap between lines', true), onDone: done }), 'tbGap'),
+      h('div.tb-row', h('span.lbl', 'Colour'), h('label', { title: 'The same colour or gradient as the main line' }, h('input', { type: 'checkbox', checked: !tb.top.color, dataset: { tbTopSame: '1' }, on: { change: (e) => set({ top: { color: e.target.checked ? null : '#ffffff' } }, 'Top line colour') } }), 'Same as main'), tb.top.color ? topCol : null)));
+  }
 
   // ── position and motion ──
-  const num = (k, label) => h('label.num', h('span', label), h('input', { type: 'number', value: Math.round(item[k]), step: 1, dataset: { tbPos: k }, on: { change: (e) => { insp.set(item, { [k]: +e.target.value || 0 }, 'Position'); done(); } } }));
-  out.push(insp.section('Position & motion',
-    h('div.tb-row', ...[['head', '🙂 Behind the head', 'Lines the words up behind your head (found from the person in the clip)'], ['centre', '⌖ Centre', 'In the middle of the frame'], ['lower', '▁ Lower', 'In the lower part of the frame']].map(([k, l, t]) => h('button.btn.small', { type: 'button', title: t, dataset: { tbQuick: k }, on: { click: () => { const r = placeTb(ctx, id, k); done(); insp.render(true); if (k === 'head' && !r?.head) toast('No person found at this moment: placed in the upper part instead', 'info'); } } }, l))),
+  const num = (k, label) => h('label.num', h('span', label), h('input', { type: 'number', value: Math.round(item[k]), step: 1, dataset: { tbPos: k }, on: { change: (e) => { host.set(item, { [k]: +e.target.value || 0 }, 'Position'); done(); } } }));
+  G.pos.push(host.section('Position',
+    h('div.tb-row', ...[['head', '🙂 Behind the head', 'Lines the words up behind your head (found from the person in the clip)'], ['centre', '⌖ Centre', 'In the middle of the frame'], ['lower', '▁ Lower', 'In the lower part of the frame']].map(([k, l, t]) => h('button.btn.small', { type: 'button', title: t, dataset: { tbQuick: k }, on: { click: () => { const r = placeTb(ctx, id, k); done(); host.render(); if (k === 'head' && !r?.head) toast('No person found at this moment: placed in the upper part instead', 'info'); } } }, l))),
     h('div.nums', num('x', 'X'), num('y', 'Y')),
-    h('p.tb-note', 'Or drag it on the video; drag a corner to resize it (the words fit the box).'),
-    tag(slider({ label: 'Rotate', min: -45, max: 45, step: 1, value: item.rot || 0, fmt: (v) => Math.round(v) + '°', onInput: (v) => insp.set(item, { rot: v }, 'Rotate'), onDone: done }), 'tbRot'),
+    h('p.tb-note', 'Or drag it on the video (it stays live while this is open); drag a corner to resize it (the words fit the box).'),
+    tag(slider({ label: 'Rotate', min: -45, max: 45, step: 1, value: item.rot || 0, fmt: (v) => Math.round(v) + '°', onInput: (v) => host.set(item, { rot: v }, 'Rotate'), onDone: done }), 'tbRot')));
+  G.pos.push(host.section('Motion',
     field('In', seg(TB_IN, tb.animIn, (v) => set({ animIn: v }, 'Text behind in'), '.tb-in')),
     tag(slider({ label: 'In time', min: 0.1, max: 2, step: 0.05, value: tb.inDur, fmt: (v) => v.toFixed(2) + ' s', onInput: (v) => set({ inDur: v }, 'In time', true), onDone: done }), 'tbInDur'),
     field('Out', seg(TB_OUT, tb.animOut, (v) => set({ animOut: v }, 'Text behind out'), '.tb-out')),
     tag(slider({ label: 'Out time', min: 0.1, max: 2, step: 0.05, value: tb.outDur, fmt: (v) => v.toFixed(2) + ' s', onInput: (v) => set({ outDur: v }, 'Out time', true), onDone: done }), 'tbOutDur'),
-    h('p.tb-note', 'Start and length: Theme element above, or drag and trim it on the timeline.')));
+    h('p.tb-note', 'Start and length: the Inspector, or drag and trim it on the timeline.')));
 
-  // ── the cut-out edges ──
-  out.push(insp.section('Cut-out edges',
+  // ── the cut-out ──
+  G.cut.push(host.section('Cut-out',
+    tbStatusBlock(ed, id),
     field('Cut out', seg([['person', '🧍 Person'], ['subject', '📦 Main subject']], tb.key, (v) => set({ key: v }, v === 'subject' ? 'Cut out the main subject' : 'Cut out the person'), '.tb-key')),
     tag(slider({ label: 'Feather', min: 0, max: 1, step: 0.01, value: tb.feather, fmt: pct, onInput: (v) => set({ feather: v }, 'Edge feather', true), onDone: done }), 'tbFeather'),
     tag(slider({ label: 'Grow', min: -1, max: 1, step: 0.01, value: tb.grow, fmt: (v) => (v > 0 ? '+' : '') + Math.round(v * 100), onInput: (v) => set({ grow: v }, 'Edge grow', true), onDone: done }), 'tbGrow'),
     tag(slider({ label: 'Smoothness', min: 0, max: 1, step: 0.01, value: tb.smooth, fmt: pct, onInput: (v) => set({ smooth: v }, 'Edge smoothness', true), onDone: done }), 'tbSmooth'),
     h('p.tb-note', 'Feather softens the edge, Grow pushes it out (or in), Smoothness steadies it from frame to frame.')));
-  return out;
+  return G;
 }
 
 const countryCapOf = (code) => (REGIONS[code] ? (CONTINENTS.find((c) => c.id === code) ? continentCap(code) : { id: capId(), en: REGIONS[code].en, ar: REGIONS[code].ar }) : countryCap(code));
@@ -247,11 +322,17 @@ export function tbQuickRows(ctx, rerender) {
   const top = h('input', { type: 'checkbox', checked: !!prev?.style?.tb?.top?.on, dataset: { tbMentionsTop: '1' } });
   return [
     h('div.tb-quick-row',
-      h('button.btn.small', { type: 'button', title: 'A huge word behind you at the playhead: you stay in front of it, the real background behind (place, words, carousel and look in the Inspector)', dataset: { tbAdd: '1' }, on: { click: () => {
-        try { const it = addTextBehind(ctx); window.kbbEditor?.select?.([it.id]); window.kbbEditor?.showSide?.('inspector'); toast('Text behind you · 3 s at the playhead · ⌘Z undoes', 'ok'); rerender?.(); } catch (e) { toast(e.message, 'error'); }
+      h('button.btn.small', { type: 'button', title: 'A huge word behind you at the playhead: you stay in front of it, the real background behind (its editor opens beside the video: words, carousel, look, position, cut-out)', dataset: { tbAdd: '1' }, on: { click: () => {
+        try { const it = addTextBehind(ctx); const ed = window.kbbEditor; ed?.select?.([it.id]); rerender?.(); if (ed) import('./textbehind-popup.js').then((m) => m.openTbEditor(ed, it.id, { fresh: true })); } catch (e) { toast(e.message, 'error'); }
       } } }, '🔤 Text behind me'),
       h('button.btn.small', { type: 'button', title: 'Scan the captions (English, Arabic, Urdu, Hindi) and put each country or region you name behind you, big, for the sentence you say it in', dataset: { tbMentions: '1' }, on: { click: () => {
-        try { const r = textBehindMentions(ctx, { top: top.checked }); toast(r.n ? `${r.n} text-behind element${r.n === 1 ? '' : 's'}: ${r.codes.map((c) => placeName(c, 'en')).join(', ')} · ⌘Z undoes` : 'No country or region named in the captions', r.n ? 'ok' : 'info', 4200); rerender?.(); } catch (e) { toast(e.message, 'error'); }
+        try {
+          const r = textBehindMentions(ctx, { top: top.checked }); rerender?.();
+          if (!r.n) { toast('No country or region named in the captions', 'info', 4200); return; }
+          // the editor opens only when he asks for it: a toast with Edit (the first placed element)
+          const ed = window.kbbEditor, first = r.items[0];
+          import('./textbehind-popup.js').then((m) => m.actionToast(`${r.n} text-behind element${r.n === 1 ? '' : 's'}: ${r.codes.map((c) => placeName(c, 'en')).join(', ')} · ⌘Z undoes`, '✎ Edit', () => { ed?.select?.([first.id]); ed?.seek?.(first.t0 + 0.05); m.openTbEditor(ed, first.id); }));
+        } catch (e) { toast(e.message, 'error'); }
       } } }, '🔤 Text behind me for every country I mention'),
       h('label', { title: 'Put a smaller “JOBS IN” line above each place (its words are editable)' }, top, 'JOBS IN above')),
     n ? h('p.tb-note', `${n} text-behind element${n === 1 ? '' : 's'} from the captions: they follow caption edits.`) : null,

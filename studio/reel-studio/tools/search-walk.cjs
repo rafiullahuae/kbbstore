@@ -84,6 +84,15 @@ async function walk(page, url, wsId, clip, onState) {
     await onState('inspector-theme-text');
     await page.evaluate(() => { kbbEditor.history.undo(); });
   });
+  // text behind the host: the Inspector's summary, then its own editor beside the video on each tab (as ui-audit.cjs)
+  await step('textbehind', async () => {
+    await page.evaluate(async () => { const TC = await import('/app/themes/textbehind-cmds.js'); const it = TC.addTextBehind(kbbEditor.context(), { t0: 0.4 }); kbbEditor.select([it.id]); kbbEditor.showSide('inspector'); });
+    await page.waitForSelector('[data-tb-edit]'); await page.waitForTimeout(300); await onState('inspector-textbehind');
+    await page.click('[data-tb-edit]'); await page.waitForSelector('.tbp');
+    for (const t of ['words', 'look', 'pos', 'cut']) { await page.click(`.tbp [data-tbp-tab="${t}"]`); await page.waitForTimeout(250); await onState('tb-editor:' + t); }
+    await page.click('.tbp [data-tbp-tab="words"]'); await page.click('.tbp .tb-mode [data-v="carousel"]'); await page.waitForTimeout(300); await onState('tb-editor:carousel');
+    await page.click('.tbp [data-tbp-cancel]'); await page.evaluate(() => { kbbEditor.history.undo(); });
+  });
   await page.click('.side-tab[data-side="captions"]');
   await page.click('.rs-cap-tabs button[data-tab="transcript"]').catch(() => {});
   await step('export', async () => { await page.click('.export-btn'); await page.waitForSelector('#x-go'); await page.waitForTimeout(400); await onState('export'); await closeModal(); });

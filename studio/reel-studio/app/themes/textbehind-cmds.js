@@ -20,7 +20,7 @@ import { themeById } from './themes.js';
 import { overlayOf, colorsFor } from './apply.js';
 import { findMentions, placeName } from './country-words.js';
 import { reelEnd2 } from './el2-cmds.js';
-import { hostClip, personAt, tbOf, loadTbAssets } from './textbehind.js';
+import { hostClip, personAt, tbOf, loadTbAssets, tbSpan } from './textbehind.js';
 
 export const AUTO_TB = 'tbehind';
 const r3 = (x) => +(+x).toFixed(3);
@@ -43,7 +43,8 @@ function rowAbove(p, t0, t1, cmds, name = null) {
 /** one element (opts: t0, dur, code, lang, text {word, top}, box, tb) */
 export function addTextBehind(ctx, opts = {}) {
   const p = ctx.project, W = p.canvas.w, H = p.canvas.h, th = themeById(themeNow(p)) || themeById('travel');
-  const t0 = r3(Math.max(0, opts.t0 ?? ctx.playhead?.() ?? 0)), dur = r3(opts.dur || 3);
+  let t0 = r3(Math.max(0, opts.t0 ?? ctx.playhead?.() ?? 0)), dur = r3(opts.dur || 3);
+  if (opts.dur == null) ({ t0, dur } = tbSpan(p, t0, dur));   // at the playhead: never past the end of the video
   const style = elementStyle(th.id, 'tbehind', { colors: colorsFor(th, 'theme', ctx.workspace || {}), ws: ctx.workspace });
   if (opts.code) style.code = opts.code;
   if (opts.lang) style.lang = opts.lang;

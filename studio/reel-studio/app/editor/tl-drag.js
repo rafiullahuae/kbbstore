@@ -269,6 +269,7 @@ export function onDrop(tl, e) {
         if (tg?.newTrack) { const nt = tg.newTrack.track.kind === 'text' ? Object.assign(tg.newTrack.track, { kind: 'overlay' }) : tg.newTrack.track; ed.apply(ops.addTrack(nt, tg.newTrack.index, 'New track')); keep = nt.id; }
         const it = A.placeElement(ed.context(), spec.el, { theme: spec.theme, variant: spec.variant, t0: t, trackId: keep });
         ed.history.end(); ed.select([it.id]);
+        if (spec.el === 'tbehind') import('../themes/textbehind-popup.js').then((m) => m.openTbEditor(ed, it.id));
       } catch (err) { ed.history.end(); console.warn('[timeline] theme element', err); }
     }).catch((err) => console.warn('[timeline] theme element', err));
     return true;

@@ -112,7 +112,7 @@ function measure() {
     const a = ctrls[i], b = ctrls[j];
     if (a.e.contains(b.e) || b.e.contains(a.e)) continue;
     const pa = cs(a.e).position, pb = cs(b.e).position;
-    if (a.e.closest('.ws-menu, .modal-back, .cfg-back, .de') !== b.e.closest('.ws-menu, .modal-back, .cfg-back, .de')) continue; // a layer above another
+    if (a.e.closest('.ws-menu, .tbp, .modal-back, .cfg-back, .de') !== b.e.closest('.ws-menu, .tbp, .modal-back, .cfg-back, .de')) continue; // a layer above another (the Text behind editor floats over the right column)
     const w = Math.min(a.v.R, b.v.R) - Math.max(a.v.L, b.v.L), hh = Math.min(a.v.B, b.v.B) - Math.max(a.v.T, b.v.T);
     if (w > 1 && hh > 1 && w * hh > 6 && !(pa === 'absolute' && a.e.classList.contains('add')) && !(pb === 'absolute' && b.e.classList.contains('add')))
       out.push({ k: 'overlap', d: `${desc(a.e)}  ×  ${desc(b.e)} (${Math.round(w)}×${Math.round(hh)})` });
@@ -352,6 +352,15 @@ function measure() {
       await page.evaluate(() => document.querySelector('[data-th-style-sec]').scrollIntoView({ block: 'start' })); await page.waitForTimeout(200);
       await audit('inspector-theme-style');
       await page.evaluate(() => { kbbEditor.history.undo(); });
+    });
+    // text behind the host: the Inspector's summary, then its own editor beside the video on each tab (Cancel, undo)
+    await tryStep('textbehind', async () => {
+      await page.evaluate(async () => { const TC = await import('/app/themes/textbehind-cmds.js'); const it = TC.addTextBehind(kbbEditor.context(), { t0: 0.4 }); kbbEditor.select([it.id]); kbbEditor.showSide('inspector'); });
+      await page.waitForSelector('[data-tb-edit]'); await page.waitForTimeout(300); await audit('inspector-textbehind');
+      await page.click('[data-tb-edit]'); await page.waitForSelector('.tbp');
+      for (const t of ['words', 'look', 'pos', 'cut']) { await page.click(`.tbp [data-tbp-tab="${t}"]`); await page.waitForTimeout(250); await audit('tb-editor:' + t); }
+      await page.click('.tbp [data-tbp-tab="words"]'); await page.click('.tbp .tb-mode [data-v="carousel"]'); await page.waitForTimeout(300); await audit('tb-editor:carousel');
+      await page.click('.tbp [data-tbp-cancel]'); await page.evaluate(() => { kbbEditor.history.undo(); });
     });
     await page.click('.side-tab[data-side="captions"]');
     await page.click('.rs-cap-tabs button[data-tab="transcript"]').catch(() => {});

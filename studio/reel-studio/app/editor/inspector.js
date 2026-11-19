@@ -141,8 +141,10 @@ export class Inspector {
     if (m?.hasAudio && (item.type === 'clip' || item.type === 'audio')) this.audioPanel(item);
     for (const sec of inspectorSections(item, track, m)) { try { const el = sec.render(ed.context(), item, track, m); if (el) this.el.append(el); } catch (e) { console.warn('[inspector]', sec.id, e); } }
     if (item.type === 'clip') { this.lookPanel(item); this.cropZoomPanel(item, m); }
-    if (item.type !== 'audio' && item.type !== 'caption') this.transformPanel(item, m);
-    if (item.type !== 'audio' && !(m?.hasAudio)) this.fadePanel(item);
+    // text behind the host: its own editor beside the video holds position, size, rotation and opacity
+    const tbehind = item.type === 'theme.el' && item.style?.el === 'tbehind';
+    if (item.type !== 'audio' && item.type !== 'caption' && !tbehind) this.transformPanel(item, m);
+    if (item.type !== 'audio' && !(m?.hasAudio) && !tbehind) this.fadePanel(item);
     if (item.type === 'caption') this.el.append(this.section('Captions', h('p.muted', 'Caption styles and the transcript are edited in Auto captions.')));
   }
 
@@ -199,8 +201,8 @@ export class Inspector {
     this.el.append(this.section('Theme element', ...kids));
     if (EL2_PANEL?.handles(el)) this.el.append(...EL2_PANEL.inspectorSections(this, item));
     // every word it draws, prefilled and live, plus its text style (themes/text-panel.js)
-    // (text behind the host has its own look controls: only its words come from here)
-    if (el !== 'capsules' && TEXT_PANEL) this.el.append(...TEXT_PANEL.themeTextSections(this, item).filter((sec) => el !== 'tbehind' || !sec.dataset?.thStyleSec));
+    // (text behind the host: a summary and "✎ Edit text behind…" only; its words are in its own editor)
+    if (el !== 'capsules' && el !== 'tbehind' && TEXT_PANEL) this.el.append(...TEXT_PANEL.themeTextSections(this, item));
     if (el === 'capsules' && CAPS_PANEL) { const box = h('div', { dataset: { capsInsp: item.id } }); this.el.append(box); CAPS_PANEL.capsulesInspector(this, item, box); }
   }
 

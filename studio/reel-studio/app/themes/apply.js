@@ -8,6 +8,7 @@ import { themeById } from './themes.js';
 import { textItem } from '../look/text.js';
 import { libraryMedia } from '../auto/commands.js';
 import { ELEMENTS, elementById, boxFor, elementStyle } from './elements.js';
+import { tbSpan } from './textbehind.js';
 import { transItem, transitionOf, cutsOf as cutPairs } from './transitions.js';
 
 export const TAG = 'theme';
@@ -347,7 +348,9 @@ export function placeElement(ctx, el, opts = {}) {
     const lws = withLogoOf(ctx, ws, el);
     const style = elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, text: opts.text, brand: ws?.name || null, logo: lws?.logo || null, ws: lws });
     if (lws.logoFrom && lws.logoFrom !== ws.id) style.logoFrom = lws.logoFrom;
-    item = createItem('theme.el', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || def.dur), ...(opts.box || boxFor(el, W, H, opts.variant)), name: `${def.icon} ${def.label}${opts.variant ? ' · ' + opts.variant : ''} · ${th.name}`, style });
+    // text behind the host stands on the video: it never runs on past the end of it (textbehind.js tbSpan)
+    const span = el === 'tbehind' && opts.dur == null ? tbSpan(p, r3(Math.max(0, opts.t0 ?? 0)), def.dur) : { t0: r3(Math.max(0, opts.t0 ?? 0)), dur: r3(opts.dur || def.dur) };
+    item = createItem('theme.el', { t0: span.t0, in: 0, out: span.dur, ...(opts.box || boxFor(el, W, H, opts.variant)), name: `${def.icon} ${def.label}${opts.variant ? ' · ' + opts.variant : ''} · ${th.name}`, style });
   }
   // the row it was dropped on when that row is free at that time, else the first free overlay row, else a new one
   const t1 = item.t0 + (item.out - item.in), free = (t) => !t.items.some((i) => i.t0 < t1 - 0.001 && itemEnd(i) > item.t0 + 0.001);

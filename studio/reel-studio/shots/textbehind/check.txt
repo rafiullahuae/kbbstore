@@ -12,9 +12,9 @@ PASS moving the element +120, +200 px moves the word by 120, 200 px
 PASS resizing to 60% of the frame narrows the word (1012 → 632 px); move and resize are one undo step each and undo puts the box back
 PASS carousel Europe → Australia (1 s per word, loop): at 0.95 s it is EUROPE (differs from the EUROPE render by 0 px, AUSTRALIA 10755), at 1.95 s AUSTRALIA (0 vs 10755), at 2.95 s EUROPE again (0 vs 10755)
 PASS the carousel word is behind the person too (word ∩ person 1561 px, 0.07/255)
-PASS “Select all Europe” in the country picker fills the carousel: 59 words (the 57 European countries, plus Europe and Australia already there) in ONE undo step, 59 rows in the Inspector
-PASS preview = export, two lines + carousel behind the host (EUROPE at 0.6 s, AUSTRALIA at 1.15 s, EUROPE at 1.75 s): mean difference 0.6s 3.14, 1.15s 3.6, 1.75s 3.6 (/255, < 6)
-PASS speed: a 540×960 frame takes 22.17 ms (median) with two lines + carousel behind the host, 11.35 ms without: +10.82 ms (each frame flushed; masks from the cache; budget +12 ms on SwiftShader's software GPU)
+PASS “Select all Europe” in the country picker fills the carousel: 59 words (the 57 European countries, plus Europe and Australia already there), 59 rows in the editor, live as a draft; Apply makes it ONE undo step
+PASS preview = export, two lines + carousel behind the host (EUROPE at 0.6 s, AUSTRALIA at 1.15 s, EUROPE at 1.75 s): mean difference 0.6s 3.14, 1.15s 3.6, 1.75s 3.59 (/255, < 6)
+PASS speed: a 540×960 frame takes 24.05 ms (median) with two lines + carousel behind the host, 14.75 ms without: +9.30 ms (each frame flushed; masks from the cache; budget +12 ms on SwiftShader's software GPU)
 PASS Text behind me for every country I mention: EUROPE 0.2–1.4 s · AUSTRALIA 2–3.2 s in ONE undo step
 PASS each spans the sentence it was said in (“We have jobs in Europe.” 0.2–1.18 s, “And also in Australia!” 2.0–2.78 s; at least 1.2 s on screen)
 PASS “JOBS IN above” puts the top line on each one
@@ -23,7 +23,38 @@ PASS an Arabic caption gives the word in Arabic: أوروبا
 PASS Themes → Place elements lists “Text behind the host” (drag or ＋, hover preview)
 PASS the word's box is recorded on the monitor (double-click edits it on the video): word
 PASS save + reload draws the same frame (mean difference 0.000/255)
+PASS the iPhone-style test clip: 960×540 pixels + a -90° display rotation (shown 540×960 upright, the presenter off-centre)
+PASS iPhone portrait clip (landscape pixels + 90° tag, decoder path): media 540×960, the cut-out lines up with the person (IoU with his true outline 0.943 / 0.917 / 0.932 at 0.5 / 1.0 / 1.5 s, > 0.8; share of the cut-out on him 0.982 / 0.989 / 0.981, > 0.9)
+PASS iPhone portrait clip (landscape pixels + 90° tag, decoder path), EXPORT: word ∩ person (1894 px) shows him (0.1/255), word alone (9088 px) shows the words (1.16/255)
+PASS iPhone portrait clip (landscape pixels + 90° tag, decoder path), PREVIEW: word ∩ person (1894 px) shows him (0.1/255), word alone (9088 px) shows the words (1.16/255)
+PASS the same clip in H.264 (the <video> element path): media 540×960, the cut-out lines up with the person (IoU with his true outline 0.939 / 0.915 / 0.931 at 0.5 / 1.0 / 1.5 s, > 0.8; share of the cut-out on him 0.982 / 0.988 / 0.981, > 0.9)
+PASS the same clip in H.264 (the <video> element path), EXPORT: word ∩ person (1894 px) shows him (0.31/255), word alone (9088 px) shows the words (1.27/255)
+PASS the same clip in H.264 (the <video> element path), PREVIEW: word ∩ person (1894 px) shows him (0.31/255), word alone (9088 px) shows the words (1.27/255)
+PASS the iPhone clip scaled to 60 % and moved on the canvas: media 540×960, the cut-out lines up with the person (IoU with his true outline 0.943 / 0.917 / 0.931 at 0.5 / 1.0 / 1.5 s, > 0.8; share of the cut-out on him 0.981 / 0.988 / 0.98, > 0.9)
+PASS the iPhone clip scaled to 60 % and moved on the canvas, EXPORT: word ∩ person (1164 px) shows him (0.03/255), word alone (10362 px) shows the words (2.27/255)
+PASS the iPhone clip scaled to 60 % and moved on the canvas, PREVIEW: word ∩ person (1164 px) shows him (0.03/255), word alone (10362 px) shows the words (2.26/255)
+PASS 4K iPhone clip (3840×2160 + 90° tag): media 2160×3840, the cut-out lines up with the person (IoU with his true outline 0.939 / 0.919 / 0.934 at 0.5 / 1.0 / 1.5 s, > 0.8; share of the cut-out on him 0.983 / 0.989 / 0.981, > 0.9)
+PASS 4K iPhone clip (3840×2160 + 90° tag), EXPORT: word ∩ person (1894 px) shows him (0.1/255), word alone (9088 px) shows the words (1.16/255)
+PASS 4K iPhone clip (3840×2160 + 90° tag), PREVIEW: word ∩ person (1894 px) shows him (0.1/255), word alone (9088 px) shows the words (1.18/255)
+PASS 60 s clip, element at 50.2 s: the person is found (2489 ms for that stretch) and the cut-out lines up (IoU 0.932)
+PASS the status line moves on by itself: “pending” when added → “ok” once the person is found (The host is cut out in front of the words.)
+PASS ⚡ One click → 🔤 Text behind me adds it (ONE step) and opens its editor beside the video on the Words tab
+PASS added at the playhead 1 s before the clip ends, it ends with the video (1–2 s, clip ends 2 s) and the reel stays 2 s (it used to run 3 s into nothing: words in front of nobody, black seconds at the end of the export)
+PASS the words show on the video as the editor opens: playhead 1.5 s (the element starts at 1 s, where its rise begins from nothing), the monitor differs from the frame without it by 9/255
+PASS the video frame stays fully visible with the editor open (every tab): 1440×900 frame 183×326 at 613,163, editor 340×741 at 1092,151; 1280×800 frame 148×264 at 550,163, editor 340×641 at 932,151; overlap 0/0/0/0/0/0/0/0 px², the video on top at its corners
+PASS changes show on the video before Apply: Look → Black changes the monitor by 8.99/255 (mean), still 0 new undo steps (a draft; fill #111111)
+PASS Cancel puts the element back exactly: the project is byte-identical to before (2409 bytes), no undo step, the monitor as before (0/255) {"diff":null,"changed":true,"same":true,"open":false,"steps":0,"mon":0}
+PASS the Inspector keeps only Start / Duration and a short summary (“EUROPE · Anton · person in front”) with ✎ Edit text behind…, which opens the editor (Theme element, Text behind the host)
+PASS Apply keeps five changes (gold, Bebas Neue, shadow 80 %, “GERMANY”, centre) as ONE undo step “✎ Text behind · Europe”; ⌘Z puts the project back byte-identical (but its “modified” time), redo brings them back {"sA":4,"sB":5,"applied":{"word":"GERMANY","font":"Bebas Neue","fill":"#fff3b0","shadow":0.8},"undoneSame":true,"redone":"GERMANY"}
+PASS double-click on the timeline opens it; Esc cancels (byte-identical, no step), ⌘↵ applies (one step, white kept)
+PASS double-click on the word on the video opens the editor on Words with that word ready to type (“GERMANY”)
+PASS dragging the words on the video while it is open moves them live (22,590 → 199,826; the X / Y fields follow), still a draft, and Apply makes it one step
+PASS ▶ Play preview plays the element’s 1.0–2.0 s on the video and loops it (playhead 1.16, 1.42, 1.67, 1.93, 1.22, 1.48, 1.72, 1.05 …); pressed again it stops
+PASS it can be moved (dragged to x 19), is reopened where he left it (x 19), and dropped onto the frame it settles beside it (x 804, overlap 0 px²)
+PASS fresh studio (models folder: manifest.json): the person is found with nothing to download (the segmenter is bundled): “ok”; 📦 Main subject says it needs its model, with 📦 Install (“Main subject needs its cut-out model: Cut-out tab”), not “Finding the person…”
+PASS a failed person search is said in the editor (“Could not find the person: the decoder could not read this clip. Try a”) with ↻ Try again, which finds him: status failed → ok
+PASS Place elements ＋ opens it too; “every country I mention” places 2 and does NOT open it, but its toast’s ✎ Edit opens the first one
 PASS no console errors
 PASS nothing leaves 127.0.0.1
 
-ALL PASSED in 50 s
+ALL PASSED in 116 s

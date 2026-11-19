@@ -297,6 +297,8 @@ export class Preview {
   onDbl(e) {
     const hit = this.hitTest(this.toCanvas(e));
     if (hit?.item.type === 'text') { this.ed.select([hit.item.id]); this.ed.inspector.focusText(); }
+    // text behind the host: its own editor beside the video, on the word that was double-clicked
+    else if (hit?.item.type === 'theme.el' && hit.item.style?.el === 'tbehind') { const p = this.toCanvas(e), ed = this.ed; Promise.all([import('../themes/text-edit.js'), import('../themes/textbehind-popup.js')]).then(([T, P]) => P.openTbEditor(ed, hit.item.id, { tab: 'words', focus: T.wordAt(hit.item, p, ed.t)?.key || null })); }
     // a theme element's words: edit them in place on the video (themes/text-edit.js)
     else if (hit && /^theme\.(el|sting|outro|trans)$/.test(hit.item.type)) { const p = this.toCanvas(e); import('../themes/text-edit.js').then((m) => m.editOnCanvas(this, hit.item, p)); }
   }

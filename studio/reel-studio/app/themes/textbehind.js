@@ -406,6 +406,21 @@ export function tbStatus(project, item, t) {
 export function tbStyle({ code = 'europe', lang = 'en', text } = {}) {
   return { code, lang, key: 'person', tb: JSON.parse(JSON.stringify(TB_DEFAULTS)), ...(text ? { text } : {}) };
 }
+/**
+ * Where a new element goes when it is added at the playhead: never past the end of the video under it. Three seconds
+ * from a playhead one second before the clip ends ran on into nothing — "No video clip under it", the words in front of
+ * nobody, and two black seconds added to the end of the export. It ends with the video (and starts earlier when the
+ * playhead is right at the end); at least 0.6 s.
+ */
+export function tbSpan(project, t0, dur) {
+  let end = 0;
+  for (const tr of project.tracks || []) if (tr.kind === 'video' || tr.kind === 'overlay') for (const it of tr.items) if (it.type === 'clip') end = Math.max(end, it.t0 + (it.out - it.in) / (it.speed || 1));
+  if (end <= 0.6) return { t0, dur };
+  const r = (x) => Math.round(x * 1000) / 1000;
+  const a = t0 > end - 0.6 ? Math.max(0, end - dur) : t0;
+  return { t0: r(a), dur: r(Math.max(0.6, Math.min(dur, end - a))) };
+}
+
 /** where it starts: a wide band in the upper half (the word's lower part behind the head) */
 export function tbBox(W, H) {
   const land = W > H * 1.05, w = Math.round(land ? W * 0.9 : W * 0.96), h = Math.round(land ? H * 0.34 : Math.min(W * 0.4, H * 0.3));

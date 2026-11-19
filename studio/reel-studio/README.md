@@ -91,6 +91,14 @@ are for features coming in the next update, so you can leave them unticked for n
   on the edge), **Placement** (*Full frame*, *Left*, *Centre*, *Right*, *Size*; or drag it on the video), and **Export
   with transparency**: **⬇ Cut-out video** (WebM with alpha, for the Ad Studio, Premiere, After Effects, Canva),
   **⬇ PNG sequence** (a zip), **⬇ This frame (PNG)**, **⬇ Whole reel (WebM)** — saved in the company's exports folder.
+* **🔤 Text behind the host** (**✨ Themes → ⚡ One click → 🔤 Text behind me**, or **Place elements → Text behind the
+  host**): a huge word (EUROPE, or a carousel of countries, with an optional "JOBS IN" line above) behind you, you cut
+  out in front of it. Its own editor opens **beside the video** (it never covers the frame; drag it by its title bar,
+  it remembers where you put it) with four tabs: **🔤 Words**, **🎨 Look**, **🙂 Position** (and the in / out motion),
+  **✂ Cut-out** (person or main subject, edges, and whether you have been found yet). Every change shows on the video
+  straight away; **▶ Play preview** loops the element while you adjust it; **✓ Apply** (⌘↵) keeps it all as one ⌘Z
+  step, **Cancel** (Esc) puts it back exactly as it was. Open it again with a double-click on the words (on the video
+  or the timeline) or **Inspector → ✎ Edit text behind…**.
 * **⬇ Export** (top right) makes an MP4 (1080×1920 for reels; 720p to 4K; 30 or 60 fps; quality up to *Max*; also 1:1,
   4:5 or 16:9 if you tick them).
 

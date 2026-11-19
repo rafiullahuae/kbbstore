@@ -41,6 +41,11 @@ export class Timeline {
     this.scroll.appendChild(this.content);
     el.append(tools, this.scroll);
     this.scroll.addEventListener('pointerdown', (e) => this.onDown(e));
+    // a double-click on a text-behind element opens its editor beside the video
+    this.scroll.addEventListener('dblclick', (e) => {
+      const el = e.target.closest?.('.tl-item'); const it = el && findItem(this.ed.project, el.dataset.id)?.item;
+      if (it?.type === 'theme.el' && it.style?.el === 'tbehind') import('../themes/textbehind-popup.js').then((m) => m.openTbEditor(this.ed, it.id));
+    });
     this.scroll.addEventListener('wheel', (e) => {
       if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.zoom(e.deltaY < 0 ? 1.15 : 0.87, e.clientX); }
     }, { passive: false });

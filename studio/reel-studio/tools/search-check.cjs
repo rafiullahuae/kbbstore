@@ -155,6 +155,9 @@ const NAV = [
   ['models', /^Models/, null],
   ['ad studio', /^Ad Studio$/, null],
   ['designs', /Designs/, null],
+  // the Text behind editor beside the video (no text-behind element in this reel: it shows where to add one)
+  ['edit text behind', /^Edit text behind…$/, null],
+  ['text behind colour', /^Text behind · font, size, colour$/, null],
 ];
 const TYPO = [
   ['trimm', /^Trim a clip$/], ['slowmo', /^Speed$/], ['captoin', /[Cc]aption/], ['enhanse voice', /^Enhance voice$/], ['transitons', /^Transitions$/],

@@ -177,6 +177,11 @@ export async function goTo(entry, { run = false } = {}) {
     if (hint) toast(hint, 'info', 4200);
   }
   if (go.side) window.kbbEditor?.showSide(go.side);
+  // a control of the Text behind editor: open it on its tab (themes/textbehind-popup.js)
+  if (go.tbp) {
+    const ed = window.kbbEditor, it = ed?.selectedItems().map((x) => x.item).find((i) => i.style?.el === 'tbehind');
+    if (it) { const P = await import('../themes/textbehind-popup.js'); P.openTbEditor(ed, it.id, { tab: go.tbp }); await waitFor(() => $('.tbp')); await sleep(60); }
+  }
   if (go.bin) { const tab = $$('.bin-tab').find((b) => words(b.textContent) === words(go.bin) || words(b.textContent).endsWith(words(go.bin))); tab?.click(); await sleep(60); }
   if (go.captab) { const b = await waitFor(() => $(`.rs-cap-tabs button[data-tab="${go.captab}"]`), 3000); if (b && !b.classList.contains('on')) { b.click(); await sleep(80); } }
   if (go.modal) {

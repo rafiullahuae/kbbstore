@@ -3,6 +3,7 @@
 // grid; drawing then only samples the cache, so the preview stays real time and the export draws the very same masks.
 // Temporal smoothing: masks are averaged over neighbouring grid frames (1-2-1) and blended between grid points.
 import { MediaStore } from '../core/media.js';
+import { bus } from '../core/bus.js';
 import { findMedia, srcTime, itemEnd } from '../core/project.js';
 import { subjectReady, subjectMasks, SUBJECT_SIZE } from './subject.js';
 
@@ -77,10 +78,16 @@ export function behindFrames(project, mediaId, fps, kind) {
  * Analyse what the project needs and is not cached yet. onProgress(label, 0..1).
  * kinds: which analyses to run ('seg', 'face'); default: whatever the project's effects use.
  */
+// It also tells the editor how it went on the bus — 'vision:progress' {label, f}, 'vision:done' {ran}, 'vision:failed'
+// {message} — so a status line that says "Finding the person…" moves on when the masks arrive, whoever started the
+// analysis (the editor's catch-up after an edit has no progress callback of its own), and says so when it failed
+// instead of waiting for ever (the owner, 19 Nov: text behind the host "not working properly").
 let queue = Promise.resolve();
 export function ensureAnalysis(project, opts = {}) {
   // one analysis at a time: a second caller waits, then finds the work already done
-  const run = queue.then(() => analyse(project, opts));
+  const onProgress = (l, f) => { opts.onProgress?.(l, f); if (l) bus.emit('vision:progress', { label: l, f }); };
+  const run = queue.then(() => analyse(project, { ...opts, onProgress }));
+  run.then((ran) => bus.emit('vision:done', { ran: !!ran }), (e) => bus.emit('vision:failed', { message: e?.message || String(e) }));
   queue = run.catch(() => {});
   return run;
 }
