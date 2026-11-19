@@ -30,11 +30,14 @@ mkdir -p "dist/$NAME/brands" "dist/$NAME/library"
 git ls-files -z brands library | while IFS= read -r -d '' f; do mkdir -p "dist/$NAME/$(dirname "$f")"; cp "$f" "dist/$NAME/$f"; done
 rm -rf "dist/$NAME/library/music/user" "dist/$NAME/library/people"
 cp models/manifest.json "dist/$NAME/models/"
-find "dist/$NAME" -name '.DS_Store' -delete
+find "dist/$NAME" -type f -name '.*' -delete   # .DS_Store, .gitignore: never needed, and an update refuses hidden files
 # nothing that is not ours to ship: no model weights, no projects, no keys, no user library
 if find "dist/$NAME/models" -type f ! -name manifest.json | grep -q .; then echo "model files leaked into the package" >&2; exit 1; fi
 for d in workspaces settings library/music/user library/people; do
   if [ -e "dist/$NAME/$d" ]; then echo "user data ($d) leaked into the package" >&2; exit 1; fi
 done
+# update.json: what Configure → Updates checks before installing this zip (engine/update.go): the version, the notes
+# from tools/release-notes.txt ("## $VER" block) and every file's size and sha256. The zip still works the old way too.
+python3 -I tools/make-update-manifest.py "dist/$NAME" "$VER" tools/release-notes.txt
 (cd dist && zip -qry -X "$ZIP" "$NAME")
 du -sh "dist/$NAME" "dist/$ZIP"

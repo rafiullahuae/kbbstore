@@ -11,6 +11,7 @@ import { Editor } from './editor.js';
 import { needsSetup, setupScreen } from './setup.js';
 import { restorePrefs } from '../core/prefs.js';
 import { installHoverHelp } from './hover-help.js';   // the guide card on hover, on every screen from the first (hover-help.js)
+import { hasUpdatedNote } from '../settings/updates.js';
 
 const root = document.getElementById('app');
 installHoverHelp();
@@ -52,7 +53,7 @@ function openProject(p, files) {
   if (files?.length) editor.importFiles(files);
 }
 
-const ENGINE_API = 5; // engine/main.go apiLevel (5: adstudio/ for the Ad Studio)
+const ENGINE_API = 6; // engine/main.go apiLevel (5: adstudio/ for the Ad Studio; 6: Configure → Updates, moving a reel)
 
 async function boot() {
   if (!(await engine.connect())) {
@@ -74,10 +75,13 @@ async function boot() {
   const st = await needsSetup();
   if (st) await setupScreen(root, st);
   const m = /^#\/p\/([\w-]+)\/([\w-]+)/.exec(location.hash);
+  let opened = false;
   if (m) {
-    try { openProject(await engine.loadProject(m[1], m[2])); return; } catch { /* fall through to home */ }
+    try { openProject(await engine.loadProject(m[1], m[2])); opened = true; } catch { /* fall through to home */ }
   }
-  goHome();
+  if (!opened) goHome();
+  // just updated (or rolled back) from Configure → Updates: show where it says "Updated to v…" (settings/updates.js)
+  if (hasUpdatedNote()) import('../settings/configure.js').then((c) => c.openConfigure('updates', { onClose: () => { if (!editor) goHome(); } }));
 }
 
 boot().catch((e) => {

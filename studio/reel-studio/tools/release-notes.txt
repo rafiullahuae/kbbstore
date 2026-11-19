@@ -1,0 +1,12 @@
+# What's new, per version. tools/package-mac.sh puts the lines under "## <APP_VERSION>" into the package
+# (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
+# no jargon. A package is not built without a block for its version. Newest first.
+
+## 1.3.0
+- Install updates from inside the studio: Configure → Updates → Install update…, then pick the zip. No more replacing the folder.
+- Roll back to the version you had before with one click, if anything looks wrong.
+- Move a reel to another company: the ⇄ button next to ✕ in Recent reels. Its clips and look go with it.
+- Copy a reel to another company from the same window.
+
+## 1.2.1
+- Captions clip by clip: each clip is heard on its own, with one caption bar per clip and a typed script per clip.

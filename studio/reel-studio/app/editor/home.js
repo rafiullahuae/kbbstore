@@ -3,8 +3,8 @@
 import { engine } from '../core/engine.js';
 import { APP_NAME } from '../core/config.js';
 import { createProject, ASPECTS } from '../core/project.js';
-import { h, clear, toast, seg, confirmDialog } from './ui.js';
-import { state as ws, workspaceSwitcher, companyDialog, wsBadge } from './workspaces.js';
+import { h, clear, toast, seg, confirmDialog, modal } from './ui.js';
+import { state as ws, workspaceSwitcher, companyDialog, wsBadge, switchWorkspace } from './workspaces.js';
 import { loadRecipes } from './bin.js';
 import { stopStudio } from './editor.js';
 import { openSetup } from './setup.js';
@@ -91,11 +91,37 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
     for (const r of list.slice(0, 12)) {
       recent.appendChild(h('div.recent', { role: 'button', tabindex: '0', title: r.name, on: { click: () => openById(r.id), keydown: (e) => e.key === 'Enter' && openById(r.id) } },
         h('span.r-aspect', { dataset: { a: r.aspect || '' } }, r.aspect || ''), h('div', h('b', { dir: 'auto' }, r.name), h('small', new Date(r.modified).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))),
+        ws.list.length > 1 ? h('button.icon-btn.move', { title: 'Move or copy this reel to another company', 'aria-label': 'Move to another company', on: { click: (e) => { e.stopPropagation(); moveDialog(r); } } }, '⇄') : null,
         h('button.icon-btn.del', { title: 'Delete this reel', on: { click: async (e) => { e.stopPropagation(); if (await confirmDialog('Delete reel?', `"${r.name}" and its copied media will be deleted.`, 'Delete')) { await engine.remove(`workspaces/${w.id}/projects/${r.id}`); rerender(); } } } }, '✕')));
     }
   } catch (e) { clear(recent); recent.appendChild(h('p.muted', 'Could not read projects: ' + e.message)); }
 
   async function openById(id) {
     try { onOpen(await engine.loadProject(w.id, id)); } catch (e) { toast('Could not open: ' + e.message, 'error'); }
+  }
+
+  // ⇄ Move to company (the owner, 19 Nov: "allow me facility to move the project from one company to another"): the
+  // reel's folder, media and all, goes to the company picked here (engine/move.go). It keeps its own look.
+  function moveDialog(r) {
+    const others = ws.list.filter((c) => c.id !== w.id);
+    let pick = others[0]?.id;
+    const err = h('p.move-err', { role: 'alert', hidden: true });
+    const opts = h('div.move-list', { role: 'radiogroup', 'aria-label': 'Company' }, others.map((c, i) => h('label.move-opt', { dataset: { co: c.id } },
+      h('input', { type: 'radio', name: 'move-to', value: c.id, checked: i === 0, on: { change: () => { pick = c.id; } } }), wsBadge(c), h('div', h('b', c.fullName || c.name), h('small.muted', c.industry || '')))));
+    const go = (copy) => async () => {
+      err.hidden = true;
+      try {
+        const res = await engine.moveProject(w.id, pick, r.id, copy);
+        rerender();
+        const open = h('button.btn.small#move-open', { on: { click: async () => { switchWorkspace(res.to); try { onOpen(await engine.loadProject(res.to, res.id)); } catch (e) { toast('Could not open: ' + e.message, 'error'); } } } }, 'Open it there');
+        toast(h('span.move-toast', `“${r.name}” ${copy ? 'copied' : 'moved'} to ${res.toName}. `, open), 'ok', 7000);
+      } catch (e) { err.textContent = e.message; err.hidden = false; return false; }
+    };
+    modal({
+      title: `Move “${r.name}”`,
+      body: h('div.move-dlg', h('p', 'To which company?'), opts,
+        h('p.muted', `Its clips and pictures go with it, and it keeps its own look (colours, fonts, logo). “Move” takes it out of ${w.name}; “Copy” keeps it here too.`), err),
+      actions: [{ label: 'Cancel', value: null }, { label: 'Copy there', id: 'move-copy', onClick: go(true) }, { label: 'Move', primary: true, id: 'move-go', onClick: go(false) }],
+    });
   }
 }

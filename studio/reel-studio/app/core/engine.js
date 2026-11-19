@@ -109,6 +109,11 @@ class EngineClient {
     }
     return out.sort((a, b) => String(b.modified).localeCompare(String(a.modified)));
   }
+  /** a reel's folder (media and all) to another company; copy: true leaves the original. Refuses an id the target
+   *  already has. -> { ok, id, to, toName, path, brought, copy } (engine/move.go) */
+  async moveProject(from, to, id, copy = false) {
+    return (await this._fetch('/api/projects/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from, to, id, copy }) })).json();
+  }
   async export(path, blob) { return this.writeFile(path, blob); }
 
   // ── the permission gate ──

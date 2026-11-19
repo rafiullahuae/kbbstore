@@ -49,7 +49,8 @@ const version = "0.1.0"
 // (the owner, 17 Nov: Configure → Photo sources / Languages, after the new app ran on the previous engine).
 // 4 (17 Nov): the data folder outside the app folder (/api/info data, /api/prefs?merge=1).
 // 5 (18 Nov): adstudio/ -- the Ad Studio's designs, companies and pictures in the data folder (app/adstudio).
-const apiLevel = 5
+// 6 (19 Nov): /api/update/* (Configure → Updates, update.go) and /api/projects/move (a reel to another company, move.go).
+const apiLevel = 6
 
 // preferredPort: the page's origin is http://127.0.0.1:<port>, and everything a browser keeps (storage, permissions)
 // belongs to that origin. A random port every launch lost all of it every time; this one is kept unless it is busy.
@@ -83,6 +84,13 @@ type server struct {
 	photoBase  string // test-only stand-in for the photo hosts (tools/stock-mock.cjs); never set by the launcher
 	claudeBase string // test-only stand-in for api.anthropic.com (tools/d-claude-mock.cjs); never set by the launcher
 	noBrowser  bool   // -no-browser (the test runs): /api/open does not pop Finder windows either
+	exe        string // this engine's own file (re-executed after an update, update.go); "" = unknown, no updates
+	noRestart  bool   // Go tests: an update does not re-execute the test binary
+	updMu      sync.Mutex
+	updPend    *updPending
+	updBusy    bool
+	movedMu    sync.Mutex
+	movedReels map[string]string // "workspaces/<ws>/projects/<id>" moved this session → the company it went to (move.go)
 }
 
 type job struct {
@@ -106,6 +114,7 @@ func main() {
 	testBase := flag.String("test-hf-base", "", "TESTS ONLY: download models from this http://127.0.0.1:<port> server instead of huggingface.co")
 	photoBase := flag.String("test-photo-base", "", "TESTS ONLY: send Pexels / Unsplash requests to this http://127.0.0.1:<port> mock server")
 	claudeBase := flag.String("test-claude-base", "", "TESTS ONLY: send Claude API calls to this http://127.0.0.1:<port> mock server")
+	afterUpdate := flag.Bool("after-update", false, "set by the engine itself when it restarts into a new version (Configure → Updates): no new browser tab, the open page reloads")
 	flag.Parse()
 
 	real, err := filepath.EvalSymlinks(*dir)
@@ -137,6 +146,10 @@ func main() {
 		grants: map[string]bool{}, subs: map[chan []byte]bool{}, jobs: map[string]*job{},
 		idle: *idle, shutdown: make(chan struct{}),
 	}
+	if p, err := filepath.EvalSymlinks(exe); err == nil && exe != "" {
+		s.exe = p
+	}
+	s.recoverInterrupted() // an update cut off midway (power lost) is put back before anything is served (update.go)
 	s.dataShow = displayPath(s.dataDir(), home)
 	s.setupData(home)
 	if s.separateData() {
@@ -189,8 +202,11 @@ func main() {
 	}()
 	u := "http://" + s.addr + "/app/"
 	fmt.Printf("%s %s running at %s\n", appName, version, u)
+	if *afterUpdate {
+		fmt.Printf("Updated: %s %s is running. The open page reloads by itself.\n", appName, appVersionAt(s.root))
+	}
 	fmt.Println("Keep this window open while you work. Close the browser tab (or press Stop in the app) to finish.")
-	if !*noBrowser {
+	if !*noBrowser && !*afterUpdate {
 		openBrowser(u)
 	}
 
@@ -518,6 +534,10 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			jsonErr(w, 403, "path refused")
 			return
 		}
+		if to := s.movedTo(rel); to != "" { // a reel moved to another company, still open in another tab (move.go)
+			jsonErr(w, 409, "This reel was moved to "+to+". Open it there.")
+			return
+		}
 		if err := writeAtomic(abs, http.MaxBytesReader(w, r.Body, 16<<30)); err != nil {
 			jsonErr(w, 500, "write failed: "+err.Error())
 			return
@@ -668,7 +688,8 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		go func() { time.Sleep(200 * time.Millisecond); s.stop() }()
 
 	default:
-		if !s.settingsAPI(w, r, p) { // engine/settings.go: Claude, preferences, folders, model removal
+		// settings.go: Claude, preferences, folders, model removal · update.go: Configure → Updates · move.go: reel → company
+		if !s.settingsAPI(w, r, p) && !s.updateAPI(w, r, p) && !s.moveAPI(w, r, p) {
 			jsonErr(w, 404, "no such endpoint")
 		}
 	}
