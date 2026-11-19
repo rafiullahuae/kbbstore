@@ -84,6 +84,7 @@ export class Editor {
       get project() { return ed.project; },
       history: ed.history, ops, media: ed.media, engine, bus,
       get workspace() { return ed.workspace; },
+      get workspaces() { return wsState.list; },   // every company (a logo from any company on any reel)
       selection: () => [...ed.sel], playhead: () => ed.t, seek: (t) => ed.seek(t),
       toast, progress: (label, f) => ed.setProgress(label, f), openPanel: (id) => ed.openModulePanel(id),
     };

@@ -15,7 +15,7 @@ import { ops, registerHistoryHook } from '../core/history.js';
 import { createItem, createTrack, itemEnd, clone, projectDuration } from '../core/project.js';
 import { elementStyle, boxFor } from './elements.js';
 import { themeById } from './themes.js';
-import { overlayOf, colorsFor } from './apply.js';
+import { overlayOf, colorsFor, logoCompanyOf } from './apply.js';
 import { logoBox, badgeOf } from './logo-badge.js';
 import { badgeBox } from './globe-badge.js';
 import { findMentions, mentionSpans, placeName } from './country-words.js';
@@ -45,11 +45,18 @@ function laneFor(p, name, cmds) {
 
 // ── logo badge ──
 export const wholeLogo = (p) => all(p).find((x) => x.item.type === 'theme.el' && x.item.style?.el === 'logo' && x.item.auto === AUTO_WHOLE)?.item || null;
+/**
+ * The company whose logo goes on the reel: opts.from (a company id), else the one the reel's badge already uses, else
+ * the current company. Any company's logo can go on any company's reel (the owner); the colours stay this company's.
+ */
+export const logoCompany = logoCompanyOf;   // (apply.js: placed logo elements use the same choice)
 export function addLogo(ctx, shape = 'circle', opts = {}) {
   const p = ctx.project, ws = ctx.workspace || {}, W = p.canvas.w, H = p.canvas.h, tid = themeNow(p), th = themeById(tid) || themeById('travel');
-  if (!ws.logo && !ws.logoFull) throw new Error('This company has no logo yet: add one in ⚙ Configure → Companies');
+  const lw = logoCompany(ctx, opts.from);
+  if (!lw.logo && !lw.logoFull) throw new Error(`${lw.id === ws.id ? 'This company' : lw.name || 'That company'} has no logo yet: add one in ⚙ Configure → Companies`);
   const old = wholeLogo(p), cmds = [];
-  const style = elementStyle(th.id, 'logo', { colors: colorsFor(th, 'theme', ws), variant: shape, brand: ws.name || null, logo: ws.logo || null, ws });
+  const style = elementStyle(th.id, 'logo', { colors: colorsFor(th, 'theme', ws), variant: shape, brand: lw.name || null, logo: lw.logo || null, ws: { ...ws, logo: lw.logo || null, logoFull: lw.logoFull || null } });
+  if (lw.id && lw.id !== ws.id) style.logoFrom = lw.id;
   if (old?.style?.badge) style.badge = { ...old.style.badge, ...(opts.badge || {}) }; else if (opts.badge) Object.assign(style.badge, opts.badge);
   style.whole = 'span';
   const b = badgeOf(style), D = reelEnd2(p) || 10;
@@ -81,7 +88,10 @@ export function addEndScreen(ctx, variant = 'corporate', opts = {}) {
   const p = ctx.project, ws = ctx.workspace || {}, W = p.canvas.w, H = p.canvas.h, th = themeById(themeNow(p)) || themeById('travel');
   const D = reelEnd2(p); if (!(D > 0.5)) throw new Error('Put a clip on the timeline first: the ending screen closes the reel');
   const old = endScreen(p), cmds = [];
-  const style = elementStyle(th.id, 'endscreen', { colors: colorsFor(th, 'theme', ws), variant, brand: ws.name || null, logo: ws.logo || null, ws });
+  // the logo: the company chosen for the reel's logo badge (opts.from, else the ending screen's own, else this one)
+  const lw = logoCompany(ctx, opts.from || old?.style?.logoFrom);
+  const style = elementStyle(th.id, 'endscreen', { colors: colorsFor(th, 'theme', ws), variant, brand: ws.name || null, logo: lw.logo || ws.logo || null, ws: { ...ws, logo: lw.logo || ws.logo || null, logoFull: lw.logoFull || ws.logoFull || null } });
+  if (lw.id && lw.id !== ws.id && lw.logo) style.logoFrom = lw.id;
   if (old) for (const k of ['slides', 'photo', 'text', 'lang', 'palette', 'tstyle']) if (old.style?.[k] != null) style[k] = old.style[k];
   if (opts.slides) style.slides = opts.slides;
   style.whole = 'end';

@@ -105,7 +105,7 @@ const NAV = [
   ['split', /^Split$/, 'section.timeline'],
   ['slow motion', /^Speed$/, '.side-tab.on[data-side="inspector"]'],
   ['noise', /Enhance voice|Noise strength/, null],
-  ['logo', /brand kit|Companies/, null],
+  ['logo', /logo badge|brand kit|Companies/, null],   // since v1.1.0 the one-click logo badge answers "logo" first
   ['export 4k', /Export resolution/, '.modal-back #x-go'],
   ['capsules', /Capsules carousel/, '.side-tab.on[data-side="mod:themes"]'],
   ['arabic captions', /Arabic captions|Translate captions/, '.side-tab.on[data-side="captions"]'],
@@ -150,7 +150,7 @@ const NAV = [
   ['shape 9:16', /Reel shape/, '.topbar'],
   ['adjust exposure', /^Adjust|^Exposure$/, '.side-tab.on[data-side="inspector"]'],
   ['pexels key', /^Pexels key$/, '.cfg-back .cfg-nav [data-sec="photos"].on'],
-  ['contact', /^Contact & social$/, '.cfg-back .cfg-nav [data-sec="contact"].on'],
+  ['contact details', /^Contact & social$/, '.cfg-back .cfg-nav [data-sec="contact"].on'],   // plain "contact" now opens the contact cards first
   ['folders', /^Folders & storage$/, '.cfg-back .cfg-nav [data-sec="folders"].on'],
   ['models', /^Models/, null],
   ['ad studio', /^Ad Studio$/, null],
@@ -159,7 +159,7 @@ const NAV = [
 const TYPO = [
   ['trimm', /^Trim a clip$/], ['slowmo', /^Speed$/], ['captoin', /[Cc]aption/], ['enhanse voice', /^Enhance voice$/], ['transitons', /^Transitions$/],
   ['dupliacte', /^Duplicate$/], ['exprot', /^Export$/], ['bigger text', /size|Text: words/i], ['slow mo', /^Speed$/], ['noise', /Enhance voice|Noise strength/],
-  ['logo', /brand kit|Companies/], ['arabic', /Arabic|Translate/], ['remove background', /^Remove background$/], ['cutout', /^Remove background$/],
+  ['logo', /logo badge|brand kit|Companies/], ['arabic', /Arabic|Translate/], ['remove background', /^Remove background$/], ['cutout', /^Remove background$/],
   ['subtitles', /[Cc]aption/], ['color grade', /Colour|Look/], ['fps', /Frame rate|fps/], ['green screen', /^(Remove background|Green screen)/], ['transparent background', /^Transparent background/], ['remove background', /^Remove background/], ['make it faster', /^Speed/],
   ['ترجمة', /Translate|Arabic/], ['قص', /^Split$|Trim/], ['تصدير', /^Export$/], ['موسيقى', /Music/], ['عربي', /Arabic|عربي|Translate/],
   ['older engine', /older engine/i], ['where are my files', /Where are my files|Folders/], ['4k', /4K/], ['lufs', /Loudness/],

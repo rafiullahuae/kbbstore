@@ -9,7 +9,7 @@ import { BADGE_LOOKS, loadBadgeAssets } from './globe-badge.js';
 import { REGIONS, placeName } from './country-words.js';
 import { COUNTRIES as FLAG_ROWS } from './capsules/countries.js';
 import { kitFor } from './kit.js';
-import { addLogo, setBadge, badgeMentions, refreshContact, afterCutPlaced, mentionBadges, wholeLogo, addEndScreen, endScreen, setEndDuration } from './el2-cmds.js';
+import { addLogo, logoCompany, setBadge, badgeMentions, refreshContact, afterCutPlaced, mentionBadges, wholeLogo, addEndScreen, endScreen, setEndDuration } from './el2-cmds.js';
 import { END_DESIGNS, endById, loadEndAssets } from './endscreen.js';
 import { cutStatus } from './cutout-trans.js';
 import { EL2_IDS } from './el2.js';
@@ -195,18 +195,25 @@ export function quickCard(ctx) {
   const render = () => {
     const p = ctx.project, ws = ctx.workspace || {}, logo = wholeLogo(p), nB = mentionBadges(p).length;
     const ends = h('select', { 'aria-label': 'Ending screen look', title: 'The look of the ending screen', dataset: { e2EndLook: '1' } }, END_DESIGNS.map((x) => h('option', { value: x.id, selected: x.id === endScreen(p)?.style?.variant }, x.label)));
+    // whose logo: any company's logo on any company's reel (the owner); the reel's colours stay this company's
+    const lw = logoCompany(ctx), comps = (ctx.workspaces || []).filter((w) => w.logo || w.logoFull || w.id === ws.id);
+    const from = h('select', { 'aria-label': 'Logo of company', title: 'Whose logo goes on the reel: any company’s logo can be used here', dataset: { e2LogoFrom: '1' }, on: { change: () => {
+      if (!logo) return render();
+      try { addLogo(ctx, logo.style.variant, { from: from.value }); const e = endScreen(ctx.project); if (e) addEndScreen(ctx, e.style.variant, { from: from.value }); toast(`Logo of ${from.selectedOptions[0].textContent} · ⌘Z undoes`, 'ok'); render(); } catch (e) { toast(e.message, 'error'); render(); }
+    } } }, comps.map((w) => h('option', { value: w.id, selected: w.id === lw.id }, w.name + (w.id === ws.id ? ' (this company)' : ''))));
     const looks = h('select', { 'aria-label': 'Badge look', title: 'The look of the country badges', dataset: { e2Look: '1' } }, BADGE_LOOKS.map((x) => h('option', { value: x.id }, x.label)));
     clear(box).append(
       h('b', '⚡ One click'),
       h('div.e2-row', h('span', '🔰 Logo badge'), ...LOGO_SHAPES.map((x) => h('button.chip' + (logo?.style?.variant === x.id ? '.on' : ''), { type: 'button', title: `Your logo on a ${x.label.toLowerCase()} for the whole video (corner, size and look in the Inspector)`, dataset: { e2Logo: x.id }, on: { click: () => {
-        try { const it = addLogo(ctx, x.id); window.kbbEditor?.select?.([it.id]); window.kbbEditor?.showSide?.('inspector'); toast(`Logo badge · ${x.label} · whole video · ⌘Z undoes`, 'ok'); render(); } catch (e) { toast(e.message, 'error'); }
+        try { const it = addLogo(ctx, x.id, { from: from.value }); window.kbbEditor?.select?.([it.id]); window.kbbEditor?.showSide?.('inspector'); toast(`Logo badge · ${x.label} · whole video · ⌘Z undoes`, 'ok'); render(); } catch (e) { toast(e.message, 'error'); }
       } } }, x.label.replace(/ \(.*\)$/, '')))),
-      ws.logo || ws.logoFull ? null : h('p.e2-note', 'No logo in this company’s brand kit yet: add one in ⚙ Configure → Companies.'),
+      comps.length > 1 ? h('div.e2-row', h('span', 'Logo of'), from) : null,
+      lw.logo || lw.logoFull ? null : h('p.e2-note', 'No logo in this company’s brand kit yet: add one in ⚙ Configure → Companies, or pick another company’s logo.'),
       h('div.e2-row', h('button.btn.small', { type: 'button', title: 'Scan the captions for countries and regions (English, Arabic, Urdu, Hindi) and put a globe badge in the corner for each mention', dataset: { e2Mentions: '1' }, on: { click: () => {
         try { const r = badgeMentions(ctx, { look: looks.value }); toast(r.n ? `${r.n} country badge${r.n === 1 ? '' : 's'}: ${r.codes.map((c) => placeName(c, 'en')).join(', ')} · ⌘Z undoes` : 'No country or region named in the captions', r.n ? 'ok' : 'info', 4200); render(); } catch (e) { toast(e.message, 'error'); }
       } } }, '🌐 Badge every country I mention'), looks),
       h('div.e2-row', h('button.btn.small', { type: 'button', title: 'A closing card at the end of the reel: logo, phone, WhatsApp, website, call to action (it follows the reel’s length)', dataset: { e2End: '1' }, on: { click: () => {
-        try { const it = addEndScreen(ctx, ends.value); window.kbbEditor?.select?.([it.id]); window.kbbEditor?.showSide?.('inspector'); toast(`Ending screen · ${endById(ends.value).label} · the last ${(it.out - it.in).toFixed(1)} s · ⌘Z undoes`, 'ok'); render(); } catch (e) { toast(e.message, 'error'); }
+        try { const it = addEndScreen(ctx, ends.value, { from: from.value }); window.kbbEditor?.select?.([it.id]); window.kbbEditor?.showSide?.('inspector'); toast(`Ending screen · ${endById(ends.value).label} · the last ${(it.out - it.in).toFixed(1)} s · ⌘Z undoes`, 'ok'); render(); } catch (e) { toast(e.message, 'error'); }
       } } }, endScreen(p) ? '🏁 Replace ending screen' : '🏁 Add ending screen'), ends),
       h('p.e2-note', nB ? `${nB} mention badge${nB === 1 ? '' : 's'} on the reel: they follow caption edits.` : 'Contact cards (15 designs) and single badges are in Place elements below.'));
   };

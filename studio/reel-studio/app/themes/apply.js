@@ -315,6 +315,26 @@ const themeNow = (p, fallback) => fallback || overlayOf(p)?.style?.theme || them
  * Place one package element as an ordinary timeline item (the owner's own: drag it, trim it, delete it). ONE undo step.
  * opts = { theme, t0, dur, variant, trackId, box:{x,y,w,h}, text }. 'overlay' places the running overlay as a clip.
  */
+/**
+ * The company whose logo goes on the reel: `from` (a company id), else the one the reel's logo badge or ending screen
+ * already uses (style.logoFrom), else this company; with nothing chosen and no logo here, the first company that has
+ * one. Any company's logo can go on any company's reel (the owner); the colours stay this company's.
+ */
+export function logoCompanyOf(ctx, from) {
+  const list = ctx.workspaces || [], ws = ctx.workspace || {};
+  let kept = null;
+  for (const tr of ctx.project?.tracks || []) for (const it of tr.items) if (it.style?.logoFrom && (it.style.el === 'logo' || it.style.el === 'endscreen')) kept ||= it.style.logoFrom;
+  const id = from || kept || ws.id;
+  const w = list.find((x) => x.id === id) || ws;
+  if (!from && !w.logo && !w.logoFull) return list.find((x) => x.logo || x.logoFull) || w;
+  return w;
+}
+/** this company with the logo of the company chosen for the reel's logo (logo / ending screen elements only) */
+const withLogoOf = (ctx, ws, el) => {
+  if (el !== 'logo' && el !== 'endscreen') return ws;
+  const lw = logoCompanyOf(ctx);
+  return lw === ws || !(lw.logo || lw.logoFull) ? ws : { ...ws, logo: lw.logo || null, logoFull: lw.logoFull || null, logoFrom: lw.id };
+};
 export function placeElement(ctx, el, opts = {}) {
   const p = ctx.project, W = p.canvas.w, H = p.canvas.h, id = themeNow(p, opts.theme), th = themeById(id); if (!th) throw new Error('No such theme: ' + id);
   const ws = ctx.workspace || {}, mode = overlayOf(p)?.style?.colorMode || 'theme';
@@ -324,7 +344,9 @@ export function placeElement(ctx, el, opts = {}) {
     item = createItem('theme.overlay', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || 4), x: 0, y: 0, w: W, h: H, name: 'Theme overlay · ' + th.name, style });
   } else {
     const def = elementById(el); if (!def) throw new Error('No such element: ' + el);
-    const style = elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, text: opts.text, brand: ws?.name || null, logo: ws?.logo || null, ws });
+    const lws = withLogoOf(ctx, ws, el);
+    const style = elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, text: opts.text, brand: ws?.name || null, logo: lws?.logo || null, ws: lws });
+    if (lws.logoFrom && lws.logoFrom !== ws.id) style.logoFrom = lws.logoFrom;
     item = createItem('theme.el', { t0: r3(Math.max(0, opts.t0 ?? 0)), in: 0, out: r3(opts.dur || def.dur), ...(opts.box || boxFor(el, W, H, opts.variant)), name: `${def.icon} ${def.label}${opts.variant ? ' · ' + opts.variant : ''} · ${th.name}`, style });
   }
   // the row it was dropped on when that row is free at that time, else the first free overlay row, else a new one
@@ -362,7 +384,8 @@ export async function setWhole(ctx, el, on, opts = {}) {
     add.push({ trackId: tt.id, item: createItem('theme.overlay', { t0: 0, in: 0, out: r3(D), x: 0, y: 0, w: W, h: H, auto: TAG, name: 'Theme · ' + th.name, style }) });
   } else {
     const def = elementById(el); if (!def) throw new Error('No such element: ' + el);
-    const style = (whole) => elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, whole, brand: ws?.name || null, logo: ws?.logo || null, ws });
+    const lws = withLogoOf(ctx, ws, el);
+    const style = (whole) => Object.assign(elementStyle(th.id, el, { colors: colorsFor(th, mode, ws), variant: opts.variant, whole, brand: ws?.name || null, logo: lws?.logo || null, ws: lws }), lws.logoFrom && lws.logoFrom !== ws.id ? { logoFrom: lws.logoFrom } : {});
     const mk = (t0, dur, whole) => createItem('theme.el', { t0: r3(Math.max(0, t0)), in: 0, out: r3(dur), ...boxFor(el, W, H, opts.variant), auto: TAG, name: `${def.icon} ${def.label} · whole video · ${th.name}`, style: style(whole) });
     const lane = def.box === 'full' && el !== 'grade' ? (p.tracks.find((t) => t.kind === 'overlay' && !t.locked && !t.theme) || tt) : tt;
     if (def.whole === 'span') add.push({ trackId: lane.id, item: mk(0, D, 'span') });

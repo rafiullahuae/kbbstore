@@ -291,6 +291,27 @@ const FPS = 30;
       return { a: [a.x, a.y, a.w], b: [b.x, b.y, b.w], s1: s1 - s0, s2: s2 - s1, H: ed.project.canvas.h };
     });
     ok(ctl.s1 === 1 && ctl.a[1] > ctl.H * 0.5 && ctl.s2 === 1 && ctl.b[2] > ctl.a[2], `corner → bottom-left moves the box (${ctl.a.join(',')}), a size drag is ONE step (${ctl.b.join(',')})`);
+    // the owner, 19 Nov: "allow me to use logos from any company i want, in any company"
+    const other = await ev(async () => {
+      const ed = window.ED, ctx = ed.context(), ws = ctx.workspace, o = ctx.workspaces.find((w) => w.id !== ws.id && (w.logo || w.logoFull));
+      if (!o) return { none: true, n: ctx.workspaces.length };
+      const keep = JSON.stringify(ws), s0 = window.steps();
+      const it = window.C2.addLogo(ctx, 'circle', { from: o.id }), item = window.find(it.id);
+      const end = window.C2.addEndScreen(ctx, 'corporate'), e = window.find(end.id);
+      const again = window.C2.addLogo(ctx, 'square'), a2 = window.find(again.id);   // a new shape keeps the chosen company
+      const back = window.C2.addLogo(ctx, 'circle', { from: ws.id }), b2 = window.find(back.id);
+      // the panel offers every company with a logo
+      ed.showSide('mod:themes'); await new Promise((r) => setTimeout(r, 400));
+      const sel = document.querySelector('[data-e2-logo-from]');
+      const out = { ws: ws.id, o: o.id, oLogo: o.logo || o.logoFull, logo: item.style.logo || item.style.logoFull, from: item.style.logoFrom, endLogo: e.style.logo, endFrom: e.style.logoFrom,
+        kept: a2.style.logoFrom, back: b2.style.logoFrom || null, backLogo: b2.style.logo, wsLogo: ws.logo, same: JSON.stringify(ws) === keep, steps: window.steps() - s0,
+        opts: sel ? [...sel.options].map((x) => x.value) : null };
+      for (let i = 0; i < 4; i++) ed.history.undo();
+      return out;
+    });
+    ok(!other.none && other.logo === other.oLogo && other.from === other.o && other.endLogo === other.oLogo && other.kept === other.o && other.back === null && other.backLogo === other.wsLogo && other.same && other.steps === 4,
+      `another company's logo on this company's reel: ${other.o}'s logo (${other.logo}) on the ${other.ws} reel's badge and ending screen, kept for a new shape, back to its own in one click; this company's brand kit untouched; ${other.steps} undo steps`);
+    ok(Array.isArray(other.opts) && other.opts.includes(other.o) && other.opts.includes(other.ws), `Themes → One click → Logo of: ${JSON.stringify(other.opts)}`);
     await ev(() => { const it = window.C2.wholeLogo(window.ED.project); window.ED.select([it.id]); window.ED.seek(1.5); window.ED.showSide?.('inspector'); }); await page.waitForTimeout(600);
     await reveal('[data-e2]'); await shot('logo-inspector-1440x900');
   }
