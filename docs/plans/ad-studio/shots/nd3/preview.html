@@ -1,0 +1,416 @@
+<title>National Day Glow Ads</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500&family=Marcellus&family=Jost:wght@400;500;600&family=Reem+Kufi:wght@500;600&family=Amiri:wght@400;700&family=El+Messiri:wght@500;600&display=swap">
+<style>
+/* Layout: a contact sheet of six campaign frames; the page chrome stays quiet so the ads carry the colour */
+:root{
+  --bg:#f5f1ee; --panel:#ffffff; --fg:#231b1d; --muted:#6f6266; --line:#e6dcd8; --accent:#9b2c45;
+  --f-ui:"Jost",system-ui,-apple-system,sans-serif; --f-title:"Cormorant Garamond","Times New Roman",serif;
+  /* ad tokens (fixed: the ads look the same in both themes) */
+  --uae-green:#00843d; --uae-red:#c8102e; --uae-black:#141414; --gold:#b98a3c; --gold-hi:#e7c886;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17131a;--panel:#211b23;--fg:#f1e9ec;--muted:#b3a3aa;--line:#352c37;--accent:#f08aa3;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17131a;--panel:#211b23;--fg:#f1e9ec;--muted:#b3a3aa;--line:#352c37;--accent:#f08aa3;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--f-ui)}
+.wrap{max-width:1320px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:end;justify-content:space-between}
+h1.pt{font:600 clamp(28px,4.4vw,44px)/1.05 var(--f-title);margin:0;text-wrap:balance}
+h1.pt i{color:var(--accent)}
+.lead{color:var(--muted);margin:8px 0 0;max-width:62ch}
+.ctl{display:flex;flex-wrap:wrap;gap:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--panel);padding:3px}
+.seg button{font:500 13px var(--f-ui);border:0;background:transparent;color:var(--fg);padding:7px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:28px 22px;margin-top:26px;min-width:0}
+.card{min-width:0;display:flex;flex-direction:column;gap:10px}
+.meta{display:flex;gap:10px;align-items:baseline;white-space:nowrap;min-width:0}
+.meta b{overflow:hidden;text-overflow:ellipsis}
+.meta b{font:600 18px/1.2 var(--f-title);letter-spacing:.01em}
+.meta span{color:var(--muted);font-size:13.5px}
+.meta .n{font:500 12px var(--f-ui);color:var(--accent);letter-spacing:.08em}
+.note{margin-top:40px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--muted);max-width:86ch;font-size:14px}
+.note b{color:var(--fg)}
+
+/* ── the ad frame: everything inside sizes from the frame (container units), so one design serves every format ── */
+.frame{position:relative;width:100%;max-width:100%;aspect-ratio:4/5;container-type:size;overflow:hidden;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 12px 30px -12px rgba(60,20,30,.28);isolation:isolate}
+body[data-fmt="story"] .frame{aspect-ratio:9/16}
+body[data-fmt="square"] .frame{aspect-ratio:1/1}
+.ad{position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr auto;padding:6cqw 6.5cqw 5.5cqw;font-family:var(--f-ui)}
+.ad>.bg{position:absolute;inset:0;z-index:-1;overflow:hidden}
+.ad>.bg>*{position:absolute}
+.copy{display:flex;flex-direction:column;align-items:center;text-align:center;gap:1.2cqw;z-index:3;position:relative}
+.h1{white-space:nowrap}
+.logo{height:max(10cqw,5.4cqh);width:auto;max-width:52cqw;margin-bottom:.6cqw}
+.kick{font:500 3cqw/1.2 var(--f-ui);letter-spacing:.28em;text-transform:uppercase}
+.h1{font-size:12.5cqw;line-height:.92;margin:.4cqw 0 0}
+.h2{font-size:6.2cqw;line-height:1.1;letter-spacing:.05em}
+.off{display:inline-block;font:600 5.2cqw/1 var(--f-ui);padding:2cqw 4.4cqw;border-radius:99cqw;margin-top:1cqw;letter-spacing:.03em}
+.prods{display:flex;align-items:flex-end;justify-content:center;gap:1.2cqw;min-height:0;z-index:2;padding-bottom:1cqw}
+.prods img{height:min(31cqh,50cqw);width:auto;max-width:none;margin-inline:-1.2cqw;filter:drop-shadow(0 2.2cqw 1.8cqw rgba(60,25,20,.28))}
+.prods img.m{height:min(25cqh,40cqw)}
+.prods img.s{height:min(20cqh,32cqw)}
+.prods img.w{height:min(13cqh,21cqw)}
+body[data-fmt="square"] .prods img{height:28cqh}body[data-fmt="square"] .prods img.m{height:22cqh}body[data-fmt="square"] .prods img.s{height:17cqh}body[data-fmt="square"] .prods img.w{height:12cqh}
+/* the scattered version: products thrown across the lower part of the frame at angles, the hero in front */
+.zone{position:absolute;left:0;right:0;top:50%;bottom:14%;z-index:2;pointer-events:none}
+body[data-fmt="story"] .zone{top:38%;bottom:12%}
+body[data-fmt="square"] .zone{top:56%;bottom:15%}
+.zone img{position:absolute;width:auto;max-width:none;translate:-50% -50%;filter:drop-shadow(0 2cqmin 1.6cqmin rgba(40,20,40,.3))}
+.ad.scatter .prods{visibility:hidden}
+.foot{display:flex;flex-direction:column;align-items:center;gap:1.3cqw;z-index:2}
+.cta{font:600 3.8cqw/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;padding:2.8cqw 6.4cqw;border-radius:99cqw}
+.trust{font:500 2.7cqw/1.2 var(--f-ui);letter-spacing:.04em;opacity:.9}
+.flag{display:inline-flex;height:2.6cqw;width:5.2cqw;vertical-align:-.3cqw;border-radius:.4cqw;overflow:hidden;box-shadow:0 0 0 .25cqw rgba(255,255,255,.7)}
+.flag i{display:block}.flag .r{width:26%;background:var(--uae-red)}.flag .s3{flex:1;display:flex;flex-direction:column}.flag .s3 i{flex:1}
+.flag .g{background:var(--uae-green)}.flag .w{background:#fff}.flag .k{background:var(--uae-black)}
+[dir="rtl"] .kick{letter-spacing:0;font-size:3.8cqw}
+[dir="rtl"] .h2{letter-spacing:0}
+[dir="rtl"] .cta{letter-spacing:0;font-size:4.4cqw}
+[dir="rtl"] .trust{letter-spacing:0}
+
+/* the live editor */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start;margin-top:22px}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.layout .grid{margin-top:0}
+.ed{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.ed h2{font:600 19px/1.2 var(--f-title);margin:0}
+.ed p{margin:0;color:var(--muted);font-size:13px}
+.ed label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);letter-spacing:.02em}
+.ed input[type=text]{font:500 14px var(--f-ui);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box}
+.ed input[type=text]:focus-visible,.ed input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ed input[dir=rtl]{font-family:"El Messiri","Amiri",sans-serif}
+.ed .row{display:flex;justify-content:space-between;align-items:baseline}
+.ed output{font:500 12px var(--f-ui);color:var(--fg);font-variant-numeric:tabular-nums}
+.ed input[type=range]{width:100%;accent-color:var(--accent)}
+.ed button.reset{font:500 13px var(--f-ui);border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:8px 14px;cursor:pointer;align-self:flex-start}
+.tag{display:inline-block;margin-left:6px;font:600 10.5px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid currentColor;border-radius:99px;padding:1px 7px;vertical-align:2px}
+.h1 span{display:inline-block}
+.prods{transform:scale(var(--ps,1));transform-origin:50% 100%}
+.zone img{scale:var(--ps,1)}
+/* the UAE flag heading: the flag's colours run through the words (white left out on the light glass, it would vanish) */
+.flagh .h1 span{-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:none!important}
+.flagh.dew .h1 span{background-image:linear-gradient(100deg,#c8102e 0%,#c8102e 14%,#00843d 44%,#0b6a35 60%,#141414 86%);filter:drop-shadow(0 .35cqw .5cqw rgba(0,0,0,.14))}
+.flagh.sky .h1 span{background-image:linear-gradient(100deg,#e2304d 0%,#e2304d 12%,#00a34f 38%,#ffffff 58%,#ffffff 66%,#1b1b1b 94%);-webkit-text-stroke:.18cqw rgba(70,40,110,.55);filter:drop-shadow(0 .3cqw .8cqw rgba(50,25,80,.55))}
+
+/* Arabic letters overlap inside a word: an outline there draws every overlap, so the Arabic flag heading takes the shadow only */
+[dir="rtl"].flagh.sky .h1 span{-webkit-text-stroke:0;filter:drop-shadow(0 .3cqw 1cqw rgba(50,25,80,.6))}
+
+/* 1 · Desert Silk: golden hour over sculpted dunes */
+.dune{color:#4a2620}
+.dune .sky{inset:0;background:linear-gradient(180deg,#fbe7d6 0%,#f8cfb2 38%,#f2ab8c 62%,#e48d74 100%)}
+.dune .sun{width:58cqw;aspect-ratio:1;left:50%;top:44%;translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,#fff6e6 0 34%,rgba(255,226,190,.85) 46%,rgba(255,200,160,0) 70%)}
+.dune svg{inset:auto 0 0 0;width:100%;height:58%}
+.dune .h1{font-family:"Italiana",serif;color:#5a2a22;font-size:13.5cqw}
+.dune .h2{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:600;color:#7a3a2c;letter-spacing:.02em;font-size:5cqw}
+.dune .off{background:#fff8ef;color:#8a3a2a;box-shadow:0 .6cqw 2cqw -.6cqw rgba(120,50,30,.45)}
+.dune .cta{background:#5a2a22;color:#fff3e6}
+.dune .trust{color:#5a2a22}
+.dune .prods img{filter:drop-shadow(-3cqw 1.6cqw 1.6cqw rgba(110,45,30,.35))}
+
+/* 2 · Lattice Light: sun through a mashrabiya, patterned light on blush */
+.lat{color:#4b2530}
+.lat .base{inset:0;background:linear-gradient(160deg,#fbe9e4 0%,#f5d2cb 55%,#eebcb4 100%)}
+.lat .cast{inset:-20%;opacity:.95;transform:rotate(-14deg) skewX(-18deg);filter:blur(.35cqw)}
+.lat .beam{inset:0;background:linear-gradient(118deg,rgba(255,255,255,0) 20%,rgba(255,250,240,.55) 42%,rgba(255,255,255,0) 64%);mix-blend-mode:soft-light}
+.lat .plinth{left:50%;bottom:13%;width:70cqw;height:12cqw;translate:-50% 0;border-radius:50%;background:radial-gradient(ellipse at 50% 35%,#fff7f3 0 40%,#efcfc7 70%,#e2b3aa 100%);box-shadow:0 2cqw 4cqw -1cqw rgba(120,50,60,.35)}
+.lat .h1{font-family:"Bodoni Moda",serif;font-style:italic;font-weight:500;color:#5b2335;font-size:12cqw}
+.lat .h2{font-family:"Marcellus",serif;color:#7d3a4b}
+.lat .kick{color:#9a4d5f}
+.lat .off{background:#5b2335;color:#fde9ec}
+.lat .cta{background:transparent;color:#5b2335;border:.3cqw solid #5b2335}
+.lat .prods{padding-bottom:5cqw}
+
+/* 3 · Henna Lace: fine gold mehndi line-work around the edit */
+.hen{color:#3f2418}
+.hen .base{inset:0;background:radial-gradient(ellipse at 50% 58%,#fbeee4 0%,#f3dccb 55%,#e9c7b1 100%)}
+.hen .mandala{left:50%;top:66%;width:92cqw;aspect-ratio:1;translate:-50% -50%}
+.hen .corner{width:34cqw;aspect-ratio:1}
+.hen .wash{left:50%;top:0;width:110cqw;height:60%;translate:-50% 0;background:radial-gradient(ellipse at 50% 40%,rgba(251,238,228,.95) 0 45%,rgba(251,238,228,0) 72%)}
+.hen .h1{font-family:"Cormorant Garamond",serif;font-weight:600;font-style:italic;color:#6b3a1c;font-size:13cqw}
+.hen .h2{font-family:"Marcellus",serif;color:#8a5a2a}
+.hen .kick{color:#9a6a33}
+.hen .off{background:linear-gradient(135deg,#c99a4b,#e8c98a 50%,#b5843a);color:#3f2418}
+.hen .cta{background:#3f2418;color:#f6e3c4}
+.hen .trust{color:#6b4a30}
+
+/* 4 · Glass & Dew: frosted glass over the flag's colours, dew on the pane */
+.dew{color:#15201a}
+.dew .base{inset:0;background:#f6f2ec}
+.dew .blob{border-radius:50%;filter:blur(7cqw);opacity:.72}
+.dew .pane{left:6%;right:6%;top:44%;bottom:9%;border-radius:4cqw;background:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,.18));backdrop-filter:blur(2.4cqw) saturate(1.2);-webkit-backdrop-filter:blur(2.4cqw) saturate(1.2);border:.3cqw solid rgba(255,255,255,.75);box-shadow:inset 0 0 6cqw rgba(255,255,255,.35)}
+.dew .drops{inset:0}
+.dew .h1{font-family:"Bodoni Moda",serif;font-weight:500;color:#101914;font-size:calc(14.2cqw * var(--hs,1));letter-spacing:-.015em}
+.dew .h2{font-family:"Jost",sans-serif;font-weight:600;letter-spacing:.36em;text-transform:uppercase;font-size:4.6cqw;color:#1d3a2b}
+.dew .kick{color:#1d3a2b}
+.dew .off{background:#101914;color:#f6f2ec}
+.dew .cta{background:#fff;color:#101914;box-shadow:0 1cqw 3cqw -1cqw rgba(0,0,0,.35)}
+.dew .trust{color:#1d3a2b}
+.dew .prods{padding-bottom:6cqw}
+
+/* 5 · Skyline Dusk: pastel twilight, soft fireworks in the flag's colours */
+.sky{color:#fff}
+.sky .base{inset:0;background:linear-gradient(180deg,#8e86c6 0%,#c9a9d6 34%,#f2bfc0 62%,#f7d4c0 78%,#f4e1d6 100%)}
+.sky .fw,.sky .city{inset:0;width:100%;height:100%}
+.sky .floor{left:0;right:0;bottom:0;height:24%;background:linear-gradient(180deg,rgba(255,236,230,.0),rgba(255,240,236,.75) 40%,#fbe9e3)}
+.sky .h1{font-family:"Italiana",serif;color:#fff;font-size:calc(15.6cqw * var(--hs,1));text-shadow:0 .4cqw 3cqw rgba(90,60,140,.45)}
+.sky .h2{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:600;font-size:7.6cqw;color:#fff6f8;letter-spacing:.02em}
+.sky .kick{color:#fff}
+.sky .off{background:rgba(255,255,255,.9);color:#6a4c8c}
+.sky .cta{background:#6a4c8c;color:#fff}
+.sky .trust{color:#5a3f78}
+.sky .prods img{-webkit-box-reflect:below .4cqw linear-gradient(transparent 62%,rgba(255,255,255,.35))}
+
+/* 6 · Marble & Gold: veined marble, one sweeping gold flourish */
+.mar{color:#1f1a17}
+.mar .base{inset:0;background:#f6f3ee}
+.mar svg.stone{inset:0;width:100%;height:100%}
+.mar svg.gold{inset:0;width:100%;height:100%}
+.mar .stripe{left:0;top:0;bottom:0;width:2.2cqw;display:flex}
+.mar .stripe i{flex:1}
+.mar .copy{align-items:flex-start;text-align:start;padding-left:3cqw}
+.mar .h1{font-family:"Bodoni Moda",serif;font-weight:500;font-size:12.6cqw;line-height:.95;color:#1f1a17}
+.mar .h1 em{font-style:italic;color:#9a7230}
+.mar .h2{font-family:"Marcellus",serif;color:#6e5226}
+.mar .kick{color:#8a6a35}
+.mar .off{background:#1f1a17;color:#f0d9a8}
+.mar .cta{background:linear-gradient(135deg,#a77a32,#e6c785 50%,#a77a32);color:#1f1a17}
+.mar .trust{color:#5a4a3a}
+.mar .foot{align-items:flex-start;padding-left:3cqw}
+[dir="rtl"] .mar .copy,[dir="rtl"] .mar .foot{padding-left:0;padding-right:3cqw}
+[dir="rtl"].ad .h1,[dir="rtl"] .h1{font-family:"Reem Kufi","Amiri",serif!important;font-style:normal!important;font-size:calc(15cqw * var(--hs,1));line-height:1.12}
+.hen[dir="rtl"] .h1,.mar[dir="rtl"] .h1{font-family:"Amiri",serif!important;font-weight:700}
+[dir="rtl"] .h2{font-family:"El Messiri","Amiri",serif!important;font-style:normal!important;font-size:7cqw}
+[dir="rtl"] .off,[dir="rtl"] .cta,[dir="rtl"] .trust,[dir="rtl"] .kick{font-family:"El Messiri","Amiri",sans-serif}
+@media (prefers-reduced-motion:no-preference){.sky .fw{animation:tw 4s ease-in-out infinite alternate}@keyframes tw{from{opacity:.75}to{opacity:1}}}
+</style>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 class="pt">National Day · <i>4 and 5</i></h1>
+      <p class="lead">Glass &amp; Dew and Skyline Dusk, line-up and scattered, each with the plain heading and the UAE flag heading side by side. Change the words and sizes on the right.</p>
+    </div>
+    <div class="ctl">
+      <div class="seg" role="group" aria-label="Size">
+        <button id="f-feed" type="button" data-fmt="feed" aria-pressed="true">Feed 4:5</button>
+        <button id="f-story" type="button" data-fmt="story" aria-pressed="false">Story 9:16</button>
+        <button id="f-square" type="button" data-fmt="square" aria-pressed="false">Square 1:1</button>
+      </div>
+      <div class="seg" role="group" aria-label="Heading">
+        <button id="h-both" type="button" data-head="both" aria-pressed="true">Both headings</button>
+        <button id="h-plain" type="button" data-head="plain" aria-pressed="false">Plain</button>
+        <button id="h-flag" type="button" data-head="flag" aria-pressed="false">UAE flag</button>
+      </div>
+      <div class="seg" role="group" aria-label="Language">
+        <button id="l-en" type="button" data-lang="en" aria-pressed="true">English</button>
+        <button id="l-ar" type="button" data-lang="ar" aria-pressed="false">العربية</button>
+      </div>
+    </div>
+  </header>
+  <div class="layout">
+    <main class="grid" id="grid"></main>
+    <aside class="ed" aria-label="Edit the ads">
+      <h2>Edit live</h2>
+      <p id="ed-note">Changes show on every ad at once. English and Arabic are edited separately: switch the language above.</p>
+      <label for="e-h1">Heading<input id="e-h1" type="text" data-k="h1"></label>
+      <label for="e-h2">Offer line<input id="e-h2" type="text" data-k="h2"></label>
+      <label for="e-off">Offer<input id="e-off" type="text" data-k="off"></label>
+      <label for="e-cta">Button<input id="e-cta" type="text" data-k="cta"></label>
+      <label for="e-trust">Small print<input id="e-trust" type="text" data-k="trust"></label>
+      <label for="e-kd">Top line · Glass &amp; Dew<input id="e-kd" type="text" data-k="kdew"></label>
+      <label for="e-ks">Top line · Skyline Dusk<input id="e-ks" type="text" data-k="ksky"></label>
+      <label for="e-hs"><span class="row">Heading size <output id="o-hs">100%</output></span><input id="e-hs" type="range" min="70" max="125" step="1" value="100" data-v="hs"></label>
+      <label for="e-ps"><span class="row">Product size <output id="o-ps">100%</output></span><input id="e-ps" type="range" min="70" max="130" step="1" value="100" data-v="ps"></label>
+      <button class="reset" id="e-reset" type="button">Reset to the original text</button>
+    </aside>
+  </div>
+  <p class="note"><b>Pick by code.</b> Tell me which you like (for example “4B·F and 5A”, ·F = the flag heading) and anything to change: products, offer, colours, wording. Your picks go into Ad Studio as editable templates, with animated versions, in the next KBB Studio update.</p>
+</div>
+<script>
+const SVGNS = 'http://www.w3.org/2000/svg';
+const BASE = {
+  en: { h1: 'National Day', h2: 'Mega Offer', off: 'Up to 50% off', cta: 'Shop the Offer', trust: 'Selected products · while stocks last', kdew: 'Fresh · dewy · proud', ksky: 'A night to shine' },
+  ar: { h1: 'اليوم الوطني', h2: 'عروض كبرى', off: 'خصم حتى ٥٠٪', cta: 'تسوّقي العرض', trust: 'منتجات مختارة · حتى نفاد الكمية', kdew: 'نضارة · إشراق · فخر', ksky: 'ليلة للتألّق' },
+};
+// what the owner typed (this browser only): falls back to the original text
+const KEY = 'nd3-edits';
+let T = { en: { ...BASE.en }, ar: { ...BASE.ar } };
+try { const saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) T = { en: { ...BASE.en, ...saved.en }, ar: { ...BASE.ar, ...saved.ar } }; } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(T)); } catch {} };
+const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const ADS = [
+  { id: 'dew', v: 'line', name: 'Glass & Dew · Line-up', idea: 'Six products in a row behind frosted glass over the flag’s colours.', kick: ['Fresh · dewy · proud', 'نضارة · إشراق · فخر'], cta: ['Shop the Offer', 'تسوّقي العرض'], logo: 'logo.svg',
+    p: [['bdserum', 'm'], ['anuacream', 'm'], ['nbz9', ''], ['eospeach', ''], ['azelaic', 'm'], ['marymay', 's'], ['eyemask', 'w']] },
+  { id: 'dew', v: 'scatter', name: 'Glass & Dew · Scattered', idea: 'Nine products thrown across the glass at angles, the hero in front.', kick: ['Fresh · dewy · proud', 'نضارة · إشراق · فخر'], cta: ['Shop the Offer', 'تسوّقي العرض'], logo: 'logo.svg',
+    // [product, x %, y % of the lower zone, height in % of the frame's short side, turn °]
+    s: [['guasha', 14, 18, 20, -28], ['marymay', 86, 16, 22, 24], ['bdserum', 9, 62, 34, -18], ['anuacream', 91, 60, 34, 16], ['nbz9', 29, 50, 38, -10], ['azelaic', 71, 50, 36, 9], ['eyemask', 30, 92, 20, -12], ['nbz5', 72, 92, 20, 10], ['eospeach', 50, 55, 46, 0]] },
+  { id: 'sky', v: 'line', name: 'Skyline Dusk · Line-up', idea: 'Seven products on a glossy floor under a pastel sky and fireworks.', kick: ['A night to shine', 'ليلة للتألّق'], cta: ['Shop the Offer', 'تسوّقي العرض'], logo: 'logo.svg',
+    p: [['balmred', 's'], ['hairoil', 'm'], ['nbz9', ''], ['glowvanilla', ''], ['celimax', 'm'], ['bdeye', 's'], ['anua', 'w']] },
+  { id: 'sky', v: 'scatter', name: 'Skyline Dusk · Scattered', idea: 'Products floating over the city like the fireworks above it.', kick: ['A night to shine', 'ليلة للتألّق'], cta: ['Shop the Offer', 'تسوّقي العرض'], logo: 'logo.svg',
+    s: [['balmred', 12, 16, 22, -26], ['bdeye', 88, 18, 24, 22], ['dalba', 10, 62, 34, -16], ['hairoil', 90, 62, 36, 14], ['celimax', 30, 54, 34, -9], ['nbz9', 70, 52, 38, 10], ['anua', 28, 92, 20, -10], ['eosbutter', 72, 92, 20, 12], ['glowvanilla', 50, 58, 46, 0]] },
+];
+
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const svg = (cls, vb, inner, par = 'none') => `<svg class="${cls}" viewBox="${vb}" preserveAspectRatio="${par}" xmlns="${SVGNS}" aria-hidden="true">${inner}</svg>`;
+// a seeded random so every frame draws the same way each time
+const rng = (s) => () => ((s = (s * 16807) % 2147483647) / 2147483647);
+
+function bgDune() {
+  return `<div class="sky"></div><div class="sun"></div>` + svg('', '0 0 100 60', `
+    <defs><linearGradient id="d1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c39c"/><stop offset="1" stop-color="#dc9271"/></linearGradient>
+    <linearGradient id="d2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e9a37f"/><stop offset=".55" stop-color="#f3bf98"/><stop offset="1" stop-color="#cf8466"/></linearGradient>
+    <linearGradient id="d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7cba8"/><stop offset="1" stop-color="#d9876a"/></linearGradient></defs>
+    <path d="M0 22 C18 10 34 12 50 20 S82 30 100 14 V60 H0Z" fill="url(#d1)" opacity=".75"/>
+    <path d="M0 34 C22 22 40 24 56 30 S86 38 100 28 V60 H0Z" fill="url(#d2)"/>
+    <path d="M0 34 C22 22 40 24 56 30" stroke="#fff3e2" stroke-width=".35" fill="none" opacity=".8"/>
+    <path d="M0 46 C20 38 44 36 62 42 S90 50 100 44 V60 H0Z" fill="url(#d3)"/>
+    <path d="M8 52 C30 46 52 46 76 50" stroke="#fbe0c8" stroke-width=".25" fill="none" opacity=".7"/>
+    <path d="M14 56 C34 52 56 52 82 55" stroke="#fbe0c8" stroke-width=".2" fill="none" opacity=".55"/>`);
+}
+function bgLattice() {
+  // an 8-pointed star lattice (two squares turned 45°), drawn as light; its shadow is the base colour showing through
+  const star = 'M10 2 L12.8 7.2 L18 10 L12.8 12.8 L10 18 L7.2 12.8 L2 10 L7.2 7.2Z';
+  const pat = `<defs><pattern id="lt" width="20" height="20" patternUnits="userSpaceOnUse"><path d="${star}" fill="#fffaf6"/><circle cx="0" cy="0" r="2.6" fill="#fffaf6"/><circle cx="20" cy="0" r="2.6" fill="#fffaf6"/><circle cx="0" cy="20" r="2.6" fill="#fffaf6"/><circle cx="20" cy="20" r="2.6" fill="#fffaf6"/></pattern>
+    <radialGradient id="lm" cx=".62" cy=".42" r=".55"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".7" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <mask id="lk"><rect width="200" height="200" fill="url(#lm)"/></mask></defs>
+    <rect width="200" height="200" fill="url(#lt)" mask="url(#lk)" opacity=".85"/>`;
+  return `<div class="base"></div>` + svg('cast', '0 0 200 200', pat, 'xMidYMid slice') + `<div class="beam"></div><div class="plinth"></div>`;
+}
+function bgHenna(seed) {
+  const r = rng(seed);
+  const C = 100, g = (s) => s;
+  let s = '';
+  const ring = (rad, n, len, w, kind) => {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 360;
+      if (kind === 'petal') s += `<ellipse cx="${C}" cy="${C - rad}" rx="${w}" ry="${len}" transform="rotate(${a} ${C} ${C})" fill="none" stroke="url(#gd)" stroke-width=".55"/>`;
+      if (kind === 'leaf') s += `<path d="M${C} ${C - rad} q ${w} ${-len / 2} 0 ${-len} q ${-w} ${len / 2} 0 ${len}Z" transform="rotate(${a} ${C} ${C})" fill="none" stroke="url(#gd)" stroke-width=".5"/><line x1="${C}" y1="${C - rad}" x2="${C}" y2="${C - rad - len * .8}" transform="rotate(${a} ${C} ${C})" stroke="url(#gd)" stroke-width=".25"/>`;
+      if (kind === 'dot') s += `<circle cx="${C}" cy="${C - rad}" r="${w}" transform="rotate(${a} ${C} ${C})" fill="url(#gd)"/>`;
+      if (kind === 'scallop') s += `<path d="M${C - w} ${C - rad} a ${w} ${w} 0 0 1 ${2 * w} 0" transform="rotate(${a} ${C} ${C})" fill="none" stroke="url(#gd)" stroke-width=".5"/>`;
+    }
+  };
+  ring(14, 12, 7, 2.6, 'petal'); ring(26, 24, 1, .7, 'dot'); ring(31, 24, 5, 3.4, 'scallop');
+  ring(40, 16, 12, 4, 'leaf'); ring(56, 32, 1, .8, 'dot'); ring(62, 40, 5, 4.6, 'scallop'); ring(72, 20, 15, 3.6, 'petal');
+  ring(91, 64, 1, .55, 'dot');
+  s += `<circle cx="${C}" cy="${C}" r="5" fill="none" stroke="url(#gd)" stroke-width=".6"/><circle cx="${C}" cy="${C}" r="1.6" fill="url(#gd)"/>`;
+  s += `<circle cx="${C}" cy="${C}" r="48" fill="none" stroke="url(#gd)" stroke-width=".3" stroke-dasharray="1 1.4"/><circle cx="${C}" cy="${C}" r="84" fill="none" stroke="url(#gd)" stroke-width=".35"/>`;
+  const defs = `<defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a87526"/><stop offset=".5" stop-color="#e2bf78"/><stop offset="1" stop-color="#9c6a1f"/></linearGradient></defs>`;
+  // a paisley in each top corner
+  const pais = (flip) => svg('corner', '0 0 100 100', `<defs><linearGradient id="gc${flip}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a87526"/><stop offset="1" stop-color="#e2bf78"/></linearGradient></defs>
+    <g transform="${flip ? 'translate(100 0) scale(-1 1)' : ''}" fill="none" stroke="url(#gc${flip})" stroke-width=".9">
+    <path d="M18 8 C46 4 70 26 64 52 C60 70 40 74 32 62 C26 52 34 42 44 46"/><path d="M22 14 C44 12 62 30 58 50 C55 62 44 64 40 58"/>
+    ${Array.from({ length: 9 }, (_, i) => `<circle cx="${20 + i * 5}" cy="${7 + i * 1.2 + (i > 5 ? (i - 5) * 3 : 0)}" r=".9" fill="url(#gc${flip})" stroke="none"/>`).join('')}
+    <path d="M6 30 q10 -4 14 4 q-8 6 -14 -4z"/><path d="M8 44 q10 -4 14 4 q-8 6 -14 -4z"/></g>`, 'xMidYMid meet');
+  return `<div class="base"></div>` + svg('mandala', '0 0 200 200', defs + s, 'xMidYMid meet') + `<div class="wash"></div>` + pais(0).replace('class="corner"', 'class="corner" style="left:0;top:0"') + pais(1).replace('class="corner"', 'class="corner" style="right:0;top:0"');
+}
+function bgDew(seed) {
+  const r = rng(seed);
+  let drops = '';
+  for (let i = 0; i < 70; i++) {
+    const x = 9 + r() * 82, y = 32 + r() * 56, rad = .25 + Math.pow(r(), 3) * 1.6;
+    drops += `<g transform="translate(${x} ${y})"><circle r="${rad}" fill="url(#dg)"/><circle cx="${-rad * .35}" cy="${-rad * .4}" r="${rad * .28}" fill="#fff" opacity=".9"/></g>`;
+  }
+  const defs = `<defs><radialGradient id="dg" cx=".6" cy=".65" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".6" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#1a3a2a" stop-opacity=".25"/></radialGradient></defs>`;
+  return `<div class="base"></div>
+    <div class="blob" style="width:62cqw;height:62cqw;left:-14cqw;top:38%;background:var(--uae-green)"></div>
+    <div class="blob" style="width:54cqw;height:54cqw;right:-12cqw;top:46%;background:var(--uae-red)"></div>
+    <div class="blob" style="width:40cqw;height:40cqw;left:34cqw;bottom:-14cqw;background:var(--uae-black);opacity:.55"></div>
+    <div class="pane"></div>` + svg('drops', '0 0 100 125', defs + drops, 'none').replace('class="drops"', 'class="drops" style="inset:0;width:100%;height:100%"');
+}
+function bgSky(seed) {
+  const r = rng(seed);
+  // an original, generic skyline: towers of varied width and height, a few spires (no real building)
+  let city = '', x = 0;
+  while (x < 100) {
+    const w = 2.5 + r() * 5, h = 6 + Math.pow(r(), 2) * 22, base = 78;
+    city += `<rect x="${x}" y="${base - h}" width="${w}" height="${h + 30}" fill="#8a78b4" opacity="${.28 + r() * .14}"/>`;
+    if (r() > .78) city += `<path d="M${x + w / 2 - .4} ${base - h} L${x + w / 2} ${base - h - 6 - r() * 8} L${x + w / 2 + .4} ${base - h}Z" fill="#7d6aa6" opacity=".55"/>`;
+    for (let k = 0; k < h / 3; k++) if (r() > .55) city += `<rect x="${x + .6 + r() * (w - 1.6)}" y="${base - h + 1.5 + k * 3}" width=".5" height=".8" fill="#ffe9c7" opacity=".7"/>`;
+    x += w + .4 + r() * 1.6;
+  }
+  const cityS = svg('city', '0 0 100 125', city, 'xMidYMax slice');
+  // soft fireworks: bursts of short strokes and sparks in the flag's colours and gold
+  const cols = ['#00a34f', '#e2304d', '#ffffff', '#f3d38a'];
+  let fw = '<defs><filter id="glow"><feGaussianBlur stdDeviation=".6"/></filter></defs>';
+  const bursts = [[10, 12, 9], [90, 10, 10], [6, 46, 6], [94, 44, 7], [80, 60, 5], [18, 62, 5]];   // kept to the edges: the heading stays clear
+  bursts.forEach(([cx, cy, R], bi) => {
+    const c = cols[bi % cols.length], n = 26;
+    let g = '';
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + r() * .1, r1 = R * (.35 + r() * .15), r2 = R * (.85 + r() * .2);
+      g += `<line x1="${cx + Math.cos(a) * r1}" y1="${cy + Math.sin(a) * r1}" x2="${cx + Math.cos(a) * r2}" y2="${cy + Math.sin(a) * r2}" stroke="${c}" stroke-width=".35" stroke-linecap="round" opacity=".85"/>`;
+      g += `<circle cx="${cx + Math.cos(a) * (r2 + 1)}" cy="${cy + Math.sin(a) * (r2 + 1)}" r=".45" fill="${c}"/>`;
+    }
+    fw += `<g filter="url(#glow)" opacity=".7">${g}</g><g opacity=".9">${g}</g>`;
+  });
+  return `<div class="base"></div>` + svg('fw', '0 0 100 125', fw, 'xMidYMin slice') + cityS + `<div class="floor"></div>`;
+}
+function bgMarble(seed) {
+  const stone = svg('stone', '0 0 400 500', `<filter id="mv${seed}" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".006 .018" numOctaves="5" seed="${seed}"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 .55  0 0 0 0 .53  0 0 0 0 .5  -2.6 0 0 0 1.55"/>
+      <feGaussianBlur stdDeviation=".4"/></filter>
+    <rect width="400" height="500" fill="#f4f1ec"/><rect width="400" height="500" filter="url(#mv${seed})" opacity=".38"/>`, 'xMidYMid slice');
+  const gold = svg('gold', '0 0 100 125', `<defs><linearGradient id="gf" x1="0" y1="0" x2="1" y2=".3"><stop offset="0" stop-color="#8f6524"/><stop offset=".45" stop-color="#ecd08f"/><stop offset=".7" stop-color="#b98a3c"/><stop offset="1" stop-color="#f3dea8"/></linearGradient></defs>
+    <path d="M-6 96 C 18 70, 42 108, 64 80 S 98 52, 112 62" fill="none" stroke="url(#gf)" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M-6 99 C 20 74, 44 111, 66 83 S 99 56, 112 66" fill="none" stroke="url(#gf)" stroke-width=".45" opacity=".9"/>
+    <path d="M70 76 c 6 -10 16 -12 22 -6" fill="none" stroke="url(#gf)" stroke-width=".7"/>
+    <circle cx="93" cy="71" r="1.1" fill="url(#gf)"/>`, 'none');
+  return `<div class="base"></div>` + stone + gold + `<div class="stripe"><i style="background:var(--uae-red);flex:.9"></i><i style="background:var(--uae-green)"></i><i style="background:#fff"></i><i style="background:var(--uae-black)"></i></div>`;
+}
+const BG = { dune: bgDune, lat: bgLattice, hen: () => bgHenna(7), dew: () => bgDew(11), sky: () => bgSky(5), mar: () => bgMarble(9) };
+const flag = `<span class="flag" aria-hidden="true"><i class="r"></i><span class="s3"><i class="g"></i><i class="w"></i><i class="k"></i></span></span>`;
+
+let head = 'both';
+function render(lang) {
+  const grid = document.getElementById('grid'), L = T[lang], ar = lang === 'ar';
+  const styles = head === 'both' ? ['plain', 'flag'] : [head];
+  const cards = [];
+  for (const a of ADS) for (const st of styles) {
+    const card = el('article', 'card');
+    const code = `${a.id === 'dew' ? '04' : '05'}${a.v === 'scatter' ? 'B' : 'A'}`;
+    const meta = el('div', 'meta', `<span class="n">${code}${st === 'flag' ? '·F' : ''}</span><b>${a.name}${st === 'flag' ? ' · flag heading' : ''}</b>`);
+    const idea = el('span', '', a.idea); idea.style.cssText = 'color:var(--muted);font-size:13.5px';
+    const frame = el('div', 'frame');
+    const ad = el('div', 'ad ' + a.id + ' ' + a.v + (st === 'flag' ? ' flagh' : '')); if (ar) ad.dir = 'rtl';
+    const kick = a.id === 'dew' ? L.kdew : L.ksky;
+    ad.innerHTML = `<div class="bg">${BG[a.id]()}</div>
+      <div class="copy"><img class="logo" src="../../../../../studio/reel-studio/brands/kbb/${a.logo}" alt="KBB"><div class="kick">${esc(kick)}</div><div class="h1"><span>${esc(L.h1)}</span></div><div class="h2">${esc(L.h2)}</div><div>${L.off ? `<span class="off">${esc(L.off)}</span>` : ''}</div></div>
+      <div class="prods">${(a.p || []).map(([n, s]) => `<img class="${s}" src="../../assets/products/${n}.webp" alt="">`).join('')}</div>
+      ${a.s ? `<div class="zone">${a.s.map(([n, x, y, h, r]) => `<img src="../../assets/products/${n}.webp" alt="" style="left:${x}%;top:${y}%;height:${h}cqmin;rotate:${r}deg">`).join('')}</div>` : ''}
+      <div class="foot"><span class="cta">${esc(L.cta)}</span><span class="trust">${flag} ${esc(L.trust)}</span></div>`;
+    frame.append(ad);
+    card.append(meta, frame, idea);
+    cards.push(card);
+  }
+  grid.replaceChildren(...cards);
+}
+// the editor: fields follow the language on show; every keystroke repaints the ads (nothing leaves this page)
+const fields = [...document.querySelectorAll('.ed input[data-k]')];
+function fillFields() { for (const i of fields) { i.value = T[lang][i.dataset.k]; i.dir = lang === 'ar' ? 'rtl' : 'ltr'; } }
+fields.forEach((i) => i.addEventListener('input', () => { T[lang][i.dataset.k] = i.value; save(); render(lang); }));
+document.querySelectorAll('.ed input[data-v]').forEach((r) => r.addEventListener('input', () => {
+  document.documentElement.style.setProperty('--' + r.dataset.v, String(r.value / 100));
+  document.getElementById('o-' + r.dataset.v).textContent = r.value + '%';
+}));
+document.getElementById('e-reset').addEventListener('click', () => {
+  T = { en: { ...BASE.en }, ar: { ...BASE.ar } }; save(); fillFields(); render(lang);
+  document.querySelectorAll('.ed input[data-v]').forEach((r) => { r.value = 100; r.dispatchEvent(new Event('input')); });
+});
+document.querySelectorAll('[data-head]').forEach((b) => b.addEventListener('click', () => {
+  head = b.dataset.head; render(lang);
+  document.querySelectorAll('[data-head]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+}));
+let lang = 'en';
+document.querySelectorAll('[data-fmt]').forEach((b) => b.addEventListener('click', () => {
+  document.body.dataset.fmt = b.dataset.fmt;
+  document.querySelectorAll('[data-fmt]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+}));
+document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
+  lang = b.dataset.lang; fillFields(); render(lang);
+  document.querySelectorAll('[data-lang]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+}));
+document.body.dataset.fmt = 'feed';
+fillFields();
+render('en');
+</script>

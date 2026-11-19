@@ -879,6 +879,114 @@ var KBB_T = (function () {
     return { bg: solidBg('#FFFFFF', '#F2EDE9', 'linear', 'none', '#000000', 0, 180), els: els, slots: sl };
   };
 
+  // ── UAE NATIONAL DAY, ROUND THREE (owner, 19 Nov 2026, approved from the preview kept as shots/nd3/preview.html:
+  //    04A / 04B "Glass & Dew" and 05A / 05B "Skyline Dusk", line-up and scattered, each with the plain heading or the
+  //    "National Day" heading in the UAE flag's colours, in English and Arabic). Every part is its own layer: the logo,
+  //    the top line, the heading (Heading style: Plain / UAE flag gradient), "Mega Offer", the offer pill, the button,
+  //    the small print and its tiny flag; each product (swap, move, size, turn); and the scene -- for Glass & Dew the
+  //    three flag-colour blobs, the frosted pane and the dew drops on the ivory background; for Skyline Dusk each firework
+  //    burst, the skyline and the glossy floor on the dusk-sky background. Geometry measured from the preview (cqw). ──
+  var ASP = { anua: .789, anuacream: .276, anuaeye: .194, azelaic: .424, balmpink: .263, balmred: .266, bdeye: .242, bdserum: .146, celimax: .373, dalba: .275,
+    deodorant: .338, eosbutter: 1.213, eospeach: .482, eyemask: 1.03, glowvanilla: .387, guasha: .532, hairoil: .37, marymay: .218, nbz5: .944, nbz9: .349 };
+  var ND3 = {
+    dew: { h1: { fn: 'bodoni', fw: 500, fs: 14.2, lh: 92, ls: -1.5, col: '#101914' }, h2: { fn: 'jost', fw: 600, fs: 4.6, lh: 110, ls: 36, up: true, col: '#1D3A2B' },
+      kc: '#1D3A2B', off: { fill: '#101914', col: '#F6F2EC' }, cta: { fill: '#FFFFFF', col: '#101914', shd: 35 }, tc: '#1D3A2B', hg: 'uae' },
+    dusk: { h1: { fn: 'italiana', fw: 400, fs: 15.6, lh: 92, col: '#FFFFFF', shd: 100, shc: '#5A3C8C' }, h2: { fn: 'cormorant', fw: 600, fi: true, fs: 7.6, lh: 110, ls: 2, col: '#FFF6F8' },
+      kc: '#FFFFFF', off: { fill: '#FFFFFFE6', col: '#6A4C8C' }, cta: { fill: '#6A4C8C', col: '#FFFFFF', shd: 0 }, tc: '#5A3F78', hg: 'uaed' }
+  };
+  // the words: logo, top line, heading, "Mega Offer", the offer pill, then the button, the small print and its flag
+  function nd3Copy(f, T, O, S) {
+    var ar = !!O.ar, k = v(f, 1, .88, 1), y = v(f, 6, 4.5, 6), top = [], foot = [];
+    function at(h) { var y0 = y; y += h; return y0; }
+    top.push(logo('logo', { lk: true, col: '#2A2228', fs: 3.73, name: 'Logo' }, G(30, at(11.79 * k), 40, 0, 0, k)));
+    var kfs = ar ? 3.8 : 3, kick = tx('kick', T.kick, { fn: ar ? 'messiri' : 'jost', fw: 500, fs: kfs, lh: 120, ls: ar ? 0 : 28, col: S.kc, name: 'Top line' }, G(5, at(kfs * 1.2 * k + 1.6 * k), 90, 0, 0, k));
+    var h1o = ar ? { fn: 'reemkufi', fw: 500, fs: 15, lh: 112, ls: 0, col: S.h1.col, shd: S.h1.shd, shc: S.h1.shc } : S.h1;
+    if (O.hg) h1o = Object.assign({}, h1o, { hg: S.hg, shd: 0 });
+    var h1 = tx('h1', T.h1, Object.assign({ name: 'Heading (National Day)' }, h1o), G(3, at(h1o.fs * h1o.lh / 100 * k + 1.19 * k), 94, 0, 0, k));
+    var h2o = ar ? { fn: 'messiri', fw: 500, fs: 7, lh: 110, ls: 0, col: S.h2.col } : S.h2;
+    var h2 = tx('h2', T.h2, Object.assign({ name: 'Offer line (Mega Offer)' }, h2o), G(5, at(h2o.fs * h2o.lh / 100 * k + 2.2 * k), 90, 0, 0, k));
+    var off = tx('off', T.off, { fn: ar ? 'messiri' : 'jost', fw: 600, fs: 5.2, lh: 100, ls: ar ? 0 : 3, col: S.off.col, sh: 'pill', fill: S.off.fill, pd: 2, name: 'Offer pill (edit me)' }, G(10, at(0), 80, 0, 0, k));
+    top.push(kick, h1, h2, off);
+    var cy = v(f, 105.57, 81.2, 158.35), ch = 9.39 * k;
+    foot.push(btn('cta', T.cta, { fn: ar ? 'messiri' : 'jost', fw: 600, fs: ar ? 4.4 : 3.8, ls: ar ? 0 : 12, up: !ar, sh: 'pill', fill: S.cta.fill, col: S.cta.col, shd: S.cta.shd, cr: undefined, name: 'Button' }, G(50 - 25.43 * k, cy, 50.86 * k, ch)));
+    // the small print with a tiny UAE flag before it (after it, in Arabic): the pair is centred as the preview set it
+    var ty = cy + ch + 1.3 * k, tw = (ar ? 35.1 : 46.8) * k, fw_ = 5.2 * k, gap = .8 * k, x0 = 50 - (tw + fw_ + gap) / 2;
+    var fx = ar ? x0 + tw + gap : x0;
+    foot.push(tx('trust', T.trust, { fn: ar ? 'messiri' : 'jost', fw: 500, fs: 2.7, lh: 120, ls: ar ? 0 : 4, col: S.tc, op: 90, al: ar ? 'r' : 'l', name: 'Small print' }, ar ? G(4, ty, x0 + tw - 4, 0, 0, k) : G(fx + fw_ + gap, ty, 96 - (fx + fw_ + gap), 0, 0, k)));
+    foot.push({ id: 'tflag', t: 'art', art: 'flag:ae', sh: 'rect', rad: .4, bw: 2.5, bc: '#FFFFFFB3', name: 'UAE flag (small print)', g: G(fx, ty + (3.24 - 2.6) / 2 * k + .25 * k, fw_, 2.6 * k) });
+    return { top: top, foot: foot };
+  }
+  // a line-up: the products side by side, overlapping a little, standing on one line (mirrored in Arabic, as the preview)
+  function nd3Row(list, by, hs, ar, ss) {
+    var ws = list.map(function (q) { return hs[q[1]] * ASP[q[0]]; }), tot = ws.reduce(function (a, b) { return a + b; }, 0) - 1.2 * (list.length - 1), x = 50 - tot / 2;
+    return list.map(function (q, i) { var cx = x + ws[i] / 2; x += ws[i] - 1.2; var s = slot(ar ? 100 - cx : cx, by, hs[q[1]], ws[i] * 1.3); if (ss) s.ss = ss; return s; });
+  }
+  // scattered: [product, x %, y % of the zone, height, turn]; the zone is a band of the canvas
+  function nd3Scatter(list, z0, z1, sc) {
+    return list.map(function (q) { var h = q[3] * sc, cy = z0 + q[2] / 100 * (z1 - z0); return slot(q[1], cy + h / 2, h, h * ASP[q[0]] * 1.3 + 2, q[4]); });
+  }
+  var ND3_ROW = {
+    dew: [['bdserum', 'm'], ['anuacream', 'm'], ['nbz9', ''], ['eospeach', ''], ['azelaic', 'm'], ['marymay', 's'], ['eyemask', 'w']],
+    dusk: [['balmred', 's'], ['hairoil', 'm'], ['nbz9', ''], ['glowvanilla', ''], ['celimax', 'm'], ['bdeye', 's'], ['anua', 'w']]
+  };
+  var ND3_SCAT = {      // the hero last, so it stands in front; the bottom two kept clear of the button's words
+    dew: [['guasha', 14, 18, 20, -28], ['marymay', 86, 16, 22, 24], ['bdserum', 9, 62, 34, -18], ['anuacream', 91, 60, 34, 16], ['nbz9', 29, 50, 38, -10], ['azelaic', 71, 50, 36, 9], ['eyemask', 21, 92, 20, -12], ['nbz5', 79, 92, 20, 10], ['eospeach', 50, 55, 46, 0]],
+    dusk: [['balmred', 12, 16, 22, -26], ['bdeye', 88, 18, 24, 22], ['dalba', 10, 62, 34, -16], ['hairoil', 90, 62, 36, 14], ['celimax', 30, 54, 34, -9], ['nbz9', 70, 52, 38, 10], ['anua', 20, 92, 20, -10], ['eosbutter', 80, 92, 20, 12], ['glowvanilla', 50, 58, 46, 0]]
+  };
+  function nd3Slots(kind, f, O) {
+    var ar = !!O.ar;
+    if (O.sc) {
+      var L = ND3_SCAT[kind], sl = v(f, nd3Scatter(L, 62.5, 107.5, 1), nd3Scatter(L, ar ? 58.5 : 57, 84, .7), nd3Scatter(L, 67.6, 156.4, 1));
+      // nothing may sit over the button's words: a product low enough to reach them steps up (in the middle) or out (at the sides)
+      var cb = v(f, 105.57, 81.2, 158.35) + (v(f, 1, .88, 1) * 9.39 - 4.2) / 2, half = ar ? 15 : 19;
+      sl.forEach(function (s, i) {
+        if (s.by <= cb + .5) return;
+        var rd = Math.abs(s.r || 0) * Math.PI / 180, w = (s.h * ASP[L[i][0]] * Math.cos(rd) + s.h * Math.sin(rd)) * .78;   // its drawn box, turned
+        if (Math.abs(s.cx - 50) < 12) s.by = cb; else if (s.cx < 50) s.cx = Math.min(s.cx, 50 - half - w / 2); else s.cx = Math.max(s.cx, 50 + half + w / 2);
+      });
+      return sl;
+    }
+    var dew = kind === 'dew', row = ND3_ROW[kind], ss = dew ? '' : 'reflect';
+    var post = { '': 38.76, m: 31.2, s: 24.9, w: 16.39 }, story = { '': 46, m: 37, s: 29.6, w: 19.5 }, sq = {}, q = ar ? .66 : dew ? .78 : .72;
+    Object.keys(post).forEach(function (c) { sq[c] = post[c] * q; });
+    return v(f, nd3Row(row, dew ? 99.6 : 104.6, post, ar, ss), nd3Row(row, dew ? 78.6 : 79.6, sq, ar, ss), nd3Row(row, dew ? 152.4 : 157.4, story, ar, ss));
+  }
+
+  // ND12 ── GLASS & DEW (04A line-up / 04B scattered): a frosted glass pane over soft blobs of the flag's green, red and
+  //         black on ivory, dew drops on the glass; the heading in Bodoni, "MEGA OFFER" in spaced capitals
+  FAM.nddew = function (f, T, P, O) {
+    var H = FH[f], els = [], c = nd3Copy(f, T, O, ND3.dew), ar = !!O.ar;
+    els.push(shp('bgreen', 'haze', { fill: '#00843D', op: 72, name: 'Green blob' }, G(-14, v(f, 47.5, 38, 67.6), 62, 62)));
+    els.push(shp('bred', 'haze', { fill: '#C8102E', op: 72, name: 'Red blob' }, G(58, v(f, 57.5, 46, 81.8), 54, 54)));
+    els.push(shp('bblack', 'haze', { fill: '#141414', op: 40, name: 'Black blob' }, G(34, H - 26, 40, 40)));
+    var py = v(f, 55, ar ? 51 : 48, 78.22);
+    els.push(shp('pane', 'glass', { fill: '#FFFFFF8C', fill2: '#FFFFFF2E', gang: 160, rad: 4, bw: 3, bc: '#FFFFFFBF', name: 'Glass pane' }, G(6, py, 88, v(f, 113.76, 91, 161.78) - py)));
+    els.push({ id: 'dew', t: 'art', art: f === 'story' ? 'nd:dew-tall' : 'nd:dew', sh: 'rect', name: 'Dew drops', g: f === 'story' ? G(8, 45, 84, 82) : G(8, v(f, 31, 30, 0), 84, 58) });
+    els.push(prods());
+    els = els.concat(c.top, c.foot);
+    return { bg: solidBg('#F6F2EC'), els: els, slots: nd3Slots('dew', f, O) };
+  };
+
+  // ND13 ── SKYLINE DUSK (05A line-up / 05B scattered): a pastel lavender-peach-rose dusk, an original city skyline (no real
+  //         building), soft fireworks in the flag's colours kept to the edges, a glossy floor the products reflect in
+  FAM.nddusk = function (f, T, P, O) {
+    var H = FH[f], els = [], c = nd3Copy(f, T, O, ND3.dusk), st = f === 'story';
+    var FW = [[10, 12, 9, 'green'], [90, 10, 10, 'red'], [6, 46, 6, 'white'], [94, 44, 7, 'gold'], [80, 60, 5, 'green, small'], [18, 62, 5, 'red, small']];
+    FW.forEach(function (q, i) {
+      var s = st ? 1.4222 : 1, S = (q[2] * 1.05 + 3.3) * s, R = q[2] * s, cx = st ? Math.max(R * .75, Math.min(100 - R * .75, q[0] * s - 21.11)) : q[0];
+      els.push({ id: 'fw' + (i + 1), t: 'art', art: 'nd:fw-' + (i + 1), name: 'Firework (' + q[3] + ')', g: G(+(cx - S).toFixed(2), +(q[1] * s - S).toFixed(2), +(2 * S).toFixed(2), +(2 * S).toFixed(2)) });
+    });
+    els.push({ id: 'city', t: 'art', art: 'nd:skyline', name: 'City skyline', g: v(f, G(0, 34, 100, 74), G(0, 9, 100, 74), G(-21.11, 48.36, 142.22, 105.24)) });
+    var fy = H * .76, fh = H * .24;
+    els.push(shp('floor1', 'rect', { fill: '#FFECE600', fill2: '#FFF0ECBF', gang: 180, name: 'Glossy floor (fade)' }, G(0, +fy.toFixed(2), 100, +(fh * .4).toFixed(2))));
+    els.push(shp('floor2', 'rect', { fill: '#FFF0ECBF', fill2: '#FBE9E3', gang: 180, name: 'Glossy floor' }, G(0, +(fy + fh * .4).toFixed(2), 100, +(fh * .6 + .5).toFixed(2))));
+    els.push(prods());
+    els = els.concat(c.top, c.foot);
+    var bg = solidBg('#8E86C6', '#F4E1D6', 'linear', 'none', '#000000', 0, 180);
+    bg.stops = [{ c: '#8E86C6', p: 0 }, { c: '#C9A9D6', p: 34 }, { c: '#F2BFC0', p: 62 }, { c: '#F7D4C0', p: 78 }, { c: '#F4E1D6', p: 100 }];
+    return { bg: bg, els: els, slots: nd3Slots('dusk', f, O) };
+  };
+
   // ── palettes ──
   function pal(bg1, bg2, ink, sub, acc, acc2, card, extra) {
     return Object.assign({ bg1: bg1, bg2: bg2, ink: ink, sub: sub, acc: acc, acc2: acc2, card: card, btnTxt: '#FFFFFF' }, extra || {});
@@ -1026,6 +1134,27 @@ var KBB_T = (function () {
   add('uae', 'nd-lilac', 'National Day · Lilac Glass', 'ndlilac', ND, ndT({ kick: 'SPARKLE & GLOW', ar: ARN, cta: 'Grab the Deals' }), {}, NDT + ' lilac pink glass pedestal bubbles wave ribbon', ['anuaeye', 'bdeye', 'bdserum', 'nbz5', 'eospeach', 'nbz9', 'eosbutter', 'azelaic']);
   add('uae', 'nd-velvet', 'National Day · Velvet Spotlight', 'ndvelvet', ND, ndT({ kick: 'INDULGE IN GLOW', ar: 'كل عام والإمارات بخير', cta: 'Shop the Offer' }), {}, NDT + ' velvet burgundy wine gold spotlight luxury', ['bdserum', 'eospeach', 'nbz9', 'eosbutter', 'nbz5', 'anuaeye', 'azelaic', 'bdeye']);
   add('uae', 'nd-sky', 'National Day · Arch Sky', 'ndsky', ND, ndT({ kick: 'A FRESH NEW GLOW', ar: ARU, cta: 'Get the Deals' }), {}, NDT + ' minimal pearl arch window sky modern', ['nbz9', 'anuaeye', 'bdserum', 'azelaic', 'nbz5', 'bdeye', 'eosbutter', 'eospeach']);
+  // round three (owner, 19 Nov 2026, approved from a preview): Glass & Dew and Skyline Dusk, line-up and scattered, each in
+  // English and Arabic, with the plain heading or the UAE flag heading (the same switch is Heading style in the editor).
+  // Never a year or "55". Appended last so no older rotation moves.
+  var ND3T = {
+    en: { h1: 'National Day', h2: 'Mega Offer', off: 'Up to 50% off', cta: 'Shop the Offer', trust: 'Selected products · while stocks last' },
+    ar: { h1: 'اليوم الوطني', h2: 'عروض كبرى', off: 'خصم حتى ٥٠٪', cta: 'تسوّقي العرض', trust: 'منتجات مختارة · حتى نفاد الكمية' }
+  };
+  var ND3K = { dew: ['FRESH · DEWY · PROUD', 'نضارة · إشراق · فخر'], dusk: ['A NIGHT TO SHINE', 'ليلة للتألّق'] };
+  var ND3P = {
+    dew: ['bdserum', 'anuacream', 'nbz9', 'eospeach', 'azelaic', 'marymay', 'eyemask', 'bdeye', 'nbz5', 'anuaeye'],
+    dews: ['guasha', 'marymay', 'bdserum', 'anuacream', 'nbz9', 'azelaic', 'eyemask', 'nbz5', 'eospeach', 'anuaeye', 'bdeye', 'celimax'],
+    dusk: ['balmred', 'hairoil', 'nbz9', 'glowvanilla', 'celimax', 'bdeye', 'anua', 'dalba', 'eosbutter', 'balmpink'],
+    dusks: ['balmred', 'bdeye', 'dalba', 'hairoil', 'celimax', 'nbz9', 'anua', 'eosbutter', 'glowvanilla', 'balmpink', 'eospeach', 'guasha']
+  };
+  [['dew', 'Glass & Dew', 'nddew', ' frosted glass dew drops ivory blobs 04'], ['dusk', 'Skyline Dusk', 'nddusk', ' skyline city dusk fireworks lavender floor 05']].forEach(function (d) {
+    [false, true].forEach(function (sc) { ['en', 'ar'].forEach(function (lg) { [false, true].forEach(function (fl) {
+      var ar = lg === 'ar', T = Object.assign({ kick: ND3K[d[0]][ar ? 1 : 0] }, ND3T[lg]);
+      add('uae', 'nd-' + d[0] + (sc ? '-s' : '') + (ar ? '-ar' : '') + (fl ? '-f' : ''), 'National Day · ' + d[1] + (sc ? ' Scattered' : '') + (ar ? ' · Arabic' : '') + (fl ? ' · Flag heading' : ''),
+        d[2], ND, T, { sc: sc, ar: ar, hg: fl }, NDT + d[1].toLowerCase() + d[3] + (sc ? ' scattered' : ' line-up lineup') + (ar ? ' arabic' : '') + (fl ? ' flag heading gradient' : ''), ND3P[d[0] + (sc ? 's' : '')]);
+    }); }); });
+  });
 
 /*PC*/
   var CATS = [['all', 'All'], ['uae', 'UAE & Gulf'], ['global', 'Global occasions'], ['sale', 'Sales & offers'], ['product', 'Products & routines']];

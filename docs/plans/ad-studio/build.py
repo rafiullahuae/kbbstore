@@ -74,6 +74,53 @@ for o in OCJ['occupations']:
 for t in OCJ['tools']:
     art['oi:' + t['id']] = mini(open(os.path.join(OCD, t['icon'])).read())
 OSECT = [[x['id'], x['en']] for x in OCJ['sectors']]
+# National Day · Glass & Dew and Skyline Dusk (19 Nov 2026): the art the owner approved in the preview
+# (shots/nd3/preview.html), drawn by the same seeded generators (bgDew seed 11, bgSky seed 5) so every drop, tower and
+# spark sits where it did there. Each piece is its own layer in the templates: the dew drops, the skyline, and each of
+# the six firework bursts (nd:fw-1..6, in the order the preview draws them). No real building; constant markup only.
+def _rng(s):
+    st = [s]
+    def r():
+        st[0] = (st[0] * 16807) % 2147483647
+        return st[0] / 2147483647
+    return r
+def _n(x):
+    return ('%.2f' % x).rstrip('0').rstrip('.')
+def _dew(n, h):
+    r, out = _rng(11), []
+    for _ in range(n):
+        x, y, rad = 9 + r() * 82, 32 + r() * h, .25 + r() ** 3 * 1.6
+        out.append('<g transform="translate(%s %s)"><circle r="%s" fill="url(#dg)"/><circle cx="%s" cy="%s" r="%s" fill="#fff" opacity=".9"/></g>'
+                   % (_n(x), _n(y), _n(rad), _n(-rad * .35), _n(-rad * .4), _n(rad * .28)))
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 %s 84 %s"><defs><radialGradient id="dg" cx=".6" cy=".65" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".9"/>'
+            '<stop offset=".6" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#1a3a2a" stop-opacity=".25"/></radialGradient></defs>%s</svg>') % (_n(31), _n(h + 2), ''.join(out))
+art['nd:dew'] = _dew(70, 56)            # the preview's own 70 drops (post); the story's taller pane takes nd:dew-tall
+art['nd:dew-tall'] = _dew(100, 80)
+_r, _city, _x = _rng(5), '', 0
+while _x < 100:
+    w, h = 2.5 + _r() * 5, 6 + _r() ** 2 * 22
+    _city += '<rect x="%s" y="%s" width="%s" height="%s" fill="#8a78b4" opacity="%s"/>' % (_n(_x), _n(78 - h), _n(w), _n(h + 30), _n(.28 + _r() * .14))
+    if _r() > .78:
+        _city += '<path d="M%s %s L%s %s L%s %sZ" fill="#7d6aa6" opacity=".55"/>' % (_n(_x + w / 2 - .4), _n(78 - h), _n(_x + w / 2), _n(78 - h - 6 - _r() * 8), _n(_x + w / 2 + .4), _n(78 - h))
+    k = 0
+    while k < h / 3:
+        if _r() > .55:
+            _city += '<rect x="%s" y="%s" width=".5" height=".8" fill="#ffe9c7" opacity=".7"/>' % (_n(_x + .6 + _r() * (w - 1.6)), _n(78 - h + 1.5 + k * 3))
+        k += 1
+    _x += w + .4 + _r() * 1.6
+art['nd:skyline'] = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 34 100 74" preserveAspectRatio="none">' + _city + '</svg>'
+import math
+ND_FW = [[10, 12, 9], [90, 10, 10], [6, 46, 6], [94, 44, 7], [80, 60, 5], [18, 62, 5]]   # [cx, cy, R] in the preview's 100 x 125 frame
+for _bi, (cx, cy, R) in enumerate(ND_FW):
+    c, g = ['#00a34f', '#e2304d', '#ffffff', '#f3d38a'][_bi % 4], ''
+    for i in range(26):
+        a, r1, r2 = (i / 26) * math.pi * 2 + _r() * .1, R * (.35 + _r() * .15), R * (.85 + _r() * .2)
+        g += '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width=".35" stroke-linecap="round" opacity=".85"/>' % (
+            _n(cx + math.cos(a) * r1), _n(cy + math.sin(a) * r1), _n(cx + math.cos(a) * r2), _n(cy + math.sin(a) * r2), c)
+        g += '<circle cx="%s" cy="%s" r=".45" fill="%s"/>' % (_n(cx + math.cos(a) * (r2 + 1)), _n(cy + math.sin(a) * (r2 + 1)), c)
+    S = R * 1.05 + 3.3
+    art['nd:fw-%d' % (_bi + 1)] = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s %s %s %s"><defs><filter id="glow" x="-20%%" y="-20%%" width="140%%" height="140%%"><feGaussianBlur stdDeviation=".6"/></filter></defs>'
+                                   '<g filter="url(#glow)" opacity=".7">%s</g><g opacity=".9">%s</g></svg>') % (_n(cx - S), _n(cy - S), _n(2 * S), _n(2 * S), g, g)
 for k, v in art.items():
     assert '<script' not in v.lower() and 'href="http' not in v and 'on' + 'load' not in v.lower(), k
 ARTPACK = base64.b64encode(gzip.compress(json.dumps(art, separators=(',', ':'), ensure_ascii=False).encode(), 9, mtime=0)).decode()

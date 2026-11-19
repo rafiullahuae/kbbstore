@@ -1,5 +1,6 @@
 // Companies + Planet Careers + the country picker, driven like the owner would, from the built file on file://:
-//  - KBB's 69 templates draw exactly as before companies existed (Planet Careers: 51 + 44 Work Abroad = 95; all 164) (tools/kbb-baseline.json, 207 renders, 0 diffs)
+//  - KBB's 69 templates draw exactly as before companies existed (Planet Careers: 51 + 44 Work Abroad = 95) (tools/kbb-baseline.json, 207 renders, 0 diffs);
+//    since 19 Nov 2026 KBB also has the 16 National Day Glass & Dew / Skyline Dusk templates (nd-dew*, nd-dusk*): 85, all 180
 //  - the switcher: KBB <-> Planet Careers is instant, each company has its own templates, designs, favourites
 //  - + New company (the form), its kit colours on the Planet Careers set, export -> import into a clean browser
 //  - the country picker on every country template: all 33 countries, flag / outline / landmark / name swap, undo
@@ -22,13 +23,14 @@ const vis = (p) => p.$$eval('#tg button:not([hidden])', (b) => b.map((x) => x.da
   // ── KBB untouched
   const base = JSON.parse(fs.readFileSync(path.join(__dirname, 'kbb-baseline.json'), 'utf8')), now = await fingerprint(HTML, b);
   const diff = Object.keys(base).filter((k) => base[k] !== now[k]);
-  ok(Object.keys(base).length === 207 && Object.keys(now).length === 207 && diff.length === 0, 'KBB templates: ' + Object.keys(now).length + ' renders, ' + diff.length + ' diffs from before companies ' + diff.slice(0, 4).join(' '));
+  const added = Object.keys(now).filter((k) => !(k in base));
+  ok(Object.keys(base).length === 207 && added.length === 48 && added.every((k) => /^nd-(dew|dusk)/.test(k)) && diff.length === 0, 'KBB templates: ' + Object.keys(now).length + ' renders (207 from before companies + ' + added.length + ' National Day round three), ' + diff.length + ' diffs ' + diff.slice(0, 4).join(' '));
 
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
   let { p, errs, net } = await open(ctx);
   ok(await p.evaluate(() => window.KBB_STUDIO.company().id) === 'kbb', 'opens in KBB');
   ok(JSON.stringify(await p.$$eval('#co-sel option', (o) => o.map((x) => x.value))) === JSON.stringify(['kbb', 'planet-careers', '__new', '__imp']), 'switcher: KBB, Planet Careers, + New company, Import company');
-  ok((await vis(p)).length === 69 && (await vis(p)).every((id) => !/^(pc|wa)-/.test(id)), 'KBB sees its own 69 templates');
+  ok((await vis(p)).length === 85 && (await vis(p)).every((id) => !/^(pc|wa)-/.test(id)), 'KBB sees its own 85 templates');
   ok(await p.evaluate(() => window.KBB_STUDIO.doc.els.some((e) => e.t === 'pay')), 'KBB designs keep tabby / tamara');
 
   // ── switch to Planet Careers
@@ -49,7 +51,7 @@ const vis = (p) => p.$$eval('#tg button:not([hidden])', (b) => b.map((x) => x.da
   ok(await p.$eval('#tg button[data-id="pc-study-gb"] .cv', (c) => [...c.querySelectorAll('img.ii')].some((i) => /^data:image\/svg/.test(i.src))), 'thumbnails carry the flag art');
   await p.click('#tg button[data-id="pc-study-gb"]'); ok(await p.evaluate(() => window.KBB_STUDIO.doc.cty) === 'de', 'a template picked under Germany opens for Germany');
   await p.selectOption('#tf-cty', ''); await p.selectOption('#tf-size', 'story'); ok(await p.$eval('#tg', (g) => g.dataset.size) === 'story' && await p.$eval('#tg button .cv', (c) => Math.abs(c.clientHeight / c.clientWidth - 1920 / 1080) < .05), 'size filter previews in story 9:16');
-  await p.selectOption('#tf-size', 'post'); await p.selectOption('#tf-set', 'all'); ok((await vis(p)).length === 164, 'All templates: ' + (await vis(p)).length); await p.selectOption('#tf-set', '');
+  await p.selectOption('#tf-size', 'post'); await p.selectOption('#tf-set', 'all'); ok((await vis(p)).length === 180, 'All templates: ' + (await vis(p)).length); await p.selectOption('#tf-set', '');
 
   // ── country picker: every country, on every country template
   const sweep = await p.evaluate(async () => {
@@ -165,7 +167,7 @@ const vis = (p) => p.$$eval('#tg button:not([hidden])', (b) => b.map((x) => x.da
   const html = `<!doctype html><meta charset="utf-8"><style>body{margin:0;padding:20px;background:#E9EDF1;font:600 15px Inter,system-ui,sans-serif;color:#0A1B30;width:${1280 * 2 + 60}px}h1{margin:0 0 4px;font-size:26px}p{margin:0 0 14px;color:#55606E;font-weight:500}.g{display:grid;grid-template-columns:1280px 1280px;gap:20px}figure{margin:0}figcaption{margin:0 0 6px}img{display:block;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.18)}.ph{display:flex;gap:20px;align-items:flex-start}</style>
     <h1>KBB Studio · companies</h1><p>The switcher in the top bar (KBB · Planet Careers · + New company · Import company); each company has its own templates, saved designs and favourites. Country templates carry the country picker next to Play.</p>
     <div class="g"><figure><figcaption>Planet Careers · Study in Canada (picked from the UK with the country picker)</figcaption><img src="data:image/png;base64,${s1.toString('base64')}" width="1280"></figure>
-    <figure><figcaption>Switched to KBB · its own 69 templates, unchanged</figcaption><img src="data:image/png;base64,${s2.toString('base64')}" width="1280"></figure>
+    <figure><figcaption>Switched to KBB · its own 85 templates, unchanged</figcaption><img src="data:image/png;base64,${s2.toString('base64')}" width="1280"></figure>
     <figure><figcaption>Edit company · the brand kit (kit.schema.json fields), export / import .json</figcaption><img src="data:image/png;base64,${s3.toString('base64')}" width="1280"></figure>
     <figure class="ph"><figcaption>Phone 390 px · + New company</figcaption><img src="data:image/png;base64,${phone.toString('base64')}" width="390"></figure></div>`;
   const sp = await b.newPage({ viewport: { width: 1280 * 2 + 100, height: 900 } }); await sp.setContent(html); await sp.screenshot({ path: path.join(ROOT, 'shots', 'companies.png'), fullPage: true }); await sp.close();

@@ -89,8 +89,9 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 .cats{display:flex;flex-wrap:wrap;gap:5px}
 .cats .chip{padding:4px 9px;font-size:11.5px}
 .mine{display:grid;gap:6px}
-.mine .it{display:flex;gap:6px;align-items:center;min-width:0}
-.mine .it span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;font-weight:600}
+.mine .it{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.mine .it select{width:auto;max-width:150px;padding:4px 6px;font-size:12px}
+.mine .it span{flex:1 1 100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;font-weight:600}
 .pk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .pk button{position:relative;display:grid;gap:3px;justify-items:center;padding:5px 3px;border-radius:9px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:10.5px;font-weight:600;line-height:1.2;text-align:center;min-width:0}
 .pk button i{display:block;width:100%;aspect-ratio:1;background-size:contain;background-position:center;background-repeat:no-repeat}
@@ -125,7 +126,7 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 .ly .gr{cursor:grab;color:var(--muted);font-size:12px;padding:0 2px;touch-action:none;user-select:none}
 .ly .gt{border:0;background:none;cursor:pointer;padding:0 3px;font-size:12px;color:var(--fg)}
 .ly.grp .n{font-weight:800}
-.ly.ch{margin-left:16px;border-left:2px solid var(--line);border-radius:0 7px 7px 0}
+.ly.ch,.ly.pi{margin-left:16px;border-left:2px solid var(--line);border-radius:0 7px 7px 0}
 .ly.drag{opacity:.45}.ly.dropb{box-shadow:inset 0 2px 0 var(--sel)}.ly.dropa{box-shadow:inset 0 -2px 0 var(--sel)}
 .ly .rn{padding:2px 5px;font-size:12.5px}
 .sw{width:36px;height:30px;padding:3px;border:1px solid var(--line);border-radius:7px;background:var(--bg);cursor:pointer;flex:none}
@@ -159,6 +160,8 @@ details>.in{padding:2px 10px 10px;display:grid;gap:9px}
 .cv .lg{display:flex;align-items:center;gap:.4em;white-space:nowrap}
 .cv .lg svg{width:1.5em;height:1.12em;flex:none}
 .cv .lg img{display:block;max-width:100%;object-fit:contain}
+.cv .lg .lkt{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.cv .lg .lktg{font-family:Poppins,sans-serif;font-weight:600;font-style:normal;font-size:.303em;letter-spacing:.265em;margin-top:.5em;white-space:nowrap}
 .cv .py{display:flex;justify-content:center;align-items:center;height:100%}
 .cv .py img{height:100%;width:auto;display:block}
 .cv .pl{position:absolute;inset:0;pointer-events:none}
@@ -365,7 +368,7 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
         <div class="g2" data-pneed><div class="row"><label for="ps-p">Product</label><select id="ps-p"></select></div>
           <div class="row"><label for="ps-r">Turn <span id="ps-rv"></span></label><input id="ps-r" type="range" min="-180" max="180" step="1"></div></div>
         <div class="g2" data-pneed><div class="row"><label for="ps-sh">Shadow</label><input id="ps-sh" type="range" min="0" max="100" step="1"></div>
-          <div class="row"><label for="ps-ss">Shadow style</label><select id="ps-ss"><option value="soft">Soft</option><option value="sharp">Sharp</option><option value="glow">Glow</option></select></div></div>
+          <div class="row"><label for="ps-ss">Shadow style</label><select id="ps-ss"><option value="soft">Soft</option><option value="sharp">Sharp</option><option value="glow">Glow</option><option value="reflect">Soft + reflection</option></select></div></div>
         <div class="btns" data-pneed><button class="btn sm" id="ps-sm" type="button">Smaller</button><button class="btn sm" id="ps-bg" type="button">Bigger</button><button class="btn sm" id="ps-fr" type="button">To front</button><button class="btn sm" id="ps-del" type="button">Remove</button></div>
         <h3>Add products</h3>
         <div class="btns"><label class="ck"><input type="checkbox" id="pk-sets"> all 3 sets</label><label class="ck"><input type="checkbox" id="pk-fmts"> all 3 sizes</label></div>
@@ -435,6 +438,9 @@ body[data-mode="video"] .top .v-top{display:flex;flex:1 1 320px;min-width:0;gap:
           <div class="g2" data-show="text btn shape logo"><div class="row"><label for="p-fs">Text size <span id="v-fs"></span></label><input id="p-fs" type="range" data-p="fs" min="1" max="45" step=".1"></div>
             <div class="row"><span class="lbl">Text colour</span><div class="crow"><button class="sw" type="button" data-cp="col" aria-label="Text colour" aria-expanded="false"><i></i></button><div class="seg" id="p-al" style="flex:1"><button data-v="l" type="button" aria-label="Align left">L</button><button data-v="c" type="button" aria-label="Centre">C</button><button data-v="r" type="button" aria-label="Align right">R</button></div></div></div></div>
           <div class="btns" data-show="text btn shape logo"><label class="ck"><input type="checkbox" data-p="fi"> Italic</label><label class="ck"><input type="checkbox" data-p="up"> CAPS</label><label class="ck" title="Keeps each line on one line, making the text smaller if it is too long"><input type="checkbox" data-p="nw"> Fit each line</label></div>
+          <div class="row" data-show="text"><label for="p-hg">Heading style</label><select id="p-hg" data-p="hg"><option value="none">Plain (text colour)</option><option value="uae">UAE flag gradient · light background</option><option value="uaed">UAE flag gradient · with white (dusk / dark)</option></select></div>
+          <div class="g3" data-show="hg"><div class="row"><span class="lbl">Flag colours</span><div class="crow"><button class="sw" type="button" data-cp="hg1" aria-label="Gradient colour 1 (left)" aria-expanded="false"><i></i></button><button class="sw" type="button" data-cp="hg2" aria-label="Gradient colour 2" aria-expanded="false"><i></i></button><button class="sw" type="button" data-cp="hg3" aria-label="Gradient colour 3" aria-expanded="false"><i></i></button><button class="sw" type="button" data-cp="hg4" aria-label="Gradient colour 4 (right)" aria-expanded="false"><i></i></button></div></div></div>
+          <div class="btns" data-show="logo"><label class="ck" title="The brand kit's logo: the rose lotus, the name and KOREAN SKINCARE · UAE under it"><input type="checkbox" data-p="lk"> Full logo with tagline</label></div>
           <div class="g2" data-show="text btn shape"><div class="row"><label for="p-ls">Letter spacing</label><input id="p-ls" type="range" data-p="ls" min="-10" max="60" step="1"></div>
             <div class="row"><label for="p-lh">Line height</label><input id="p-lh" type="range" data-p="lh" min="70" max="200" step="1"></div></div>
           <div class="g2" data-show="icon"><div class="row"><label for="p-ic">Icon</label><select id="p-ic" data-p="ic"></select></div><div class="row"><span class="lbl">Colour</span><button class="sw" type="button" data-cp="col" aria-label="Icon colour" aria-expanded="false"><i></i></button></div></div>
