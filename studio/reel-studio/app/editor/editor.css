@@ -450,6 +450,19 @@ kbd { background: var(--panel3); border: 1px solid var(--line2); border-bottom-w
 .recent .del { opacity: .5; color: var(--muted); }
 .recent:hover .del { opacity: 1; }
 .recent .del:hover { color: #ff9aa3; background: color-mix(in srgb, var(--err) 14%, transparent); }
+.recent .move { opacity: .5; color: var(--muted); }
+.recent:hover .move { opacity: 1; }
+.recent .move:hover { color: var(--text); background: var(--accent-soft); }
+/* ⇄ Move to company (home.js moveDialog) */
+.move-dlg { display: flex; flex-direction: column; gap: 10px; min-width: min(440px, 80vw); }
+.move-dlg p { margin: 0; }
+.move-list { display: flex; flex-direction: column; gap: 6px; }
+.move-opt { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r2); background: var(--panel2); cursor: pointer; }
+.move-opt:hover { border-color: var(--accent-line); }
+.move-opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.move-opt b { display: block; } .move-opt small { display: block; }
+.move-err { color: #ff8a94; font-weight: 600; }
+.move-toast { display: inline-flex; align-items: center; gap: 10px; pointer-events: auto; } /* .toasts lets clicks through; its button must not */
 .empty { display: flex; align-items: center; gap: 18px; padding: 22px; border: 1px dashed var(--line2); border-radius: var(--r2); background: color-mix(in srgb, var(--panel2) 60%, transparent); grid-column: 1 / -1; }
 .empty-art { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-size: 30px; flex: none; background: linear-gradient(135deg, var(--accent-soft), transparent); border: 1px solid var(--line2); }
 .empty b { display: block; font-size: 15px; }

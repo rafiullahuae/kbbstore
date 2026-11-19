@@ -11,6 +11,7 @@ import { state as wsState, companyDialog, wsBadge } from '../editor/workspaces.j
 import { claudeStatus, claudeSave, claudeDisconnect, claudeRun } from './claude.js';
 import { SOURCES, testUrl } from '../stock/api.js';
 import { searchBox } from '../editor/search-ui.js';
+import { renderUpdates, UPDATE_CSS } from './updates.js';
 const ap = (el, ...k) => { el.append(...k.flat(Infinity).filter((x) => x != null && x !== false)); return el; };
 
 const CSS = `
@@ -51,7 +52,7 @@ p.cfg-muted{margin:0;line-height:1.55}
 .cfg-bar{height:8px;border-radius:5px;background:var(--panel3);overflow:hidden}.cfg-bar i{display:block;height:100%;background:var(--accent)}
 `;
 let styled = false;
-const SECTIONS = [['companies', '🏢 Companies'], ['contact', '☎ Contact & social'], ['claude', '✦ Connect Claude'], ['photos', '📷 Photo sources'], ['models', '🧠 Models'], ['folders', '📁 Folders & storage'], ['languages', '🌐 Languages'], ['about', 'ℹ About']];
+const SECTIONS = [['companies', '🏢 Companies'], ['contact', '☎ Contact & social'], ['claude', '✦ Connect Claude'], ['photos', '📷 Photo sources'], ['models', '🧠 Models'], ['folders', '📁 Folders & storage'], ['languages', '🌐 Languages'], ['updates', '⬆ Updates'], ['about', 'ℹ About']];
 const tokenH = () => ({ 'X-RS-Token': document.querySelector('meta[name="rs-token"]')?.content || '', 'Content-Type': 'application/json' });
 async function api(path, body) { const r = await fetch(path, { method: body ? 'POST' : 'GET', cache: 'no-store', headers: tokenH(), body: body ? JSON.stringify(body) : undefined }); const j = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(j.error || r.status + ''), { status: r.status }); return j; }
 
@@ -100,7 +101,7 @@ function keyInput(placeholder, label) {
 }
 
 export function openConfigure(section = 'companies', { onClose } = {}) {
-  if (!styled) { document.head.appendChild(h('style', CSS)); styled = true; }
+  if (!styled) { document.head.appendChild(h('style', CSS + UPDATE_CSS)); styled = true; }
   document.querySelector('.cfg-back')?.remove();
   const main = h('main.cfg-main');
   const nav = h('nav.cfg-nav', { 'aria-label': 'Configure sections' });
@@ -298,6 +299,8 @@ const RENDER = {
         try { await api('/api/prefs', np); out.className = 'cfg-ok'; out.textContent = '✓ Saved'; } catch (e) { out.className = 'cfg-bad'; out.textContent = e.message; }
       } } }, 'Save'), out)));
   },
+
+  updates: renderUpdates, // ⬆ Updates: install a new version from its zip, roll back, history (updates.js)
 
   async about(sec) {
     const info = engine.info || {};

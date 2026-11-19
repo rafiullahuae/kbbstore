@@ -271,6 +271,10 @@ export const CATALOGUE = [
   E(HELP, '❓', 'How to make Arabic captions', 'Guide', 'Auto captions, then Captions → Translate → To: Arabic (Replace, Bilingual or second track).', cap('translate', 'Translate into'), { syn: ['arabic captions', 'arabic subtitles'], ar: 'ترجمة عربية' }),
   E(HELP, '❓', 'How to cut out a mistake', 'Guide', 'Mark a range with I and O (or Shift-drag the ruler), then Delete: the gap closes.', tl('Range'), { syn: ['remove mistake', 'cut middle', 'delete part'] }),
   E(HELP, '❓', 'Where are my files?', 'Guide', 'Your things live in KBB Studio Data in your home folder (Finder → Go → Home); Configure → Folders opens them.', cfg('folders', 'Open in Finder'), { syn: ['where saved', 'files location', 'exports location', 'kbb studio data'] }),
+  // ── updates and moving reels (19 Nov 2026), last so the ids of the entries above stay as they were ──
+  E(S, '⬆', 'Updates', 'Configure → Updates', 'Install a new KBB Studio from the zip you received: see what’s new, then Install; it restarts by itself.', cfg('updates', 'Install update…'), { syn: ['update', 'upgrade', 'patch', 'new version', 'install update', 'version', 'zip'], ar: 'تحديث' }),
+  E(A, '↩', 'Roll back an update', 'Configure → Updates', 'Puts the version you had before back, exactly as it was; your companies, reels and keys stay.', cfg('updates', null), { syn: ['rollback', 'undo update', 'previous version', 'downgrade', 'go back'] }),
+  E(A, '⇄', 'Move a reel to another company', 'Home → Recent reels → ⇄', 'Moves (or copies) a reel with its clips to another company; it keeps its own look.', { screen: 'home', sel: '.recent .move' }, { syn: ['move project', 'change company', 'transfer reel', 'copy reel', 'move reel', 'copy to company'], ar: 'نقل' }),
 ];
 
 // stable ids, a flag for the ranking, normalised once

@@ -253,6 +253,12 @@ Copy your `.mp3`, `.m4a` or `.wav` files into **`library/music/user/`** (inside 
 **Music** tab and they are listed with the starter tracks; the studio measures their tempo once so **Add music** and
 **Auto reel** can cut on the beat. Use only music you have the rights to.
 
+### Moving a reel to another company
+
+In **Recent reels**, press **⇄** on a reel, pick the company and press **Move** (or **Copy there** to keep it in both).
+Its clips and pictures go with it and it keeps its own look; the toast's **Open it there** opens it in the other company.
+If that company already has a reel with the same id, nothing is moved and the window says so.
+
 ## 7. Adding a company
 
 Top left, click the company name → **+ New company**. Give it a name and industry (for example *Restaurant / cafe*),
@@ -345,7 +351,16 @@ WhatsApp"* — and press **✨ Make designs**.
 **Contact & social** (website, phone, WhatsApp, email, Instagram, TikTok …, the button wording in English and Arabic) ·
 **Connect Claude** · **Photo sources** (your Pexels and Unsplash keys) · **Models** (installed / available with sizes,
 download, remove) · **Folders & storage** (sizes, *Open in Finder*) · **Languages** (caption language, translation
-targets, ad copy languages) · **About**.
+targets, ad copy languages) · **Updates** · **About**.
+
+**Updates (from 1.3 on).** No more replacing the folder: **⚙ Configure → ⬆ Updates → Install update…** (or drop the
+**KBB Studio v….zip** on that box). Before anything changes the studio checks every file of the zip against the
+fingerprint packed with it and shows a card: your version → the new one, *What's new*, the size, and **Install**. It
+installs, restarts itself in the same Terminal window and the page reloads and says *Updated to version …*. Your
+companies, reels, models and keys are never touched. A changed or damaged zip, an older version or one with a part
+missing is refused and nothing changes. The version you had is kept: **↩ Roll back to …** puts it back exactly. If
+the new version ever cannot start at all, the Terminal window offers to go back: type **B** and press Return.
+Updates come only from a zip you choose; the studio never looks for updates online.
 
 **Connect Claude (optional).** Without it everything works offline. With it: *Smart brief* and *Best quality*
 translation. Paste your key (console.anthropic.com → API keys), **Save**, **Test**. The key is kept by the studio in
@@ -393,6 +408,15 @@ Space play/pause · J K L back/stop/forward · S split · Delete remove · Shift
   `art.js`, `icons.js` (vendored Lucide), `imagegen/` (SDXS worker, prompts, picture check), `screen.js`, `editor.js`.
   Checked by `tools/d-check.cjs` (+ `d-claude-mock.cjs`, `d-briefs.mjs`; `d-gen-probe.cjs` / `d-imagegen-probe.cjs` for
   contact sheets and the model alone).
+* Updates — `engine/update.go` (`/api/update`, `/upload`, `/cancel`, `/install`, `/rollback`) + `app/settings/updates.js`
+  (Configure → Updates). The package is the `package-mac.sh` zip with `KBB Studio/update.json` (version, `minVersion`,
+  notes from the `## <version>` block of `tools/release-notes.txt`, size + sha256 per file, `signature` reserved; written
+  by `tools/make-update-manifest.py`). Checked before anything changes; staged in `.update/` inside the app folder;
+  swapped by renames with a journal (undone on failure, and on the next start after a crash); `.update/previous` is the
+  one-level Roll back; the engine re-execs itself (`-after-update`). The launcher offers the previous version when the
+  new engine cannot start. Integrity only, no signature yet (no safe place for a key). Checked by `go test` and
+  `tools/update-check.cjs`.
+* Moving a reel — `engine/move.go` (`/api/projects/move`) + `moveDialog` in `app/editor/home.js`; `tools/move-check.cjs`.
 * `app/settings/` — ⚙ Configure (`configure.js`) and the Claude client (`claude.js`: `claudeStatus()`, `claudeRun({task})`
   for other modules; tasks `test`, `brief`, `translate`). The engine side is `engine/settings.go`: the key in
   `settings/claude.json` (0600), calls only to `https://api.anthropic.com/v1/messages` after the per-session grant,
