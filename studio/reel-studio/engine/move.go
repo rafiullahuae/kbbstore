@@ -28,6 +28,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var (
@@ -61,6 +62,10 @@ func (s *server) companyName(ws string) string {
 type moveReq struct {
 	From, To, ID string
 	Copy         bool
+	// a duplicate (the owner, 19 Nov: "allow us to duplicate the project if required"): a copy under a new id, in the
+	// same company or another, with its own name
+	NewID string `json:"newId"`
+	Name  string `json:"name"`
 }
 
 type moveResult struct {
@@ -95,11 +100,21 @@ func (s *server) moveProject(q moveReq) (*moveResult, int, error) {
 	if !wsIDRe.MatchString(q.From) || !wsIDRe.MatchString(q.To) || len(q.From) > 64 || len(q.To) > 64 || !projIDRe.MatchString(q.ID) {
 		return nil, 400, errors.New("That is not a reel or a company of this studio.")
 	}
-	if q.From == q.To {
+	dstID := q.ID
+	if q.NewID != "" {
+		if !q.Copy || !projIDRe.MatchString(q.NewID) || q.NewID == q.ID {
+			return nil, 400, errors.New("That is not a new id for a copy.")
+		}
+		dstID = q.NewID
+	}
+	if q.From == q.To && dstID == q.ID {
 		return nil, 400, errors.New("The reel is already in that company.")
 	}
+	if len(q.Name) > 200 {
+		return nil, 400, errors.New("That name is too long.")
+	}
 	srcRel := "workspaces/" + q.From + "/projects/" + q.ID
-	dstRel := "workspaces/" + q.To + "/projects/" + q.ID
+	dstRel := "workspaces/" + q.To + "/projects/" + dstID
 	src, err1 := s.resolveWrite(srcRel, writeRoots)
 	dst, err2 := s.resolveWrite(dstRel, writeRoots)
 	wsFile, err3 := s.resolveWrite("workspaces/"+q.To+"/workspace.json", writeRoots)
@@ -118,7 +133,7 @@ func (s *server) moveProject(q moveReq) (*moveResult, int, error) {
 		return nil, 404, errors.New("That reel is not there any more.")
 	}
 	if _, err := os.Lstat(dst); err == nil {
-		return nil, 409, errors.New(toName + " already has a reel with the same id (" + q.ID + "), so it was not moved. Nothing was changed.")
+		return nil, 409, errors.New(toName + " already has a reel with the same id (" + dstID + "), so it was not moved. Nothing was changed.")
 	}
 	var proj map[string]any
 	dec := json.NewDecoder(bytes.NewReader(raw))
@@ -160,7 +175,7 @@ func (s *server) moveProject(q moveReq) (*moveResult, int, error) {
 				return lead + dstRel
 			case strings.HasPrefix(s2, oldPre):
 				return lead + newPre + strings.TrimPrefix(s2, oldPre)
-			case strings.HasPrefix(s2, coPre) && !strings.ContainsAny(s2, "?#"):
+			case q.From != q.To && strings.HasPrefix(s2, coPre) && !strings.ContainsAny(s2, "?#"): // (a duplicate in the same company keeps using them)
 				if to, ok := seen[s2]; ok {
 					return lead + to
 				}
@@ -191,6 +206,13 @@ func (s *server) moveProject(q moveReq) (*moveResult, int, error) {
 		return nil, 422, walkErr
 	}
 	proj["workspace"] = q.To
+	if dstID != q.ID {
+		proj["id"] = dstID
+		proj["modified"] = time.Now().UTC().Format(time.RFC3339Nano) // the copy shows first in Recent reels
+	}
+	if n := strings.TrimSpace(q.Name); n != "" {
+		proj["name"] = n
+	}
 	out, err := json.MarshalIndent(proj, "", " ")
 	if err != nil {
 		return nil, 500, err
@@ -243,5 +265,5 @@ func (s *server) moveProject(q moveReq) (*moveResult, int, error) {
 		verb = "copied"
 	}
 	log.Printf("reel %s %s from %s to %s (%d files brought along)", q.ID, verb, q.From, q.To, len(brings))
-	return &moveResult{OK: true, ID: q.ID, To: q.To, ToName: toName, Path: dstRel, Brought: len(brings), Copy: q.Copy}, 200, nil
+	return &moveResult{OK: true, ID: dstID, To: q.To, ToName: toName, Path: dstRel, Brought: len(brings), Copy: q.Copy}, 200, nil
 }

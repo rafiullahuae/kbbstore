@@ -275,6 +275,7 @@ export const CATALOGUE = [
   E(S, '⬆', 'Updates', 'Configure → Updates', 'Install a new KBB Studio from the zip you received: see what’s new, then Install; it restarts by itself.', cfg('updates', 'Install update…'), { syn: ['update', 'upgrade', 'patch', 'new version', 'install update', 'version', 'zip'], ar: 'تحديث' }),
   E(A, '↩', 'Roll back an update', 'Configure → Updates', 'Puts the version you had before back, exactly as it was; your companies, reels and keys stay.', cfg('updates', null), { syn: ['rollback', 'undo update', 'previous version', 'downgrade', 'go back'] }),
   E(A, '⇄', 'Move a reel to another company', 'Home → Recent reels → ⇄', 'Moves (or copies) a reel with its clips to another company; it keeps its own look.', { screen: 'home', sel: '.recent .move' }, { syn: ['move project', 'change company', 'transfer reel', 'copy reel', 'move reel', 'copy to company'], ar: 'نقل' }),
+  E(A, '⧉', 'Duplicate a reel', 'Home → Recent reels → ⧉', 'Makes a full copy of a reel, clips and all, in the same company, named “… (copy)”.', { screen: 'home', sel: '.recent .dup' }, { syn: ['duplicate project', 'copy project', 'duplicate reel', 'clone', 'make a copy', 'save as copy'], ar: 'نسخ' }),
 ];
 
 // stable ids, a flag for the ranking, normalised once

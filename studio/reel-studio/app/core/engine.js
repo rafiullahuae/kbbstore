@@ -111,8 +111,10 @@ class EngineClient {
   }
   /** a reel's folder (media and all) to another company; copy: true leaves the original. Refuses an id the target
    *  already has. -> { ok, id, to, toName, path, brought, copy } (engine/move.go) */
-  async moveProject(from, to, id, copy = false) {
-    return (await this._fetch('/api/projects/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from, to, id, copy }) })).json();
+  /** a copy of reel `id` in the same company under a new id and name (Recent reels → ⧉ Duplicate; engine/move.go) */
+  duplicateProject(ws, id, newId, name) { return this.moveProject(ws, ws, id, true, { newId, name }); }
+  async moveProject(from, to, id, copy = false, extra = {}) {
+    return (await this._fetch('/api/projects/move', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from, to, id, copy, ...extra }) })).json();
   }
   async export(path, blob) { return this.writeFile(path, blob); }
 

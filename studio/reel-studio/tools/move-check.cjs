@@ -9,6 +9,7 @@
 //      project.json says so and its media paths point there; nothing else in the data folder changed
 //   3. the toast's "Open it there": it opens in Planet Careers and PLAYS (the playhead moves, the video decodes)
 //   4. a reel with the same id already in the target: refused in the dialog with a clear message, nothing changed
+//   5. ⧉ Duplicate: a full copy in the same company under a new id, media and all, listed first; the original untouched
 // Pictures -> shots/move/ (01-dialog, 02-moved, 03-open-in-target, 04-collision).
 //
 // usage: NODE_PATH=/home/user/kbbstore/node_modules node tools/move-check.cjs
@@ -135,6 +136,31 @@ const freePort = () => new Promise((res) => { const s = net.createServer().liste
   ok(await page.isVisible('.move-dlg'), 'the dialog stays open so he can pick another company or cancel');
   await shot('04-collision');
   ok(treeSum(DATA, SKIP) === before, 'nothing changed on disk');
+
+  // ── 5. ⧉ Duplicate (the owner, 19 Nov: "allow us to duplicate the project if required") ──
+  await page.keyboard.press('Escape'); await page.goto(url + '/app/');
+  await page.waitForSelector(`.recent[title="Serum launch"]`);
+  const n0 = await page.$$eval('.recent', (l) => l.length), pc0 = treeSum(path.join(ws('planet-careers'), 'projects', id));
+  await page.hover(`.recent[title="Serum launch"]`);
+  await page.click(`.recent[title="Serum launch"] .dup`);
+  await page.waitForSelector('.move-toast');
+  await page.waitForFunction((n) => document.querySelectorAll('.recent').length === n + 1, n0);
+  const toastD = (await page.textContent('.move-toast')).trim();
+  const dirs = fs.readdirSync(path.join(ws('planet-careers'), 'projects')).filter((d) => d !== id);
+  const dupId = dirs.find((d) => { try { return JSON.parse(fs.readFileSync(path.join(ws('planet-careers'), 'projects', d, 'project.json'), 'utf8')).name === 'Serum launch (copy)'; } catch { return false; } });
+  const dp = dupId && JSON.parse(fs.readFileSync(path.join(ws('planet-careers'), 'projects', dupId, 'project.json'), 'utf8'));
+  ok(!!dp && /duplicated as “Serum launch \(copy\)”/.test(toastD) && await page.$('.recent[title="Serum launch (copy)"]') !== null,
+    `⧉ Duplicate: “Serum launch (copy)” is listed in the same company (${toastD})`);
+  ok(dp && dp.id === dupId && dp.workspace === 'planet-careers' && dp.media.every((m) => m.src.startsWith(`workspaces/planet-careers/projects/${dupId}/media/`)),
+    'the copy has its own id and its media paths point into its own folder');
+  ok(dp && treeSum(path.join(ws('planet-careers'), 'projects', dupId), ['project.json']) === reel0, 'its media came along byte for byte');
+  ok(treeSum(path.join(ws('planet-careers'), 'projects', id)) === pc0, 'the original reel is untouched');
+  await page.mouse.move(1430, 450);
+  await page.$eval('.recent-card', (e) => e.scrollIntoView({ block: 'end' }));
+  await shot('05-duplicated');
+  await page.click('#dup-open');
+  await page.waitForFunction((d) => window.kbbEditor?.project.id === d && kbbEditor.project.media[0]?.dur > 0, dupId, { timeout: 60000 });
+  ok(true, 'the toast’s “Open the copy” opens it');
 
   ok(errors.length === 0, `no console errors (${errors.slice(0, 3).join(' | ')})`);
   await browser.close();

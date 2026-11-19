@@ -2,7 +2,7 @@
 
 import { engine } from '../core/engine.js';
 import { APP_NAME } from '../core/config.js';
-import { createProject, ASPECTS } from '../core/project.js';
+import { createProject, ASPECTS, uid } from '../core/project.js';
 import { h, clear, toast, seg, confirmDialog, modal } from './ui.js';
 import { state as ws, workspaceSwitcher, companyDialog, wsBadge, switchWorkspace } from './workspaces.js';
 import { loadRecipes } from './bin.js';
@@ -91,6 +91,7 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
     for (const r of list.slice(0, 12)) {
       recent.appendChild(h('div.recent', { role: 'button', tabindex: '0', title: r.name, on: { click: () => openById(r.id), keydown: (e) => e.key === 'Enter' && openById(r.id) } },
         h('span.r-aspect', { dataset: { a: r.aspect || '' } }, r.aspect || ''), h('div', h('b', { dir: 'auto' }, r.name), h('small', new Date(r.modified).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))),
+        h('button.icon-btn.dup', { title: 'Duplicate this reel (a full copy in this company)', 'aria-label': 'Duplicate this reel', on: { click: (e) => { e.stopPropagation(); duplicate(r); } } }, '⧉'),
         ws.list.length > 1 ? h('button.icon-btn.move', { title: 'Move or copy this reel to another company', 'aria-label': 'Move to another company', on: { click: (e) => { e.stopPropagation(); moveDialog(r); } } }, '⇄') : null,
         h('button.icon-btn.del', { title: 'Delete this reel', on: { click: async (e) => { e.stopPropagation(); if (await confirmDialog('Delete reel?', `"${r.name}" and its copied media will be deleted.`, 'Delete')) { await engine.remove(`workspaces/${w.id}/projects/${r.id}`); rerender(); } } } }, '✕')));
     }
@@ -98,6 +99,17 @@ export async function renderHome(root, { onOpen, onDropFiles }) {
 
   async function openById(id) {
     try { onOpen(await engine.loadProject(w.id, id)); } catch (e) { toast('Could not open: ' + e.message, 'error'); }
+  }
+
+  // ⧉ Duplicate (the owner, 19 Nov: "allow us to duplicate the project if required"): a full copy of the reel, media
+  // and all, in this company under a new id, named "… (copy)" (engine/move.go); it shows first in Recent reels
+  async function duplicate(r) {
+    try {
+      const res = await engine.duplicateProject(w.id, r.id, uid('p'), `${r.name} (copy)`);
+      rerender();
+      const open = h('button.btn.small#dup-open', { on: { click: async () => { try { onOpen(await engine.loadProject(w.id, res.id)); } catch (e) { toast('Could not open: ' + e.message, 'error'); } } } }, 'Open the copy');
+      toast(h('span.move-toast', `“${r.name}” duplicated as “${r.name} (copy)”. `, open), 'ok', 7000);
+    } catch (e) { toast('Could not duplicate: ' + e.message, 'error'); }
   }
 
   // ⇄ Move to company (the owner, 19 Nov: "allow me facility to move the project from one company to another"): the

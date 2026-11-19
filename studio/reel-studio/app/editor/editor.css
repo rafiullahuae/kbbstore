@@ -453,6 +453,9 @@ kbd { background: var(--panel3); border: 1px solid var(--line2); border-bottom-w
 .recent .move { opacity: .5; color: var(--muted); }
 .recent:hover .move { opacity: 1; }
 .recent .move:hover { color: var(--text); background: var(--accent-soft); }
+.recent .dup { opacity: .5; color: var(--muted); }
+.recent:hover .dup { opacity: 1; }
+.recent .dup:hover { color: var(--text); background: var(--accent-soft); }
 /* ⇄ Move to company (home.js moveDialog) */
 .move-dlg { display: flex; flex-direction: column; gap: 10px; min-width: min(440px, 80vw); }
 .move-dlg p { margin: 0; }

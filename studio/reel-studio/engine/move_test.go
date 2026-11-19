@@ -125,3 +125,47 @@ func TestCopyReel(t *testing.T) {
 		t.Fatalf("the original stays editable after a copy: %d", r.Code)
 	}
 }
+
+// the owner, 19 Nov: "allow us to duplicate the project if required" — a copy in the same company under a new id
+// and name; its own media paths point into its own folder, the original is untouched, the company's other files
+// (the logo) are still used where they are.
+func TestDuplicateReel(t *testing.T) {
+	s := moveServer(t)
+	ws := filepath.Join(s.data, "workspaces")
+	orig := readAll(t, filepath.Join(ws, "kbb", "projects", "p1", "project.json"))
+	r := call(s, "POST", "/api/projects/move", `{"from":"kbb","to":"kbb","id":"p1","copy":true,"newId":"p2","name":"Serum reel (copy)"}`)
+	if r.Code != 200 || !strings.Contains(r.Body.String(), `"id":"p2"`) {
+		t.Fatalf("%d %s", r.Code, r.Body)
+	}
+	if readAll(t, filepath.Join(ws, "kbb", "projects", "p1", "project.json")) != orig {
+		t.Fatal("duplicating changed the original")
+	}
+	if readAll(t, filepath.Join(ws, "kbb", "projects", "p2", "media", "m1-clip.mp4")) != "MP4DATA" {
+		t.Fatal("the duplicate has no media")
+	}
+	var p map[string]any
+	if err := json.Unmarshal([]byte(readAll(t, filepath.Join(ws, "kbb", "projects", "p2", "project.json"))), &p); err != nil {
+		t.Fatal(err)
+	}
+	src := p["media"].([]any)[0].(map[string]any)["src"]
+	if p["id"] != "p2" || p["name"] != "Serum reel (copy)" || p["workspace"] != "kbb" || src != "workspaces/kbb/projects/p2/media/m1-clip.mp4" || p["logo"] != "workspaces/kbb/brand/logo.png" {
+		t.Fatalf("duplicate: id %v name %v ws %v media %v logo %v", p["id"], p["name"], p["workspace"], src, p["logo"])
+	}
+	if _, err := os.Stat(filepath.Join(ws, "kbb", "projects", "p2", "media", "from-kbb")); err == nil {
+		t.Fatal("a duplicate in the same company brought the company's own files along")
+	}
+	// refusals: a move with a new id, the same id, an id that exists, a bad id; nothing written
+	for _, body := range []string{
+		`{"from":"kbb","to":"kbb","id":"p1","copy":false,"newId":"p3"}`,
+		`{"from":"kbb","to":"kbb","id":"p1","copy":true,"newId":"p1"}`,
+		`{"from":"kbb","to":"kbb","id":"p1","copy":true,"newId":"p2"}`,
+		`{"from":"kbb","to":"kbb","id":"p1","copy":true,"newId":"../x"}`,
+	} {
+		if r := call(s, "POST", "/api/projects/move", body); r.Code < 400 {
+			t.Fatalf("accepted %s: %d", body, r.Code)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(ws, "kbb", "projects", "p3")); err == nil {
+		t.Fatal("a refused request left a folder")
+	}
+}
