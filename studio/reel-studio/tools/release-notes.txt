@@ -9,6 +9,7 @@
 - Copy a reel to another company from the same window.
 - Phone videos now export the right way up (they came out on their side in a story export).
 - Use any company's logo on any reel: Themes → One click → Logo of.
+- Captions clip by clip: every clip is heard on its own (no more "no speech heard" on a normal voice), one caption bar per clip, and a box in Captions → Script to type a clip's own script.
 
 ## 1.2.1
 - Captions clip by clip: each clip is heard on its own, with one caption bar per clip and a typed script per clip.

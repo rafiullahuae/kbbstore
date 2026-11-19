@@ -90,8 +90,9 @@ const freePort = () => new Promise((res) => { const s = net.createServer().liste
   ok(man.version === BUILT && man.notes.length > 0 && man.files['engine/kbbstudio-mac-arm64'] && man.files['engine/kbbstudio-mac-amd64'] && 'signature' in man,
     `its manifest: version, ${man.notes.length} note(s), ${Object.keys(man.files).length} files with sha256, both Mac engines, a signature field reserved`);
   execFileSync('cp', ['-a', DIST, APP]);
-  fs.writeFileSync(path.join(T, 'notes.txt'), '## 1.3.0\n- Install updates from Configure → Updates.\n- Move a reel to another company (⇄ in Recent reels).\n## 1.0.0\n- old\n');
-  const NEW = '1.3.0';
+  // the update installed in this check: the version after the one just built (whatever APP_VERSION is today)
+  const NEW = BUILT.replace(/(\d+)$/, (d) => String(+d + 1));
+  fs.writeFileSync(path.join(T, 'notes.txt'), `## ${NEW}\n- Install updates from Configure → Updates.\n- Move a reel to another company (⇄ in Recent reels).\n## 1.0.0\n- old\n`);
   const good = makePkg('good', NEW, (f, when) => { if (when === 'pre') fs.writeFileSync(path.join(f, 'app/update-proof.txt'), 'installed by the updater\n'); });
   const bad = {
     tampered: [makePkg('tampered', NEW, (f, when) => { if (when === 'post') fs.appendFileSync(path.join(f, 'app/index.html'), '<!-- changed -->'); }), /changed or damaged/],
@@ -164,10 +165,10 @@ const freePort = () => new Promise((res) => { const s = net.createServer().liste
   let nav = page.waitForNavigation({ timeout: 90000 });
   await page.click('#upd-install');
   await nav;
-  await waitOut(/Updated: KBB Studio 1\.3\.0 is running/, 60000);
+  await waitOut(new RegExp(`Updated: KBB Studio ${NEW.replace(/\./g, '\\.')} is running`), 60000);
   await page.waitForSelector('#upd-done', { timeout: 90000 });
   const done = await page.textContent('#upd-done');
-  ok(/Updated to version 1\.3\.0/.test(done), `the page reloaded by itself and says “${done.split('.')[0]}.”`);
+  ok(done.includes(`Updated to version ${NEW}`), `the page reloaded by itself and says “${done.split('.')[0]}.”`);
   ok((await page.textContent('#upd-version')).includes(NEW), 'the version shown is the new one');
   ok(!exited && eng.pid === pid && (out.match(/running at/g) || []).length === 2 && out.includes(`127.0.0.1:${port}`), 'the engine re-executed itself in the same process (same window), on the same port');
   ok(appVersion(APP) === NEW && fs.existsSync(path.join(APP, 'app/update-proof.txt')), 'the app folder has the new files');
@@ -190,7 +191,7 @@ const freePort = () => new Promise((res) => { const s = net.createServer().liste
   ok(treeSum(APP, ['.update']) === app0, 'after Roll back the app folder is byte-identical to before the update');
   ok(treeSum(DATA, DATA_SKIP) === data0, 'the data folder is still untouched');
   const hist = await page.$$eval('.upd-hist li', (l) => l.map((x) => x.textContent));
-  ok(hist.length === 2 && /Rolled back 1\.3\.0 → /.test(hist[0]) && /Updated .* → 1\.3\.0/.test(hist[1]), `history: ${JSON.stringify(hist)}`);
+  ok(hist.length === 2 && hist[0].includes(`Rolled back ${NEW} → `) && new RegExp(`Updated .* → ${NEW.replace(/\./g, '\\.')}`).test(hist[1]), `history: ${JSON.stringify(hist)}`);
   ok((await page.textContent('#upd-rollback')).includes(NEW), `and the way forward again is “Roll back to ${NEW}”`);
   await page.evaluate(() => document.querySelector('.cfg-main').scrollTo(0, 0));
   await shot('05-rolled-back');
