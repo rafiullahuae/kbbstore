@@ -157,3 +157,10 @@
 .rs-cap-line.pos-sel { background: var(--accent-soft, rgba(232,80,139,.16)); box-shadow: inset 2px 0 0 var(--sel, #ffd166); }
 .rs-cap-ov .rs-cap-pair { min-width: 0; } .rs-cap-ov .rs-cap-pair input[type="range"] { width: 0; min-width: 0; }   /* X + Y sliders share one row */
 .rs-cap .rs-cap-posval { flex: 1 1 0; width: 0; min-width: 0; padding: 5px 6px; }
+
+/* the Script tab clip by clip: a clip's heading, and the box to type a clip's script (typed.js) */
+.rs-cap-clip { display: flex; align-items: center; gap: 8px; margin: 12px 0 2px; font-size: 13px; font-weight: 600; }
+.rs-cap-clip:first-child { margin-top: 2px; }
+.rs-cap-clipname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-cap-typed { min-height: 3.3em; border-color: var(--c-line, rgba(127,127,127,.35)); border-style: dashed; }
+.rs-cap-typed:empty::before { content: attr(data-ph); color: var(--c-mute, #8a93a6); pointer-events: none; }

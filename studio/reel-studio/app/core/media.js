@@ -183,6 +183,14 @@ export class MediaStore {
       const b16 = await new OfflineAudioContext(1, 1, 16000).decodeAudioData(bytes);
       const mono16k = new Float32Array(b16.length);
       for (let c = 0; c < b16.numberOfChannels; c++) { const d = b16.getChannelData(c); for (let i = 0; i < d.length; i++) mono16k[i] += d[i] / b16.numberOfChannels; }
+      // a stereo recording whose two sides are out of phase (some phone / lapel mic setups) cancels to near silence
+      // when the sides are averaged: speech recognition then hears nothing in a voice everybody can hear. Use the
+      // louder side instead when the average lost most of the sound.
+      if (b16.numberOfChannels === 2) {
+        const L = b16.getChannelData(0), R = b16.getChannelData(1), ms = (d) => { let e = 0; for (let i = 0; i < d.length; i += 7) e += d[i] * d[i]; return e; };
+        const eL = ms(L), eR = ms(R), eM = ms(mono16k);
+        if (Math.max(eL, eR) > 1e-6 && eM < 0.12 * Math.max(eL, eR)) mono16k.set(eL >= eR ? L : R);
+      }
       const L = b48.getChannelData(0), R = b48.numberOfChannels > 1 ? b48.getChannelData(1) : L;
       return { mono16k, pcm48k: { sampleRate: 48000, length: b48.length, channels: [L, R] }, buffer: b48 };
     })();

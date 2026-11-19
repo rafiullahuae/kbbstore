@@ -76,7 +76,7 @@ function state(p) {
   return { sig: sigOf(videoClips(p)), els, trans, pics, music, content: contentEnd(p), caps: new Map(caps.map((c) => [c.id, itemEnd(c)])) };
 }
 /** the caption layer items (type 'caption', one per caption track, spanning 0..end) */
-const captionItems = (p) => p.tracks.filter((t) => t.kind === 'caption' && !t.locked).flatMap((t) => t.items.filter((i) => i.type === 'caption' && Math.abs(i.t0) < 1e-6));
+const captionItems = (p) => p.tracks.filter((t) => t.kind === 'caption' && !t.locked).flatMap((t) => t.items.filter((i) => i.type === 'caption' && !i.clip && Math.abs(i.t0) < 1e-6));   // per-clip bars follow their clip (captions/items.js)
 /** where the pictures and sound end (the caption layer never holds the reel open: Auto captions caps it at this) */
 function contentEnd(p) { let e = 0; for (const tr of p.tracks) if (tr.kind !== 'caption') for (const it of tr.items) e = Math.max(e, itemEnd(it)); return e; }
 

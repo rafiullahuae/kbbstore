@@ -73,7 +73,8 @@ function makeMedia() {
     if (!E.__autocap) { const orig = E.modelsStatus.bind(E); E.modelsStatus = async () => { const st = await orig(); for (const m of st.models) if (m.id === 'whisper-' + model) m.installed = true; return st; }; E.__autocap = true; }
     window.CC = await import('/app/captions/commands.js'); window.ED = ed;
     window.clips = () => ed.project.tracks.find((t) => t.kind === 'video').items.slice().sort((a, b) => a.t0 - b.t0).map((c) => ({ id: c.id, t0: c.t0, t1: c.t0 + (c.out - c.in) / (c.speed || 1), name: ed.project.media.find((m) => m.id === c.media)?.name }));
-    window.capItem = () => { const it = ed.project.tracks.find((t) => t.kind === 'caption').items.find((i) => i.type === 'caption'); return it ? [it.t0, it.t0 + (it.out - it.in) / (it.speed || 1)] : null; };
+    // the caption layer = every caption bar (one per clip since clip-by-clip bars): from the first bar's start to the last bar's end
+    window.capItem = () => { const its = ed.project.tracks.find((t) => t.kind === 'caption').items.filter((i) => i.type === 'caption'); return its.length ? [Math.min(...its.map((it) => it.t0)), Math.max(...its.map((it) => it.t0 + (it.out - it.in) / (it.speed || 1)))] : null; };
     window.wordsIn = (a, b) => (ed.project.captions?.words || []).filter((w) => (w.t0 + w.t1) / 2 >= a && (w.t0 + w.t1) / 2 < b);
     window.toasts = [];
     if (!window.__tw) { window.__tw = new MutationObserver(() => { for (const t of document.querySelectorAll('.toast')) if (!t.__seen) { t.__seen = 1; window.toasts.push(t.className.replace('toast ', '') + ': ' + t.textContent); } }); window.__tw.observe(document.body, { childList: true, subtree: true }); }

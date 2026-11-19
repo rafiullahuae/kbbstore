@@ -18,7 +18,7 @@ export function visibleWords(cap, mode = cap.soundTags || DEFAULT_TAG_MODE) {
  * and once a paragraph passes `maxWords` at the next sentence end. Each: { a, b (word indices, inclusive, into
  * cap.words), t0, t1, spk, text }.
  */
-export function paragraphs(cap, { pause = 0.9, maxWords = 70, mode } = {}) {
+export function paragraphs(cap, { pause = 0.9, maxWords = 70, mode, cuts = null } = {}) {
   const ws = cap.words, out = [];
   if (!ws.length) return out;
   let a = 0;
@@ -31,6 +31,8 @@ export function paragraphs(cap, { pause = 0.9, maxWords = 70, mode } = {}) {
       if ((w.spk ?? 0) !== (n.spk ?? 0)) brk = true;
       if (end && i - a + 1 >= maxWords) brk = true;
       if (!!w.tag !== !!n.tag && gap >= 0.3) brk = true;
+      // cuts: [t] where a new clip starts (the Script tab lists the script clip by clip): a paragraph never spans one
+      if (cuts && cuts.some((t) => (w.t0 + w.t1) / 2 < t && (n.t0 + n.t1) / 2 >= t)) brk = true;
     }
     if (brk) { out.push(para(cap, a, i, mode)); a = i + 1; }
   }

@@ -367,7 +367,7 @@ const union = (bs) => { bs = bs.filter(Boolean); if (!bs.length) return null; co
 export function captionBoxes(p) {
   const out = [];
   for (const tr of p.tracks) if (tr.kind === 'caption' && !tr.hidden) for (const it of tr.items) if (it.type === 'caption') {
-    for (const L of p.captions?.lines || []) { const t = Math.min((L.t0 + L.t1) / 2, itemEnd(it) - 0.01); if (t < it.t0) continue; const b = drawnBox(p, tr, it, t); if (b) out.push({ line: L.id, t: r3(t), box: b }); }
+    for (const L of p.captions?.lines || []) { const t = Math.min((L.t0 + L.t1) / 2, itemEnd(it) - 0.01); if (t < it.t0 || (it.clip && (L.t0 + L.t1) / 2 >= itemEnd(it))) continue; const b = drawnBox(p, tr, it, t); if (b) out.push({ line: L.id, t: r3(t), box: b }); }
   }
   return out;
 }

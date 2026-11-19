@@ -99,7 +99,7 @@ export function effectsCommands(p, ev, { kitI, sfxLib, ot = trackOf(p, 'overlay'
 
 /** the caption item spans exactly 0..end (null when there is none or it already does) */
 export function fitCaptionItem(p, end) {
-  const it = tracksOfKind(p, 'caption').flatMap(t => t.items).find(i => i.type === 'caption');
+  const it = tracksOfKind(p, 'caption').flatMap(t => t.items).find(i => i.type === 'caption' && !i.clip);   // per-clip bars follow their clip (captions/items.js)
   if (!it || !(end > 0) || Math.abs(itemEnd(it) - end) < 1e-3) return null;
   return ops.setItem(it.id, { t0: 0, in: 0, out: +end.toFixed(3), speed: 1 }, 'Captions');
 }
@@ -155,7 +155,7 @@ export function removeCutsCommand(p, mediaId, cuts) {
   if (p.captions?.words?.length && p.meta?.sync?.follow === false) cmds.push(ops.setCaptions(remapCaptions(p.captions, segs)));
   const removed = removedAt.reduce((a, b) => a + b[1], 0);
   // the caption item starts at 0 so the ripple never moves it: it gets shorter by what was cut before its end
-  for (const tr of p.tracks) if (tr.kind === 'caption') for (const it of tr.items) if (it.type === 'caption') { const d = shift(itemEnd(it)); if (d > 1e-4) cmds.push(ops.setItem(it.id, { out: +(it.out - d).toFixed(4) }, 'Captions')); }
+  for (const tr of p.tracks) if (tr.kind === 'caption') for (const it of tr.items) if (it.type === 'caption' && !it.clip) { const d = shift(itemEnd(it)); if (d > 1e-4) cmds.push(ops.setItem(it.id, { out: +(it.out - d).toFixed(4) }, 'Captions')); }
   const cmd = ops.batch(`Remove silences (−${removed.toFixed(1)} s)`, cmds); cmd.removed = removed; cmd.keep = keep;
   return cmd;
 }
