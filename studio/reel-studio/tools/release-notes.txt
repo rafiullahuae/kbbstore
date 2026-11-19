@@ -2,6 +2,13 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.3.3
+- Text behind the host now has its own editor window beside the video, so the frame is never covered: tabs for Words, Look, Position and Cut-out.
+- Every change shows on the video straight away; ✓ Apply keeps it (one undo step), Cancel puts it back exactly as it was.
+- Open it by double-clicking the words on the video or timeline, or with ✎ Edit text behind… in the right panel, which is now short.
+- Fixed: "Finding the person…" stayed on for ever; it now says when the person is found, or why not with ↻ Try again.
+- Fixed: the words no longer run past the end of the video (they used to add black seconds to the export).
+
 ## 1.3.2
 - Text behind the host: a big word like EUROPE behind the person in your video, the real background still there. Themes → Place elements → Text behind the host.
 - Two lines if you want: JOBS IN on top (switch it off for the big word only), the country or a carousel of countries below.
