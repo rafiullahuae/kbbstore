@@ -60,6 +60,12 @@ class BuildPackage extends Command
         // guard refusing a zip that should never have been built is a worse
         // outcome than the zip not containing it.
         'wordpress-plugin/',
+        // KBB Studio, the owner's offline Mac video / ad tool: a SEPARATE project that never ships to the website
+        // (the owner, 16 and 19 Nov: "always keep the kbb studio and the kbeautybliss.com completely separate").
+        // UpdateGuard would refuse the whole package for it (no allowed prefix); this keeps a --since range that
+        // crosses studio commits from building a website package the server must reject. The studio ships as its
+        // own zip (studio/reel-studio/tools/package-mac.sh), installed in KBB Studio → Configure → Updates.
+        'studio/',
         // Repo-only. UpdateGuard rejects it twice over -- no allowed prefix and
         // no extension -- and the server does not read it anyway: the installed
         // version is the newest applied row in update_releases.

@@ -203,6 +203,18 @@ ships in a website update package, never touches `app/`, `resources/`, `routes/`
 `public/`, and its progress is tracked here, in this section only — never mixed into the website phases
 below.
 
+**Completely separate, restated by the owner, 19 Nov:** *"always keep the kbb studio and the kbeautybliss.com
+completely separate. also mention this in the master plan file."* Concretely:
+- **Code:** KBB Studio lives only under `studio/`; the website never imports, serves or packages it, and the studio
+  never reads the shop's database, settings or files.
+- **Releases:** the studio ships as its own zip, `KBB Studio v<version>.zip` (`studio/reel-studio/tools/package-mac.sh`),
+  installed in **KBB Studio → ⚙ Configure → ⬆ Updates** (from v1.3.0; roll back there too). The website ships through
+  `php artisan kbb:package` and Platform → Core Updates.
+- **Enforcement:** `kbb:package` lists `studio/` in `NEVER_SHIP`, and `tests/Feature/StudioNeverShipsTest.php` pins
+  that; the website's UpdateGuard has no `studio/` prefix either.
+- **Records:** studio versions and work are recorded in this section only. Website packages and website phases never
+  mention studio work, and studio zips never carry website files.
+
 | Date | Studio item | State |
 |---|---|---|
 | 15–16 Nov | Ad Studio: 69 templates, National Day sets, multi-select/groups/align, backgrounds and colour controls | Done (artifact) |
@@ -226,6 +238,10 @@ below.
 | 18 Nov | KBB Studio v1.0.1: capsules carousel (2 auto-scrolling rows, 100 jobs, countries by continent, 14 looks, per-capsule colours; caps-check), Ad Studio fits the screen, search box over every control with one-line descriptions and exact navigation (search-check), rich hover help, one-click background removal on video and in Ad Studio (bg-check), theme text editable in place by double-click (text-check), Auto captions for whole video or selected clips (autocap-check 27). Zip delivered. | Done |
 | 18 Nov | KBB Studio v1.1.0: 15 contact cards (phone + WhatsApp etc.), one-click logo badge (circle/square/rectangle), 6 country globe badge looks with "Badge every country I mention", 7 cut-out transitions, 11 ending screens (el2-check). Zips now carry the version (APP_VERSION). Zip delivered. | Done |
 | 18 Nov | KBB Studio v1.2.0: Hindi / Urdu / Hinglish detection, captions in Devanagari, Roman Hindi or Urdu script with a lossless one-click switch, offline transliterator + 3,749-word dictionary, English stretches in Hinglish kept as English, RTL English-run order fixed (hindi-check). Zip delivered. | Done |
+| 19 Nov | KBB Studio v1.2.1: captions clip by clip. The owner's third clip came back "no speech heard": every clip was mixed into one recording, so the loudest set the level and language for all. Now each clip is heard on its own, at a speech level, from the louder side when an out-of-phase stereo pair cancels. One caption bar per clip, following its clip through moves, splits, ripples and deletes. Script tab lists clip by clip, with a box to type a clip's script, synced to its voice (clipcap-check). | Done |
+| 19 Nov | KBB Studio v1.2.2: any company's logo on any reel (Themes → One click → Logo of), for the logo badge, the ending screen and placed logos; the reel keeps its own colours (el2-check). | Done |
+| 19 Nov | KBB Studio v1.2.3: phone clips export the right way up. An iPhone's rotation tag was applied by the preview but not by the WebCodecs export, so a 9:16 story came out sideways. Every decoded frame is now turned by the track's display matrix (rotate-check: red on the old code, green now). | Done |
+| 19 Nov | KBB Studio v1.3.0: in-app updates, the studio's own equivalent of the website's Core Updates (⚙ Configure → ⬆ Updates: review card, sha256 for every file, staged swap with automatic undo, restart, one-level roll back, history; update-check, Go tests). Move or copy a reel between companies (⇄ in Recent reels; move-check). Website packages can never carry studio files (`NEVER_SHIP` + StudioNeverShipsTest). One zip with everything since v1.2.0. | Done |
 | 16 Nov | Owner: **Brief → Designs** (type a brief, get 6–8 professional editable ads; same reader drives Brief → Reel). Offline by default and fully capable (rule parser + a small local language model on the Mac GPU, downloaded once after permission); optional "Connect Claude" with his key, off by default; AI-generated visuals offline (local image model on the Mac GPU, procedural artwork, restyled icon set, generated colour schemes) — owner, 16 Nov. | Planned (after round 1) |
 
 ## Mobile app — planning ledger  *(opened 12 November 2026, kept running)*
