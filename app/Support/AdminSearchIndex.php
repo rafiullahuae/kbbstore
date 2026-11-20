@@ -865,6 +865,9 @@ final class AdminSearchIndex
                 'Meta Pixel ID', 'Google (GA4) Measurement ID', 'TikTok Pixel ID',
             ],
         ],
+        'adsautopilot' => [
+            '' => ['Create connection key', 'Connection keys', 'Measurement (Meta)', 'Cost prices'],
+        ],
         'searchterms' => [],
         'seokeywords' => [
             'Overview' => [],

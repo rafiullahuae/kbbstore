@@ -49,6 +49,8 @@ class PageController extends Controller
     public const RESERVED_SLUGS = [
         // Routers and framework
         'api', 'admin', 'admin-api', 'up',
+        // KBB Ads Autopilot's read-only shop API (bearer key, stateless).
+        'autopilot-api',
         /*
          * `import-chain` is the loopback endpoint the background import calls
          * to continue itself (Lane GO). It carries no `auth:admin`, by

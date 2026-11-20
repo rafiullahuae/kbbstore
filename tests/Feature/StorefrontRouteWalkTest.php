@@ -175,6 +175,13 @@ function walkExpectations(array $seed): array
         // own gate (MerchantFeed::enabled(), not a private host), so the same 200.
         'feeds/meta-catalog.xml'   => ['status' => 200],
         'feeds/tiktok-catalog.xml' => ['status' => 200],
+        // KBB Ads Autopilot's shop API (Lane AP-API): a bearer key or nothing.
+        // The walk carries no key, so every endpoint must refuse it the same way.
+        'autopilot-api/v1/ping'         => ['status' => 401],
+        'autopilot-api/v1/orders'       => ['status' => 401],
+        'autopilot-api/v1/orders/daily' => ['status' => 401],
+        'autopilot-api/v1/refunds'      => ['status' => 401],
+        'autopilot-api/v1/products'     => ['status' => 401],
         /*
          * Apple's domain-association document (Lane WAL), both spellings Apple
          * publishes. 404 IS THE CORRECT ANSWER ON A SHOP THAT HAS NOT SET ONE
