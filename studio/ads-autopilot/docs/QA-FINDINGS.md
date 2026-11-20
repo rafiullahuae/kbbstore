@@ -50,7 +50,7 @@ creatives and history all still there).
    so the starter reports "skipped: <why>" in Activity.
 2. **`engine/brain/adapter.go:67-75` `save`** ignores every error: MkdirAll, Marshal, WriteFile, Rename (and no fsync).
    On a full disk the brain's per-account settings (ad wording, creation mode), creation requests and trending are not
-   saved, and nothing says so. **`load` (line 61)** returns false on a JSON error, which the callers read as "never set",
+   saved, and nothing says so. **`load` (line 62)** returns false on a JSON error, which the callers read as "never set",
    so the next `save` writes defaults over the owner's choices. This is the same class as the engine bug fixed in
    `store.Load`. Expected: keep a `.unreadable` copy and `e.log("alert", …)` on both.
 3. **`engine/brain/adapter.go:120-128`**: a failed daily trending refresh is dropped without a log line ("never blocks
