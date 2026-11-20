@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// LANE BRAIN fake engine: serves app/ and the engine API (CONTRACT.md + the
-// multi-account / videos / onboarding additions) with realistic fixture data,
+// LANE BRAIN fake engine: serves app/ (at /app/, with the engine's CSP) and the
+// REAL engine API shapes (docs/ENGINE-API.md) + the brain's /api/brain/x/ routes
+// with realistic multi-account fixture data,
 // so the UI can be built and checked without LANE ENGINE, Meta or Claude.
 // NOT shipped. Never talks to Meta or Claude.
 //
@@ -206,80 +207,85 @@ train();
 for (const A of accounts) runBrain(A);
 for (const p of accounts[0].brain ? accounts[0].brain.proposals : []) addLog(accounts[0], 'proposal', p.target, `${p.kind} ${p.target}: ${p.why}`, 'shadow', now - 3600000);
 
-// ---------- derived state ----------
+// ---------- derived state, in the REAL engine's shapes (docs/ENGINE-API.md) ----------
 function agg(rows) {
   const a = rows.reduce((a, r) => { a.spend += r.spend; a.impressions += r.impressions; a.clicks += r.clicks; a.purchases += r.purchases; a.revenue += r.revenue; a.frequency = Math.max(a.frequency, r.frequency || 0); return a; },
     { spend: 0, impressions: 0, clicks: 0, purchases: 0, revenue: 0, frequency: 0 });
   a.roas = a.spend ? a.revenue / a.spend : 0; a.cpa = a.purchases ? a.spend / a.purchases : 0; a.cpc = a.clicks ? a.spend / a.clicks : 0;
-  a.ctr = a.impressions ? a.clicks / a.impressions : 0; a.cpm = a.impressions ? a.spend / a.impressions * 1000 : 0;
+  a.ctr = a.impressions ? a.clicks / a.impressions * 100 : 0; // engine: CTR in percent
+  a.cpm = a.impressions ? a.spend / a.impressions * 1000 : 0;
   for (const k of Object.keys(a)) a[k] = +a[k].toFixed(4);
   return a;
 }
 const since = (n) => dstr(now.getTime() - n * DAY);
-function kpis(A) { const camp = A.metrics.filter((r) => r.level === 'campaign'); return { today: agg(camp.filter((r) => r.date === today)), d7: agg(camp.filter((r) => r.date >= since(7))), d30: agg(camp.filter((r) => r.date >= since(30))) }; }
+const totals = (A) => A.metrics.filter((r) => r.level === 'campaign');
+function kpis(A) { const c = totals(A); return { today: agg(c.filter((r) => r.date === today)), '7d': agg(c.filter((r) => r.date >= since(7))), '30d': agg(c.filter((r) => r.date >= since(30))) }; }
+const limitsSet = (A) => A.cfg.limits.daily_aed > 0 && A.cfg.limits.monthly_aed > 0;
+function engineLimits(A) { const L = A.cfg.limits; return { daily_aed: L.daily_aed, monthly_aed: L.monthly_aed, max_budget_step_pct: L.max_budget_step_pct, cooldown_hours: L.cooldown_hours, max_active_ads: L.max_active_ads, countries: L.countries, autopilot: L.autopilot, target_cpa_aed: L.target_cpa_aed || 0, kill_multiple: L.kill_multiple || 3 }; }
 function alertsOf(A) {
-  const L = A.cfg.limits, out = [];
-  if (!(L.daily_aed > 0 && L.monthly_aed > 0)) out.push({ level: 'warn', text: 'No limits set: the autopilot cannot launch anything in this account.', text_ar: 'لا توجد حدود إنفاق: لن يطلق الطيار الآلي أي شيء في هذا الحساب.', at: now.toISOString() });
-  else if (L.autopilot !== 'auto') out.push({ level: 'info', text: `Autopilot is in ${L.autopilot} mode: proposals are logged, nothing changes on Meta.`, text_ar: L.autopilot === 'shadow' ? 'الطيار الآلي في وضع المراقبة: تُسجَّل المقترحات ولا يتغير شيء على ميتا.' : 'الطيار الآلي متوقف.', at: now.toISOString() });
-  for (const x of A.brain ? A.brain.verdicts : []) if (x.verdict === 'fatigued') out.push({ level: 'warn', text: `An ad shows creative fatigue (${(x.signals || []).join(', ')}); a fresh creative is queued.`, text_ar: 'إعلان يظهر عليه إرهاق الإبداع؛ تمت جدولة إعلان جديد بدلاً منه.', at: now.toISOString(), object: x.object });
-  if (A.cfg.status === 'DISABLED') out.push({ level: 'danger', text: 'Meta disabled this ad account; history is used for learning only.', text_ar: 'عطّلت ميتا هذا الحساب؛ يُستخدم سجله للتعلّم فقط.', at: now.toISOString() });
-  out.push({ level: 'info', text: 'Orders and margins are not connected yet (shop endpoint pending): break-even uses feed prices and a default margin.', text_ar: 'لم تُربط الطلبات والهوامش بعد: نقطة التعادل محسوبة من أسعار المتجر وهامش افتراضي.', at: now.toISOString() });
+  const out = [];
+  if (!limitsSet(A)) out.push({ at: now.toISOString(), level: 'warn', text: 'No limits set: the autopilot cannot launch anything in this account.' });
+  if (A.cfg.status === 'DISABLED') out.push({ at: now.toISOString(), level: 'error', text: 'Meta disabled this ad account; its history is used for learning only.' });
+  for (const x of A.brain ? A.brain.verdicts : []) if (x.verdict === 'fatigued') out.push({ at: now.toISOString(), level: 'warn', text: `Ad ${x.object} shows creative fatigue (${(x.signals || []).join(', ')}); a fresh creative is queued.` });
+  out.push({ at: now.toISOString(), level: 'info', text: 'Orders and margins are not connected yet: break-even uses feed prices and a default margin.' });
   return out;
 }
-function state(A) {
-  const v = Object.fromEntries((A.brain ? A.brain.verdicts : []).map((x) => [x.object, x]));
-  const lastAct = {};
-  for (const l of A.log) if (l.object) lastAct[l.object] = { kind: l.kind, at: l.time, why: l.summary };
+function engineState(A) {
   const m7 = (id) => agg(A.metrics.filter((r) => r.object_id === id && !r.placement && r.date >= since(7)));
-  const t = JSON.parse(JSON.stringify(A.tree));
-  for (const c of t) { c.metrics7 = m7(c.id); c.verdict = v[c.id] || null;
-    for (const s of c.adsets) { s.metrics7 = m7(s.id); s.verdict = v[s.id] || null;
-      for (const a of s.ads) { a.metrics7 = m7(a.id); a.verdict = v[a.id] || null; a.last_action = lastAct[a.id] || null; } } }
-  const lang = {}; for (const s of t[0].adsets) for (const a of s.ads) lang[a.id] = a.lang;
-  const byLang = (l) => agg(A.metrics.filter((r) => r.level === 'ad' && !r.placement && r.date >= since(30) && lang[r.object_id] === l));
-  const camp = A.metrics.filter((r) => r.level === 'campaign');
-  const days = [...new Set(camp.map((r) => r.date))].sort().slice(-30);
-  const e = A.brain ? A.brain.economics : {};
-  const nextCycle = new Date(Math.ceil(Date.now() / (4 * 3600000)) * 4 * 3600000);
-  const placements = ['reels', 'stories', 'feed'].map((p) => Object.assign({ placement: p }, agg(A.metrics.filter((r) => r.placement === p && r.date >= since(30)))));
-  return {
-    now: new Date().toISOString(), fixture: true, account: { id: A.cfg.id, name: A.cfg.name, currency: A.cfg.currency, status: A.cfg.status, timezone: 'Asia/Dubai', spend_cap: A.cfg.limits.monthly_aed },
-    autopilot: { mode: A.cfg.limits.autopilot, next_cycle_at: nextCycle.toISOString(), last_cycle_at: iso(now - 3600000), running: false, model: A.brain ? A.brain.model : '',
-      doing: A.cfg.limits.autopilot === 'off' ? '' : 'Watching 7 live ads; next: refresh the fatigued Arabic heartleaf ad on Monday\'s creative batch.',
-      doing_ar: A.cfg.limits.autopilot === 'off' ? '' : 'يراقب ٧ إعلانات نشطة؛ التالي: استبدال إعلان الهارتليف العربي المُرهَق في دفعة الإبداع يوم الاثنين.' },
-    limits: A.cfg.limits, limits_set: A.cfg.limits.daily_aed > 0 && A.cfg.limits.monthly_aed > 0, economics: e,
-    kpis: kpis(A), targets: { cpa: e.target_cpa, roas: e.target_roas, breakeven_cpa: e.breakeven_cpa, breakeven_roas: e.breakeven_roas, ctr: 0.012, cpc: 2.5, cpm: 30 },
-    series: days.map((d) => { const a = agg(camp.filter((r) => r.date === d)); return { date: d, spend: a.spend, revenue: a.revenue, purchases: a.purchases, cpc: a.cpc, cpm: a.cpm, ctr: a.ctr }; }),
-    split: { ar: byLang('ar'), en: byLang('en') }, placements,
-    tree: t, plan: A.brain ? A.brain.plan : null, report: A.brain ? { text: A.brain.report, at: iso(now - 3600000) } : null,
-    proposals: A.brain ? A.brain.proposals : [], learnings: A.log.filter((l) => l.kind === 'brain.learning').map((l) => l.summary),
-    alerts: alertsOf(A),
-    activity: A.log.filter((l) => Date.parse(l.time) > Date.now() - 2 * DAY).slice(-12).reverse().map((l) => ({ at: l.time, kind: l.kind, text: l.summary, outcome: l.outcome })),
-    designs_pending: A.pending, creatives_count: A.creatives.length, videos_count: A.videos.length, research_updated_at: research.updated_at,
-  };
+  const camps = A.tree.map((c) => ({ id: c.id, name: c.name, objective: c.objective, status: c.status, effective_status: c.status, daily_budget: c.daily_budget_aed, managed: c.made_by_app, created_time: c.created_at, last7: m7(c.id),
+    adsets: c.adsets.map((s) => ({ id: s.id, campaign_id: c.id, name: s.name, status: s.status, effective_status: s.status, daily_budget: s.daily_budget_aed, countries: s.countries, learning_stage: s.learning_stage, last7: m7(s.id),
+      ads: s.ads.map((a) => ({ id: a.id, adset_id: s.id, campaign_id: c.id, name: a.name, status: a.status, effective_status: a.effective_status, creative_id: a.creative_id, format: a.format, last7: m7(a.id) })) })) }));
+  const monthStart = today.slice(0, 8) + '01';
+  const plan = A.brain ? { updated_at: A.brain.plan.generated_at, summary: A.brain.plan.summary, steps: (A.brain.plan.tests || []).map((t) => ({ when: 'batch day', title: t.name, detail: t.hypothesis })) } : null;
+  return { account_id: A.cfg.id, automated: A.cfg.automate, at: new Date().toISOString(),
+    account: { id: A.cfg.id, name: A.cfg.name, currency: A.cfg.currency, timezone: 'Asia/Dubai', spend_cap: A.cfg.limits.monthly_aed, amount_spent: 0, account_status: A.cfg.status === 'ACTIVE' ? 1 : 2 },
+    links: { page_id: '2000000000' + A.n, instagram_user_id: '5000000000' + A.n, pixel_id: '3000000000' + A.n, catalog_id: A.n === 1 ? '400000000001' : '', whatsapp_number: A.n === 1 ? '+971500000000' : '' },
+    link_checks: {}, limits: engineLimits(A), limits_set: limitsSet(A), campaigns: camps, kpis: kpis(A),
+    committed_daily: camps.reduce((n, c) => n + (c.status === 'ACTIVE' ? c.daily_budget + c.adsets.reduce((m, s) => m + (s.status === 'ACTIVE' ? s.daily_budget : 0), 0) : 0), 0),
+    month_spend: +totals(A).filter((r) => r.date >= monthStart).reduce((n, r) => n + r.spend, 0).toFixed(2),
+    plan, report: A.brain ? { date: today, text: A.brain.report, at: iso(now - 3600000) } : null, alerts: alertsOf(A),
+    last_sync: iso(now - 20 * 60000), last_cycle: iso(now - 3600000), next_sync: iso(Date.now() + 40 * 60000), next_cycle: iso(Math.ceil(Date.now() / (4 * 3600000)) * 4 * 3600000), cycle_running: false,
+    backfill: { state: 'done', done: 37, total: 37, rows: A.metrics.length }, connections: { meta: true, claude: true, shop: true }, shop: { products: products.length, orders_source: 'none' },
+    research_at: research.updated_at, creatives: A.creatives.length };
 }
+function accountRow(A) {
+  return { id: A.cfg.id, name: A.cfg.name, currency: A.cfg.currency, account_status: A.cfg.status === 'ACTIVE' ? 1 : 2, business_id: '900000000001', relation: 'owned', automated: A.cfg.automate, limits_set: limitsSet(A), autopilot: A.cfg.limits.autopilot,
+    links: engineState(A).links, link_checks: A.n === 1 ? { page: { ok: true, name: 'K-Beauty Bliss' }, instagram: { ok: true, name: 'kbeautybliss' }, pixel: { ok: true, name: 'kbeautybliss.com pixel' }, catalog: { ok: true, name: 'KBB catalog' }, whatsapp: { ok: true, name: '+971500000000' } } : { page: { ok: true, name: 'K-Beauty Bliss' } },
+    backfill: { state: 'done', rows: A.metrics.length }, selected: A.cfg.id === selected };
+}
+let selected = accounts[0].cfg.id;
 const connections = {
-  meta: { ok: true, business: { id: '1029384756', name: 'K-Beauty Bliss portfolio' }, account: { id: 'act_1234567890', name: 'K-Beauty Bliss · UAE', currency: 'AED', timezone: 'Asia/Dubai', spend_cap: 9000 }, error: '', token: { set: true, last4: 'x9Qa' }, pixel_id: '1234567890123', catalog_id: '987654321', whatsapp: '' },
-  claude: { ok: true, model: 'claude-sonnet-5-5', error: '', key: { set: true, last4: '7f2c' } },
-  shop: { ok: true, products: 902, orders_source: 'none', error: '', url: 'https://kbeautybliss.com' },
+  meta: { ok: true, auth: 'system_user', token: { set: true, last4: 'x9Qa' }, app_secret: { set: false }, app_id: '', api_version: 'v27.0', token_type: 'SYSTEM_USER', token_days_left: -1, ad_accounts: accounts.length, access_tier: 'standard_access' },
+  claude: { ok: true, model: 'claude-sonnet-5-5', key: { set: true, last4: '7f2c' } },
+  shop: { ok: true, products: 902, orders_source: 'none', feed_url: 'https://kbeautybliss.com/feeds/meta-catalog.xml', token: { set: false } },
+  secret_store: 'file',
 };
-let onboarding = { done: process.env.KAA_ONBOARDED !== '0', goals: ['sales', 'arabic_first', 'low_cpc'] };
+// trending fixture: real product names from the shop's own feed + an item the shop does not sell; labelled as fixture
+const trending = { updated_at: iso(now - 5 * 3600000), fixture: true, items: [
+  { rank: 1, name: 'Heartleaf 77% Soothing Toner', brand: 'Anua', kind: 'product', momentum: 'hot', region: 'gcc', why: 'Fixture: a bestseller the shop carries.', why_ar: 'بيانات تجريبية: منتج رائج يبيعه المتجر.', sources: [{ url: 'https://kbeautybliss.com/feeds/meta-catalog.xml', title: 'Shop feed (fixture)' }], in_shop: true, in_stock: true, product_ids: ['3214'] },
+  { rank: 2, name: 'Glow Serum: Propolis + Niacinamide', brand: 'Beauty of Joseon', kind: 'product', momentum: 'rising', region: 'global', why: 'Fixture.', why_ar: 'بيانات تجريبية.', sources: [{ url: 'https://kbeautybliss.com/feeds/meta-catalog.xml', title: 'Shop feed (fixture)' }], in_shop: true, in_stock: true, product_ids: ['3206'] },
+  { rank: 3, name: 'PDRN Pink Peptide Serum', brand: 'Medicube', kind: 'product', momentum: 'new', region: 'global', why: 'Fixture: an item the shop does not sell.', why_ar: 'بيانات تجريبية: منتج غير متوفر في المتجر.', sources: [{ url: 'https://kbeautybliss.com/feeds/meta-catalog.xml', title: 'Fixture' }], in_shop: false, in_stock: false },
+  { rank: 4, name: 'Rice', brand: '', kind: 'ingredient', momentum: 'steady', region: 'gcc', why: 'Fixture.', why_ar: 'بيانات تجريبية.', sources: [{ url: 'https://kbeautybliss.com/feeds/meta-catalog.xml', title: 'Fixture' }], in_shop: false, in_stock: false },
+], selling: ['3214', '3206'] };
+trending.consider_stocking = trending.items.filter((x) => !x.in_shop && x.kind !== 'ingredient');
+for (const A of accounts) A.n = accounts.indexOf(A) + 1;
+for (const A of accounts) { A.archive = A.creatives.filter((c) => c.design).map((c) => c.design).concat(A.pending); A.done = new Set(); A.settings = { ad_wording: A.cfg.limits.ad_wording || 'balanced', promo_approved: false }; }
 
 // ---------- HTTP ----------
 const sse = new Set();
-function emit(type, data) { const s = `event: ${type}\ndata: ${JSON.stringify(data || {})}\n\n`; for (const r of sse) r.write(s); }
+function emit(type, data, account = '') { const s = `event: ${type}\ndata: ${JSON.stringify({ account, data: data || {} })}\n\n`; for (const r of sse) r.write(s); }
 setInterval(() => emit('heartbeat', { at: new Date().toISOString() }), 15000).unref();
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8', '.webm': 'video/webm', '.mp4': 'video/mp4' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.txt': 'text/plain; charset=utf-8' };
 function json(res, code, v) { res.writeHead(code, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(v)); }
 function rawBody(req, max) { return new Promise((ok, no) => { const c = []; let n = 0; req.on('data', (d) => { n += d.length; if (n > max) { req.destroy(); no(new Error('too big')); } else c.push(d); }); req.on('end', () => ok(Buffer.concat(c))); }); }
 async function body(req) { try { const b = await rawBody(req, 40e6); return b.length ? JSON.parse(b.toString()) : {}; } catch { return null; } }
 function placeholder(res) {
   res.writeHead(200, { 'content-type': 'image/svg+xml' });
-  res.end('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="#F6F2F3"/><rect x="220" y="120" width="160" height="360" rx="30" fill="#E0567B" opacity=".85"/><rect x="245" y="80" width="110" height="60" rx="12" fill="#2A2228"/></svg>');
+  res.end('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="#F6F2F3"/><rect x="220" y="120" width="160" height="360" rx="30" fill="#3f7d5c" opacity=".85"/><rect x="245" y="80" width="110" height="60" rx="12" fill="#1f2a24"/></svg>');
 }
 function serveImg(res, u) {
   let url; try { url = new URL(u); } catch { return placeholder(res); }
-  if (url.protocol !== 'https:' || !/(^|\.)kbeautybliss\.com$/.test(url.hostname)) return json(res, 400, { error: 'only kbeautybliss.com images' });
+  if (url.protocol !== 'https:' || !/(^|\.)kbeautybliss\.com$/.test(url.hostname)) return json(res, 400, { error: 'only https://kbeautybliss.com images' });
   const f = path.join(TMP, 'img', Buffer.from(u).toString('base64url').slice(-80));
   if (!fs.existsSync(f)) {
     const r = spawnSync('curl', ['-sfL', '--max-time', '20', '-o', f, u]);
@@ -288,132 +294,119 @@ function serveImg(res, u) {
   res.writeHead(200, { 'content-type': /\.webp$/i.test(url.pathname) ? 'image/webp' : /\.png$/i.test(url.pathname) ? 'image/png' : 'image/jpeg', 'cache-control': 'max-age=86400' });
   fs.createReadStream(f).pipe(res);
 }
-function accountRow(A) {
-  const k = kpis(A).d7;
-  return { id: A.cfg.id, name: A.cfg.name, currency: A.cfg.currency, status: A.cfg.status, automate: A.cfg.automate, mode: A.cfg.limits.autopilot, limits_set: A.cfg.limits.daily_aed > 0 && A.cfg.limits.monthly_aed > 0,
-    d7: { spend: k.spend, purchases: k.purchases, roas: k.roas, cpa: k.cpa, cpc: k.cpc, ctr: k.ctr, cpm: k.cpm }, alerts: alertsOf(A).filter((a) => a.level !== 'info').length,
-    history_days: A.profile ? A.profile.days : 0, synced_at: iso(now - 20 * 60000) };
+function insights(A) {
+  const days = [...new Set(totals(A).map((r) => r.date))].sort().slice(-30);
+  const lang = {}; for (const s of A.tree[0].adsets) for (const a of s.ads) lang[a.id] = a.lang;
+  const sp = (l) => { const a = agg(A.metrics.filter((r) => r.level === 'ad' && !r.placement && r.date >= since(30) && lang[r.object_id] === l)); return { spend: a.spend, purchases: a.purchases, revenue: a.revenue, cpa: a.cpa, roas: a.roas, ctr: a.ctr / 100 }; };
+  return { series: days.map((d) => { const a = agg(totals(A).filter((r) => r.date === d)); return { date: d, spend: a.spend, revenue: a.revenue, purchases: a.purchases, cpc: a.cpc, cpm: a.cpm, ctr: a.ctr / 100 }; }), split: { ar: sp('ar'), en: sp('en') } };
 }
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   if (!p.startsWith('/api/')) {
-    const f = path.normalize(path.join(APP, p === '/' ? 'index.html' : p));
-    if (!f.startsWith(APP) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
-    res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache' });
+    if (p === '/') { res.writeHead(302, { location: '/app/' }); return res.end(); }
+    const rel = p.replace(/^\/app\/?/, '/');
+    const f = path.normalize(path.join(APP, rel === '/' ? 'index.html' : rel));
+    if (!p.startsWith('/app') || !f.startsWith(APP) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
+    res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache',
+      'content-security-policy': "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
     return fs.createReadStream(f).pipe(res);
   }
-  if (p === '/api/info') return json(res, 200, { app: 'KBB Ads Autopilot', version: '0.2.0-fake', apiLevel: 1, token: TOKEN, dataDir: '~/KBB Ads Autopilot Data' });
-  const tok = req.headers['x-kaa'] || url.searchParams.get('t');
+  if (p === '/api/info') return json(res, 200, { app: 'KBB Ads Autopilot', version: '0.3.0-fake', apiLevel: 1, token: TOKEN, dataDir: '~/KBB Ads Autopilot Data' });
+  const tok = req.headers['x-kaa'] || (p === '/api/events' ? url.searchParams.get('t') : '');
   if (tok !== TOKEN) return json(res, 401, { error: 'missing X-KAA token' });
-  const A = acc(req.headers['x-kaa-account'] || url.searchParams.get('account'));
-  if (p === '/api/img') return serveImg(res, url.searchParams.get('u') || '');
+  const A = acc(req.headers['x-kaa-account'] || url.searchParams.get('account') || selected);
   if (p === '/api/events') {
     res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
     res.write('event: hello\ndata: {}\n\n'); sse.add(res); req.on('close', () => sse.delete(res)); return;
   }
-  if (p === '/api/accounts' && req.method === 'GET') return json(res, 200, accounts.map(accountRow));
+  // ---- app-wide ----
+  if (p === '/api/accounts' && req.method === 'GET') return json(res, 200, { selected, accounts: accounts.map(accountRow), businesses: [{ id: '900000000001', name: 'K-Beauty Bliss portfolio', ad_accounts: accounts.map((x) => x.cfg.id) }], read_at: now.toISOString(), global_limits: { daily_aed: 0, monthly_aed: 0 } });
+  if (p === '/api/accounts/select' && req.method === 'POST') { const b = (await body(req)) || {}; selected = acc(b.account).cfg.id; return json(res, 200, { selected }); }
   const am = p.match(/^\/api\/accounts\/(act_\d+)$/);
-  if (am && req.method === 'PUT') { const b = (await body(req)) || {}; const X = acc(am[1]); if (typeof b.automate === 'boolean') X.cfg.automate = b.automate; emit('accounts.updated', { account: X.cfg.id }); return json(res, 200, accountRow(X)); }
-  if (p === '/api/portfolio') return json(res, 200, { accounts: accounts.map(accountRow), profile: portfolio });
-  if (p === '/api/profile') return json(res, 200, A.profile);
-  if (p === '/api/onboarding') { if (req.method === 'GET') return json(res, 200, onboarding); const b = (await body(req)) || {}; onboarding = Object.assign(onboarding, b); return json(res, 200, onboarding); }
-  if (p === '/api/state' && req.method === 'GET') return json(res, 200, state(A));
+  if (am && req.method === 'PUT') { const b = (await body(req)) || {}; const X = acc(am[1]); if (typeof b.automated === 'boolean') X.cfg.automate = b.automated; emit('connections', {}, X.cfg.id); return json(res, 200, { account: X.cfg.id, automated: X.cfg.automate, links: engineState(X).links, link_checks: {} }); }
+  if (p === '/api/learnings') {
+    const out = [];
+    for (const X of accounts) for (const [dim, keyOf] of [['format', (a) => a.format], ['country', () => 'AE'], ['objective', () => 'OUTCOME_SALES']]) {
+      const by = {};
+      for (const s of X.tree[0].adsets) for (const a of s.ads) { const k = keyOf(a); const g = (by[k] = by[k] || { ids: new Set(), ads: 0 }); g.ids.add(a.id); g.ads++; }
+      for (const [k, g] of Object.entries(by)) { const a = agg(X.metrics.filter((r) => r.level === 'ad' && !r.placement && g.ids.has(r.object_id))); out.push({ account_id: X.cfg.id, dimension: dim, key: k, spend: a.spend, purchases: a.purchases, revenue: a.revenue, ads: g.ads, cpa: a.cpa, roas: a.roas, from: since(150), to: today }); }
+    }
+    return json(res, 200, out);
+  }
+  if (p === '/api/research') return json(res, 200, { updated_at: research.updated_at, trends: research.notes.map((n) => ({ date: n.date.slice(0, 10), title: n.title, body: n.body, source: n.sources[0].url })), competitors: [], angles: [], arabic_insights: [], sources: research.notes.flatMap((n) => n.sources.map((s) => s.url)) });
+  if (p === '/api/brain/research' && req.method === 'POST') { research.updated_at = new Date().toISOString(); emit('research.updated', { at: research.updated_at }); return json(res, 200, { updated_at: research.updated_at, trends: [], competitors: [], angles: [], arabic_insights: [], sources: [] }); }
   if (p === '/api/connections' && req.method === 'GET') return json(res, 200, connections);
   const cm = p.match(/^\/api\/connections\/(meta|claude|shop)$/);
   if (cm && req.method === 'PUT') {
     const b = (await body(req)) || {}; const k = cm[1]; const c = connections[k];
-    if (k === 'meta') { if (b.token) c.token = { set: true, last4: String(b.token).slice(-4) }; for (const f of ['pixel_id', 'catalog_id', 'whatsapp']) if (b[f] !== undefined) c[f] = String(b[f]); c.ok = !b.token || /^EAA/.test(b.token); c.error = c.ok ? '' : 'Meta said: Invalid OAuth access token (code 190)'; }
-    if (k === 'claude') { if (b.key) c.key = { set: true, last4: String(b.key).slice(-4) }; c.ok = !b.key || /^sk-ant-/.test(b.key); c.error = c.ok ? '' : 'Claude said: invalid x-api-key (401)'; }
-    if (k === 'shop') { c.url = b.url || c.url; c.ok = true; }
-    return json(res, 200, connections);
+    if (k === 'meta') { if (b.token) c.token = { set: true, last4: String(b.token).slice(-4) }; c.ok = !b.token || /^EAA/.test(b.token); c.error = c.ok ? '' : 'Meta said: Invalid OAuth access token (code 190)'; }
+    if (k === 'claude') { if (b.api_key) c.key = { set: true, last4: String(b.api_key).slice(-4) }; c.ok = !b.api_key || /^sk-ant-/.test(b.api_key); c.error = c.ok ? '' : 'Claude said: invalid x-api-key (401)'; }
+    if (k === 'shop') { c.feed_url = b.feed_url || c.feed_url; c.ok = true; }
+    return json(res, 200, c);
   }
+  if (p === '/api/kill' && req.method === 'POST') {
+    const out = [];
+    for (const X of accounts) { const paused = []; X.cfg.limits.autopilot = 'off'; for (const c of X.tree) if (c.made_by_app && c.status === 'ACTIVE') { c.status = 'PAUSED'; paused.push(c.id); addLog(X, 'kill', c.id, `KILL SWITCH: campaign ${c.name} paused, autopilot off.`, 'executed'); } out.push({ account: X.cfg.id, paused, failed: [] }); }
+    emit('action.kill', {}); return json(res, 200, { accounts: out });
+  }
+  // ---- per account ----
+  if (p === '/api/state' && req.method === 'GET') return json(res, 200, engineState(A));
   if (p === '/api/limits') {
-    if (req.method === 'GET') return json(res, 200, A.cfg.limits);
+    if (req.method === 'GET') return json(res, 200, engineLimits(A));
     const b = await body(req);
     if (!b) return json(res, 400, { error: 'bad JSON' });
+    const allowed = ['daily_aed', 'monthly_aed', 'max_budget_step_pct', 'cooldown_hours', 'max_active_ads', 'countries', 'autopilot', 'target_cpa_aed', 'kill_multiple'];
+    const unknown = Object.keys(b).filter((k) => !allowed.includes(k));
+    if (unknown.length) return json(res, 400, { error: `bad JSON: json: unknown field "${unknown[0]}"` }); // the engine refuses unknown fields
     const n = Object.assign({}, A.cfg.limits, b);
     if (n.autopilot !== 'off' && !(n.daily_aed > 0 && n.monthly_aed > 0)) return json(res, 400, { error: 'Set a daily and a monthly limit before turning the autopilot on.' });
     if (n.monthly_aed > 0 && n.daily_aed > n.monthly_aed) return json(res, 400, { error: 'The daily limit is above the monthly limit.' });
-    if (!['strict', 'balanced', 'relaxed'].includes(n.ad_wording)) n.ad_wording = 'balanced';
-    const prev = A.cfg.limits; A.cfg.limits = n;
-    addLog(A, 'settings', '', `Limits saved: AED ${n.daily_aed}/day, AED ${n.monthly_aed}/month, autopilot ${n.autopilot}, wording ${n.ad_wording}.`, 'saved');
-    emit('metrics.updated', { account: A.cfg.id }); return json(res, 200, Object.assign({ previous: prev }, n));
+    A.cfg.limits = n;
+    addLog(A, 'config', '', `Limits saved: AED ${n.daily_aed}/day, AED ${n.monthly_aed}/month, autopilot ${n.autopilot}.`, 'saved');
+    emit('metrics.updated', {}, A.cfg.id); return json(res, 200, engineLimits(A));
   }
   if (p === '/api/cycle' && req.method === 'POST') {
-    emit('cycle.start', { account: A.cfg.id, at: new Date().toISOString() });
-    setTimeout(() => { runBrain(A); addLog(A, 'cycle', '', `Cycle finished (${A.cfg.limits.autopilot}): ${A.brain ? A.brain.proposals.length : 0} proposals.`, A.cfg.limits.autopilot); emit('cycle.end', { account: A.cfg.id }); emit('metrics.updated', { account: A.cfg.id }); }, 300);
-    return json(res, 202, { started: true });
-  }
-  if (p === '/api/kill' && req.method === 'POST') {
-    for (const X of accounts) { X.cfg.limits.autopilot = 'off'; for (const c of X.tree) if (c.made_by_app && c.status === 'ACTIVE') { c.status = 'PAUSED'; addLog(X, 'execution', c.id, `KILL SWITCH: campaign ${c.name} paused, autopilot off.`, 'executed'); } }
-    emit('alert', { level: 'danger', text: 'Kill switch: everything the app made is paused; autopilot is off in every account.' }); emit('metrics.updated', {});
-    return json(res, 200, { ok: true });
-  }
-  if (p === '/api/log') { const after = url.searchParams.get('after'); let rows = A.log; if (after) rows = rows.filter((l) => l.id > after); return json(res, 200, rows.slice().reverse()); }
-  if (p === '/api/research') return json(res, 200, research);
-  if (p === '/api/creatives') {
-    if (req.method === 'GET') {
-      const ids = {}; for (const s of A.tree[0].adsets) for (const a of s.ads) (ids[a.creative_id] = ids[a.creative_id] || []).push(a.id);
-      return json(res, 200, A.creatives.map((c) => Object.assign({}, c, { ads: ids[c.id] || [], results: agg(A.metrics.filter((r) => !r.placement && (ids[c.id] || []).includes(r.object_id))) })));
-    }
-    const b = await body(req);
-    if (!b || !b.lang || !b.format || !(b.png || b.video)) return json(res, 400, { error: 'need lang, format, png or video' });
-    const isVid = !!b.video;
-    const buf = Buffer.from(String(b.png || b.video).replace(/^data:[^;]+;base64,/, ''), 'base64');
-    if (!isVid && buf.slice(1, 4).toString() !== 'PNG') return json(res, 400, { error: 'not a PNG' });
-    const id = `cr-${Date.now().toString(36)}-${A.creatives.length}`;
-    const ext = isVid ? (b.mime && b.mime.includes('mp4') ? '.mp4' : '.webm') : '.png';
-    fs.writeFileSync(path.join(TMP, 'creatives', id + ext), buf);
-    A.creatives.push({ id, pair_id: b.pair_id || '', lang: b.lang, format: b.format, kind: isVid ? 'motion' : 'image', headline: b.headline || '', primary_text: b.primary_text || '', cta: b.cta || 'SHOP_NOW',
-      link: b.link || '', product_ids: b.product_ids || [], angle: b.angle || '', template: b.template || '', source: b.source || 'brain', design: b.design || null,
-      image_url: `/api/creatives/${id}${ext}`, bytes: buf.length, created_at: new Date().toISOString(), lint_ok: true });
-    if (b.design_id && !isVid) A.pending = A.pending.filter((d) => d.id !== b.design_id || b.format !== (d.formats || []).slice(-1)[0]);
-    addLog(A, 'creative', id, `${isVid ? 'Motion ad' : 'Creative'} rendered: ${b.lang.toUpperCase()} ${b.format} "${b.headline || ''}" (${Math.round(buf.length / 1024)} KB).`, 'saved');
-    emit('metrics.updated', { account: A.cfg.id });
-    return json(res, 201, { id, bytes: buf.length });
-  }
-  const cf = p.match(/^\/api\/creatives\/(cr-[\w-]+\.(png|webm|mp4))$/);
-  if (cf) { const f = path.join(TMP, 'creatives', cf[1]); if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': MIME['.' + cf[2]] }); return fs.createReadStream(f).pipe(res); }
-  // videos: upload raw (the real engine copies it into ~/KBB Ads Autopilot Data/videos/), analyse, update
-  if (p === '/api/videos' && req.method === 'GET') return json(res, 200, A.videos);
-  if (p === '/api/videos' && req.method === 'POST') {
-    let buf; try { buf = await rawBody(req, 300e6); } catch { return json(res, 413, { error: 'video over 300 MB' }); }
-    const name = decodeURIComponent(req.headers['x-filename'] || 'video.mp4').replace(/[^\w.\- ]/g, '_').slice(0, 120);
-    const id = 'v-' + Date.now().toString(36);
-    const ext = (path.extname(name) || '.mp4').toLowerCase();
-    fs.writeFileSync(path.join(TMP, 'videos', id + ext), buf);
-    const v = { id, name, path: `videos/${id}${ext}`, bytes: buf.length, status: req.headers['x-status'] === 'past' ? 'past' : 'new', meta_video_id: '', meta_ad_ids: [], results: null, analysis: null, thumb: '', added_at: new Date().toISOString() };
-    // past videos: match an existing ad by name (the real engine also matches advideo / creative ids)
-    const stem = name.replace(/\.[^.]+$/, '').toLowerCase();
-    for (const s of A.tree[0].adsets) for (const a of s.ads) if (stem.length > 3 && a.name.toLowerCase().includes(stem)) v.meta_ad_ids.push(a.id);
-    A.videos.unshift(v);
-    addLog(A, 'video', id, `Video added: ${name} (${(buf.length / 1048576).toFixed(1)} MB).`, 'saved');
-    return json(res, 201, v);
-  }
-  const va = p.match(/^\/api\/videos\/(v-[\w-]+)\/(analyse|thumb)$/);
-  if (va) {
-    const v = A.videos.find((x) => x.id === va[1]); if (!v) return json(res, 404, { error: 'no such video' });
-    if (va[2] === 'thumb') { const f = path.join(TMP, 'videos', v.id + '.jpg'); if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': 'image/jpeg' }); return fs.createReadStream(f).pipe(res); }
-    const b = await body(req);
-    if (!b) return json(res, 400, { error: 'bad JSON' });
-    if (b.frames && b.frames[0]) { fs.writeFileSync(path.join(TMP, 'videos', v.id + '.jpg'), Buffer.from(b.frames[0].jpeg.replace(/^data:[^;]+;base64,/, ''), 'base64')); v.thumb = `/api/videos/${v.id}/thumb`; }
-    if (b.results) v.results = Object.assign({ source: 'owner' }, b.results);
-    const a = brainDry(['-video'], { video: { id: v.id, name: v.name, duration_s: b.duration_s, width: b.width, height: b.height, has_audio: !!b.has_audio, frames: (b.frames || []).slice(0, 10), results: v.results, notes: b.notes || '', ad_wording: A.cfg.limits.ad_wording }, shop: { products } });
-    if (!a) return json(res, 500, { error: 'analysis failed' });
-    a.model = a.model === 'local-only' ? 'local-only (Claude not called by the fake engine)' : a.model;
-    v.analysis = a;
-    addLog(A, 'video', v.id, `Video analysed: ${v.name} -- score ${a.score}/100, ${a.aspect}, ${a.duration_s}s, ${a.issues.length} notes.`, 'saved');
-    emit('metrics.updated', { account: A.cfg.id });
-    return json(res, 200, v);
-  }
-  const vu = p.match(/^\/api\/videos\/(v-[\w-]+)$/);
-  if (vu && req.method === 'PUT') { const v = A.videos.find((x) => x.id === vu[1]); if (!v) return json(res, 404, {}); const b = (await body(req)) || {}; if (b.status) v.status = b.status; if (b.results) v.results = Object.assign({ source: 'owner' }, b.results); return json(res, 200, v); }
-  const bm = p.match(/^\/api\/brain\/(plan|research|copy|profile)$/);
-  if (bm && req.method === 'POST') {
     const b = (await body(req)) || {};
-    if (bm[1] === 'copy') { // fixture copy (no Claude here): shows the flow end to end
+    runBrain(A);
+    const props = A.brain ? A.brain.proposals : [];
+    const mode = b.mode === 'auto' && A.cfg.limits.autopilot !== 'off' ? 'auto' : 'shadow';
+    addLog(A, 'cycle', '', `Cycle finished (${mode}): ${props.length} proposals.`, mode);
+    emit('cycle.end', {}, A.cfg.id);
+    return json(res, 200, { account: A.cfg.id, counts: mode === 'auto' ? { done: props.length } : { shadow: props.length }, results: [], proposals: props.length, ms: 40 });
+  }
+  if (p === '/api/log') { const lim = +url.searchParams.get('limit') || 200; return json(res, 200, { account: A.cfg.id, entries: A.log.slice(-lim).map((l, i) => ({ seq: i + 1, at: l.time, kind: l.kind, summary: l.summary, data: { target: l.object, outcome: l.outcome } })), last: A.log.length }); }
+  if (p === '/api/creatives') {
+    if (req.method === 'GET') return json(res, 200, A.creatives.map((c) => ({ id: c.id, lang: c.lang, format: c.format, headline: c.headline, primary_text: c.primary_text, cta: c.cta, link: c.link, product_ids: c.product_ids, angle: c.angle, source: c.source, created_at: c.created_at, media: c.media || 'png', used: !!c.used })));
+    const b = await body(req);
+    const allowed = ['id', 'lang', 'format', 'png', 'video', 'headline', 'primary_text', 'cta', 'link', 'product_ids', 'angle', 'source'];
+    const unknown = Object.keys(b || {}).filter((k) => !allowed.includes(k));
+    if (!b || unknown.length) return json(res, 400, { error: `bad JSON: json: unknown field "${unknown[0]}"` });
+    if (!['ar', 'en'].includes(b.lang) || !['1:1', '4:5', '9:16'].includes(b.format) || !(b.png || b.video)) return json(res, 400, { error: 'need lang, format, png or video' });
+    if (!String(b.link || '').startsWith('https://kbeautybliss.com/')) return json(res, 400, { error: 'link must be a page of https://kbeautybliss.com/' });
+    const buf = Buffer.from(String(b.png || b.video), 'base64');
+    const id = `cr-${Date.now().toString(36)}-${A.creatives.length}`;
+    fs.writeFileSync(path.join(TMP, 'creatives', id + (b.video ? '.media' : '.png')), buf);
+    A.creatives.push({ id, lang: b.lang, format: b.format, headline: b.headline || '', primary_text: b.primary_text || '', cta: b.cta || 'SHOP_NOW', link: b.link, product_ids: b.product_ids || [], angle: b.angle || '', source: b.source || 'brain', created_at: new Date().toISOString(), media: b.video ? 'mp4' : 'png' });
+    addLog(A, 'config', id, `creative added: ${id} (${b.lang} ${b.format}, ${b.source || 'brain'}, ${Math.round(buf.length / 1024)} KB)`, 'saved');
+    return json(res, 200, A.creatives[A.creatives.length - 1]);
+  }
+  if (p === '/api/brain/plan' && req.method === 'POST') { runBrain(A); return json(res, 200, { plan: A.brain.plan, proposals: A.brain.proposals, report: A.brain.report }); }
+  // ---- the brain's own routes (/api/brain/x/), as engine/brain/httpx.go serves them ----
+  const x = p.startsWith('/api/brain/x/') ? p.slice('/api/brain/x/'.length) : null;
+  if (x !== null) {
+    if (x === 'img') return serveImg(res, url.searchParams.get('u') || '');
+    if (x === 'cycle') return json(res, 200, Object.assign({}, A.brain || {}, { designs: A.pending.filter((d) => !A.done.has(d.id)), profile: A.profile }));
+    if (x === 'design-done' && req.method === 'POST') { const b = (await body(req)) || {}; A.done.add(b.id); A.pending = A.pending.filter((d) => d.id !== b.id); return json(res, 200, { ok: true }); }
+    if (x === 'designs') return json(res, 200, A.archive);
+    if (x === 'insights') return json(res, 200, insights(A));
+    if (x === 'profile') return json(res, 200, A.profile);
+    if (x === 'research') return json(res, 200, research);
+    if (x === 'trending') { if (req.method === 'POST') trending.updated_at = new Date().toISOString(); return json(res, 200, trending); }
+    if (x === 'settings') { if (req.method === 'PUT') { const b = (await body(req)) || {}; A.settings = { ad_wording: ['strict', 'relaxed'].includes(b.ad_wording) ? b.ad_wording : 'balanced', promo_approved: !!b.promo_approved }; } return json(res, 200, A.settings); }
+    if (x === 'copy' && req.method === 'POST') { // fixture copy (no Claude here): shows the flow end to end
+      const b = (await body(req)) || {};
       const pr = P[(b.product_ids || [])[0]] || products[0];
       const pair = 'p-gen-' + Date.now().toString(36);
       const ttl = pr.title.split(' - ').slice(1).join(' - ') || pr.title;
@@ -422,13 +415,38 @@ const server = http.createServer(async (req, res) => {
         { lang: 'en', headline: `${pr.brand}, the daily K-beauty step`, sub: 'Simple, every day', bullets: ['Authentic K-beauty', 'Light texture', 'Daily use'], primary_text: `${ttl} by ${pr.brand}: a simple step for skin that feels fresh every day.` },
       ];
       const designs = sets.map((s) => ({ id: `d-${pair}-${s.lang}`, pair_id: pair, lang: s.lang, template: b.template || 'clean', formats: ['1:1', '4:5', '9:16'], product_ids: [pr.id], images: [pr.image],
-        headline: s.headline, sub: s.sub, bullets: s.bullets, badge: pr.brand, cta: 'SHOP_NOW', price: s.lang === 'ar' ? `${pr.price} درهم` : `AED ${pr.price}`, angle: b.angle || 'daily routine', copy_id: `${pair}-${s.lang}`, primary_text: s.primary_text }));
-      A.pending.push(...designs);
+        headline: s.headline, sub: s.sub, bullets: s.bullets, badge: pr.brand, cta: 'SHOP_NOW', price: s.lang === 'ar' ? `${pr.price} درهم` : `AED ${pr.price}`, angle: b.angle || 'daily routine', copy_id: `${pair}-${s.lang}` }));
+      A.archive.push(...designs);
       return json(res, 200, { copy_sets: sets.map((s) => Object.assign({ id: `${pair}-${s.lang}`, pair_id: pair, cta: 'SHOP_NOW', lint: { ok: true } }, s)), designs });
     }
-    if (bm[1] === 'plan') { runBrain(A); return json(res, 200, A.brain); }
-    if (bm[1] === 'profile') { train(); return json(res, 200, A.profile); }
-    return json(res, 200, research);
+    if (x === 'videos' && req.method === 'GET') return json(res, 200, A.videos);
+    if (x === 'videos' && req.method === 'POST') {
+      let buf; try { buf = await rawBody(req, 300e6); } catch { return json(res, 413, { error: 'video over 300 MB' }); }
+      const name = decodeURIComponent(req.headers['x-filename'] || 'video.mp4').replace(/[^\w.\- ]/g, '_').slice(0, 120);
+      const id = 'v' + Date.now().toString(16);
+      fs.writeFileSync(path.join(TMP, 'videos', id + (path.extname(name) || '.mp4')), buf);
+      const v = { id, name, path: `videos/${id}${path.extname(name)}`, bytes: buf.length, status: req.headers['x-status'] === 'past' ? 'past' : 'new', meta_video_id: '', meta_ad_ids: [], results: null, analysis: null, thumb: '', added_at: new Date().toISOString() };
+      A.videos.unshift(v);
+      addLog(A, 'config', id, `video added: ${name} (${(buf.length / 1048576).toFixed(1)} MB)`, 'saved');
+      return json(res, 200, v);
+    }
+    const vm = x.match(/^videos\/(v[\w-]+)(?:\/(analyse|thumb))?$/);
+    if (vm) {
+      const v = A.videos.find((y) => y.id === vm[1]); if (!v) return json(res, 404, { error: 'no such video' });
+      if (vm[2] === 'thumb') { const f = path.join(TMP, 'videos', v.id + '.jpg'); if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': 'image/jpeg' }); return fs.createReadStream(f).pipe(res); }
+      const b = await body(req);
+      if (!b) return json(res, 400, { error: 'bad JSON' });
+      if (vm[2] === 'analyse') {
+        if (b.frames && b.frames[0]) { fs.writeFileSync(path.join(TMP, 'videos', v.id + '.jpg'), Buffer.from(b.frames[0].jpeg, 'base64')); v.thumb = `/api/brain/x/videos/${v.id}/thumb`; }
+        if (b.results) v.results = Object.assign({ source: 'owner' }, b.results);
+        const a = brainDry(['-video'], { video: { id: v.id, name: v.name, duration_s: b.duration_s, width: b.width, height: b.height, has_audio: !!b.has_audio, frames: (b.frames || []).slice(0, 10), results: v.results, notes: b.notes || '', ad_wording: A.settings.ad_wording }, shop: { products } });
+        if (!a) return json(res, 500, { error: 'analysis failed' });
+        if (a.model === 'local-only') a.model = 'local-only (the fake engine does not call Claude)';
+        v.analysis = a;
+      } else { if (b.status) v.status = b.status; if (b.results) v.results = Object.assign({ source: 'owner' }, b.results); }
+      return json(res, 200, v);
+    }
+    return json(res, 404, { error: 'no such brain endpoint' });
   }
   json(res, 404, { error: 'no such endpoint' });
 });

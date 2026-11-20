@@ -52,7 +52,8 @@ const REAL = process.argv.includes('--real');
   const errors = [], failed = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('requestfailed', (r) => { if (!/\/api\/events/.test(r.url())) failed.push(r.url() + ' ' + (r.failure() || {}).errorText); });
+  // a <video> reading a local blob: cancels its own range reads while seeking (ERR_ABORTED) -- not a failure
+  page.on('requestfailed', (r) => { if (!/\/api\/events/.test(r.url()) && !(/^blob:/.test(r.url()) && /ERR_ABORTED/.test((r.failure() || {}).errorText || ''))) failed.push(r.url() + ' ' + (r.failure() || {}).errorText); });
   page.on('response', (r) => { if (r.status() >= 400 && !/\/api\/img/.test(r.url())) failed.push(`${r.status()} ${r.url()}`); });
   // count layout-measuring calls made while switching screens
   await page.addInitScript(() => {
@@ -214,14 +215,6 @@ const REAL = process.argv.includes('--real');
     if (want('--shots')) { await page.waitForTimeout(500); await page.screenshot({ path: path.join(SHOTS, `${REAL ? 'real-' : ''}videos-1440.jpg`), type: 'jpeg', quality: 70 }); }
   }
 
-  // 9: onboarding wizard
-  await page.goto(base + '#/welcome'); await page.waitForTimeout(400);
-  let steps = 1;
-  for (let i = 0; i < 6; i++) { const n = await page.$('#next'); if (!n) break; const before = await page.$eval('.steps span.on', (e) => e.textContent); await n.click(); await page.waitForFunction((b) => document.querySelector('.steps span.on') && document.querySelector('.steps span.on').textContent !== b, before, { timeout: 5000 }).catch(() => {}); steps++; }
-  const last = await page.$('#go-shadow');
-  check('onboarding wizard', steps === 7 && !!last, `${steps}/7 steps reached, start buttons ${last ? 'shown' : 'missing'}`);
-  if (want('--shots')) await page.screenshot({ path: path.join(SHOTS, `${REAL ? 'real-' : ''}welcome-1440.jpg`), type: 'jpeg', quality: 70 });
-
   // screenshots: every screen, light + dark, 1440x900 and 1280x800
   if (want('--shots')) {
     for (const [w, h] of [[1440, 900], [1280, 800]]) for (const scheme of ['light', 'dark']) {
@@ -235,6 +228,14 @@ const REAL = process.argv.includes('--real');
       await c2.close();
     }
   }
+
+  // 9: onboarding wizard
+  await page.goto(base + '#/welcome'); await page.waitForTimeout(400);
+  let steps = 1;
+  for (let i = 0; i < 6; i++) { const n = await page.$('#next'); if (!n) break; const before = await page.$eval('.steps span.on', (e) => e.textContent); await n.click(); await page.waitForFunction((b) => document.querySelector('.steps span.on') && document.querySelector('.steps span.on').textContent !== b, before, { timeout: 5000 }).catch(() => {}); steps++; }
+  const last = await page.$('#go-shadow');
+  check('onboarding wizard', steps === 7 && !!last, `${steps}/7 steps reached, start buttons ${last ? 'shown' : 'missing'}`);
+  if (want('--shots')) await page.screenshot({ path: path.join(SHOTS, `${REAL ? 'real-' : ''}welcome-1440.jpg`), type: 'jpeg', quality: 70 });
 
   check('no console errors', errors.length === 0, errors.length ? errors.slice(0, 5).join(' | ') : '0 errors');
   check('no failed requests', failed.length === 0, failed.length ? failed.slice(0, 5).join(' | ') : '0 failed');

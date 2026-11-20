@@ -44,7 +44,7 @@ func modelInput() model.CycleInput {
 		Limits: model.Limits{DailyAED: 300, MonthlyAED: 9000, MaxBudgetStepPct: 20, CooldownHours: 72, MaxActiveAds: 6, Countries: []string{"AE"}, Autopilot: "shadow"},
 		Tree: []model.Campaign{{ID: "c1", Name: "KAA: Sales", Status: "ACTIVE", Managed: true, AdSets: []model.AdSet{{ID: "s1", CampaignID: "c1", Name: "KAA: AR women", Status: "ACTIVE", DailyBudgetAED: 100,
 			Ads: []model.Ad{{ID: "a1", AdSetID: "s1", Name: "AR · routine", Status: "ACTIVE"}}}}}},
-		Shop: model.ShopSnapshot{Products: []model.Product{{ID: "3214", Title: "Anua - Heartleaf 77% Soothing Toner 250ml", Brand: "Anua", PriceAED: 105, InStock: true, Image: "https://kbeautybliss.com/a.webp"}}},
+		Shop:    model.ShopSnapshot{Products: []model.Product{{ID: "3214", Title: "Anua - Heartleaf 77% Soothing Toner 250ml", Brand: "Anua", PriceAED: 105, InStock: true, Image: "https://kbeautybliss.com/a.webp"}}},
 		Metrics: []model.MetricRow{{Date: "2026-11-15", Level: "ad", ObjectID: "a1", SpendAED: 300, Impressions: 20000, Clicks: 200, Purchases: 0}},
 	}
 }

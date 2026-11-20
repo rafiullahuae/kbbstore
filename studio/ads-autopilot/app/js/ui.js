@@ -71,7 +71,7 @@ export function confirmBox(title, body, okLabel, danger) {
 // One-axis line chart (AED), fixed viewBox: no layout measuring. Each day has
 // a hit area with a native tooltip listing both series.
 export function lineChart(series, keys, colors, labels, fmt) {
-  const W = 760, H = 220, L = 52, R = 12, T = 12, B = 26;
+  const W = 760, H = 220, L = 84, R = 14, T = 12, B = 26;
   const n = series.length;
   if (!n) return '';
   const max = Math.max(1, ...series.flatMap((d) => keys.map((k) => d[k] || 0))) * 1.1;

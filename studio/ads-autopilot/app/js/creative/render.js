@@ -70,8 +70,17 @@ function cutout(im) {
   // feather: half-transparent for pixels next to the removed area
   for (let i = w; i < w * h - w; i++) if (!seen[i] && (seen[i - 1] || seen[i + 1] || seen[i - w] || seen[i + w])) p[i * 4 + 3] = 150;
   x.putImageData(d, 0, 0);
-  cv.cutout = true;
-  return cv;
+  // crop to the product itself (studio shots leave wide white margins), +3% air
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (p[(j * w + i) * 4 + 3] > 0) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (j < y0) y0 = j; if (j > y1) y1 = j; }
+  if (x1 < 0) return cv;
+  const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.03);
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+  const out = document.createElement('canvas');
+  out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+  out.getContext('2d').drawImage(cv, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  out.cutout = true;
+  return out;
 }
 
 // ---------- drawing helpers ----------

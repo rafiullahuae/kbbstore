@@ -77,13 +77,13 @@ export function render(S, el) {
     <div class="card"><header><h2>${esc(tt('Who is buying', 'من يشتري'))}</h2><span class="sub">30d</span></header>
       <div class="spread small"><span>${esc(tt('Arabic ads share of spend', 'حصة الإعلانات العربية من الإنفاق'))}</span><b>${pct(arShare, 0)}</b></div>
       <div class="share" style="margin:6px 0 12px"><i style="width:${(arShare * 100).toFixed(1)}%;background:var(--accent)"></i><i style="flex:1;background:var(--surface3)"></i></div>
-      <table><tbody>
-        <tr><td>${esc(tt('Arabic ads', 'الإعلانات العربية'))}</td><td class="n">ROAS ${num((sp.ar || {}).roas, 2)}</td><td class="n">${aed((sp.ar || {}).cpa)}</td></tr>
-        <tr><td>${esc(tt('English ads', 'الإعلانات الإنجليزية'))}</td><td class="n">ROAS ${num((sp.en || {}).roas, 2)}</td><td class="n">${aed((sp.en || {}).cpa)}</td></tr>
-        <tr><td>${esc(tt('Audience', 'الجمهور'))}</td><td colspan="2" class="n small">${esc(tt('Women 18–45 · Arabic · GCC (Advantage+ suggestions)', 'نساء ١٨–٤٥ · العربية · الخليج'))}</td></tr>
-        <tr><td>${esc(tt('Countries', 'الدول'))}</td><td colspan="2" class="n">${(L.countries || []).map((c) => `<span class="chip">${esc(c)}</span>`).join(' ')}</td></tr>
-        <tr><td>${esc(tt('Placements', 'أماكن الظهور'))}</td><td colspan="2" class="n small">${esc(tt('Reels & Stories first · Advantage+ placements', 'الريلز والستوريز أولاً'))}</td></tr>
-      </tbody></table>
+      <div class="list small">
+        <div class="spread"><span>${esc(tt('Arabic ads', 'الإعلانات العربية'))}</span><span class="num">ROAS ${num((sp.ar || {}).roas, 2)} · ${aed((sp.ar || {}).cpa)}</span></div>
+        <div class="spread"><span>${esc(tt('English ads', 'الإعلانات الإنجليزية'))}</span><span class="num">ROAS ${num((sp.en || {}).roas, 2)} · ${aed((sp.en || {}).cpa)}</span></div>
+        <div class="spread"><span>${esc(tt('Audience', 'الجمهور'))}</span><span class="ink2">${esc(tt('Women 18–45 · Arabic · GCC', 'نساء ١٨–٤٥ · العربية · الخليج'))}</span></div>
+        <div class="spread"><span>${esc(tt('Countries', 'الدول'))}</span><span>${(L.countries || []).map((c) => `<span class="chip">${esc(c)}</span>`).join(' ')}</span></div>
+        <div class="spread"><span>${esc(tt('Placements', 'أماكن الظهور'))}</span><span class="ink2">${esc(tt('Reels & Stories first', 'الريلز والستوريز أولاً'))}</span></div>
+      </div>
       <p class="small muted">${esc(tt('Break-even', 'نقطة التعادل'))}: ${aed(tg.breakeven_cpa)} · ROAS ${num(tg.breakeven_roas, 2)}</p></div>
   </section>
   <section class="grid g21">

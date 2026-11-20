@@ -38,6 +38,7 @@ export async function probe(file) {
   if (typeof v.mozHasAudio === 'boolean') hasAudio = v.mozHasAudio;
   else if (v.audioTracks) hasAudio = v.audioTracks.length > 0;
   else if (file.size < 60e6) { try { const ac = new OfflineAudioContext(1, 1, 22050); await ac.decodeAudioData(await file.arrayBuffer()); } catch { hasAudio = false; } }
+  v.pause(); v.removeAttribute('src'); v.load(); // stop the element before the URL goes
   URL.revokeObjectURL(url);
   return { duration_s: Math.round(d * 100) / 100, width: w, height: h, has_audio: hasAudio, frames };
 }
