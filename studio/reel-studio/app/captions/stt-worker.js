@@ -67,7 +67,7 @@ self.onmessage = async (e) => {
       post({ type: 'done', id: m.id, words: r.words, n: r.n, f0: r.f0 });
     }
   } catch (err) {
-    post({ type: 'error', id: m.id, message: String(err && err.message || err) });
+    post({ type: 'error', id: m.id, message: String(err && err.message || err), stack: String(err?.stack || ''), op: m.type });
   }
 };
 

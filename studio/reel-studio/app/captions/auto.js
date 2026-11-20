@@ -1,7 +1,7 @@
 // "Auto captions" in one click: the timeline's speech -> words -> cues -> a caption item, as ONE
 // undo step. Uses the engine's permission gate for the first model download.
 
-import { Transcriber } from './stt.js';
+import { Transcriber, gpuDistrusted } from './stt.js';
 import { ensureModel, DEFAULT_MODEL, SPEECH_MODELS } from './models.js';
 import { buildLines, finishTimes } from './model.js';
 import { setCaptions } from './commands.js';
@@ -15,6 +15,30 @@ import { captionItemCmds } from './items.js';
 const SR = 16000;
 let shared = null;
 export const transcriber = () => (shared ||= new Transcriber());
+
+/**
+ * What the last Auto captions run did, clip by clip (the Captions panel's "Copy diagnostics" and the reasons an empty
+ * run gives): { at, model, lang, scope, stage, device, clips:[{ name, secs, rms, words, raw, dropped, why }], error }.
+ * The owner, 20 Nov: "I run multiple times auto captions, but nothing generating" — a run that ends with no words
+ * must say why for every clip, and the report must be something he can paste.
+ */
+let lastDiag = null;
+export const captionDiagnostics = () => lastDiag;
+const rmsOf = (a) => { let e = 0, n = 0; for (let i = 0; i < a.length; i += 16) { e += a[i] * a[i]; n++; } return n ? Math.sqrt(e / n) : 0; };
+/** the plain-text report "Copy diagnostics" puts on the clipboard */
+export function diagnosticsText(d = lastDiag, extra = {}) {
+  if (!d) return 'KBB Studio · Auto captions: not run yet in this window.';
+  const L = [`KBB Studio${extra.version ? ' ' + extra.version : ''} · Auto captions diagnostics · ${d.at}`,
+    `model ${d.model} · language ${d.lang} · scope ${d.scope} · device ${d.device || '?'}${d.fallback ? ` (${d.fallback})` : ''}`,
+    `stage reached: ${d.stage || '?'}${d.ms ? ` · ${(d.ms / 1000).toFixed(1)} s` : ''}`];
+  if (d.heard) L.push(`heard: ${d.heard}`);
+  for (const c of d.clips || []) L.push(`- ${c.name}: ${c.secs != null ? c.secs.toFixed(1) + ' s decoded' : 'not decoded'}${c.rms != null ? `, RMS ${c.rms.toFixed(4)}` : ''}${c.raw != null ? `, ${c.raw} words heard` : ''}${c.dropped ? `, ${c.dropped} dropped as non-speech` : ''}${c.words != null ? `, ${c.words} kept` : ''}${c.why ? ` — ${c.why}` : ''}`);
+  if (d.error) L.push(`error: ${d.error}`);
+  const gpu = gpuDistrusted(); if (gpu) L.push(`GPU not used for speech on this Mac: ${gpu}`);
+  if (extra.engine) L.push(`engine: ${extra.engine}`);
+  L.push(`browser: ${typeof navigator !== 'undefined' ? navigator.userAgent : '?'}`);
+  return L.join('\n');
+}
 
 /**
  * The clips Auto captions can listen to: every clip with a recording (not a picture) on the video/overlay tracks, in
@@ -192,18 +216,35 @@ export async function autoCaptions(ctx, opts = {}) {
   const project = ctx.project;
   const model = opts.model || project.meta?.captions?.model || DEFAULT_MODEL;
   const lang = opts.lang || project.meta?.captions?.lang || 'auto';
-  const report = (label, f) => { ctx.progress?.(label, f); opts.onProgress?.(label, f); };
   const sc = captionScope(ctx, opts.clips ? 'selected' : opts.scope);
   const targets = opts.clips ? captionClips(project, opts.clips) : sc.scope === 'selected' ? sc.selected : sc.all;
   const partial = !!opts.clips || sc.scope === 'selected';
+  const diag = lastDiag = { at: new Date().toISOString(), model, lang, scope: opts.clips ? 'new clips' : partial ? 'selected clips' : 'whole video', stage: 'starting', clips: targets.map(({ it, name }) => ({ id: it.id, name })) };
+  const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
+  const report = (label, f) => { if (label) diag.stage = label; ctx.progress?.(label, f); opts.onProgress?.(label, f); };
+  try {
+    return await runCaptions(ctx, opts, { project, model, lang, sc, targets, partial, diag, report });
+  } catch (e) {
+    if (e.name !== 'AbortError') diag.error = e.message + (e.op ? ` (${e.op})` : '');
+    else diag.stage += ' · cancelled';
+    throw e;
+  } finally { diag.ms = (typeof performance !== 'undefined' ? performance.now() : 0) - t0; }
+}
+
+async function runCaptions(ctx, opts, { project, model, lang, targets, partial, diag, report }) {
+  const clipDiag = (it) => diag.clips.find((c) => c.id === it.id) || {};
   if (!targets.length) {
-    ctx.toast?.(partial ? 'Select a clip on the timeline first (or choose Whole video).' : 'No clip with sound on the timeline yet.', 'warn');
+    diag.empty = partial ? 'Select a clip on the timeline first (or choose Whole video).' : 'No clip with sound on the timeline yet.';
+    ctx.toast?.(diag.empty, 'warn');
     return partial ? 'No clip selected' : 'No speech to caption';
   }
   const skipped = [];
+  report('Reading the clips\u2019 sound…', null);
   const parts = await speechParts(project, ctx.media, { only: new Set(targets.map((c) => c.it.id)), skipped });
+  for (const x of skipped) clipDiag(x.it).why = x.why;
+  for (const p of parts) { const seg = clipSound(p.it, p.pcm, { level: false }); Object.assign(clipDiag(p.it), { secs: seg.length / SR, rms: rmsOf(seg) }); }
   const why = (list) => list.map((x) => `${x.name}: ${x.why}`).join(' · ');
-  if (!parts.length) { ctx.toast?.(`Nothing to caption — ${why(skipped) || 'no clip with sound'}.`, 'warn', 7000); return 'No speech to caption'; }
+  if (!parts.length) { diag.empty = `Nothing to caption — ${why(skipped) || 'no clip with sound'}.`; ctx.toast?.(diag.empty, 'warn', 7000); return 'No speech to caption'; }
   try {
     // the same installer (and the same models/ folder) as the first-run Setup screen
     await ensureModel(ctx.engine, model, (p) => report(`Downloading ${SPEECH_MODELS[model].label}`, p.loaded / p.total), ctx.bus);
@@ -226,9 +267,22 @@ export async function autoCaptions(ctx, opts = {}) {
   const p = ctx.project;
   const ranges = rangesOf(targets);
   const words = r.words.filter((w) => inRanges(ranges, w));
-  // a clip that was decoded but gave no word: say so (a quiet clip, music only, speech in another language)
-  const quiet = targets.filter(({ it }) => !skipped.some((x) => x.it === it) && !words.some((w) => inRanges(rangesOf([{ it }]), w)))
-    .map(({ it, name }) => ({ it, name, why: 'no speech heard' }));
+  diag.device = r.device; diag.fallback = r.fallback || null;
+  diag.heard = r.detect ? `${r.detect.lang} ${Math.round((r.detect.conf || 0) * 100)}%` : r.lang;
+  for (const g of r.groups) for (const id of g.ids) { const c = diag.clips.find((x) => x.id === id); if (c) Object.assign(c, { raw: g.raw, dropped: g.dropped }); }
+  // a clip that was decoded but gave no word: say WHY (silent, every word removed as non-speech, or the model wrote
+  // nothing at all over clear sound — the case that used to read as a blank "no speech heard" every time)
+  const quiet = [];
+  for (const { it, name } of targets) {
+    const c = clipDiag(it), mine = rangesOf([{ it }]);
+    c.words = words.filter((w) => inRanges(mine, w)).length;
+    if (skipped.some((x) => x.it === it) || c.words) continue;
+    c.why = c.rms != null && c.rms < 0.002 ? 'its sound is silent'
+      : c.raw > 0 ? `the ${c.raw} words heard were all removed as non-speech`
+      : `the speech model wrote no words over ${c.secs != null ? c.secs.toFixed(1) + ' s of ' : ''}sound (${r.device || 'device ?'})`;
+    quiet.push({ it, name, why: c.why });
+  }
+  report('Writing the captions…', null);
   const heard = [...new Set([...(partial ? p.captions?.heard || [] : []), ...targets.map((c) => c.it.id)])];
   const style = p.captions?.style || styleForWorkspace(ctx.workspace);
   const music = (r.music || []).filter((m) => inRanges(ranges, { t0: m[0], t1: m[1] }));
@@ -252,8 +306,11 @@ export async function autoCaptions(ctx, opts = {}) {
     : `Captions for the whole video (${plural(targets.length, 'clip')})`;
   const extra = [r.dropped.length ? `${r.dropped.length} invented words removed` : '', r.fixes.length ? `${r.fixes.length} names spelled right` : '',
     r.speakers > 1 ? `${r.speakers} speakers` : ''].filter(Boolean).join(', ');
-  if (words.length || !quiet.length) ctx.toast?.(`${head}: ${words.length} words (${r.lang})${extra ? ' · ' + extra : ''}.`, 'ok', 4500);
-  if (skipped.length || quiet.length) ctx.toast?.(`No captions for ${why([...skipped, ...quiet])}.`, 'warn', 8000);
+  diag.stage = 'done';
+  if (words.length) ctx.toast?.(`${head}: ${words.length} words (${r.lang})${extra ? ' · ' + extra : ''}.`, 'ok', 4500);
+  if (skipped.length || quiet.length) ctx.toast?.(`No captions for ${why([...skipped, ...quiet])}.`, words.length ? 'warn' : 'error', 12000);
+  // nothing at all: the panel shows this in place (with Try again and Copy diagnostics), not only a toast
+  if (!words.length) { diag.empty = `No words came back — ${why([...skipped, ...quiet]) || 'no speech heard'}.`; return diag.empty; }
   return `${words.length} words`;
 }
 
@@ -276,7 +333,8 @@ export async function listenGroups(tr, groups, opts = {}) {
     for (const m of r.music || []) music.push([at(m[0]), at(Math.min(m[1], end))]);
     for (const w of r.dropped || []) dropped.push({ ...w, t0: at(w.t0), t1: at(w.t1) });
     fixes.push(...(r.fixes || []));
-    per.push({ t0: g.t0, t1: g.t1, ids: g.parts.map((p) => p.it.id), words: r.words.length, lang: r.lang, hinglish: r.hinglish, detect: r.detect, raw: r.raw });
+    per.push({ t0: g.t0, t1: g.t1, ids: g.parts.map((p) => p.it.id), words: r.words.length, lang: r.lang, hinglish: r.hinglish, detect: r.detect, raw: r.raw,
+      device: r.raw?.device, fallback: r.raw?.fallback, dropped: (r.dropped || []).length, rawWords: r.raw?.words?.length ?? null });
   }
   // the captions' language: the one most words were heard in (a clip in another language keeps its own words)
   const tally = new Map();
@@ -287,7 +345,8 @@ export async function listenGroups(tr, groups, opts = {}) {
   if (opts.speakers !== false && words.length >= 6) {
     try { const sp = await tr.speakers(mixGroups(groups), words); out = sp.words; speakers = sp.n; } catch { /* best effort */ }
   }
-  return { words: out, lang, music, dropped, fixes, speakers, raw: main?.raw, hinglish: per.some((g) => g.lang === lang && g.hinglish), detect: main?.detect || null, groups: per };
+  return { words: out, lang, music, dropped, fixes, speakers, raw: main?.raw, hinglish: per.some((g) => g.lang === lang && g.hinglish), detect: main?.detect || null,
+    groups: per.map((g) => ({ ...g, raw: g.rawWords })), device: per.map((g) => g.device).filter(Boolean)[0] || null, fallback: per.map((g) => g.fallback).filter(Boolean)[0] || null };
 }
 
 /**

@@ -16,7 +16,8 @@ import { suggestEmoji } from './emoji.js';
 import * as C from './commands.js';
 import { LANGS } from './stt.js';
 import { SPEECH_MODELS } from './models.js';
-import { autoCaptions, captionScope, uncaptionedClips } from './auto.js';
+import { autoCaptions, captionScope, uncaptionedClips, captionDiagnostics, diagnosticsText } from './auto.js';
+import { APP_VERSION } from '../core/config.js';
 import { TAG_MODES, DEFAULT_TAG_MODE, TAG_ICON } from './nonspeech.js';
 import { vocabFor } from './vocab.js';
 import { alignEdit } from './script.js';
@@ -70,6 +71,21 @@ export function mountCaptionPanel(el, ctx) {
   const cancelBtn = h('button', { class: 'rs-cap-btn ghost', onclick: () => running?.abort() }, 'Cancel');
   const progress = h('div', { class: 'rs-cap-progress', hidden: true }, barLabel, bar, cancelBtn);
   const goBtn = h('button', { class: 'rs-cap-btn primary', onclick: () => runAuto() }, '💬 Auto captions');
+  // a run that failed or ended with no words says why IN PLACE (not only in a toast that is gone in seconds), with
+  // Try again and Copy diagnostics (the owner, 20 Nov: "I run multiple times auto captions, but nothing generating")
+  let lastRun = null;
+  const failMsg = h('span', { class: 'rs-cap-failmsg', role: 'alert' });
+  const copyDiag = async () => {
+    const text = diagnosticsText(captionDiagnostics(), { version: APP_VERSION });
+    let done = false;
+    try { await navigator.clipboard.writeText(text); done = true; } catch { /* below */ }
+    if (!done) { const ta = h('textarea', { style: 'position:fixed;left:-9999px' }); ta.value = text; document.body.append(ta); ta.select(); try { done = document.execCommand('copy'); } catch {} ta.remove(); }
+    ctx.toast?.(done ? 'Diagnostics copied — paste them in your message' : 'Could not copy the diagnostics', done ? 'ok' : 'warn');
+  };
+  const failBox = h('div', { class: 'rs-cap-fail', hidden: true, 'data-cap-fail': '' }, failMsg,
+    h('div', { class: 'rs-cap-row' },
+      h('button', { class: 'rs-cap-btn', 'data-x': 'cap-retry', onclick: () => { const a = lastRun || []; runAuto(...a); } }, '↻ Try again'),
+      h('button', { class: 'rs-cap-btn ghost', 'data-x': 'cap-diag', onclick: copyDiag }, '📋 Copy diagnostics')));
   // Whole video / Selected clips: follows the timeline selection (a clip selected -> Selected clips), he can change it
   const scopeSel = h('select', { class: 'rs-cap-in', 'data-k': 'capScope', 'aria-label': 'Caption what', title: 'Caption the whole video, or only the clips selected on the timeline' },
     h('option', { value: 'all' }, 'Whole video'), h('option', { value: 'selected' }, 'Selected clips'));
@@ -90,13 +106,17 @@ export function mountCaptionPanel(el, ctx) {
   async function runAuto(clips, scope) {
     if (running) return;
     running = new AbortController();
-    progress.hidden = false; goBtn.disabled = true; newBtn.disabled = true;
+    lastRun = [clips, scope];
+    progress.hidden = false; failBox.hidden = true; goBtn.disabled = true; newBtn.disabled = true;
     const set = (label, f) => { barLabel.textContent = label || ''; bar.firstChild.style.width = f == null ? '0' : Math.round(f * 100) + '%'; };
+    let fail = null;
     try {
       await autoCaptions(ctx, { model: modelSel.value, lang: langSel.value, signal: running.signal, onProgress: set, ...(clips ? { clips } : { scope: scope || scopeSel.value }) });
+      fail = captionDiagnostics()?.empty || null;
     } catch (e) {
-      if (e.name !== 'AbortError') ctx.toast?.('Captions failed: ' + e.message, 'error');
+      if (e.name !== 'AbortError') { fail = 'Captions failed: ' + e.message; ctx.toast?.(fail, 'error'); }
     } finally { running = null; progress.hidden = true; goBtn.disabled = false; newBtn.disabled = false; }
+    failMsg.textContent = fail || ''; failBox.hidden = !fail;
   }
 
   // Music & sound tags (per project, undoable)
@@ -433,11 +453,12 @@ export function mountCaptionPanel(el, ctx) {
     h('div', { class: 'rs-cap-row' }, modelSel, langSel),
     h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Hindi / Urdu in'), scriptSel),
     h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel),
+    h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Something wrong?'), h('button', { class: 'rs-cap-btn ghost', 'data-x': 'cap-diag-settings', onclick: copyDiag }, '📋 Copy diagnostics')),
     vocabBox);
   const trBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'open-translate', title: 'Translate the captions (Urdu, Arabic, English, Hindi …)', onclick: () => show('translate') }, '🌐 Translate');
   // what Whisper heard + the Hindi / Urdu script switch (hinglish/notice.js)
   const notice = mountLangNotice({ cap, apply, canvas: () => P().canvas, relisten: (l) => { langSel.value = l; saveMeta(); runAuto(null, 'all'); } });
-  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, scopeSel, trBtn, settings), newRow, progress, notice.el),
+  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, scopeSel, trBtn, settings), newRow, progress, failBox, notice.el),
     tabs, transcriptPane, scriptPane, stylePane, translatePane);
 
   let queued = false;
