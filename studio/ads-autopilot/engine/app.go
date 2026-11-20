@@ -123,10 +123,15 @@ type App struct {
 func newApp(st *store.Store, now func() time.Time, publish func(string, any)) *App {
 	a := &App{st: st, now: now, publish: publish, accounts: map[string]*Acct{}}
 	a.sec = secrets.New(st.Dir, st.AddSecret)
-	_ = st.Load("config", &a.cfg)
-	_ = st.Load("portfolio", &a.portfolio)
-	_ = st.Load("learnings", &a.learnings)
-	_ = st.Load("research", &a.research)
+	// a saved file this version cannot read is said in Activity (store.Load keeps a copy), never read as "never set"
+	for _, x := range []struct {
+		n string
+		v any
+	}{{"config", &a.cfg}, {"portfolio", &a.portfolio}, {"learnings", &a.learnings}, {"research", &a.research}} {
+		if err := st.Load(x.n, x.v); err != nil {
+			st.Append("alert", "Saved settings could not be read: "+err.Error()+". Check Settings; nothing on Meta was changed.", model.Alert{At: now().UTC(), Level: "warn", Text: err.Error()})
+		}
+	}
 	if a.cfg.APIVersion == "" {
 		a.cfg.APIVersion = meta.DefaultVersion
 	}

@@ -76,7 +76,26 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("Claude %d %s: %s", e.Status, e.Type, e.Message)
+	return fmt.Sprintf("Claude %d %s: %s%s", e.Status, e.Type, e.Message, e.hint())
+}
+
+// hint: what the owner does about it, in plain words (the bare "Claude 529 overloaded_error: Overloaded" said nothing).
+func (e *APIError) hint() string {
+	switch {
+	case e.Status == 401:
+		return " — Claude refused the key: paste a new one in Settings → Connections → Claude."
+	case e.Status == 403:
+		return " — this key may not use this model or feature: check the key's workspace in the Claude Console."
+	case e.Status == 402 || e.Type == "billing_error" || strings.Contains(strings.ToLower(e.Message), "credit balance"):
+		return " — the Claude account is out of credit: add credit in the Claude Console (Plans & Billing)."
+	case e.Status == 429:
+		return " — Claude's rate limit for this key: nothing was changed; it tries again at the next cycle."
+	case e.Status == 529 || e.Type == "overloaded_error":
+		return " — Claude is busy right now: nothing was changed; it tries again at the next cycle."
+	case e.Status >= 500:
+		return " — Claude had a problem on its side: nothing was changed; it tries again at the next cycle."
+	}
+	return ""
 }
 
 // Complete runs one Messages request. The brain drives any tool loop itself by appending resp.Content.
@@ -141,7 +160,7 @@ func (c *Client) Complete(ctx context.Context, req model.LLMRequest) (model.LLMR
 		hr.Header.Set("anthropic-beta", FallbackBeta)
 		resp, err := c.HTTP.Do(hr)
 		if err != nil {
-			lastErr = err
+			lastErr = fmt.Errorf("Claude did not answer (no internet, or it took too long): nothing was changed; it tries again at the next cycle (%w)", err)
 			c.meter(req.Purpose, mdl, model.LLMUsage{}, time.Since(t0).Milliseconds(), err)
 			continue
 		}

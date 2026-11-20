@@ -152,7 +152,7 @@ export function switchAccount(id) {
   if (!id || id === getAccount()) return;
   setAccount(id);
   try { localStorage.setItem('kaa.account', id); } catch {}
-  api('/api/accounts/select', { method: 'POST', body: { account: id }, noAccount: true }).catch(() => {});
+  api('/api/accounts/select', { method: 'POST', body: { account: id }, noAccount: true }).catch((x) => toast(tt('The engine did not record the account switch: ', 'لم يسجّل المحرك تبديل الحساب: ') + x.message));
   paintAccount(); paintTop(); paintNav();
   rerender(); // instant from the warmed cache
   refreshState(id).catch((e) => toast(e.message));
@@ -315,7 +315,16 @@ window.addEventListener('online', () => warmNow('online'));
     view.innerHTML = `<div class="page"><div class="alert danger stale-engine" id="stale-engine" role="alert"><div><b>${esc(tt('The app was updated, but the old engine is still running.', 'تم تحديث التطبيق، لكن المحرك القديم ما زال يعمل.'))}</b><br>${esc(tt('Close the KBB Ads Autopilot Terminal window, then double-click “Start KBB Ads Autopilot” again. Nothing is lost: your accounts, keys and history stay as they are.', 'أغلقي نافذة Terminal الخاصة بـ KBB Ads Autopilot، ثم انقري مرتين على «Start KBB Ads Autopilot» مرة أخرى. لا يضيع شيء: حساباتك ومفاتيحك وسجلك تبقى كما هي.'))}<br><span class="small muted" dir="ltr">${esc(stale === 'api' ? `engine ${v.version || '?'} (API level ${v.apiLevel ?? '?'}) is older than this app (needs API level 2)` : `engine started as ${v.version}, the app folder is now ${v.folderVersion}`)}</span></div></div></div>`;
     return;
   }
-  const [acc, connections] = await Promise.all([api('/api/accounts', { noAccount: true }).catch(() => ({ accounts: [] })), api('/api/connections', { noAccount: true })]);
+  // A failed read is NOT "no accounts": the old .catch(() => ({ accounts: [] })) sent him to the first-run wizard as if
+  // his accounts were gone, and a failed /api/connections left the skeleton up for good. Say so, with Try again.
+  let acc, connections;
+  try { [acc, connections] = await Promise.all([api('/api/accounts', { noAccount: true }), api('/api/connections', { noAccount: true })]); }
+  catch (x) {
+    S.connHTML = `<span class="dot bad"></span><span>${esc(tt('Engine not answering', 'المحرك لا يستجيب'))}</span>`; paintNav();
+    view.innerHTML = `<div class="page"><div class="card empty" id="start-failed" role="alert"><b>${esc(tt('Your accounts could not be read from the engine.', 'تعذّرت قراءة حساباتك من المحرك.'))}</b><span>${esc(tt('Nothing is lost. ', 'لم يضع شيء. ') + x.message)}</span><button type="button" id="start-retry">${esc(tt('Try again', 'حاولي مرة أخرى'))}</button></div></div>`;
+    document.getElementById('start-retry').onclick = () => start();
+    return;
+  }
   const r = normAccounts(acc);
   S.accounts = r.rows; S.conn = connections;
   let saved = ''; try { saved = localStorage.getItem('kaa.account') || ''; } catch {}

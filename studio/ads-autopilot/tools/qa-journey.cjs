@@ -130,6 +130,19 @@ const warmDone = async () => { for (let i = 0; i < 200; i++) { const w = (await 
       if (shots && lang === 'en') await page.screenshot({ path: path.join(SHOTS, `qa-${rt}.png`) });
     }
   }
+  // a failed accounts read at start is not "no accounts" (it sent him to the first-run wizard) -- MUTATION: put back
+  // .catch(() => ({ accounts: [] })) in main.js start → S1 red
+  const pf = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await pf.route('**/api/accounts', (rt) => rt.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"disk busy"}' }));
+  await pf.goto(base + '/app/#/overview');
+  await pf.waitForSelector('#start-failed', { timeout: 8000 }).catch(() => {});
+  const s1 = await pf.evaluate(() => ({ err: !!document.getElementById('start-failed'), hash: location.hash, text: (document.getElementById('view').innerText || '').slice(0, 120) }));
+  check('S1', s1.err && !s1.hash.includes('welcome'), `accounts read fails at start → ${s1.err ? 'a clear message + Try again' : 'no message'}, at ${s1.hash}: ${s1.text.replace(/\s+/g, ' ')}`);
+  await pf.unroute('**/api/accounts');
+  if (s1.err) { await pf.click('#start-retry'); await pf.waitForFunction(() => window.__kaa && window.__kaa.state, null, { timeout: 15000 }).catch(() => {}); }
+  check('S2', await pf.evaluate(() => !!(window.__kaa && window.__kaa.state) && !document.getElementById('start-failed')), 'Try again → the overview');
+  await pf.close();
+
   // switch account, Create with Claude, Settings → Updates
   await page.goto(base + '/app/#/overview');
   await page.waitForFunction(() => window.__kaa && window.__kaa.state, null, { timeout: 30000 });
