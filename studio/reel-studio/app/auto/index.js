@@ -38,6 +38,8 @@ export function call(op, args, transfer = []) { return new Promise((res, rej) =>
 // ── library ──
 const getJSON = async (ctx, path) => { try { if (ctx?.engine?.available) return await ctx.engine.readFile(path, 'json'); } catch {} const r = await fetch('/' + path); if (!r.ok) throw new Error(path + ' ' + r.status); return r.json(); };
 let LIB = null;
+/** forget the cached library (a track was imported into library/music/user; the Music Library re-reads it) */
+export function resetLibrary() { LIB = null; }
 export async function library(ctx) {
   if (LIB) return LIB;
   const [music, sfx] = await Promise.all([getJSON(ctx, 'library/music/library.json'), getJSON(ctx, 'library/sfx/library.json')]);

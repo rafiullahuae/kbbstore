@@ -5,6 +5,7 @@ Everything here works offline. Nothing is fetched at run time.
 | What | Where | Source | Licence |
 |---|---|---|---|
 | Starter music, 27 tracks | `library/music/*.m4a`, `library.json` | Composed and rendered by `tools/r3-music.cjs` (deterministic synth written for KBB Studio) | Original work, owned by the owner. Free to use commercially; no attribution needed |
+| "Viral reel" styles, 33 tracks (60 in all) | `library/music/*.m4a`, `library.json` (entries with `cats`) | Composed and rendered by `tools/r4-music.cjs` (same synth; phonk-lite, trap, pop-house, afro-house, future bass, lo-fi, Arabic pop, cinematic, stomp-clap, R&B, deep house, amapiano, baile-style, piano, pizzicato, corporate). Styles only: no sample, melody or progression of any real song | Original work, owned by the owner. Free to use commercially; no attribution needed |
 | Sound effects, 28 | `library/sfx/*.m4a`, `library.json` | Synthesised by `tools/r3-sfx.cjs` | Original work, same terms |
 | Sound hooks, 21 | `library/sfx/hooks/*.m4a`, `library.json` | Synthesised by `tools/v-sfx.cjs` (Lane V) | Original work, same terms |
 | Your own music | `library/music/user/` | Whatever you drop in | Your responsibility. Use only tracks you have the rights to |

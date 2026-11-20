@@ -84,7 +84,7 @@ export const hearingOriginal = () => !!MediaStore.hearOriginal;
 
 /** music dips under speech: volume keyframes on every music item (one undo step). onlyNew: skip music already ducked */
 export async function duckMusic(ctx, { onlyNew = false, depth = 0.3 } = {}) {
-  const p = ctx.project, music = p.tracks.filter((t) => t.kind === 'music').flatMap((t) => t.items).filter((i) => i.media && !(onlyNew && i.kf?.volume?.length));
+  const p = ctx.project, music = p.tracks.filter((t) => t.kind === 'music').flatMap((t) => t.items).filter((i) => i.media && !i.duck?.on && !(onlyNew && i.kf?.volume?.length));   // Auto-duck (audio/music.js) already dips it
   if (!music.length) return 0;
   let speech = [];
   for (const m of voiceMedia(ctx, [])) {
