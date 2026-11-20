@@ -33,19 +33,32 @@ type Config struct {
 	ShopFeedURL   string `json:"shop_feed_url"`
 	SyncMinutes   int    `json:"sync_minutes"`
 	PlansPerDay   int    `json:"plans_per_day"`
+	// token.go: how Meta is connected, and what /debug_token last said about the token
+	MetaAuth     string    `json:"meta_auth"` // system_user | user_token
+	TokenType    string    `json:"token_type,omitempty"`
+	TokenExpires time.Time `json:"token_expires_at,omitempty"`
+	TokenScopes  []string  `json:"token_scopes,omitempty"`
+	TokenValid   bool      `json:"token_valid,omitempty"`
 }
 
 type connMeta struct {
-	OK      bool           `json:"ok"`
-	Account *model.Account `json:"account,omitempty"`
-	Error   string         `json:"error,omitempty"`
-	Token   secrets.Info   `json:"token"`
-	Secret  secrets.Info   `json:"app_secret"`
-	Version string         `json:"api_version"`
-	PageID  string         `json:"page_id"`
-	PixelID string         `json:"pixel_id"`
-	AppID   string         `json:"app_id"`
-	Usage   meta.Usage     `json:"usage"`
+	OK        bool           `json:"ok"`
+	Account   *model.Account `json:"account,omitempty"`
+	Error     string         `json:"error,omitempty"`
+	Token     secrets.Info   `json:"token"`
+	Secret    secrets.Info   `json:"app_secret"`
+	Version   string         `json:"api_version"`
+	PageID    string         `json:"page_id"`
+	PixelID   string         `json:"pixel_id"`
+	AppID     string         `json:"app_id"`
+	Usage     meta.Usage     `json:"usage"`
+	Auth      string         `json:"auth"` // system_user | user_token
+	TokenType string         `json:"token_type,omitempty"`
+	ExpiresAt *time.Time     `json:"token_expires_at,omitempty"` // nil = does not expire by time
+	DaysLeft  int            `json:"token_days_left"`            // -1 = no expiry
+	Scopes    []string       `json:"token_scopes,omitempty"`
+	Warning   string         `json:"warning,omitempty"`
+	Tier      string         `json:"access_tier,omitempty"`
 }
 type connClaude struct {
 	OK    bool           `json:"ok"`
@@ -271,7 +284,22 @@ func (a *App) testMeta(ctx context.Context) connMeta {
 	cfg := a.cfg
 	mc := a.meta
 	a.mu.RUnlock()
-	c := connMeta{Token: secrets.Describe(a.sec, "meta_token"), Secret: secrets.Describe(a.sec, "meta_app_secret"), Version: cfg.APIVersion, PageID: cfg.PageID, PixelID: cfg.PixelID, AppID: cfg.MetaAppID}
+	c := connMeta{Token: secrets.Describe(a.sec, "meta_token"), Secret: secrets.Describe(a.sec, "meta_app_secret"), Version: cfg.APIVersion, PageID: cfg.PageID, PixelID: cfg.PixelID, AppID: cfg.MetaAppID, Auth: cfg.MetaAuth}
+	if c.Auth == "" {
+		c.Auth = AuthSystemUser
+	}
+	if c.Token.Set {
+		_ = a.inspectToken(ctx) // best effort: type, expiry, scopes
+		a.mu.RLock()
+		cfg = a.cfg
+		a.mu.RUnlock()
+		c.TokenType, c.Scopes = cfg.TokenType, cfg.TokenScopes
+		if !cfg.TokenExpires.IsZero() {
+			t := cfg.TokenExpires
+			c.ExpiresAt = &t
+		}
+		c.DaysLeft, c.Warning = a.tokenStatus(a.now())
+	}
 	switch {
 	case !c.Token.Set:
 		c.Error = "No Meta system-user token saved."
@@ -298,6 +326,7 @@ func (a *App) testMeta(ctx context.Context) connMeta {
 		}
 	}
 	c.Usage = mc.Usage()
+	c.Tier = c.Usage.Tier
 	return c
 }
 

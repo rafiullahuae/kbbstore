@@ -181,6 +181,7 @@ func (s *server) putConnection(w http.ResponseWriter, r *http.Request, which str
 			PageID     string `json:"page_id"`
 			PixelID    string `json:"pixel_id"`
 			APIVersion string `json:"api_version"`
+			Auth       string `json:"auth"` // system_user (default) | user_token
 		}
 		if err := readJSON(r, &in, maxBody); err != nil {
 			jsonErr(w, 400, err.Error())
@@ -199,13 +200,38 @@ func (s *server) putConnection(w http.ResponseWriter, r *http.Request, which str
 				return
 			}
 		}
-		for name, v := range map[string]string{"meta_token": in.Token, "meta_app_secret": in.AppSecret} {
-			if v != "" {
-				if err := a.sec.Set(name, strings.TrimSpace(v)); err != nil {
-					jsonErr(w, 400, err.Error())
-					return
-				}
+		if in.Auth != "" && in.Auth != AuthSystemUser && in.Auth != AuthUserToken {
+			jsonErr(w, 400, `auth must be "system_user" or "user_token"`)
+			return
+		}
+		if in.AppSecret != "" {
+			if err := a.sec.Set("meta_app_secret", strings.TrimSpace(in.AppSecret)); err != nil {
+				jsonErr(w, 400, err.Error())
+				return
 			}
+		}
+		a.mu.Lock()
+		if in.Auth != "" {
+			a.cfg.MetaAuth = in.Auth
+		}
+		if in.AppID != "" {
+			a.cfg.MetaAppID = in.AppID
+		}
+		auth := a.cfg.MetaAuth
+		a.mu.Unlock()
+		if in.Token != "" {
+			if err := secrets.ValidValue(strings.TrimSpace(in.Token)); err != nil {
+				jsonErr(w, 400, err.Error())
+				return
+			}
+			a.wire()
+			if err := a.saveMetaToken(ctx, auth, in.Token); err != nil {
+				jsonErr(w, 400, err.Error())
+				return
+			}
+			a.mu.Lock()
+			a.cfg.TokenExpires, a.cfg.TokenType, a.cfg.TokenScopes = time.Time{}, "", nil
+			a.mu.Unlock()
 		}
 		a.mu.Lock()
 		for _, kv := range []struct {

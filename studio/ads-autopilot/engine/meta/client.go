@@ -120,9 +120,66 @@ type Client struct {
 	MaxRetries int
 	Sleep      func(ctx context.Context, d time.Duration) error
 	OnCall     func(Call)
+	Paced      int // tests: how many times pacing waited
 
 	mu    sync.Mutex
 	usage Usage
+	spent []scored // pacing: the score of the calls made in the last 300 s
+}
+
+type scored struct {
+	at  time.Time
+	pts int
+}
+
+// Score limits per ad account (META-FACTS §5): a read costs 1 point, a write 3; the score decays over 300 s. The
+// Limited (development) tier, which every app gets WITHOUT App Review or Business Verification, allows 60; Full
+// access 9000. Until Meta's headers say otherwise the client assumes Limited and paces itself to 80% of it, so a
+// sync or a launch batch waits a little instead of being blocked by Meta for 300 s.
+const (
+	scoreWindow  = 300 * time.Second
+	limitedScore = 60
+	fullScore    = 9000
+)
+
+func (c *Client) pace(ctx context.Context, cost int) error {
+	for i := 0; i < 40; i++ {
+		c.mu.Lock()
+		now := time.Now()
+		keep := c.spent[:0]
+		sum := 0
+		for _, s := range c.spent {
+			if now.Sub(s.at) < scoreWindow {
+				keep = append(keep, s)
+				sum += s.pts
+			}
+		}
+		c.spent = keep
+		max := limitedScore
+		if c.usage.Tier == "standard_access" || c.usage.Tier == "full_access" {
+			max = fullScore
+		}
+		budget := max * 8 / 10
+		if sum+cost <= budget || len(c.spent) == 0 {
+			c.spent = append(c.spent, scored{now, cost})
+			c.mu.Unlock()
+			return nil
+		}
+		wait := scoreWindow - now.Sub(c.spent[0].at) + 100*time.Millisecond
+		c.mu.Unlock()
+		if err := c.sleep(ctx, wait); err != nil {
+			return err
+		}
+		if c.Sleep != nil { // tests: a fake sleep moves no clock, so age the window by hand
+			c.mu.Lock()
+			if len(c.spent) > 0 {
+				c.spent = c.spent[1:]
+			}
+			c.Paced++
+			c.mu.Unlock()
+		}
+	}
+	return nil
 }
 
 func New(token func() string) *Client {
@@ -195,8 +252,15 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 		return &Error{Code: 190, Message: "no Meta token saved (Settings → Connections → Meta)"}
 	}
 	write := method != http.MethodGet
+	cost := 1
+	if write {
+		cost = 3
+	}
 	var last *Error
 	for attempt := 0; attempt <= c.MaxRetries; attempt++ {
+		if err := c.pace(ctx, cost); err != nil {
+			return err
+		}
 		if attempt > 0 {
 			wait := backoff(attempt, last)
 			if wait < 0 {
@@ -424,4 +488,87 @@ func scrub(s string) string {
 		s = s[:j] + "[redacted]" + s[k:]
 	}
 	return s
+}
+
+// ── tokens (Settings → Connections → Meta) ──
+
+// TokenInfo: what GET /debug_token says about a token. ExpiresAt zero = it does not expire by time (system-user
+// tokens, and tokens of apps with Marketing API access: META-FACTS §12).
+type TokenInfo struct {
+	Type        string    `json:"type"` // USER | SYSTEM_USER | PAGE | APP
+	AppID       string    `json:"app_id"`
+	UserID      string    `json:"user_id,omitempty"`
+	Valid       bool      `json:"is_valid"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	DataExpires time.Time `json:"data_access_expires_at"`
+	Scopes      []string  `json:"scopes"`
+}
+
+// rawGet: a GET that carries its own credentials (the token endpoints).
+func (c *Client) rawGet(ctx context.Context, path string, q url.Values, out any) error {
+	if err := c.pace(ctx, 1); err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.url(path)+"?"+q.Encode(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return &Error{Network: true, Message: scrub(err.Error())}
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode >= 400 {
+		e := parseError(resp.StatusCode, body)
+		c.report(Call{Method: "GET", Path: path, Status: resp.StatusCode, Err: e})
+		return e
+	}
+	return json.Unmarshal(body, out)
+}
+
+// ExchangeToken turns a short-lived user token into a long-lived one (~60 days):
+// GET oauth/access_token?grant_type=fb_exchange_token&client_id&client_secret&fb_exchange_token (META-FACTS §12).
+// An expired token cannot be exchanged.
+func (c *Client) ExchangeToken(ctx context.Context, appID, appSecret, token string) (string, time.Duration, error) {
+	var r struct {
+		AccessToken string `json:"access_token"`
+		ExpiresIn   int64  `json:"expires_in"`
+	}
+	q := url.Values{"grant_type": {"fb_exchange_token"}, "client_id": {appID}, "client_secret": {appSecret}, "fb_exchange_token": {token}}
+	if err := c.rawGet(ctx, "oauth/access_token", q, &r); err != nil {
+		return "", 0, err
+	}
+	if r.AccessToken == "" {
+		return "", 0, fmt.Errorf("Meta did not return a long-lived token")
+	}
+	return r.AccessToken, time.Duration(r.ExpiresIn) * time.Second, nil
+}
+
+// DebugToken reads a token's type, expiry and permissions. asToken: the app access token "appid|secret" when the app
+// secret is known, else the token itself (allowed for a developer of the app).
+func (c *Client) DebugToken(ctx context.Context, input, asToken string) (TokenInfo, error) {
+	var r struct {
+		Data struct {
+			Type        string   `json:"type"`
+			AppID       string   `json:"app_id"`
+			UserID      string   `json:"user_id"`
+			Valid       bool     `json:"is_valid"`
+			ExpiresAt   int64    `json:"expires_at"`
+			DataExpires int64    `json:"data_access_expires_at"`
+			Scopes      []string `json:"scopes"`
+		} `json:"data"`
+	}
+	if err := c.rawGet(ctx, "debug_token", url.Values{"input_token": {input}, "access_token": {asToken}}, &r); err != nil {
+		return TokenInfo{}, err
+	}
+	d := r.Data
+	ti := TokenInfo{Type: d.Type, AppID: d.AppID, UserID: d.UserID, Valid: d.Valid, Scopes: d.Scopes}
+	if d.ExpiresAt > 0 {
+		ti.ExpiresAt = time.Unix(d.ExpiresAt, 0).UTC()
+	}
+	if d.DataExpires > 0 {
+		ti.DataExpires = time.Unix(d.DataExpires, 0).UTC()
+	}
+	return ti, nil
 }

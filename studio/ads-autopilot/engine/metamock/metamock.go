@@ -68,15 +68,19 @@ type Server struct {
 	adsets    []obj
 	ads       []obj
 	creatives map[string]obj
-	rules     []obj
-	idem      map[string]idemRec
-	budgetTS  map[string][]time.Time
-	capTS     []time.Time
-	injects   []Inject
-	writes    []Write
-	calls     int
-	srv       *http.Server
-	URL       string
+	// user tokens (the unverified-business path): token → expiry. AppID/AppSecret are the owner's own app.
+	userTokens map[string]time.Time
+	AppID      string
+	AppSecret  string
+	rules      []obj
+	idem       map[string]idemRec
+	budgetTS   map[string][]time.Time
+	capTS      []time.Time
+	injects    []Inject
+	writes     []Write
+	calls      int
+	srv        *http.Server
+	URL        string
 }
 
 type idemRec struct {
@@ -248,9 +252,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-FB-Ads-Insights-Throttle", `{"app_id_util_pct":2.5,"acc_id_util_pct":1.0,"ads_api_access_tier":"development_access"}`)
 	}
 
-	if form.Get("access_token") != s.Token {
-		s.fail(w, 400, 190, 463, "Error validating access token: Session has expired.", false)
+	switch path {
+	case "oauth/access_token":
+		s.exchange(w, form)
 		return
+	case "debug_token":
+		s.debugToken(w, form)
+		return
+	}
+	if tok := form.Get("access_token"); tok != s.Token {
+		exp, ok := s.userTokens[tok]
+		if !ok || !s.Now().Before(exp) {
+			s.fail(w, 400, 190, 463, "Error validating access token: Session has expired.", false)
+			return
+		}
 	}
 	for i := range s.injects {
 		in := &s.injects[i]
@@ -764,4 +779,59 @@ func (s *Server) nameChain(o obj) string {
 		n += " " + fmt.Sprint(c["name"])
 	}
 	return n
+}
+
+// AddUserToken: a short-lived user token as Graph API Explorer hands it out (valid for `life`).
+func (s *Server) AddUserToken(tok string, life time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.userTokens == nil {
+		s.userTokens = map[string]time.Time{}
+	}
+	s.userTokens[tok] = s.Now().Add(life)
+}
+
+// ExpireAll: every user token lapses (the 60 days ran out).
+func (s *Server) ExpireAll() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for k := range s.userTokens {
+		s.userTokens[k] = s.Now().Add(-time.Second)
+	}
+}
+
+func (s *Server) exchange(w http.ResponseWriter, form url.Values) {
+	if form.Get("grant_type") != "fb_exchange_token" || form.Get("client_id") != s.AppID || form.Get("client_secret") != s.AppSecret || s.AppID == "" {
+		s.fail(w, 400, 101, 0, "Error validating application. Invalid application ID or secret.", false)
+		return
+	}
+	exp, ok := s.userTokens[form.Get("fb_exchange_token")]
+	if !ok || !s.Now().Before(exp) {
+		s.fail(w, 400, 190, 463, "Error validating access token: Session has expired.", false)
+		return
+	}
+	long := "EAALONG" + s.id() + "0000000000000000"
+	if s.userTokens == nil {
+		s.userTokens = map[string]time.Time{}
+	}
+	s.userTokens[long] = s.Now().Add(60 * 24 * time.Hour)
+	s.ok(w, obj{"access_token": long, "token_type": "bearer", "expires_in": 5183944})
+}
+
+func (s *Server) debugToken(w http.ResponseWriter, form url.Values) {
+	as, in := form.Get("access_token"), form.Get("input_token")
+	_, asUser := s.userTokens[as]
+	if as != s.AppID+"|"+s.AppSecret && as != in && as != s.Token && !asUser {
+		s.fail(w, 400, 190, 0, "Invalid OAuth access token.", false)
+		return
+	}
+	d := obj{"app_id": s.AppID, "scopes": []string{"ads_management", "ads_read", "business_management"}}
+	if in == s.Token {
+		d["type"], d["is_valid"], d["expires_at"] = "SYSTEM_USER", true, 0
+	} else if exp, ok := s.userTokens[in]; ok {
+		d["type"], d["is_valid"], d["expires_at"], d["user_id"] = "USER", s.Now().Before(exp), exp.Unix(), "777"
+	} else {
+		d["is_valid"] = false
+	}
+	s.ok(w, obj{"data": d})
 }

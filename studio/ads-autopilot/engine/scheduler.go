@@ -12,9 +12,10 @@ import (
 // 30 s on the wall clock, so after the Mac wakes the next tick sees what is due (and a long gap reads as a wake:
 // catch-up at once).
 type scheduler struct {
-	a       *App
-	tick    time.Duration
-	attempt time.Time // last sync attempt: a failing sync is retried every 5 min, not every tick
+	a          *App
+	tick       time.Duration
+	attempt    time.Time // last sync attempt: a failing sync is retried every 5 min, not every tick
+	tokenCheck time.Time
 }
 
 func newScheduler(a *App) *scheduler { return &scheduler{a: a, tick: 30 * time.Second} }
@@ -74,6 +75,14 @@ func (s *scheduler) step() {
 	a.mu.Lock()
 	a.nextSync, a.nextCycle = lastSync.Add(syncEvery), lastCycle.Add(cycleEvery)
 	a.mu.Unlock()
+	if now.Sub(s.tokenCheck) >= 24*time.Hour { // the token: expiry warning and refresh, once a day
+		s.tokenCheck = now
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			a.maintainToken(ctx)
+		}()
+	}
 	if !ok {
 		return
 	}

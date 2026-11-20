@@ -119,7 +119,7 @@ func main() {
 	}
 	s.app = newApp(st, time.Now, s.publish)
 	if *mock {
-		if err := setupMock(s.app); err != nil {
+		if _, err := setupMock(s.app); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -179,17 +179,18 @@ func main() {
 
 // setupMock: the -mock flag. Fake Meta + fake Claude + fake feed in this process, a throwaway token, a seeded owner
 // campaign the app must never touch. The data folder is whatever -data says (the checks use a temp folder).
-func setupMock(a *App) error {
+func setupMock(a *App) (*metamock.Server, error) {
 	m := metamock.New("EAAMOCKTOKEN0000000000000000", "act_1000000001")
+	m.AppID, m.AppSecret = "1234567890123", "mockappsecret0000"
 	m.Seed()
 	mu, err := m.Start()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	aux := &metamock.Aux{Key: "sk-ant-mock-0000000000"}
 	au, err := aux.Start()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	a.testMetaBase, a.testClaudeBase, a.testFeedURL = mu, au, au+"/feed.xml"
 	_ = a.sec.Set("meta_token", m.Token)
@@ -197,9 +198,11 @@ func setupMock(a *App) error {
 	a.cfg.MetaAccountID, a.cfg.PageID, a.cfg.PixelID = m.Account, "200000000001", "300000000001"
 	_ = a.st.Save("config", a.cfg)
 	log.Printf("TEST MODE: Meta → %s, Claude + feed → %s (never the real services)", mu, au)
-	mockURL = mu
-	return nil
+	mockURL, mockServer = mu, m
+	return m, nil
 }
+
+var mockServer *metamock.Server
 
 var mockURL string
 
