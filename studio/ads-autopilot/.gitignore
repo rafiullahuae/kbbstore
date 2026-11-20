@@ -1,0 +1,6 @@
+# LANE ENGINE scratch (fetched Meta docs, check logs) and build outputs: never committed, never shipped
+.lane-engine-logs/
+/dist/
+/engine/kaa-mac-*
+/engine/kaa-linux-*
+.update/
