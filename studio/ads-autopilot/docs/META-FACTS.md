@@ -153,3 +153,67 @@ Short link prefix: `MAPI` = `https://developers.facebook.com/documentation/ads-c
   META-SETUP.md) works without it.
 - **[inferred]** Whether re-exchanging a still-valid long-lived user token extends it: not stated. The engine tries
   once a day from 10 days before expiry and keeps the warning if the date does not move.
+
+## §13 Portfolio discovery
+- **[verified]** Business edges exist in the Marketing API reference: `owned_ad_accounts`, `client_ad_accounts`,
+  `owned_pages`, `owned_instagram_accounts`, `owned_pixels`, `owned_product_catalogs`,
+  `owned_whatsapp_business_accounts`. — `MAPI/reference/llms.txt` → `reference/business/*.md`
+- **[inferred]** `me/businesses` and `me/adaccounts` (Graph user edges, long-standing; their pages were not reachable as
+  Markdown). The engine reads both and treats a refused edge as a note on that business, never fatal.
+- **[verified]** Insights reach back 37 months (`date_preset=maximum`; error 3018 "cannot be beyond 37 months").
+  — `MAPI/reference/ad-account/insights.md`. The history import reads exactly that far.
+
+## §14 Ad formats
+- **[verified]** Carousel: `object_story_spec.link_data.child_attachments`, ≥2 cards (Instagram shows the first 5,
+  Stories up to 10), each with `link` and `image_hash`/`picture` or `video_id` + thumbnail; `instagram_user_id` on
+  the creative. — `…/ads-commerce/instagram/ads-api/guides/carousel-ads.md`, `MAPI/reference/ad-creative.md`
+- **[verified]** Video upload, resumable: `POST act_X/video_ads upload_phase=start` → `{video_id, upload_url}` →
+  `POST rupload.facebook.com/video-ads-upload/v27.0/<id>` with `Authorization: OAuth`, `offset`, `file_size` (resume
+  from `status.uploading_phase.bytes_transferred`) → `upload_phase=finish` → poll `GET <id>?fields=status` until
+  `video_status: ready` (processing makes thumbnails). Video creative: `video_data {video_id, image_url|image_hash}`.
+  — `MAPI/guides/videoads/fbvideoads.md`, `MAPI/guides/videoads.md`
+- **[verified]** Flexible / dynamic creative: `asset_feed_spec {images, videos, bodies, titles, descriptions,
+  ad_formats, call_to_action_types, link_urls}`, no customization rules. — `MAPI/ad-creative/asset-feed-spec.md`
+- **[verified]** Advantage+ creative: `degrees_of_freedom_spec.creative_features_spec.<feature>.enroll_status`
+  OPT_IN/OPT_OUT; features listed include `image_touchups`, `inline_comment`, `image_templates`, `text_optimizations`,
+  `text_translation`, `image_background_gen`, `product_extensions` … — `MAPI/creative/advantage-creative/get-started.md`.
+  Engine: allow-list in `executor/formats.go`; generative/translation features OPT_OUT only; `product_extensions`
+  (v27 product showcase default) sent OPT_OUT unless the brain opts in.
+- **[verified]** Advantage+ catalog ads: campaign `objective=PRODUCT_CATALOG_SALES` + `promoted_object
+  {product_catalog_id}`; ad set `promoted_object {product_set_id[, custom_event_type]}`; creative
+  `object_story_spec.template_data {message, name, link, description}` with `{{product.*}}` tokens + `product_set_id`.
+  — `MAPI/advantage-catalog-ads/get-started.md`. **[inferred]** the ODAX equivalent (OUTCOME_SALES + catalog) is not
+  in the mapping table; the engine uses the objective the catalog page documents.
+- **[verified]** Collection ads are built on an Instant Experience (formerly Canvas): `link =
+  https://fb.com/canvas_doc/<canvas id>`. — `MAPI/creative/collection-ads.md`. Engine: only on an existing IE id.
+- Product sets: `POST <catalog>/product_sets {name, filter}`. **[inferred]** from the catalog reference index; the
+  engine sends only a name and a JSON filter.
+
+## §15 Click-to-message and audiences
+- **[verified]** Click-to-WhatsApp: objective OUTCOME_SALES (or ENGAGEMENT/LEADS/TRAFFIC); ad set
+  `destination_type=WHATSAPP`, `optimization_goal` CONVERSATIONS (allowed for SALES), `promoted_object {page_id,
+  whatsapp_phone_number}`; creative CTA `{type: WHATSAPP_MESSAGE, value {app_destination: WHATSAPP}}`; prerequisite: a
+  Page with a WhatsApp number linked. — `MAPI/ad-creative/messaging-ads/click-to-whatsapp.md`
+- **[verified]** Messenger: `destination_type=MESSENGER`, CTA `MESSAGE_PAGE`, `app_destination MESSENGER`.
+  Instagram Direct: `destination_type=INSTAGRAM_DIRECT`, CTA `INSTAGRAM_MESSAGE`, `app_destination INSTAGRAM_DIRECT`,
+  `instagram_user_id`. — `…/click-to-messenger.md`, `…/click-to-instagram.md`
+- **[verified]** Website custom audience: `POST act_X/customaudiences {name, rule {inclusions {operator, rules
+  [{event_sources [{id: pixel, type: pixel}], retention_seconds, filter {operator, filters [{field, operator,
+  value}]}}]}}, prefill}`, retention 1–180 days. — `MAPI/audiences/guides/website-custom-audiences.md`
+  **[inferred]** the `event` filter with operator `eq` (the page shows `i_contains` on `event`; the catalog page
+  shows `{"event":{"eq":…}}`).
+- **[verified]** Engagement audience: `event_sources [{type: page | ig_business, id}]`, events `page_engaged`,
+  `ig_business_profile_all` … — `MAPI/audiences/guides/engagement-custom-audiences.md`
+- **[verified]** Lookalike: `subtype=LOOKALIKE`, `origin_audience_id` (≥100 people), `lookalike_spec {ratio 0.01–0.20}`;
+  **v27 rejects `country` / `location_spec`**. — `MAPI/audiences/guides/lookalike-audiences.md`. Engine: ratio ≤ 0.10.
+
+## §16 Targeting, placements, frequency
+- **[verified]** Advantage+ audience: `targeting_automation.advantage_audience` 1/0 (defaults to 1 from v23);
+  with it on, `age_min` 18–25 only, `age_max` fixed 65, `age_range` is a suggestion. `genders` 1/2.
+  — `MAPI/audiences/reference/targeting-expansion/advantage-audience.md`, `…/basic-targeting.md`
+- **[inferred]** `locales` (ids from Meta's targeting search) — passed through as numbers.
+- **[verified]** Placements: `publisher_platforms` (facebook, instagram, threads, messenger, audience_network),
+  `facebook_positions` (feed, story, facebook_reels, …), `instagram_positions` (stream, story, reels, explore, …);
+  omit them for Advantage+ placements. — `MAPI/audiences/reference/placement-targeting.md`
+- **[verified]** `frequency_control_specs` can be written only on REACH / THRUPLAY ad sets.
+  — `MAPI/reference/ad-account/adsets.md`. Engine: refuses a frequency cap on sales ad sets, with that reason.
