@@ -171,6 +171,12 @@ func createAnswer(msgs string) string {
 		pid, name, nameAR, angle = "5120", "Anua Heartleaf 77% Toner", "تونر Anua بالهارتليف", "calming heartleaf toner"
 	}
 	n := 1
+	if edit { // the whole current set comes back (every idea carries a "template")
+		n = strings.Count(low, `"template":`)
+		if n < 1 || n > 5 {
+			n = 1
+		}
+	}
 	if !edit && (strings.Contains(req, "3 ads") || strings.Contains(req, "٣ إعلانات") || strings.Contains(req, "3 إعلانات")) {
 		n = 3
 	}
@@ -178,7 +184,7 @@ func createAnswer(msgs string) string {
 	angles := []string{angle, "texture you can feel", "a K-beauty classic"}
 	var ideas []idea
 	for i := 0; i < n; i++ {
-		ideas = append(ideas, idea{ProductIDs: []string{pid}, Angle: angles[i], Hook: "The lightest step of your morning", Template: fams[i],
+		ideas = append(ideas, idea{ProductIDs: []string{pid}, Angle: angles[i%3], Hook: "The lightest step of your morning", Template: fams[i%3],
 			Palette: []string{}, Formats: []string{"1:1", "4:5", "9:16"}, Motion: true,
 			Sets: []set{
 				{Lang: "ar", Headline: "خطوة يومية خفيفة من كوريا", PrimaryText: nameAR + "، خطوة يومية لطيفة في روتينكِ. أصلي من كوريا، توصيل داخل الإمارات.", Sub: nameAR, Bullets: []string{"أصلي ١٠٠٪", "قوام خفيف"}, Badge: "K-Beauty", CTA: "SHOP_NOW", Hooks: []string{"أخف خطوة في صباحكِ"}},

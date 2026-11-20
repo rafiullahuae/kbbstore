@@ -121,10 +121,32 @@ func (ac *Acct) launch(ctx context.Context, in launchReq) (map[string]any, int, 
 	for _, it := range ps.Items {
 		have[it.ID] = true
 	}
+	ac.mu.RLock()
+	tree := cloneTree(ac.tree)
+	ac.mu.RUnlock()
 	if !have[pid("campaign")] {
-		ac.mu.RLock()
-		tree := cloneTree(ac.tree)
-		ac.mu.RUnlock()
+		// a test fits the free ad slots: feed pictures first, Arabic first; the rest stay approved for the cycle
+		if lim := st.Limits.MaxActiveAds; lim > 0 {
+			free := lim - executor.ActiveAds(tree)
+			if free <= 0 {
+				return nil, 409, fmt.Errorf("no free ad slot (%d ads active, your limit is %d): they stay approved and the autopilot rotates them in, or raise max active ads in Settings → Limits", lim-free, lim)
+			}
+			rank := func(c model.Creative) int {
+				r := 0
+				if c.Format != "4:5" {
+					r += 2
+				}
+				if c.Lang != "ar" {
+					r++
+				}
+				return r
+			}
+			sort.SliceStable(crs, func(i, j int) bool { return rank(crs[i]) < rank(crs[j]) })
+			if len(crs) > free {
+				out["left_for_cycle"] = len(crs) - free
+				crs = crs[:free]
+			}
+		}
 		room := st.Limits.DailyAED - executor.CommittedDaily(tree)
 		budget := in.DailyAED
 		if budget <= 0 {
@@ -192,8 +214,13 @@ func (ac *Acct) launch(ctx context.Context, in launchReq) (map[string]any, int, 
 	// every ad through the existing approve path (it pulls in its campaign, ad set and creative)
 	var results []any
 	counts := map[string]int{}
-	for i := range crs {
-		id := pid(fmt.Sprintf("ad-%d", i+1))
+	var adIDs []string
+	for _, it := range ac.Pending().Items {
+		if strings.HasPrefix(it.ID, pid("ad-")) {
+			adIDs = append(adIDs, it.ID)
+		}
+	}
+	for _, id := range adIDs {
 		res, _, err := ac.Decide(ctx, id, true)
 		if errors.Is(err, errNotWaiting) { // already decided (a retried launch): report what happened
 			for _, it := range ac.Pending().Items {
@@ -306,6 +333,10 @@ func (s *server) renderAPI(w http.ResponseWriter, r *http.Request, p string) {
 		if len(in.Result) > 0 && j.Result == nil {
 			j.Result = in.Result
 			close(j.finished)
+			var e struct{ Error string }
+			if json.Unmarshal(in.Result, &e) == nil && e.Error != "" {
+				delete(renders.m, id) // a failure is answered once and forgotten: the next call draws again
+			}
 		}
 		renders.Unlock()
 		writeJSON(w, map[string]bool{"ok": true})

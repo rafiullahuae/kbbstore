@@ -16,7 +16,7 @@ export function getAccount() { return account; }
 
 export async function api(path, opts = {}) {
   const headers = Object.assign({ 'X-KAA': token }, opts.headers || {});
-  if (account && !opts.noAccount) headers['X-KAA-Account'] = account;
+  if (opts.account) headers['X-KAA-Account'] = opts.account; else if (account && !opts.noAccount) headers['X-KAA-Account'] = account;
   let body = opts.body;
   if (body && !(body instanceof Blob) && !(body instanceof ArrayBuffer) && typeof body !== 'string') {
     body = JSON.stringify(body);
@@ -36,7 +36,7 @@ export async function api(path, opts = {}) {
 // Server-sent events with automatic reconnect (EventSource does it itself).
 export function events(onEvent) {
   const es = new EventSource(`/api/events?t=${encodeURIComponent(token)}`);
-  for (const t of ['hello', 'heartbeat', 'connections', 'cycle.start', 'cycle.end', 'action.execution', 'action.safety', 'action.kill', 'action.alert', 'alert', 'metrics.updated', 'research.updated', 'backfill.progress']) {
+  for (const t of ['hello', 'heartbeat', 'connections', 'cycle.start', 'cycle.end', 'action.execution', 'action.safety', 'action.kill', 'action.alert', 'alert', 'metrics.updated', 'research.updated', 'backfill.progress', 'creation', 'render.request']) {
     es.addEventListener(t, (ev) => { let d = {}; try { d = JSON.parse(ev.data || '{}'); } catch {} onEvent(t, d); });
   }
   es.onerror = () => onEvent('disconnected', {});
@@ -55,5 +55,27 @@ export function blobURL(path) {
 // <img data-src="/api/..."> -> real src, after a render
 export function hydrate(root) {
   for (const im of root.querySelectorAll('img[data-src]')) { const p = im.dataset.src; im.removeAttribute('data-src'); blobURL(p).then((u) => { if (u) im.src = u; }); }
+}
+// NDJSON stream (Create with Claude, render jobs): each line is handed to onLine as it arrives.
+export async function apiStream(path, body, onLine, opts = {}) {
+  const headers = { 'X-KAA': token, 'content-type': 'application/json' };
+  if (opts.account || account) headers['X-KAA-Account'] = opts.account || account;
+  const r = await fetch(path, { method: 'POST', headers, body: JSON.stringify(body), cache: 'no-store', signal: opts.signal });
+  if (!r.ok) { let m = `HTTP ${r.status}`; try { m = (await r.json()).error || m; } catch {} throw new Error(m); }
+  const rd = r.body.getReader(), dec = new TextDecoder();
+  let buf = '', last = null;
+  for (;;) {
+    const { value, done } = await rd.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const ln = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!ln) continue;
+      try { last = JSON.parse(ln); } catch { continue; }
+      onLine(last);
+    }
+  }
+  return last;
 }
 export const authed = (u) => u + (u.includes('?') ? '&' : '?') + `t=${encodeURIComponent(token)}&account=${encodeURIComponent(account)}`;
