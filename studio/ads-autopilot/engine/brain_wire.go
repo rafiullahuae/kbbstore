@@ -42,14 +42,14 @@ func (s *server) brainExtra(w http.ResponseWriter, r *http.Request, p string) bo
 		return true
 	}
 	ac.mu.RLock()
-	id := ac.account.ID
+	id := ac.id // never empty, even before the first sync (the brain keys its files by it)
 	ac.mu.RUnlock()
 	eb.ServeBrain(w, r, id, func() model.CycleInput {
 		a.mu.RLock()
 		shopSnap, research, learnings := a.shopSnap, a.research, a.learnings
 		a.mu.RUnlock()
 		ac.mu.RLock()
-		in := model.CycleInput{Now: a.now(), Limits: ac.settings.Limits, Account: ac.account, Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: ac.settings.Links, Learnings: learnings}
+		in := model.CycleInput{Now: a.now(), Limits: ac.settings.Limits, Account: ac.accountRef(), Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: ac.settings.Links, Learnings: learnings}
 		ac.mu.RUnlock()
 		in.Metrics, in.Creatives = ac.metricRows(), ac.creatives.all()
 		in.History = ac.st.Recent(200, "execution", "check", "cycle", "kill", "alert", "safety")

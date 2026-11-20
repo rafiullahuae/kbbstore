@@ -100,6 +100,22 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		a.mu.Unlock()
 		_ = a.st.Save("config", cfg)
 		a.startBackfill(ac)
+		ac.mu.RLock()
+		never := ac.lastSync.IsZero()
+		ac.mu.RUnlock()
+		if never && a.metaOK() { // an account never read yet shows its campaigns within seconds of the switch
+			go func() {
+				if !ac.work.TryLock() {
+					return
+				}
+				defer ac.work.Unlock()
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer cancel()
+				if err := ac.Sync(ctx); err != nil {
+					ac.alertOnce("Sync with Meta failed: " + err.Error())
+				}
+			}()
+		}
 		writeJSON(w, map[string]string{"selected": ac.id})
 	case strings.HasPrefix(p, "/api/accounts/") && r.Method == http.MethodPut:
 		s.putAccount(w, r, strings.TrimPrefix(p, "/api/accounts/"))
@@ -308,6 +324,10 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		ac.st.Append("config", "creative added: "+out.ID+" ("+out.Lang+" "+out.Format+", "+out.Source+")", out)
 		ac.dirty()
 		writeJSON(w, out)
+	case strings.HasPrefix(p, "/api/creatives/") && strings.HasSuffix(p, "/file") && (r.Method == http.MethodGet || r.Method == http.MethodHead):
+		s.creativeFile(w, r, strings.TrimSuffix(strings.TrimPrefix(p, "/api/creatives/"), "/file"))
+	case p == "/api/proposals" || strings.HasPrefix(p, "/api/proposals/"):
+		s.proposalsAPI(w, r, p)
 	case (p == "/api/brain/plan" || p == "/api/brain/copy") && r.Method == http.MethodPost:
 		if ac := s.acct(w, r); ac != nil {
 			s.brainAPI(w, r, strings.TrimPrefix(p, "/api/brain/"), ac)
@@ -640,6 +660,9 @@ func validLimits(l model.Limits) error {
 	if l.Autopilot != model.AutopilotOff && l.Autopilot != model.AutopilotShadow && l.Autopilot != model.AutopilotAuto {
 		return errors.New(`autopilot must be "off", "shadow" or "auto"`)
 	}
+	if l.Wording != "" && l.Wording != "strict" && l.Wording != "balanced" && l.Wording != "relaxed" {
+		return errors.New(`wording must be "strict", "balanced" or "relaxed"`)
+	}
 	if l.KillMultiple != 0 && (l.KillMultiple < 1 || l.KillMultiple > 10) {
 		return errors.New("kill_multiple must be 1–10")
 	}
@@ -713,7 +736,7 @@ func (s *server) brainAPI(w http.ResponseWriter, r *http.Request, what string, a
 	br, shopSnap, research, learnings := a.brain, a.shopSnap, a.research, a.learnings
 	a.mu.RUnlock()
 	ac.mu.RLock()
-	in := model.CycleInput{Now: a.now(), Limits: ac.settings.Limits, Account: ac.account, Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: ac.settings.Links, Learnings: learnings}
+	in := model.CycleInput{Now: a.now(), Limits: ac.settings.Limits, Account: ac.accountRef(), Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: ac.settings.Links, Learnings: learnings}
 	ac.mu.RUnlock()
 	switch what {
 	case "plan": // a preview: the brain plans, nothing is executed
@@ -757,6 +780,22 @@ func (s *server) testAPI(w http.ResponseWriter, r *http.Request, p string) {
 		target = mockURL + "/__mock/inject"
 	case "/api/test/meta-writes":
 		target = mockURL + "/__mock/writes"
+	case "/api/test/meta-tag": // {"id", "tag": WINNER|LOSER}: seeded results for one Meta object
+		target = mockURL + "/__mock/tag"
+	case "/api/test/claude-calls": // the fake Claude's scripted answers, by kind
+		target = mockClaudeURL + "/__mock/claude-calls"
+	case "/api/test/clock": // {"advance_hours": n}: move the engine's and the fake Meta's clock forward
+		var in struct {
+			AdvanceHours float64 `json:"advance_hours"`
+		}
+		if err := readJSON(r, &in, 4096); err != nil || in.AdvanceHours < 0 || in.AdvanceHours > 24*400 {
+			jsonErr(w, 400, "advance_hours 0–9600")
+			return
+		}
+		mockOffset.Add(int64(in.AdvanceHours * float64(time.Hour)))
+		s.app.dirtyAll()
+		writeJSON(w, map[string]any{"now": s.app.now().UTC()})
+		return
 	default:
 		jsonErr(w, 404, "no such test endpoint")
 		return

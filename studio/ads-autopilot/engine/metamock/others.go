@@ -14,6 +14,7 @@ type Aux struct {
 	Key   string
 	mu    sync.Mutex
 	Calls int
+	Kinds map[string]int // scripted answers given, by kind (plan, copy, research-search, …)
 	srv   *http.Server
 	URL   string
 }
@@ -46,6 +47,13 @@ func (a *Aux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	a.Calls++
 	a.mu.Unlock()
+	if r.URL.Path == "/__mock/claude-calls" {
+		a.mu.Lock()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"calls": a.Calls, "kinds": a.Kinds})
+		a.mu.Unlock()
+		return
+	}
 	if r.URL.Path == "/feed.xml" {
 		w.Header().Set("Content-Type", "application/xml")
 		_, _ = w.Write([]byte(Feed))
@@ -63,11 +71,14 @@ func (a *Aux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.URL.Path == "/v1/messages" && r.Method == http.MethodPost:
 		var body map[string]any
 		_ = json.NewDecoder(r.Body).Decode(&body)
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"id": "msg_mock", "type": "message", "role": "assistant", "model": body["model"], "stop_reason": "end_turn",
-			"content": []any{map[string]any{"type": "text", "text": "mock answer"}},
-			"usage":   map[string]any{"input_tokens": 1200, "output_tokens": 80, "cache_read_input_tokens": 900, "cache_creation_input_tokens": 0, "server_tool_use": map[string]any{"web_search_requests": 0}},
-		})
+		ans, kind := claudeAnswer(body) // scripted tool calls (claude.go)
+		a.mu.Lock()
+		if a.Kinds == nil {
+			a.Kinds = map[string]int{}
+		}
+		a.Kinds[kind]++
+		a.mu.Unlock()
+		_ = json.NewEncoder(w).Encode(ans)
 	default:
 		w.WriteHeader(404)
 		_, _ = w.Write([]byte(`{"type":"error","error":{"type":"not_found_error","message":"no such path"}}`))

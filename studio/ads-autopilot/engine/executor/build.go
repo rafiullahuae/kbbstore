@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -150,10 +152,102 @@ func (x *Executor) media(ctx context.Context, act, id string) (model.Creative, e
 				return c, err
 			}
 		}
+	case "":
+		if !ShopURL(c.ImageURL) {
+			return c, fmt.Errorf("creative %s has no picture or video", id)
+		}
 	default:
 		return c, fmt.Errorf("creative %s has no picture or video", id)
 	}
 	return c, nil
+}
+
+// ShopURL: an https page or photo on the shop itself (the only picture URL a creative may name).
+func ShopURL(u string) bool {
+	pu, err := url.Parse(u)
+	return err == nil && pu.Scheme == "https" && pu.Host == "kbeautybliss.com" && pu.User == nil
+}
+
+// VideoPathRe: the owner's videos as the brain names them, relative to the data folder (videos/<id>.<ext>).
+var VideoPathRe = regexp.MustCompile(`^videos/[A-Za-z0-9][A-Za-z0-9_-]{0,80}\.(mp4|mov|m4v)$`)
+
+// ownerVideo uploads one of the owner's videos straight from the data folder (once per file: the Meta video id is
+// kept in the ledger) and builds video_data. Its cover is thumbnail_url, a library picture, or the frame the brain
+// saved next to the video (videos/<id>.jpg).
+func (x *Executor) ownerVideo(ctx context.Context, act string, p model.Proposal) (map[string]any, []string, error) {
+	vp := str(p.Params, "video_path")
+	if !VideoPathRe.MatchString(vp) {
+		return nil, nil, fmt.Errorf("video_path %q is not a video in the data folder (videos/<name>.mp4|mov|m4v)", vp)
+	}
+	if x.VideoFile == nil {
+		return nil, nil, errors.New("this engine cannot read the owner's videos")
+	}
+	var steps []string
+	key := "vpath:" + act + ":" + vp
+	vid := x.Ledger.Resolve(key)
+	if vid == key {
+		f, size, err := x.VideoFile(vp)
+		if err != nil {
+			return nil, nil, err
+		}
+		v, err := x.Meta.UploadVideoReader(ctx, act, f, size, 3*time.Minute)
+		f.Close()
+		if v != "" {
+			x.Ledger.MapTmp(key, v)
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		vid = v
+		steps = append(steps, fmt.Sprintf("video uploaded from the data folder (%.1f MB)", float64(size)/1048576))
+	} else {
+		steps = append(steps, "video already on Meta")
+	}
+	link := str(p.Params, "link")
+	if link == "" {
+		link = "https://kbeautybliss.com/"
+	}
+	if !strings.HasPrefix(link, "https://kbeautybliss.com/") {
+		return nil, steps, errors.New("link must be a kbeautybliss.com page")
+	}
+	text := str(p.Params, "primary_text")
+	if text == "" {
+		return nil, steps, errors.New("a video ad needs its text (primary_text)")
+	}
+	c := model.Creative{CTA: str(p.Params, "cta"), Link: link}
+	vd := map[string]any{"video_id": vid, "message": text, "title": str(p.Params, "headline"), "call_to_action": ctaFor(p, c, link)}
+	switch {
+	case str(p.Params, "thumbnail_url") != "":
+		if !ShopURL(str(p.Params, "thumbnail_url")) {
+			return nil, steps, errors.New("thumbnail_url must be on https://kbeautybliss.com/")
+		}
+		vd["image_url"] = str(p.Params, "thumbnail_url")
+	case str(p.Params, "thumbnail_creative_id") != "":
+		tc, err := x.media(ctx, act, str(p.Params, "thumbnail_creative_id"))
+		if err != nil {
+			return nil, steps, err
+		}
+		vd["image_hash"] = tc.ImageHash
+	default:
+		thumb := strings.TrimSuffix(vp, filepath.Ext(vp)) + ".jpg"
+		f, size, err := x.VideoFile(thumb)
+		if err != nil {
+			return nil, steps, errors.New("a video ad needs a cover: thumbnail_url, thumbnail_creative_id, or the frame saved by the video analysis")
+		}
+		b := make([]byte, size)
+		_, err = f.ReadAt(b, 0)
+		f.Close()
+		if err != nil || size > 8<<20 {
+			return nil, steps, errors.New("the video's cover frame could not be read")
+		}
+		h, err := x.Meta.UploadImage(ctx, act, "kaa-cover-"+filepath.Base(thumb), b64(b))
+		if err != nil {
+			return nil, steps, err
+		}
+		vd["image_hash"] = h
+		steps = append(steps, "cover from the analysed frame")
+	}
+	return vd, steps, nil
 }
 
 func ctaFor(p model.Proposal, c model.Creative, link string) map[string]any {
@@ -184,7 +278,16 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 	var steps []string
 	var lib *model.Creative
 	switch format {
-	case "image", "video":
+	case "video", "image":
+		if format == "video" && str(p.Params, "video_path") != "" { // the owner's own video, read from the data folder
+			vd, st, err := x.ownerVideo(ctx, act, p)
+			if err != nil {
+				return "", st, err
+			}
+			spec["video_data"] = vd
+			steps = append(steps, st...)
+			break
+		}
 		cid := str(p.Params, "creative_id")
 		if cid == "" {
 			cid = p.Target
@@ -202,6 +305,8 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 		lib = &c
 		if c.Media == "png" {
 			spec["link_data"] = map[string]any{"message": c.PrimaryText, "link": c.Link, "name": c.Headline, "image_hash": c.ImageHash, "call_to_action": ctaFor(p, c, c.Link)}
+		} else if c.Media == "" { // a shop photo by URL (the starter set before any design is rendered): link_data.picture
+			spec["link_data"] = map[string]any{"message": c.PrimaryText, "link": c.Link, "name": c.Headline, "picture": c.ImageURL, "call_to_action": ctaFor(p, c, c.Link)}
 		} else {
 			thumb := str(p.Params, "thumbnail_url")
 			vd := map[string]any{"video_id": c.VideoID, "message": c.PrimaryText, "title": c.Headline, "call_to_action": ctaFor(p, c, c.Link)}
