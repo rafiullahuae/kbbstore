@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Pixels;
 
 use App\Models\Order;
+use App\Models\Refund;
 use App\Services\Analytics;
 use App\Support\InstantNav;
 use Illuminate\Http\Request;
@@ -63,10 +64,43 @@ use Illuminate\Support\Facades\Log;
  *
  * Every outcome is a row in marketing_server_events — platform, event, id,
  * status, HTTP code, the platform's message. No payload, no customer data.
+ *
+ * ── REFUNDS, CANCELLATIONS AND RETRIES (Lane AP-API) ────────────────────────
+ *
+ *   OrderRefunded    Meta only, a CUSTOM event, once per refund that moved
+ *                    money ("refund-<refund id>"), value = the refund, positive.
+ *   OrderCancelled   Meta only, custom, once per order that leaves a placed
+ *                    status for cancelled/failed ("cancel-<order number>").
+ * Both only for an order Meta can have counted (a browser purchase tag was
+ * printed, or a server Purchase row exists), with the order's hashed
+ * user_data and action_source "other". Neither corrects Ads Manager's
+ * Purchase value -- Meta has no event that does -- they exist for audiences
+ * and diagnostics; the Ads Autopilot reads the shop's own net revenue.
+ *
+ * A Meta Purchase / OrderRefunded / OrderCancelled that fails for a reason
+ * worth retrying (no answer, 429, 5xx, a refused token, the breaker) is kept
+ * ENCRYPTED in marketing_capi_retries and re-sent by `kbb:capi-retry` on the
+ * scheduler cron (every minute; no queue worker on this host) at 5 min, 15
+ * min, 1 h, 3 h, 8 h and 12 h after the first try, never once 47 hours have
+ * passed: Meta merges a browser and a server copy only within 48 h, so a later
+ * copy would be a second sale. A 400 (Meta refused the event itself) is not
+ * retried; it would fail the same way every time.
  */
 final class ServerEvents
 {
     public const PLACED = ['processing', 'onhold', 'shipped', 'completed'];
+
+    /** Leaving PLACED for one of these is a cancellation. */
+    public const CANCELLED = ['cancelled', 'failed'];
+
+    /** The Meta events worth a retry; a missed AddToCart is not worth the queue. */
+    public const RETRIED = ['Purchase', 'OrderRefunded', 'OrderCancelled'];
+
+    /** Minutes after the FIRST try at which attempt n+1 is made. */
+    public const RETRY_AFTER = [5, 15, 60, 180, 480, 720];
+
+    /** Meta keeps a browser/server pair as one event only within 48 h. */
+    public const RETRY_HOURS = 47;
 
     private const ARMED = 'kbb.pixels.server.armed';
 
@@ -108,6 +142,19 @@ final class ServerEvents
     public function anyOn(): bool
     {
         return $this->metaOn() || $this->tiktokOn() || $this->ga4On();
+    }
+
+    /**
+     * The statuses that make an order a sale for the server Purchase. On hold
+     * is in it unless the owner switched it out (Ads Autopilot -> Measurement):
+     * then an on-hold order sends its Purchase when it moves on to processing,
+     * shipped or completed instead.
+     *
+     * @return list<string>
+     */
+    public function placedStatuses(): array
+    {
+        return $this->config->on('meta_purchase_onhold') ? self::PLACED : array_values(array_diff(self::PLACED, ['onhold']));
     }
 
     // ----------------------------------------------------------------- events
@@ -204,6 +251,85 @@ final class ServerEvents
     public static function purchaseId(Order $order): string
     {
         return 'purchase-' . preg_replace('/[^A-Za-z0-9\-]/', '', (string) ($order->order_number ?: $order->id));
+    }
+
+    /** A refund that moved money: Meta custom event OrderRefunded, once per refund. */
+    public function refund(Refund $refund): void
+    {
+        if (! $this->refundEventsOn() || (int) $refund->amount <= 0) {
+            return;
+        }
+
+        $order = $refund->order()->first();
+
+        if (! $order instanceof Order || ! $this->metaCounted($order)) {
+            return;
+        }
+
+        $this->dispatchMetaOnly('OrderRefunded', 'refund-' . (int) $refund->id, $order, [
+            'currency' => (string) ($order->currency ?: 'AED'),
+            'value' => round((int) $refund->amount / 100, 2),
+            'order_id' => (string) $order->order_number,
+            'refund_of' => self::purchaseId($order),
+        ]);
+    }
+
+    /** A placed order cancelled (a refused COD parcel, a voided BNPL): OrderCancelled, once. */
+    public function cancellation(Order $order): void
+    {
+        if (! $this->refundEventsOn() || ! $this->metaCounted($order)) {
+            return;
+        }
+
+        $this->dispatchMetaOnly('OrderCancelled', 'cancel-' . preg_replace('/[^A-Za-z0-9\-]/', '', (string) ($order->order_number ?: $order->id)), $order, [
+            'currency' => (string) ($order->currency ?: 'AED'),
+            'value' => round((int) $order->total / 100, 2),
+            'order_id' => (string) $order->order_number,
+            'refund_of' => self::purchaseId($order),
+        ]);
+    }
+
+    public function refundEventsOn(): bool
+    {
+        return $this->metaOn() && $this->config->on('meta_refund_events');
+    }
+
+    /**
+     * Could Meta have counted this order? The browser purchase tag was printed
+     * (pixels_fired_at), or a server Purchase was claimed for it. An imported or
+     * manual order Meta never saw gets no correction either.
+     */
+    private function metaCounted(Order $order): bool
+    {
+        if ($order->pixels_fired_at !== null) {
+            return true;
+        }
+
+        try {
+            return DB::table('marketing_server_events')->where(['platform' => 'meta', 'event' => 'Purchase', 'event_id' => self::purchaseId($order)])
+                ->whereIn('status', ['queued', 'sent', 'failed', 'paused'])->exists();
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /** @param array<string, mixed> $custom */
+    private function dispatchMetaOnly(string $name, string $eventId, Order $order, array $custom): void
+    {
+        $pixel = (string) $this->analytics->validId('meta');
+        $token = (string) $this->config->secret('meta_capi_token');
+        $test = $this->config->get('meta_test_code') ?: null;
+        $event = self::metaEvent($name, $eventId, time(), [], self::customer($order), $custom);
+        $event['action_source'] = 'other';
+
+        if (! $this->claim('meta', $name, $eventId)) {
+            return;
+        }
+
+        $retry = ['pixel' => $pixel, 'event' => $event, 'test' => $test];
+        self::later(function () use ($name, $eventId, $pixel, $token, $event, $test, $retry): void {
+            $this->send('meta', $name, $eventId, fn () => $this->client->metaEvents($pixel, $token, [$event], $test), $retry);
+        });
     }
 
     // -------------------------------------------------------------- context
@@ -370,40 +496,43 @@ final class ServerEvents
             $token = (string) $this->config->secret('meta_capi_token');
             $test = $this->config->get('meta_test_code') ?: null;
             $event = self::metaEvent($metaName, $eventId, $time, $ctx, $customer, $custom);
-            $jobs[] = ['meta', $metaName, fn () => $this->client->metaEvents($pixel, $token, [$event], $test)];
+            $retry = in_array($metaName, self::RETRIED, true) ? ['pixel' => $pixel, 'event' => $event, 'test' => $test] : null;
+            $jobs[] = ['meta', $metaName, fn () => $this->client->metaEvents($pixel, $token, [$event], $test), $retry];
         }
 
         if ($this->tiktokOn()) {
             $pixel = (string) $this->analytics->validId('tiktok');
             $token = (string) $this->config->secret('tiktok_token');
             $body = self::tiktokBody($pixel, $tiktokName, $eventId, $time, $ctx, $customer, $custom, $this->config->get('tiktok_test_code') ?: null);
-            $jobs[] = ['tiktok', $tiktokName, fn () => $this->client->tiktok($token, $body)];
+            $jobs[] = ['tiktok', $tiktokName, fn () => $this->client->tiktok($token, $body), null];
         }
 
         if ($ga4Params !== null && $this->ga4On() && ($ctx['ga_client'] ?? null) !== null) {
             $mid = (string) $this->analytics->validId('ga4');
             $secret = (string) $this->config->secret('ga4_api_secret');
             $body = self::ga4Body((string) $ctx['ga_client'], $ctx['ga_session'] ?? null, 'purchase', $ga4Params);
-            $jobs[] = ['ga4', 'purchase', fn () => $this->client->ga4($mid, $secret, $body)];
+            $jobs[] = ['ga4', 'purchase', fn () => $this->client->ga4($mid, $secret, $body), null];
         } elseif ($ga4Params !== null && $this->ga4On()) {
             $this->log('ga4', 'purchase', $eventId, 'skipped', null, 'No Google Analytics client id on this order (cookie blocked or declined), so the browser purchase is the only one — sending a second from the server would double-count it.');
         }
 
-        foreach ($jobs as [$platform, $name, $send]) {
+        foreach ($jobs as [$platform, $name, $send, $retry]) {
             if (! $this->claim($platform, $name, $eventId)) {
                 continue;
             }
 
-            self::later(function () use ($platform, $name, $eventId, $send): void {
-                $this->send($platform, $name, $eventId, $send);
+            self::later(function () use ($platform, $name, $eventId, $send, $retry): void {
+                $this->send($platform, $name, $eventId, $send, $retry);
             });
         }
     }
 
-    private function send(string $platform, string $name, string $eventId, \Closure $send): void
+    /** @param array{pixel: string, event: array, test: ?string}|null $retry what to keep if this fails */
+    private function send(string $platform, string $name, string $eventId, \Closure $send, ?array $retry = null): void
     {
         if (Cache::has(self::BREAKER . $platform)) {
-            $this->finish($platform, $name, $eventId, 'paused', null, 'Paused for 10 minutes after the platform refused the access token. Check the token on the Connect tab.');
+            $kept = $retry !== null && $this->keepForRetry($name, $eventId, $retry, 'paused by the breaker');
+            $this->finish($platform, $name, $eventId, 'paused', null, 'Paused for 10 minutes after the platform refused the access token. Check the token on the Connect tab.' . ($kept ? ' Will retry.' : ''));
 
             return;
         }
@@ -424,10 +553,145 @@ final class ServerEvents
         }
 
         $message = $answer['ok'] ? self::successNote($platform, $answer['data']) : ($answer['message'] ?: 'Refused.');
+
+        if (! $answer['ok'] && $retry !== null && self::retryable($answer) && $this->keepForRetry($name, $eventId, $retry, $message)) {
+            $message = mb_substr($message, 0, 280) . ' Will retry.';
+        }
+
         $this->finish($platform, $name, $eventId, $answer['ok'] ? 'sent' : 'failed', $answer['status'] ?: null, $message);
 
         if (! $answer['ok']) {
             Log::warning("Marketing pixels: {$platform} {$name} failed: {$message}");
+        }
+    }
+
+    /** No answer, rate limited, a server fault or a refused token: worth another go. A 400 is not. */
+    public static function retryable(array $answer): bool
+    {
+        $status = (int) $answer['status'];
+
+        return $status === 0 || $status === 429 || $status >= 500 || self::authFailure($answer);
+    }
+
+    /** @param array{pixel: string, event: array, test: ?string} $retry */
+    private function keepForRetry(string $name, string $eventId, array $retry, string $why): bool
+    {
+        if (! $this->config->on('meta_capi_retry') || ! in_array($name, self::RETRIED, true)) {
+            return false;
+        }
+
+        try {
+            return DB::table('marketing_capi_retries')->insertOrIgnore([
+                'event' => $name,
+                'event_id' => mb_substr($eventId, 0, 80),
+                'payload' => Crypt::encryptString((string) json_encode($retry)),
+                'attempts' => 0,
+                'next_at' => now()->addMinutes(self::RETRY_AFTER[0]),
+                'first_at' => now(),
+                'last_error' => mb_substr($why, 0, 300),
+            ]) === 1;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Re-send what is due. Run by `kbb:capi-retry` from the scheduler. One
+     * indexed read when nothing is due. Uses the token as it is NOW, so a
+     * token the owner has just fixed delivers what failed under the old one.
+     *
+     * @return array{due: int, sent: int, failed: int, dropped: int}
+     */
+    public function retryDue(int $limit = 20): array
+    {
+        $out = ['due' => 0, 'sent' => 0, 'failed' => 0, 'dropped' => 0];
+
+        try {
+            $rows = DB::table('marketing_capi_retries')->where('next_at', '<=', now())->orderBy('next_at')->limit($limit)->get();
+        } catch (\Throwable) {
+            return $out;
+        }
+
+        $out['due'] = $rows->count();
+
+        foreach ($rows as $row) {
+            $tooLate = strtotime((string) $row->first_at) < time() - self::RETRY_HOURS * 3600;
+            $payload = null;
+
+            try {
+                $payload = json_decode(Crypt::decryptString((string) $row->payload), true);
+            } catch (\Throwable) {
+            }
+
+            if ($tooLate || ! is_array($payload) || ! $this->metaOn() || ! $this->config->on('meta_capi_retry')) {
+                DB::table('marketing_capi_retries')->where('id', $row->id)->delete();
+                $why = $tooLate ? 'Gave up: ' . self::RETRY_HOURS . ' hours passed (Meta merges a browser and server copy only within 48 h).'
+                    : 'Dropped: Meta server events or retries were switched off, or the kept event could not be read.';
+                $this->finish('meta', (string) $row->event, (string) $row->event_id, 'failed', null, $why);
+                $out['dropped']++;
+
+                continue;
+            }
+
+            if (Cache::has(self::BREAKER . 'meta')) {
+                DB::table('marketing_capi_retries')->where('id', $row->id)->update(['next_at' => now()->addMinutes(10)]);
+
+                continue;
+            }
+
+            $attempt = (int) $row->attempts + 1;
+            $answer = ['ok' => false, 'status' => 0, 'message' => 'Not sent.', 'data' => []];
+
+            try {
+                $answer = $this->client->metaEvents((string) $payload['pixel'], (string) $this->config->secret('meta_capi_token'), [$payload['event']], $payload['test'] ?? null);
+            } catch (\Throwable $e) {
+                $answer['message'] = mb_substr($e->getMessage(), 0, 200);
+            }
+
+            if ($answer['ok']) {
+                DB::table('marketing_capi_retries')->where('id', $row->id)->delete();
+                $this->finish('meta', (string) $row->event, (string) $row->event_id, 'sent', $answer['status'] ?: null, self::successNote('meta', $answer['data']) . " (retry {$attempt})");
+                $out['sent']++;
+
+                continue;
+            }
+
+            if (self::authFailure($answer)) {
+                try {
+                    Cache::put(self::BREAKER . 'meta', 1, self::BREAKER_SECONDS);
+                } catch (\Throwable) {
+                }
+            }
+
+            $message = ($answer['message'] ?: 'Refused.') . " (retry {$attempt})";
+            $next = self::RETRY_AFTER[$attempt] ?? null;
+
+            if (! self::retryable($answer) || $next === null) {
+                DB::table('marketing_capi_retries')->where('id', $row->id)->delete();
+                $this->finish('meta', (string) $row->event, (string) $row->event_id, 'failed', $answer['status'] ?: null, $message . ' Gave up.');
+            } else {
+                DB::table('marketing_capi_retries')->where('id', $row->id)->update([
+                    'attempts' => $attempt,
+                    'next_at' => \Illuminate\Support\Carbon::parse((string) $row->first_at)->addMinutes($next),
+                    'last_error' => mb_substr($message, 0, 300),
+                ]);
+                $this->finish('meta', (string) $row->event, (string) $row->event_id, 'failed', $answer['status'] ?: null, $message . ' Will retry.');
+            }
+
+            Log::warning("Marketing pixels: meta {$row->event} retry {$attempt} failed: {$message}");
+            $out['failed']++;
+        }
+
+        return $out;
+    }
+
+    /** @return array{waiting: int, oldest: string|null} for the admin screen */
+    public static function retryQueue(): array
+    {
+        try {
+            return ['waiting' => (int) DB::table('marketing_capi_retries')->count(), 'oldest' => DB::table('marketing_capi_retries')->min('first_at')];
+        } catch (\Throwable) {
+            return ['waiting' => 0, 'oldest' => null];
         }
     }
 

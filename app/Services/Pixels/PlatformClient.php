@@ -18,8 +18,23 @@ use Illuminate\Support\Facades\Http;
  */
 final class PlatformClient
 {
-    /** Meta's Graph API version: the one Meta's own WordPress plugin 5.2.2 pins. */
-    public const GRAPH_VERSION = 'v25.0';
+    /**
+     * Meta's Graph API version when the owner has not chosen one.
+     *
+     * v25.0 (the version Meta's WordPress plugin 5.2.2 pins) until Lane AP-API,
+     * 20 Nov 2026, which moved it to v27.0 (released 4 Nov 2026) after reading
+     * the v26.0 and v27.0 changelogs on developers.facebook.com: neither touches
+     * anything this shop calls -- POST /{pixel}/events (data, test_event_code,
+     * events_received), GET /{pixel}?fields=id,name,last_fired_time, the
+     * dialog/oauth + oauth/access_token exchange, or me/adaccounts with
+     * name,adspixels{id,name}. v26's protocol removals (pretty, debug,
+     * date_format, GET /?ids=, If-None-Match) are not used here either.
+     * Growth & Marketing -> Ads Autopilot -> Measurement can put it back.
+     */
+    public const GRAPH_VERSION = 'v27.0';
+
+    /** The versions the owner may pick; anything else reads as GRAPH_VERSION. */
+    public const GRAPH_VERSIONS = ['v25.0', 'v26.0', 'v27.0'];
 
     public const META_HOST = 'https://graph.facebook.com';
 
@@ -42,20 +57,32 @@ final class PlatformClient
             $body['test_event_code'] = $testCode;
         }
 
-        return $this->call('post', self::META_HOST . '/' . self::GRAPH_VERSION . '/' . rawurlencode($pixelId) . '/events', $body, [], [$token]);
+        return $this->call('post', self::META_HOST . '/' . self::graphVersion() . '/' . rawurlencode($pixelId) . '/events', $body, [], [$token]);
     }
 
     /** GET /{pixel}?fields=id,name — proves the token can reach the pixel. */
     public function metaPixel(string $pixelId, string $token): array
     {
-        return $this->call('get', self::META_HOST . '/' . self::GRAPH_VERSION . '/' . rawurlencode($pixelId),
+        return $this->call('get', self::META_HOST . '/' . self::graphVersion() . '/' . rawurlencode($pixelId),
             ['fields' => 'id,name,last_fired_time', 'access_token' => $token], [], [$token]);
     }
 
     /** Graph GET for the optional OAuth path. */
     public function metaGet(string $path, array $query, array $secrets): array
     {
-        return $this->call('get', self::META_HOST . '/' . self::GRAPH_VERSION . '/' . ltrim($path, '/'), $query, [], $secrets);
+        return $this->call('get', self::META_HOST . '/' . self::graphVersion() . '/' . ltrim($path, '/'), $query, [], $secrets);
+    }
+
+    /** The version every Graph call uses: the owner's pick, else GRAPH_VERSION. */
+    public static function graphVersion(): string
+    {
+        try {
+            $picked = app(PixelConfig::class)->get('meta_graph_version');
+        } catch (\Throwable) {
+            $picked = '';
+        }
+
+        return in_array($picked, self::GRAPH_VERSIONS, true) ? $picked : self::GRAPH_VERSION;
     }
 
     /** GA4 Measurement Protocol: /mp/collect, or /debug/mp/collect to validate. */

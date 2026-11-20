@@ -245,6 +245,8 @@ final class AdminRoles
             'marketing.feed' => 'Google Shopping feed: see its address and switch it on or off',
             'marketing.pixels.connect' => 'Marketing Pixels: connect Meta, Google and TikTok, paste their tokens and run the checks',
             'marketing.customcode' => 'Marketing Pixels: custom head, body and footer code on the shop (Full Admin only by default)',
+            'autopilot.view' => 'Ads Autopilot: see connection keys, their use, the Meta measurement switches and cost prices (Full Admin only by default)',
+            'autopilot.manage' => 'Ads Autopilot: create and revoke connection keys, change the Meta measurement switches and cost prices (Full Admin only by default)',
             'carttracking.view' => 'See Cart Tracking',
             'carttracking.block' => 'Block and unblock IP addresses',
         ]],
