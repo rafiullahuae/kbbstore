@@ -207,8 +207,9 @@ function makeMedia() {
   await ev((ids) => ED.select(ids), [cl[4].id, cl[5].id]);
   r = await run();
   const s7 = await snap();
+  // an empty clip says WHY (capfix-check): a silent track now reads "its sound is silent" rather than "no speech heard"
   const warn = r.toasts.find((t) => /^warn:/.test(t)) || '';
-  ok(/IMG_7740\.mov: it has no sound/.test(warn) && /IMG_7750\.mov: no speech heard/.test(warn), `silent clips reported: "${warn}"`);
+  ok(/IMG_7740\.mov: it has no sound/.test(warn) && /IMG_7750\.mov: (no speech heard|its sound is silent)/.test(warn), `silent clips reported: "${warn}"`);
   ok(same(s7.words, s6.words), 'and no words were invented for them');
   await shot('autocap-04-silent');
 

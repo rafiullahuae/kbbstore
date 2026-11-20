@@ -52,20 +52,40 @@ export class Transcriber {
       const m = e.data;
       if (m.type === 'progress') { this.onProgress?.(m); return; }
       const p = this.pending.get(m.id); if (!p) return;
-      this.pending.delete(m.id);
-      m.type === 'error' ? p.rej(new Error(m.message)) : p.res(m);
+      this.pending.delete(m.id); clearTimeout(p.timer);
+      if (m.type === 'error') { const er = new Error(m.message); er.op = m.op; er.workerStack = m.stack; this.lastError = `${m.op}: ${m.message}`; p.rej(er); } else p.res(m);
     };
-    this.worker.onerror = (e) => { for (const p of this.pending.values()) p.rej(new Error(e.message || 'speech worker crashed')); this.pending.clear(); };
+    // a crashed worker (out of memory, a GPU that was lost) fails every call waiting on it, and the worker is thrown
+    // away so the next run starts clean, never a "Writing captions…" that waits for an answer that cannot come
+    const crash = (msg) => { this.lastError = msg; for (const p of this.pending.values()) { clearTimeout(p.timer); p.rej(new Error(msg)); } this.pending.clear(); this.dispose(); };
+    this.worker.onerror = (e) => crash(e.message || 'the speech worker crashed');
+    this.worker.onmessageerror = () => crash('the speech worker sent an unreadable answer');
   }
 
-  _call(msg, transfer) {
-    const id = ++this.seq;
-    return new Promise((res, rej) => { this.pending.set(id, { res, rej }); this.worker.postMessage({ ...msg, id }, transfer || []); });
+  /**
+   * One request to the worker. A request that gets no answer in its time (watchdog) fails with a plain message and
+   * the worker is thrown away: no stage of Auto captions can sit forever. timeout: ms (default: by the request).
+   */
+  _call(msg, transfer, timeout) {
+    const id = ++this.seq, secs = msg.audio ? msg.audio.length / SR : 0;
+    const ms = (timeout ?? (msg.type === 'load' ? 300000 : msg.type === 'run' ? 120000 + secs * 12000 : 60000 + secs * 2000)) * (this.timeoutScale || 1);
+    return new Promise((res, rej) => {
+      const timer = setTimeout(() => {
+        if (!this.pending.has(id)) return;
+        this.pending.delete(id);
+        const e = new Error(`the speech model stopped answering (${msg.type === 'load' ? 'loading' : msg.type === 'run' ? 'writing' : msg.type}, no reply in ${Math.round(ms / 1000)} s)`);
+        e.stalled = true; e.op = msg.type; this.lastError = e.message;
+        rej(e); this.cancel();
+      }, ms);
+      this.pending.set(id, { res, rej, timer });
+      this.worker.postMessage({ ...msg, id }, transfer || []);
+    });
   }
 
   /** Load a model ('small' | 'base') on the best device. Re-uses the worker when nothing changed. */
   async load(modelKey = 'small', { prefer = 'auto' } = {}) {
-    const { device, f16 } = await pickDevice(prefer);
+    // a GPU that once wrote no words over clear speech is not asked again on this Mac (distrustGpu)
+    const { device, f16 } = await pickDevice(prefer === 'auto' && gpuDistrusted() ? 'wasm' : prefer);
     const sig = modelKey + '|' + device;
     if (this.loaded && this.loaded.sig === sig) return this.loaded;
     this.dispose();
@@ -99,13 +119,46 @@ export class Transcriber {
    *     holds sound) is decoded again on its own, with ≥ 3 s of context, and the words inside it are put back.
    */
   async transcribe(audio, opts = {}) {
+    let r;
+    try { r = await this._transcribe(audio, opts); } catch (e) {
+      // the GPU path failed outright (a graph it cannot run, a lost device, a stall): listen again on the CPU
+      if (e.name === 'AbortError' || opts.signal?.aborted || this.used !== 'webgpu' || opts.noFallback) throw e;
+      distrustGpu(`WebGPU failed: ${e.message}`);
+      this.dispose();
+      r = await this._transcribe(audio, { ...opts, device: 'wasm' });
+      r.fallback = `WebGPU failed (${e.message}); listened again on the CPU`;
+      return r;
+    }
+    // WebGPU that comes back with no word (or a few) over windows that hold speech is not "no speech". The owner's Mac
+    // is the only place the GPU path runs (Apple GPU: fp16 encoder + q4 decoder; no check machine has shader-f16), and
+    // there Hindi/Urdu came back empty on every run (20 Nov, v1.4.1: "I run multiple times auto captions, but nothing
+    // generating"). Measured here on WebGPU: the q8 encoder heard Hindi as Arabic and wrote 0 words; the q4 decoder
+    // after the Hindi script prompt looped ("लव़ लव़ लव़ …") with every timestamp past the clip's end, so clean()
+    // dropped them all — while the CPU path (q8 + q8, what every check runs) wrote the sentence. So: listen again on
+    // the CPU, keep the fuller result, and when the CPU heard clearly more, remember it for this Mac.
+    const speechSecs = r.analysis?.loud ? r.analysis.loud.reduce((n, v) => n + (v ? 1 : 0), 0) * r.analysis.hop : audio.length / SR;
+    if (r.device === 'webgpu' && r.stats.windows > 0 && r.words.length < Math.max(1, 0.5 * speechSecs) && !opts.noFallback && !opts.signal?.aborted) {
+      this.dispose();
+      const c = await this._transcribe(audio, { ...opts, device: 'wasm' });
+      if (c.words.length <= r.words.length) { this.dispose(); return r; }
+      if (!r.words.length || c.words.length >= 2 * r.words.length) distrustGpu(r.words.length ? `WebGPU wrote ${r.words.length} words where the CPU heard ${c.words.length}` : 'WebGPU wrote no words over speech');
+      c.fallback = `WebGPU wrote ${r.words.length ? 'only ' + r.words.length : 'no'} words; listened again on the CPU (${c.words.length})`;
+      c.gpuWords = r.words.length;
+      return c;
+    }
+    return r;
+  }
+
+  async _transcribe(audio, opts = {}) {
     const { model = 'small', task = 'transcribe', onProgress = () => {}, signal, offset = 0, device = 'auto' } = opts;
+    this.used = null;
     let lang = opts.lang && opts.lang !== 'auto' ? opts.lang : null;
     const onAbort = () => this.cancel();
     signal?.addEventListener('abort', onAbort);
     try {
       this.onProgress = (p) => onProgress({ ...p, phase: 'load' });
       const info = await this.load(model, { prefer: device });
+      this.used = info.device;
       const t0 = performance.now();
       const dur = audio.length / SR;
       const stats = { windows: 0, skipped: 0, reread: 0, recovered: 0, prompted: 0, cuts: 0 };
@@ -268,13 +321,28 @@ export class Transcriber {
   /** Stop now: the worker is terminated (the next run reloads the model from disk). */
   cancel() {
     if (!this.worker) return;
-    for (const p of this.pending.values()) p.rej(abortError());
+    for (const p of this.pending.values()) { clearTimeout(p.timer); p.rej(abortError()); }
     this.pending.clear();
     this.dispose();
   }
 
   dispose() { this.worker?.terminate(); this.worker = null; this.loaded = null; }
 }
+
+// "this Mac's GPU wrote nothing once": kept in the browser (per Mac), read by load(); the Captions panel's diagnostics
+// name it. A run with device 'wasm' never asks the GPU; trustGpuAgain() asks it again.
+const GPU_KEY = 'kbbstudio.captions.gpuDistrust';
+let gpuNote = null;
+export function gpuDistrusted() {
+  if (gpuNote) return gpuNote;
+  try { gpuNote = localStorage.getItem(GPU_KEY); } catch { /* no storage: this window only */ }
+  return gpuNote;
+}
+export function distrustGpu(why) {
+  gpuNote = `${why} · ${new Date().toISOString()}`;
+  try { localStorage.setItem(GPU_KEY, gpuNote); } catch { /* this window only */ }
+}
+export function trustGpuAgain() { gpuNote = null; try { localStorage.removeItem(GPU_KEY); } catch {} }
 
 const abortError = () => { const e = new Error('Cancelled'); e.name = 'AbortError'; return e; };
 
