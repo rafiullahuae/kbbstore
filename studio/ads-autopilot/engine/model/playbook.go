@@ -332,8 +332,8 @@ func (p Playbook) CountriesOr(lim []string) []string {
 // ── matching and the hard filter ──
 
 // Match: does this rule name this product? product = its feed id or its group (feed "123-45" is product 123);
-// brand = the brand (or the title starts with it); category = the feed category contains it; keyword = the title,
-// brand or category contains it. All case-insensitive.
+// brand = the brand (or the title starts with it); category = the feed category contains it; keyword = every word
+// of it is in the title, brand or category. All case-insensitive.
 func (r PBRule) Match(p Product) bool {
 	v := strings.ToLower(strings.TrimSpace(r.Value))
 	if v == "" {
@@ -347,8 +347,14 @@ func (r PBRule) Match(p Product) bool {
 		return strings.EqualFold(strings.TrimSpace(p.Brand), v) || strings.HasPrefix(strings.ToLower(p.Title), v+" ")
 	case "category":
 		return strings.Contains(strings.ToLower(p.Category), v)
-	case "keyword":
-		return strings.Contains(strings.ToLower(p.Title+" \x00 "+p.Brand+" \x00 "+p.Category), v)
+	case "keyword": // every word of it, in any order ("snail mucin" names "Advanced Snail 96 Mucin Essence")
+		hay := strings.ToLower(p.Title + " \x00 " + p.Brand + " \x00 " + p.Category)
+		for _, w := range strings.Fields(v) {
+			if !strings.Contains(hay, w) {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }

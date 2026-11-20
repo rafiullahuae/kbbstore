@@ -12,7 +12,7 @@ func TestParseFeed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Products) != 3 || s.OrdersSource != "none" {
+	if len(s.Products) != 8 || s.OrdersSource != "none" {
 		t.Fatalf("%d products, orders %q", len(s.Products), s.OrdersSource)
 	}
 	p := s.Products[0]

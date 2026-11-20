@@ -71,7 +71,7 @@ func TestAPISourceWithoutKeyIsTheFeed(t *testing.T) {
 	defer srv.Close()
 	s := testSource(srv, "")
 	snap, err := s.Snapshot(context.Background())
-	if err != nil || s.OrdersSource() != "none" || snap.OrdersSource != "none" || len(snap.Products) != 3 || calls != 0 {
+	if err != nil || s.OrdersSource() != "none" || snap.OrdersSource != "none" || len(snap.Products) != 8 || calls != 0 {
 		t.Fatalf("err %v, source %q/%q, %d products, %d api calls", err, s.OrdersSource(), snap.OrdersSource, len(snap.Products), calls)
 	}
 }
@@ -114,7 +114,7 @@ func TestAPISourceRefusedKeyKeepsProductsAndSaysWhy(t *testing.T) {
 	defer srv.Close()
 	s := testSource(srv, "kbbap_wrong")
 	snap, err := s.Snapshot(context.Background())
-	if !errors.Is(err, ErrUnauthorized) || snap.OrdersSource != "none" || len(snap.Products) != 3 || len(snap.Orders) != 0 {
+	if !errors.Is(err, ErrUnauthorized) || snap.OrdersSource != "none" || len(snap.Products) != 8 || len(snap.Orders) != 0 {
 		t.Fatalf("err %v, source %q, %d products", err, snap.OrdersSource, len(snap.Products))
 	}
 }

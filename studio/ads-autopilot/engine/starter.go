@@ -432,6 +432,13 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 	if fb.Prospecting < math.Max(in.Account.MinDailyAED, 10) {
 		return nil, ac.starterSkip(fmt.Sprintf("no room for a starter campaign: AED %.0f/day after your edit", total))
 	}
+	if fb.ExistingCap > 0 { // the existing-customer ad needs a slot of its own under max_active_ads
+		if nCr > 1 {
+			nCr--
+		} else {
+			fb.ExistingCap = 0
+		}
+	}
 	langOn := map[string]bool{}
 	for _, l := range pb.Languages {
 		langOn[l] = true
