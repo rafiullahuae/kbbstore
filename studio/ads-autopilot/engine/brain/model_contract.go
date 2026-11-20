@@ -204,6 +204,7 @@ type CycleInput struct {
 	Creatives []Creative   `json:"creatives"`
 	Research  Research     `json:"research"`
 	History   []LogEntry   `json:"history"`
+	Videos    []VideoAsset `json:"videos"` // BRAIN addition: the owner's ad videos with analysis + results
 }
 
 // CycleOutput: Plan, Proposals and Report are the contract's. Verdicts,
@@ -302,6 +303,82 @@ type Usage struct {
 	CostUSD          float64 `json:"cost_usd"`
 }
 
+// VideoAsset is one of the owner's ad videos (BRAIN addition; engine/model
+// adds it and CycleInput.Videos). The original file is copied once into
+// "~/KBB Ads Autopilot Data/videos/" and referenced by Path; only small JPEG
+// frames/thumbnails are kept beside it.
+type VideoAsset struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"` // the owner's file name
+	Path        string         `json:"path"` // inside the data folder
+	Bytes       int64          `json:"bytes"`
+	Thumb       string         `json:"thumb"`         // small JPEG path/URL
+	Status      string         `json:"status"`        // new | past | running | retired
+	MetaVideoID string         `json:"meta_video_id"` // advideo id once uploaded / matched
+	MetaAdIDs   []string       `json:"meta_ad_ids"`   // past ads matched by name/creative
+	Results     *VideoResults  `json:"results"`       // from Meta (matched) or typed by the owner
+	Analysis    *VideoAnalysis `json:"analysis"`
+	AddedAt     time.Time      `json:"added_at"`
+}
+
+type VideoResults struct {
+	Source      string  `json:"source"` // meta | owner
+	SpendAED    float64 `json:"spend"`
+	Impressions int64   `json:"impressions"`
+	Clicks      int64   `json:"clicks"`
+	Purchases   int64   `json:"purchases"`
+	RevenueAED  float64 `json:"revenue"`
+	ThruPlays   int64   `json:"thruplays"`
+	Views3s     int64   `json:"views_3s"`
+	Note        string  `json:"note"` // owner's own words ("did well in Ramadan")
+}
+
+// VideoAnalysis: the numbers and checks are computed in code from the
+// browser's measurements; Claude (vision on a handful of frames) reports what
+// it SEES (hook, text, products, language, angle). Score is code's.
+type VideoAnalysis struct {
+	DurationS     float64        `json:"duration_s"`
+	Width         int            `json:"width"`
+	Height        int            `json:"height"`
+	Aspect        string         `json:"aspect"` // 9:16 | 4:5 | 1:1 | 16:9 | other
+	Placements    []string       `json:"placements"`
+	Hook          string         `json:"hook"`
+	HookStrength  float64        `json:"hook_strength"` // 0..10, Claude
+	Language      string         `json:"language"`      // ar | en | mixed | none (on-screen; audio not transcribed)
+	OnScreenText  []string       `json:"on_screen_text"`
+	Captions      bool           `json:"captions"`
+	ProductsShown []VideoMatch   `json:"products_shown"`
+	FirstProductS float64        `json:"first_product_s"` // seconds until a product is visible (-1 never)
+	Angle         string         `json:"angle"`           // routine | ingredient | before_after_style | testimonial | offer | texture | unboxing | other
+	Issues        []VideoIssue   `json:"issues"`
+	Suggestions   []string       `json:"suggestions"`
+	Trims         []VideoTrim    `json:"trims"`
+	Score         int            `json:"score"` // 0..100
+	ScoreParts    map[string]int `json:"score_parts"`
+	Summary       string         `json:"summary"`
+	SummaryAR     string         `json:"summary_ar"`
+	Model         string         `json:"model"`
+	AnalysedAt    time.Time      `json:"analysed_at"`
+}
+
+type VideoMatch struct {
+	ProductID  string  `json:"product_id"`
+	Title      string  `json:"title"`
+	Confidence float64 `json:"confidence"`
+}
+
+type VideoIssue struct {
+	Code     string `json:"code"`
+	Severity string `json:"severity"` // block | fix | tip
+	Detail   string `json:"detail"`
+}
+
+type VideoTrim struct {
+	FromS float64 `json:"from_s"`
+	ToS   float64 `json:"to_s"`
+	Why   string  `json:"why"`
+}
+
 // DesignSpec asks the UI to render one ad image (canvas, in the app) and POST
 // the PNG to /api/creatives with design_id = ID. Original art only: the
 // shop's own product photos plus our templates.
@@ -337,6 +414,7 @@ type CopySet struct {
 	CTA         string     `json:"cta"` // Meta call_to_action type, e.g. SHOP_NOW
 	Lint        LintResult `json:"lint"`
 	Rewritten   bool       `json:"rewritten"`
+	VideoID     string     `json:"video_id,omitempty"` // copy written for one of the owner's videos
 }
 
 // Economics: unit economics the rules layer judged against this cycle.

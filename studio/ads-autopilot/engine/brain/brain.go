@@ -158,6 +158,17 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 	for i, cr := range reqs {
 		cr.PairID = fmt.Sprintf("p%s-%d", in.Now.Format("060102"), i)
 		cr.Wording = in.Limits.AdWording
+		if cr.VideoID != "" {
+			for j := range in.Videos {
+				if in.Videos[j].ID == cr.VideoID {
+					cr.Video = &in.Videos[j]
+				}
+			}
+			if cr.Video == nil {
+				out.Dropped = append(out.Dropped, fmt.Sprintf("copy %d: unknown video %s", i, cr.VideoID))
+				continue
+			}
+		}
 		sets, designs, usage, err := b.copyFor(ctx, cr, in.Shop, in.Research)
 		addUsageTotals(&out.Usage, usage)
 		if err != nil {
@@ -229,6 +240,10 @@ func (b *Brain) validate(a plannerAnswer, in CycleInput, rr RulesResult, known m
 	lib := map[string]bool{}
 	for _, c := range in.Creatives {
 		lib[c.ID] = true
+	}
+	vids := map[string]VideoAsset{}
+	for _, v := range in.Videos {
+		vids[v.ID] = v
 	}
 	allowed := map[string]bool{}
 	for _, k := range proposalKinds {
@@ -349,6 +364,23 @@ func (b *Brain) validate(a plannerAnswer, in CycleInput, rr RulesResult, known m
 					continue
 				}
 			}
+		case "upload_creative":
+			if params["media"] == "video" {
+				v, ok := vids[fmt.Sprint(params["video_id"])]
+				if !ok {
+					bad("unknown video_id")
+					continue
+				}
+				if !videoRunnable(v) {
+					bad("video not analysed or has a blocking issue")
+					continue
+				}
+				if v.MetaVideoID != "" {
+					bad("video already uploaded to Meta")
+					continue
+				}
+				params["path"] = v.Path
+			}
 		case "create_ad":
 			as, _ := params["adset_id"].(string)
 			if _, ok := known[as]; !ok && !newIDs[as] {
@@ -360,7 +392,12 @@ func (b *Brain) validate(a plannerAnswer, in CycleInput, rr RulesResult, known m
 				continue
 			}
 			cr, _ := params["creative_id"].(string)
-			if !lib[cr] && !strings.HasPrefix(cr, "copy:") {
+			if strings.HasPrefix(cr, "video:") {
+				if v, ok := vids[strings.TrimPrefix(cr, "video:")]; !ok || !videoRunnable(v) {
+					bad("video creative unknown or blocked")
+					continue
+				}
+			} else if !lib[cr] && !strings.HasPrefix(cr, "copy:") {
 				bad("creative_id not in the library")
 				continue
 			}
@@ -609,7 +646,7 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 		"language_30d": langSummary(rr.Lang), "alerts": rr.Alerts,
 		"rules_proposals_already_queued": rr.Proposals, "tree": tree, "learning_table": rr.Learning,
 		"past_learnings": learned, "recent_history": hist, "research": notes, "creative_library": lib, "products": prods,
-		"orders_source": in.Shop.OrdersSource,
+		"orders_source": in.Shop.OrdersSource, "videos": videoSummary(in.Videos, rr.Econ),
 	}
 }
 

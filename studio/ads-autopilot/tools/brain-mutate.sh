@@ -31,5 +31,9 @@ mut linter.go '"discount_unapproved":         {"block", "warn", "warn"},' '"disc
 mut brain.go 'if v.Verdict == "keep" && contains(v.Signals, "winner") {' 'if false {' 'planner may pause a winner'
 mut brain.go 'if !rr.BatchDay {' 'if false {' 'new ads off batch day'
 mut research.go 'if len(srcs) == 0 || strings.TrimSpace(n.Title) == "" {' 'if strings.TrimSpace(n.Title) == "" {' 'unsourced research note'
+mut video.go '(t.YTop < 0.14 || t.YBottom > 0.65)' '(t.YTop < 0.14)' 'video bottom safe zone'
+mut video.go 'if pr, ok := idx[p.ProductID]; ok && p.Confidence >= 0.4 {' 'if pr, ok := idx[p.ProductID]; ok || true {' 'video product ids not checked'
+mut video.go 'if i.Severity == "block" && s > 30 {' 'if false {' 'blocked video score cap'
+mut brain.go 'if !videoRunnable(v) {' 'if false {' 'upload a blocked video'
 echo "mutations killed: $pass, survived: $fail"
 [ "$fail" -eq 0 ]

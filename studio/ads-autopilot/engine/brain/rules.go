@@ -537,6 +537,22 @@ func learningTable(in CycleInput, life map[string]*Agg, e Economics, prior float
 			}
 		}
 	}
+	for _, v := range in.Videos {
+		if v.Results == nil || v.Results.SpendAED <= 0 || v.Analysis == nil {
+			continue
+		}
+		k := key{v.Analysis.Angle, v.Analysis.Language, "video"}
+		if agg[k] == nil {
+			agg[k] = &Agg{}
+		}
+		g := agg[k]
+		g.Spend += v.Results.SpendAED
+		g.Revenue += v.Results.RevenueAED
+		g.Impr += v.Results.Impressions
+		g.Clicks += v.Results.Clicks
+		g.Purch += v.Results.Purchases
+		ads[k]++
+	}
 	var out []LearningRow
 	for k, g := range agg {
 		out = append(out, LearningRow{Angle: k.a, Lang: k.l, Template: k.t, Ads: ads[k], Spend: round2(g.Spend), Purch: g.Purch,

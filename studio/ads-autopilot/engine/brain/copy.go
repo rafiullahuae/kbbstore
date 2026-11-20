@@ -10,12 +10,14 @@ import (
 // CopyRequest asks for one idea as an AR + EN pair (POST /api/brain/copy, or
 // a planner copy_request).
 type CopyRequest struct {
-	ProductIDs []string `json:"product_ids"`
-	Angle      string   `json:"angle"`
-	Template   string   `json:"template"`
-	Brief      string   `json:"brief"`
-	PairID     string   `json:"pair_id,omitempty"`
-	Wording    string   `json:"ad_wording,omitempty"` // linter strictness; the engine passes limits.ad_wording
+	ProductIDs []string    `json:"product_ids"`
+	Angle      string      `json:"angle"`
+	Template   string      `json:"template"`
+	Brief      string      `json:"brief"`
+	PairID     string      `json:"pair_id,omitempty"`
+	Wording    string      `json:"ad_wording,omitempty"` // linter strictness; the engine passes limits.ad_wording
+	VideoID    string      `json:"video_id,omitempty"`   // write copy for this video (products from its analysis)
+	Video      *VideoAsset `json:"-"`
 }
 
 // CopyResult is what POST /api/brain/copy returns.
@@ -56,6 +58,11 @@ func (b *Brain) copyFor(ctx context.Context, cr CopyRequest, shop ShopSnapshot, 
 	if !b.hasClaude() {
 		return nil, nil, u, ErrNoKey
 	}
+	if cr.Video != nil && cr.Video.Analysis != nil && len(cr.ProductIDs) == 0 {
+		for _, m := range cr.Video.Analysis.ProductsShown {
+			cr.ProductIDs = append(cr.ProductIDs, m.ProductID)
+		}
+	}
 	prods := productsByID(shop, cr.ProductIDs)
 	if len(prods) == 0 {
 		return nil, nil, u, fmt.Errorf("no in-stock product with a photo among %v", cr.ProductIDs)
@@ -75,7 +82,7 @@ func (b *Brain) copyFor(ctx context.Context, cr CopyRequest, shop ShopSnapshot, 
 		}
 	}
 	ask, _ := json.Marshal(map[string]any{"products": pinfo, "angle": cr.Angle, "brief": cr.Brief, "template": cr.Template,
-		"promotion_approved": b.PromoApproved, "wording_rules": firstNonEmpty(cr.Wording, Balanced), "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea"})
+		"promotion_approved": b.PromoApproved, "wording_rules": firstNonEmpty(cr.Wording, Balanced), "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea", "video": videoBrief(cr.Video)})
 	req := Request{Model: b.CopyModel, MaxTokens: 8000, System: CachedSystem(copySystem),
 		Messages: []Message{{Role: "user", Content: "Write the ad copy.\n" + string(ask)}},
 		Output:   JSONOutput(copySchema(), "medium")}
@@ -122,7 +129,7 @@ func (b *Brain) copyFor(ctx context.Context, cr CopyRequest, shop ShopSnapshot, 
 			}
 			id := fmt.Sprintf("%s-%s", cr.PairID, s.Lang)
 			final = append(final, CopySet{ID: id, PairID: cr.PairID, Lang: s.Lang, ProductIDs: cr.ProductIDs, Angle: cr.Angle,
-				Hooks: f.Hooks, PrimaryText: f.PrimaryText, Headline: f.Headline, Description: f.Description, CTA: f.CTA, Lint: lr, Rewritten: rew})
+				Hooks: f.Hooks, PrimaryText: f.PrimaryText, Headline: f.Headline, Description: f.Description, CTA: f.CTA, Lint: lr, Rewritten: rew, VideoID: cr.VideoID})
 			extra[id] = copyExtra{sub: s.Sub, bullets: clean(s.Bullets, 3), badge: s.Badge}
 		}
 		if len(blocked) == 0 && hasBothLangs(final) {
@@ -142,6 +149,9 @@ func (b *Brain) copyFor(ctx context.Context, cr CopyRequest, shop ShopSnapshot, 
 	}
 	var designs []DesignSpec
 	for _, s := range final {
+		if cr.VideoID != "" {
+			break // the video is the creative; no image to design
+		}
 		x := extra[s.ID]
 		designs = append(designs, designFor(s, x, prods, cr.Template))
 	}
@@ -224,4 +234,14 @@ func hash32(s string) uint32 {
 		h *= 16777619
 	}
 	return h
+}
+
+// videoBrief: what the copywriter needs to know about a video (no frames).
+func videoBrief(v *VideoAsset) any {
+	if v == nil || v.Analysis == nil {
+		return nil
+	}
+	a := v.Analysis
+	return map[string]any{"name": v.Name, "angle": a.Angle, "hook": a.Hook, "on_screen_text": a.OnScreenText, "language": a.Language,
+		"aspect": a.Aspect, "duration_s": a.DurationS, "note": "Write the ad text that runs WITH this video (primary text, headline); the first line should match the video's hook."}
 }

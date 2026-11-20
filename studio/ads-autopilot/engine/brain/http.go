@@ -46,6 +46,21 @@ func Handler(b *Brain, d Deps) http.Handler {
 			}
 			_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&body)
 			out, err = b.Research(ctx, ResearchInput{Now: in.Now, Shop: in.Shop, Previous: in.Research, Focus: clean(body.Focus, 6)})
+		case "video":
+			var vin VideoInput
+			if e := json.NewDecoder(http.MaxBytesReader(w, r.Body, 12<<20)).Decode(&vin); e != nil || vin.ID == "" {
+				writeErr(w, http.StatusBadRequest, errString("send {id, name, duration_s, width, height, has_audio, frames:[{t,jpeg}]}"))
+				return
+			}
+			if vin.Wording == "" {
+				vin.Wording = in.Limits.AdWording
+			}
+			var a VideoAnalysis
+			a, _, verr := b.AnalyzeVideo(ctx, vin, in.Shop)
+			if verr != nil { // the local checks still stand; say why vision is missing
+				a.Model = "local-only (" + verr.Error() + ")"
+			}
+			out = a
 		case "copy":
 			var req CopyRequest
 			if e := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&req); e != nil || len(req.ProductIDs) == 0 {

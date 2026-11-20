@@ -39,4 +39,10 @@ type (
 	Economics     = model.Economics
 	LintResult    = model.LintResult
 	LintIssue     = model.LintIssue
+	VideoAsset    = model.VideoAsset
+	VideoResults  = model.VideoResults
+	VideoAnalysis = model.VideoAnalysis
+	VideoMatch    = model.VideoMatch
+	VideoIssue    = model.VideoIssue
+	VideoTrim     = model.VideoTrim
 )

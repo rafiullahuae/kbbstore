@@ -36,6 +36,8 @@ func plannerSchema() map[string]any {
 		"lang":             null(enum("ar", "en")),
 		"countries":        null(arr(str())),
 		"objective":        null(str()),
+		"video_id":         null(str()),
+		"media":            null(enum("image", "video")),
 	})
 	return obj(map[string]any{
 		"summary_en": str(),
@@ -51,7 +53,7 @@ func plannerSchema() map[string]any {
 			"confidence": num(), "evidence": arr(str()),
 		})),
 		"copy_requests": arr(obj(map[string]any{
-			"product_ids": arr(str()), "angle": str(), "template": enum(templateIDs...), "brief": str(),
+			"product_ids": arr(str()), "angle": str(), "template": enum(templateIDs...), "brief": str(), "video_id": null(str()),
 		})),
 		"report_en": str(),
 		"report_ar": str(),

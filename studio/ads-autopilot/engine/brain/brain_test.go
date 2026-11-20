@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// vfake is the vision answer the fake returns for video analysis.
+var vfake string
+
 // fakeClaude answers by which system prompt it sees. It records every request.
 type fakeClaude struct {
 	mu       sync.Mutex
@@ -62,6 +65,8 @@ func (f *fakeClaude) server(t *testing.T) *httptest.Server {
 		case strings.HasPrefix(sys, researchSystem[:60]):
 			c := pop(&f.research)
 			w.Write([]byte(`{"id":"r","stop_reason":"end_turn","content":` + c + `,"usage":{"input_tokens":5000,"output_tokens":900,"server_tool_use":{"web_search_requests":3}}}`))
+		case strings.HasPrefix(sys, videoSystem[:60]):
+			w.Write([]byte(text(vfake)))
 		case strings.HasPrefix(sys, normalizeSystem[:60]):
 			w.Write([]byte(text(f.notes)))
 		default:
