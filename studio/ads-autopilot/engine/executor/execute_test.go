@@ -34,8 +34,9 @@ func rig(t *testing.T) (*metamock.Server, *Executor, *meta.Client) {
 	t.Cleanup(m.Close)
 	mc := meta.New(func() string { return m.Token })
 	mc.Base = u
+	meta.RuploadBase = u + "/video-ads-upload"
 	mc.Sleep = func(context.Context, time.Duration) error { return nil }
-	x := &Executor{Meta: mc, Act: func() string { return m.Account }, PageID: func() string { return "200000000001" }, PixelID: func() string { return "300000000001" },
+	x := &Executor{Meta: mc, Act: func() string { return m.Account }, Links: func() model.AccountLinks { return testLinks },
 		Ledger: NewLedger(), Creatives: &memCreatives{m: map[string]model.Creative{"cr-ar-1": {ID: "cr-ar-1", Lang: "ar", Format: "4:5", Media: "png", Headline: "بشرة", PrimaryText: "روتين", Link: "https://kbeautybliss.com/p/"}}}}
 	return m, x, mc
 }

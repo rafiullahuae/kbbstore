@@ -30,7 +30,7 @@ func tree() []model.Campaign {
 }
 
 func env() Env {
-	return Env{Now: t0, Limits: lim(), Tree: tree(), MonthSpendAED: 1000, Ledger: NewLedger()}
+	return Env{Now: t0, Limits: lim(), Tree: tree(), MonthSpendAED: 1000, Ledger: NewLedger(), Links: testLinks}
 }
 
 // MUTATION: change math.Round to math.Floor in Fils → the 12.345 row (1234.5 → 1235) goes red.
@@ -167,3 +167,5 @@ func TestDaysLeft(t *testing.T) {
 		t.Fatalf("days left on 28 Feb 2027 = %d, want 1", d)
 	}
 }
+
+var testLinks = model.AccountLinks{PageID: "200000000001", PixelID: "300000000001", CatalogID: "400000000001", InstagramUserID: "500000000001", WhatsAppNumber: "+971500000000"}

@@ -57,6 +57,12 @@ type Env struct {
 	Loc           *time.Location                  // account time zone (nil = UTC)
 	ActivatedNow  int                             // ads set ACTIVE earlier in this same batch
 	CommitDelta   float64                         // daily budget committed earlier in this same batch (AED)
+	Links         model.AccountLinks              // the account's Page / Instagram / pixel / catalog / WhatsApp
+	// the optional global caps across ALL the owner's automated accounts (Settings → Limits → All accounts)
+	GlobalDailyAED      float64
+	GlobalMonthlyAED    float64
+	OtherCommitted      float64 // daily budgets running in the OTHER automated accounts
+	OtherMonthProjected float64 // the other accounts' month: spent + running budgets to month end
 }
 
 type Decision struct {
@@ -257,6 +263,9 @@ func Check(p model.Proposal, env Env) Decision {
 	if lim.Autopilot != model.AutopilotShadow && lim.Autopilot != model.AutopilotAuto {
 		return refuse("limits", "the autopilot is off")
 	}
+	if err := ValidateParams(p, env.Links); err != nil {
+		return refuse("params", "%v", err)
+	}
 	reducing := p.Kind == model.KindPause || p.Kind == model.KindArchive
 	spends := p.Kind == model.KindCreateCampaign || p.Kind == model.KindCreateAdSet || p.Kind == model.KindCreateAd ||
 		p.Kind == model.KindResume || p.Kind == model.KindSetBudget || p.Kind == model.KindSetBid
@@ -266,7 +275,8 @@ func Check(p model.Proposal, env Env) Decision {
 
 	// target: an existing object must be one the app made
 	var n *node
-	if !strings.HasPrefix(p.Target, "tmp:") && p.Kind != model.KindCreateCampaign && p.Kind != model.KindUploadCreative {
+	makes := p.Kind == model.KindCreateCampaign || p.Kind == model.KindUploadCreative || p.Kind == model.KindCreateAudience || p.Kind == model.KindCreateLookalike || p.Kind == model.KindCreateProductSet
+	if !strings.HasPrefix(p.Target, "tmp:") && !makes {
 		n = find(env.Tree, p.Target)
 		if n == nil && (p.Kind != model.KindCreateAdSet && p.Kind != model.KindCreateAd) {
 			return refuse("limits", "%s is not in the account as last read", p.Target)
@@ -389,6 +399,14 @@ func Check(p model.Proposal, env Env) Decision {
 		if proj := ProjectedMonth(env, committed+addDaily); proj > lim.MonthlyAED+1e-9 {
 			return refuse("limits", "the month would reach %.2f AED (%.2f spent + running budgets to month end); the monthly limit is %.2f", proj, env.MonthSpendAED, lim.MonthlyAED)
 		}
+		if env.GlobalDailyAED > 0 && env.OtherCommitted+committed+addDaily > env.GlobalDailyAED+1e-9 {
+			return refuse("limits", "all accounts together would run %.2f AED a day; the all-accounts daily limit is %.2f", env.OtherCommitted+committed+addDaily, env.GlobalDailyAED)
+		}
+		if env.GlobalMonthlyAED > 0 {
+			if proj := env.OtherMonthProjected + ProjectedMonth(env, committed+addDaily); proj > env.GlobalMonthlyAED+1e-9 {
+				return refuse("limits", "all accounts together would reach %.2f AED this month; the all-accounts monthly limit is %.2f", proj, env.GlobalMonthlyAED)
+			}
+		}
 	}
 
 	// cooldown: no second significant change to one object within cooldown_hours (pause and archive are exempt:
@@ -422,7 +440,7 @@ func Check(p model.Proposal, env Env) Decision {
 	}
 
 	// 4. copy linter
-	if p.Kind == model.KindUploadCreative || p.Kind == model.KindCreateAd {
+	if p.Kind == model.KindUploadCreative || p.Kind == model.KindCreateAd || p.Kind == model.KindCreateAudience || p.Kind == model.KindCreateProductSet {
 		lint := env.Lint
 		if lint == nil {
 			lint = BuiltinLint
@@ -454,7 +472,7 @@ var bannedClaims = []string{"cure", "cures", "guaranteed results", "100% guarant
 
 func BuiltinLint(p model.Proposal) []string {
 	var probs []string
-	text := strings.ToLower(str(p.Params, "headline") + " " + str(p.Params, "primary_text"))
+	text := strings.ToLower(texts(p))
 	for _, b := range bannedClaims {
 		if strings.Contains(text, strings.ToLower(b)) {
 			probs = append(probs, fmt.Sprintf("copy makes a claim Meta refuses for beauty ads: %q", b))

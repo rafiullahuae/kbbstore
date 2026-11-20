@@ -37,6 +37,7 @@ import (
 	"time"
 
 	"kaa/metamock"
+	"kaa/model"
 	"kaa/store"
 )
 
@@ -153,6 +154,9 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 		s.app.connectAll(ctx)
+		if *mock {
+			mockLink(s.app)
+		}
 		if !*noSched {
 			s.sched.start(s.shutdown)
 		}
@@ -195,7 +199,7 @@ func setupMock(a *App) (*metamock.Server, error) {
 	a.testMetaBase, a.testClaudeBase, a.testFeedURL = mu, au, au+"/feed.xml"
 	_ = a.sec.Set("meta_token", m.Token)
 	_ = a.sec.Set("anthropic_key", aux.Key)
-	a.cfg.MetaAccountID, a.cfg.PageID, a.cfg.PixelID = m.Account, "200000000001", "300000000001"
+	a.cfg.Selected = m.Account
 	_ = a.st.Save("config", a.cfg)
 	log.Printf("TEST MODE: Meta → %s, Claude + feed → %s (never the real services)", mu, au)
 	mockURL, mockServer = mu, m
@@ -411,4 +415,20 @@ func (s *server) events(w http.ResponseWriter, r *http.Request) {
 			fl.Flush()
 		}
 	}
+}
+
+// MockLinks: the fake assets of the -mock account (metamock seeds them).
+var MockLinks = model.AccountLinks{PageID: "200000000001", InstagramUserID: "500000000001", PixelID: "300000000001", CatalogID: "400000000001", WhatsAppNumber: "+971500000000"}
+
+// mockLink: -mock only: the fake account is automated and linked, like an owner who finished the setup.
+func mockLink(a *App) {
+	ac, err := a.Acct(mockServer.Account)
+	if err != nil {
+		log.Printf("mock: %v", err)
+		return
+	}
+	ac.mu.Lock()
+	ac.settings.Automated, ac.settings.Links = true, MockLinks
+	ac.mu.Unlock()
+	ac.saveSettings()
 }

@@ -148,7 +148,10 @@ type rawAd struct {
 
 // Tree reads campaigns, ad sets and ads (every status but DELETED) and nests them.
 func (c *Client) Tree(ctx context.Context, act string) ([]model.Campaign, error) {
-	filt := `[{"field":"effective_status","operator":"NOT_IN","value":["DELETED"]}]`
+	return c.tree(ctx, act, `[{"field":"effective_status","operator":"NOT_IN","value":["DELETED"]}]`)
+}
+
+func (c *Client) tree(ctx context.Context, act, filt string) ([]model.Campaign, error) {
 	cs, err := getAll[rawCampaign](ctx, c, act+"/campaigns", url.Values{"limit": {"200"}, "filtering": {filt},
 		"fields": {"id,name,objective,status,effective_status,daily_budget,lifetime_budget,bid_strategy,advantage_state_info,created_time,updated_time"}}, 2000)
 	if err != nil {
@@ -244,11 +247,15 @@ func pick(list []struct {
 // Insights: one row per object per day at this level (campaign | adset | ad), 7d_click + 1d_view attribution, in the
 // account currency (insights money is in major units: spend "12.34" = AED 12.34).
 func (c *Client) Insights(ctx context.Context, act, level, since, until string) ([]model.MetricRow, error) {
+	return c.insights(ctx, act, level, since, until, "1")
+}
+
+func (c *Client) insights(ctx context.Context, act, level, since, until, increment string) ([]model.MetricRow, error) {
 	tr, _ := json.Marshal(map[string]string{"since": since, "until": until})
 	q := url.Values{
 		"level":                      {level},
 		"time_range":                 {string(tr)},
-		"time_increment":             {"1"},
+		"time_increment":             {increment},
 		"action_attribution_windows": {`["7d_click","1d_view"]`},
 		"fields":                     {"date_start,campaign_id,adset_id,ad_id,campaign_name,adset_name,ad_name,spend,impressions,reach,frequency,inline_link_clicks,actions,action_values"},
 		"limit":                      {"500"},

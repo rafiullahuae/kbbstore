@@ -24,9 +24,8 @@ type CreativeStore interface {
 
 type Executor struct {
 	Meta      *meta.Client
-	Act       func() string // act_…
-	PageID    func() string
-	PixelID   func() string
+	Act       func() string             // act_…
+	Links     func() model.AccountLinks // the account's Page / Instagram / pixel / catalog / WhatsApp
 	Ledger    *Ledger
 	Creatives CreativeStore
 	Log       func(kind, summary string, data any)
@@ -100,9 +99,21 @@ func (x *Executor) resolve(p model.Proposal) model.Proposal {
 			q.Target = r
 		}
 	}
-	for _, k := range []string{"campaign_id", "adset_id"} {
+	for _, k := range []string{"campaign_id", "adset_id", "creative_id", "origin_audience_id", "product_set_id"} {
 		if s, ok := q.Params[k].(string); ok && strings.HasPrefix(s, "tmp:") {
 			q.Params[k] = x.Ledger.Resolve(s)
+		}
+	}
+	for _, k := range []string{"custom_audiences", "excluded_custom_audiences"} {
+		if xs, ok := q.Params[k].([]any); ok {
+			out := make([]any, len(xs))
+			for i, v := range xs {
+				if s, ok := v.(string); ok && strings.HasPrefix(s, "tmp:") {
+					v = x.Ledger.Resolve(s)
+				}
+				out[i] = v
+			}
+			q.Params[k] = out
 		}
 	}
 	return q
@@ -182,81 +193,17 @@ func (x *Executor) apply(ctx context.Context, env *Env, p model.Proposal, key st
 	now := env.Now
 	switch p.Kind {
 	case model.KindCreateCampaign:
-		bs := str(p.Params, "bid_strategy")
-		if bs == "" {
-			bs = "LOWEST_COST_WITHOUT_CAP"
-		}
-		if !bidStrategies[bs] {
-			return "", nil, fmt.Errorf("bid strategy %q is not one Meta knows", bs)
-		}
-		budget, _ := num(p.Params, "daily_budget")
-		fs, err := filsStr(budget)
-		if err != nil {
-			return "", nil, err
-		}
-		name := managedName(str(p.Params, "name"))
-		form := url.Values{"name": {name}, "objective": {"OUTCOME_SALES"}, "status": {"PAUSED"}, "special_ad_categories": {"[]"},
-			"buying_type": {"AUCTION"}, "daily_budget": {fs}, "bid_strategy": {bs}}
-		id, err := x.Meta.Create(ctx, act, "campaigns", form, key)
-		if err != nil {
-			return "", nil, err
-		}
-		if strings.HasPrefix(p.Target, "tmp:") {
-			x.Ledger.MapTmp(p.Target, id)
-		}
-		env.Tree = append(env.Tree, model.Campaign{ID: id, Name: name, Objective: "OUTCOME_SALES", Status: "PAUSED", EffectiveStatus: "PAUSED", DailyBudgetAED: budget, BidStrategy: bs, Managed: true, AdSets: []model.AdSet{}})
-		return id, []string{"created PAUSED (OUTCOME_SALES, campaign budget " + fs + " fils)"}, nil
-
+		return x.createCampaign(ctx, env, act, p, key)
 	case model.KindCreateAdSet:
-		pix := x.PixelID()
-		if pix == "" {
-			return "", nil, errors.New("no pixel / dataset id saved (Settings → Connections → Meta): a sales ad set cannot optimise for purchases without it")
-		}
-		cid := str(p.Params, "campaign_id")
-		cn := find(env.Tree, cid)
-		if cn == nil || !cn.campaign.Managed {
-			return "", nil, fmt.Errorf("campaign %s is not one the app made", cid)
-		}
-		countries := strs(p.Params, "countries")
-		targeting := map[string]any{"geo_locations": map[string]any{"countries": countries}, "targeting_automation": map[string]any{"advantage_audience": 1}}
-		if a, ok := num(p.Params, "age_min"); ok && a >= 18 && a <= 65 {
-			targeting["age_min"] = int(a)
-		}
-		name := managedName(str(p.Params, "name"))
-		form := url.Values{"name": {name}, "campaign_id": {cid}, "status": {"PAUSED"}, "billing_event": {"IMPRESSIONS"},
-			"optimization_goal": {"OFFSITE_CONVERSIONS"}, "promoted_object": {jsonStr(map[string]string{"pixel_id": pix, "custom_event_type": "PURCHASE"})},
-			"targeting": {jsonStr(targeting)}, "start_time": {now.UTC().Format(time.RFC3339)}}
-		budget := 0.0
-		if b, ok := num(p.Params, "daily_budget"); ok {
-			if cn.campaign.DailyBudgetAED > 0 {
-				return "", nil, errors.New("the campaign has its own budget; an ad set under it cannot have one too")
-			}
-			fs, err := filsStr(b)
-			if err != nil {
-				return "", nil, err
-			}
-			form.Set("daily_budget", fs)
-			budget = b
-		}
-		if b, ok := num(p.Params, "bid_amount"); ok {
-			fs, err := filsStr(b)
-			if err != nil {
-				return "", nil, err
-			}
-			form.Set("bid_amount", fs)
-		}
-		id, err := x.Meta.Create(ctx, act, "adsets", form, key)
-		if err != nil {
-			return "", nil, err
-		}
-		if strings.HasPrefix(p.Target, "tmp:") {
-			x.Ledger.MapTmp(p.Target, id)
-		}
-		cn.campaign.AdSets = append(cn.campaign.AdSets, model.AdSet{ID: id, CampaignID: cid, Name: name, Status: "PAUSED", EffectiveStatus: "PAUSED", DailyBudgetAED: budget, Countries: countries, Ads: []model.Ad{}})
-		return id, []string{"created PAUSED (Advantage+ audience, purchases via pixel)"}, nil
-
+		return x.createAdSet(ctx, env, act, p, key)
 	case model.KindUploadCreative:
-		return x.uploadCreative(ctx, act, p, key)
+		return x.createCreative(ctx, act, p, key)
+	case model.KindCreateAudience:
+		return x.createAudience(ctx, act, p)
+	case model.KindCreateLookalike:
+		return x.createLookalike(ctx, act, p)
+	case model.KindCreateProductSet:
+		return x.createProductSet(ctx, p)
 
 	case model.KindCreateAd:
 		sid := str(p.Params, "adset_id")
@@ -265,6 +212,9 @@ func (x *Executor) apply(ctx context.Context, env *Env, p model.Proposal, key st
 			return "", nil, fmt.Errorf("ad set %s is not one the app made", sid)
 		}
 		crID := str(p.Params, "creative_id")
+		if strings.HasPrefix(crID, "tmp:") {
+			return "", nil, fmt.Errorf("creative %s was never made (upload_creative first)", crID)
+		}
 		if x.Creatives != nil {
 			if c, _, err := x.Creatives.Get(crID); err == nil {
 				if c.MetaID == "" {
@@ -381,75 +331,6 @@ func (x *Executor) afterStatus(env *Env, n *node, status string) {
 		}
 		n.ad.Status, n.ad.EffectiveStatus = status, status
 	}
-}
-
-func (x *Executor) uploadCreative(ctx context.Context, act string, p model.Proposal, key string) (string, []string, error) {
-	if x.Creatives == nil {
-		return "", nil, errors.New("no creative library")
-	}
-	page := x.PageID()
-	if page == "" {
-		return "", nil, errors.New("no Facebook Page id saved (Settings → Connections → Meta)")
-	}
-	cid := str(p.Params, "creative_id")
-	if cid == "" {
-		cid = p.Target
-	}
-	c, media, err := x.Creatives.Get(cid)
-	if err != nil {
-		return "", nil, err
-	}
-	if c.MetaID != "" {
-		return c.MetaID, []string{"already uploaded"}, nil
-	}
-	if c.Link == "" || !strings.HasPrefix(c.Link, "https://") {
-		return "", nil, errors.New("the creative's link must be an https:// shop page")
-	}
-	steps := []string{}
-	cta := c.CTA
-	if cta == "" {
-		cta = "SHOP_NOW"
-	}
-	var spec map[string]any
-	switch c.Media {
-	case "png":
-		if c.ImageHash == "" {
-			h, err := x.Meta.UploadImage(ctx, act, "kaa-"+c.ID+".png", b64(media))
-			if err != nil {
-				return "", nil, err
-			}
-			c.ImageHash = h
-			_ = x.Creatives.Put(c)
-			steps = append(steps, "image uploaded")
-		}
-		spec = map[string]any{"page_id": page, "link_data": map[string]any{"message": c.PrimaryText, "link": c.Link, "name": c.Headline, "image_hash": c.ImageHash,
-			"call_to_action": map[string]any{"type": cta, "value": map[string]string{"link": c.Link}}}}
-	case "mp4":
-		if c.VideoID == "" {
-			v, err := x.Meta.UploadVideo(ctx, act, "kaa-"+c.ID, media)
-			if err != nil {
-				return "", nil, err
-			}
-			c.VideoID = v
-			_ = x.Creatives.Put(c)
-			steps = append(steps, "video uploaded")
-		}
-		thumb := str(p.Params, "thumbnail_url")
-		if thumb == "" {
-			return "", nil, errors.New("a video ad needs thumbnail_url (a product image) for its cover")
-		}
-		spec = map[string]any{"page_id": page, "video_data": map[string]any{"video_id": c.VideoID, "message": c.PrimaryText, "title": c.Headline, "image_url": thumb,
-			"call_to_action": map[string]any{"type": cta, "value": map[string]string{"link": c.Link}}}}
-	default:
-		return "", nil, errors.New("the creative has no picture or video")
-	}
-	id, err := x.Meta.Create(ctx, act, "adcreatives", url.Values{"name": {managedName(c.ID + " " + c.Lang + " " + c.Format)}, "object_story_spec": {jsonStr(spec)}}, key)
-	if err != nil {
-		return "", steps, err
-	}
-	c.MetaID = id
-	_ = x.Creatives.Put(c)
-	return id, append(steps, "creative "+id), nil
 }
 
 func b64(b []byte) string { return base64.StdEncoding.EncodeToString(b) }

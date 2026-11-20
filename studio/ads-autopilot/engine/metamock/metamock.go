@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -68,11 +69,16 @@ type Server struct {
 	adsets    []obj
 	ads       []obj
 	creatives map[string]obj
+	accounts  map[string]obj // every ad account the token sees (multi-account); account = accounts[Account]
+	cur       string         // the ad account named in the request path
+	assets    map[string]obj // pages, Instagram accounts, pixels, catalogs, WhatsApp accounts, product sets, videos
+	BizID     string
 	// user tokens (the unverified-business path): token → expiry. AppID/AppSecret are the owner's own app.
 	userTokens map[string]time.Time
 	AppID      string
 	AppSecret  string
 	rules      []obj
+	audiences  []obj
 	idem       map[string]idemRec
 	budgetTS   map[string][]time.Time
 	capTS      []time.Time
@@ -93,6 +99,15 @@ func New(token, account string) *Server {
 		creatives: map[string]obj{}, idem: map[string]idemRec{}, budgetTS: map[string][]time.Time{}}
 	s.account = obj{"id": account, "name": "K-Beauty Bliss UAE", "currency": "AED", "timezone_name": "Asia/Dubai",
 		"spend_cap": "0", "amount_spent": "1234500", "account_status": 1, "disable_reason": 0, "min_daily_budget": 367}
+	s.accounts = map[string]obj{account: s.account}
+	s.BizID = "900000000001"
+	s.assets = map[string]obj{
+		"200000000001": {"id": "200000000001", "name": "K-Beauty Bliss", "_kind": "page"},
+		"500000000001": {"id": "500000000001", "username": "kbeautybliss", "_kind": "instagram"},
+		"300000000001": {"id": "300000000001", "name": "kbeautybliss.com pixel", "_kind": "pixel", "last_fired_time": "2026-11-20T09:00:00+0000"},
+		"400000000001": {"id": "400000000001", "name": "KBB catalog", "_kind": "catalog", "product_count": 902},
+		"600000000001": {"id": "600000000001", "name": "KBB WhatsApp", "_kind": "whatsapp"},
+	}
 	return s
 }
 
@@ -111,6 +126,37 @@ func (s *Server) Seed() {
 }
 
 func (s *Server) id() string { s.nextID++; return strconv.FormatInt(s.nextID, 10) }
+
+// AddAccount: a second (third…) ad account in the same business, for the multi-account checks.
+func (s *Server) AddAccount(id, name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.accounts[id] = obj{"id": id, "name": name, "currency": "AED", "timezone_name": "Asia/Dubai", "spend_cap": "0", "amount_spent": "50000", "account_status": 1, "min_daily_budget": 367}
+}
+
+// AccountObj: a copy of one account's fields.
+func (s *Server) AccountObj(id string) map[string]any {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return copyObj(s.accounts[id])
+}
+
+func (s *Server) actOf(o obj) string {
+	if a, ok := o["_act"].(string); ok {
+		return a
+	}
+	return s.Account
+}
+
+func (s *Server) mine(src []obj) []obj {
+	var out []obj
+	for _, o := range src {
+		if s.actOf(o) == s.cur {
+			out = append(out, o)
+		}
+	}
+	return out
+}
 
 // Start listens on 127.0.0.1:0 and serves until Close.
 func (s *Server) Start() (string, error) {
@@ -232,6 +278,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.ok(w, obj{"ok": true})
 		return
 	}
+	if strings.HasPrefix(r.URL.Path, "/video-ads-upload/") { // the resumable upload host (rupload.facebook.com)
+		if r.Header.Get("Authorization") != "OAuth "+s.Token && !strings.HasPrefix(r.Header.Get("Authorization"), "OAuth EAALONG") {
+			s.fail(w, 401, 190, 0, "Invalid OAuth access token.", false)
+			return
+		}
+		vid := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
+		v := s.assets[vid]
+		body, _ := io.ReadAll(r.Body)
+		if v == nil || r.Header.Get("file_size") == "" {
+			s.fail(w, 400, 100, 0, "unknown upload", false)
+			return
+		}
+		v["_bytes"] = len(body)
+		s.ok(w, obj{"success": true})
+		return
+	}
 	if r.URL.Path == "/__mock/writes" {
 		s.ok(w, s.writes)
 		return
@@ -293,26 +355,34 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) route(w http.ResponseWriter, r *http.Request, path string, form url.Values) {
 	segs := strings.Split(path, "/")
+	if s.accounts[segs[0]] != nil {
+		s.cur = segs[0]
+	}
+	if s.portfolio(w, r, segs, form) {
+		return
+	}
 	switch {
-	case r.Method == http.MethodGet && len(segs) == 1 && segs[0] == s.Account:
-		s.ok(w, pickFields(s.account, form.Get("fields")))
-	case r.Method == http.MethodGet && len(segs) == 2 && segs[0] == s.Account:
+	case r.Method == http.MethodGet && len(segs) == 1 && s.accounts[segs[0]] != nil:
+		s.ok(w, pickFields(s.accounts[segs[0]], form.Get("fields")))
+	case r.Method == http.MethodGet && len(segs) == 2 && s.accounts[segs[0]] != nil:
 		switch segs[1] {
 		case "campaigns":
-			s.list(w, form, s.campaigns)
+			s.list(w, form, s.mine(s.campaigns))
 		case "adsets":
-			s.list(w, form, s.adsets)
+			s.list(w, form, s.mine(s.adsets))
 		case "ads":
 			s.reviewTick()
-			s.list(w, form, s.ads)
+			s.list(w, form, s.mine(s.ads))
 		case "adrules_library":
-			s.list(w, form, s.rules)
+			s.list(w, form, s.mine(s.rules))
+		case "customaudiences":
+			s.list(w, form, s.mine(s.audiences))
 		case "insights":
 			s.insights(w, form)
 		default:
 			s.fail(w, 400, 100, 0, "Unknown edge "+segs[1], false)
 		}
-	case r.Method == http.MethodPost && len(segs) == 2 && segs[0] == s.Account:
+	case r.Method == http.MethodPost && len(segs) == 2 && s.accounts[segs[0]] != nil:
 		s.create(w, r, segs[1], form)
 	case r.Method == http.MethodPost && len(segs) == 1:
 		s.update(w, segs[0], form)
@@ -403,7 +473,10 @@ func (s *Server) list(w http.ResponseWriter, form url.Values, src []obj) {
 }
 
 func (s *Server) findAny(id string) obj {
-	for _, l := range [][]obj{s.campaigns, s.adsets, s.ads, s.rules} {
+	if a, ok := s.assets[id]; ok {
+		return a
+	}
+	for _, l := range [][]obj{s.campaigns, s.adsets, s.ads, s.rules, s.audiences} {
 		for _, o := range l {
 			if o["id"] == id {
 				return o
@@ -434,7 +507,7 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, edge string, for
 	key := r.Header.Get("X-Client-Idempotent-Key")
 	body := canonForm(form)
 	if key != "" {
-		if rec, ok := s.idem[key]; ok {
+		if rec, ok := s.idem[s.cur+"|"+key]; ok {
 			if rec.body != body {
 				s.fail(w, 400, 100, 1349016, "Invalid parameter", false)
 				return
@@ -519,7 +592,7 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, edge string, for
 		}
 		id = s.id()
 		ad := obj{"id": id, "adset_id": as["id"], "campaign_id": as["campaign_id"], "name": form.Get("name"), "status": form.Get("status"),
-			"effective_status": "PENDING_REVIEW", "creative": obj{"id": cr.ID}, "_reviewAt": s.Now().Add(time.Second).Unix()}
+			"effective_status": "PENDING_REVIEW", "creative": s.creativeView(cr.ID, cobj), "_reviewAt": s.Now().Add(time.Second).Unix()}
 		if strings.Contains(fmt.Sprint(cobj["object_story_spec"]), "REJECT") {
 			ad["_reject"] = true
 		}
@@ -539,6 +612,44 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, edge string, for
 			return
 		}
 		id = s.id()
+	case "customaudiences":
+		if form.Get("name") == "" {
+			s.fail(w, 400, 100, 0, "name is required", false)
+			return
+		}
+		if form.Get("subtype") == "LOOKALIKE" {
+			if strings.Contains(form.Get("lookalike_spec"), "country") || strings.Contains(form.Get("lookalike_spec"), "location_spec") {
+				s.fail(w, 400, 100, 0, "lookalike_spec.country is no longer accepted in v27.0", false)
+				return
+			}
+			if s.findAny(form.Get("origin_audience_id")) == nil {
+				s.fail(w, 400, 100, 0, "origin_audience_id: no such audience", false)
+				return
+			}
+		} else if !json.Valid([]byte(form.Get("rule"))) || !strings.Contains(form.Get("rule"), "event_sources") {
+			s.fail(w, 400, 100, 0, "rule is required", false)
+			return
+		}
+		id = s.id()
+		s.audiences = append(s.audiences, obj{"id": id, "name": form.Get("name"), "subtype": form.Get("subtype"), "rule": form.Get("rule")})
+	case "video_ads":
+		switch form.Get("upload_phase") {
+		case "start":
+			vid := s.id()
+			s.assets[vid] = obj{"id": vid, "_kind": "video", "status": obj{"video_status": "processing", "uploading_phase": obj{"status": "not_started", "bytes_transferred": 0}}}
+			s.ok(w, obj{"video_id": vid, "upload_url": "https://rupload.facebook.com/video-ads-upload/" + s.Version + "/" + vid})
+		case "finish":
+			v := s.assets[form.Get("video_id")]
+			if v == nil || v["_bytes"] == nil {
+				s.fail(w, 400, 100, 0, "video_id: nothing uploaded", false)
+				return
+			}
+			v["status"] = obj{"video_status": "ready", "uploading_phase": obj{"status": "complete", "bytes_transferred": v["_bytes"]}}
+			s.ok(w, obj{"success": true})
+		default:
+			s.fail(w, 400, 100, 0, "upload_phase must be start or finish", false)
+		}
+		return
 	case "adrules_library":
 		if form.Get("name") == "" || form.Get("evaluation_spec") == "" || form.Get("execution_spec") == "" {
 			s.fail(w, 400, 100, 0, "name, evaluation_spec and execution_spec are required", false)
@@ -561,8 +672,11 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, edge string, for
 		s.fail(w, 400, 100, 0, "Unknown edge "+edge, false)
 		return
 	}
+	if o := s.findAny(id); o != nil {
+		o["_act"] = s.cur
+	}
 	if key != "" {
-		s.idem[key] = idemRec{body: body, id: id}
+		s.idem[s.cur+"|"+key] = idemRec{body: body, id: id}
 	}
 	s.ok(w, obj{"id": id})
 }
@@ -585,7 +699,7 @@ func canonForm(f url.Values) string {
 
 func (s *Server) update(w http.ResponseWriter, id string, form url.Values) {
 	now := s.Now()
-	if id == s.Account {
+	if acct := s.accounts[id]; acct != nil {
 		if v := form.Get("spend_cap"); v != "" || form.Get("spend_cap_action") != "" {
 			keep := s.capTS[:0]
 			for _, t := range s.capTS {
@@ -600,9 +714,9 @@ func (s *Server) update(w http.ResponseWriter, id string, form url.Values) {
 			}
 			s.capTS = append(s.capTS, now)
 			if form.Get("spend_cap_action") == "delete" {
-				s.account["spend_cap"] = "0"
+				acct["spend_cap"] = "0"
 			} else if form.Get("spend_cap_action") == "reset" {
-				s.account["amount_spent"] = "0"
+				acct["amount_spent"] = "0"
 			}
 			if v != "" {
 				f, err := strconv.ParseFloat(v, 64)
@@ -611,7 +725,7 @@ func (s *Server) update(w http.ResponseWriter, id string, form url.Values) {
 					return
 				}
 				// standard denomination in, minor units stored (as Meta reads it back); 0 = NO cap
-				s.account["spend_cap"] = strconv.FormatInt(int64(f*100+0.5), 10)
+				acct["spend_cap"] = strconv.FormatInt(int64(f*100+0.5), 10)
 			}
 			s.ok(w, obj{"success": true})
 			return
@@ -716,11 +830,11 @@ func (s *Server) insights(w http.ResponseWriter, form url.Values) {
 	var src []obj
 	switch level {
 	case "campaign":
-		src = s.campaigns
+		src = s.mine(s.campaigns)
 	case "adset":
-		src = s.adsets
+		src = s.mine(s.adsets)
 	case "ad":
-		src = s.ads
+		src = s.mine(s.ads)
 	default:
 		s.fail(w, 400, 100, 0, "level is invalid", false)
 		return
@@ -834,4 +948,79 @@ func (s *Server) debugToken(w http.ResponseWriter, form url.Values) {
 		d["is_valid"] = false
 	}
 	s.ok(w, obj{"data": d})
+}
+
+// portfolio: me/businesses, the business edges, me/adaccounts, and product_sets on the catalog.
+func (s *Server) portfolio(w http.ResponseWriter, r *http.Request, segs []string, form url.Values) bool {
+	list := func(rows []obj) {
+		s.list(w, form, rows)
+	}
+	kind := func(k string) []obj {
+		var o []obj
+		for _, a := range s.assets {
+			if a["_kind"] == k {
+				o = append(o, a)
+			}
+		}
+		return o
+	}
+	accs := func() []obj {
+		var o []obj
+		ids := make([]string, 0, len(s.accounts))
+		for id := range s.accounts {
+			ids = append(ids, id)
+		}
+		sort.Strings(ids)
+		for _, id := range ids {
+			o = append(o, s.accounts[id])
+		}
+		return o
+	}
+	if r.Method == http.MethodGet && len(segs) == 2 && segs[0] == "me" {
+		switch segs[1] {
+		case "businesses":
+			list([]obj{{"id": s.BizID, "name": "K-Beauty Bliss"}})
+		case "adaccounts":
+			list(accs())
+		default:
+			return false
+		}
+		return true
+	}
+	if r.Method == http.MethodGet && len(segs) == 2 && segs[0] == s.BizID {
+		switch segs[1] {
+		case "owned_ad_accounts":
+			list(accs())
+		case "client_ad_accounts":
+			list([]obj{})
+		case "owned_pages":
+			list(kind("page"))
+		case "owned_instagram_accounts":
+			list(kind("instagram"))
+		case "owned_pixels":
+			list(kind("pixel"))
+		case "owned_product_catalogs":
+			list(kind("catalog"))
+		case "owned_whatsapp_business_accounts":
+			list(kind("whatsapp"))
+		default:
+			return false
+		}
+		return true
+	}
+	if r.Method == http.MethodPost && len(segs) == 2 && segs[1] == "product_sets" {
+		if c := s.assets[segs[0]]; c == nil || c["_kind"] != "catalog" {
+			s.fail(w, 400, 100, 33, "no such catalog", false)
+			return true
+		}
+		if f := form.Get("filter"); f != "" && !json.Valid([]byte(f)) {
+			s.fail(w, 400, 100, 0, "filter is not JSON", false)
+			return true
+		}
+		id := s.id()
+		s.assets[id] = obj{"id": id, "name": form.Get("name"), "_kind": "product_set", "filter": form.Get("filter")}
+		s.ok(w, obj{"id": id})
+		return true
+	}
+	return false
 }
