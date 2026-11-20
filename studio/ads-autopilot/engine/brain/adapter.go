@@ -116,6 +116,12 @@ func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOut
 	b := e.B.clone() // per-call copy: settings differ per account
 	st := e.settings(acct)
 	b.PromoApproved = st.PromoApproved
+	if in.Playbook != nil {
+		b.Rules, b.Econ = withKnobs(b.Rules, b.Econ, in.Playbook.Knobs)
+		if !in.Playbook.OffersAllowed { // the owner's "Offers: not allowed" beats the promotion switch
+			b.PromoApproved = false
+		}
+	}
 	b.DeferCopy = st.CreationMode == CreationWithMe
 	// daily trending refresh rides on the cycle when it is stale (never blocks a cycle on failure)
 	if b.hasClaude() && TrendingDue(e.trending(), bin.Now) {
@@ -185,7 +191,7 @@ func (e *Engine) Research(ctx context.Context, in model.ResearchInput) (model.Re
 }
 
 func (e *Engine) Copy(ctx context.Context, in model.CopyInput) (model.CopyOutput, error) {
-	res, err := e.B.Copy(ctx, CopyRequest{ProductIDs: in.ProductIDs, Angle: in.Angle}, shopFromModel(in.Shop), e.richResearch())
+	res, err := e.B.Copy(ctx, CopyRequest{ProductIDs: in.ProductIDs, Angle: in.Angle, Brief: in.Brief}, shopFromModel(in.Shop), e.richResearch())
 	if err != nil {
 		return model.CopyOutput{}, err
 	}
@@ -320,6 +326,12 @@ func (e *Engine) FromModel(in model.CycleInput) CycleInput {
 	if len(in.Learnings) > 0 {
 		out.PortfolioLearnings = in.Learnings
 	}
+	if in.Playbook != nil {
+		pb := *in.Playbook
+		out.Playbook = &pb
+		out.Ranked = RankFor(out, in.Shop, pb, feedBaseline(in.Shop), nil)
+	}
+	out.JobNotes = in.JobNotes
 	return out
 }
 

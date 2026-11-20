@@ -49,6 +49,11 @@ type CycleInput struct {
 	LongHistory []MetricRow
 	Creatives37 []HistoryCreative
 	Learnings   []Learning
+	// added by the media-buying lane (20 Nov): the owner's Playbook (the shop above is ALREADY filtered by it), the
+	// account's custom audiences with Meta's size estimates, and the owner's notes on upcoming jobs (planner input)
+	Playbook  *Playbook
+	Audiences []Audience
+	JobNotes  []string
 }
 
 type CycleOutput struct {
@@ -145,6 +150,7 @@ type CopyInput struct {
 	ProductIDs []string `json:"product_ids"`
 	Langs      []string `json:"langs"` // "ar" first
 	Angle      string   `json:"angle"`
+	Brief      string   `json:"brief,omitempty"` // the owner's playbook instructions + a job's copy direction and note
 	Shop       ShopSnapshot
 	Research   Research
 }
@@ -283,6 +289,12 @@ type Product struct {
 	Image     string   `json:"image,omitempty"`
 	URL       string   `json:"url,omitempty"`
 	Category  string   `json:"category,omitempty"`
+	// added by the media-buying lane: the shop API's stock, units sold (sale orders) in the last 14 days and the 14
+	// before, and the day the engine first saw the product in the feed (YYYY-MM-DD, the newness signal)
+	Stock       *int   `json:"stock,omitempty"`
+	Units14     int    `json:"units_14d,omitempty"`
+	UnitsPrev14 int    `json:"units_prev_14d,omitempty"`
+	FirstSeen   string `json:"first_seen,omitempty"`
 }
 
 type OrderDay struct {

@@ -39,10 +39,19 @@ func fakeShop(t *testing.T, apiCalls *int32) *httptest.Server {
 			w.Write([]byte(`{"ok":true,"days":[{"date":"2026-11-19","orders":3,"gross":400,"net":350.5,"refunded_on_orders":49.5},{"date":"2026-11-20","orders":0,"net":0,"refunded_on_orders":0}]}`))
 		case "/autopilot-api/v1/products":
 			if r.URL.Query().Get("after") == "0" {
-				w.Write([]byte(`{"ok":true,"products":[{"id":"3195","margin_pct":41.5,"variants":[]}],"next_after":3195}`))
+				w.Write([]byte(`{"ok":true,"products":[{"id":"3195","margin_pct":41.5,"stock":42,"variants":[]}],"next_after":3195}`))
 				return
 			}
 			w.Write([]byte(`{"ok":true,"products":[{"id":"9999","margin_pct":null,"variants":[]}],"next_after":null}`))
+		case "/autopilot-api/v1/orders":
+			if r.URL.Query().Get("from") != "2026-10-24" {
+				t.Errorf("orders range %s", r.URL.RawQuery)
+			}
+			if r.URL.Query().Get("after") == "0" {
+				w.Write([]byte(`{"ok":true,"orders":[{"day":"2026-11-18","is_sale":true,"items":[{"product_id":"3195","qty":2},{"product_id":null,"qty":1}]},{"day":"2026-11-01","is_sale":true,"items":[{"product_id":"3195","qty":1}]}],"next_after":7}`))
+				return
+			}
+			w.Write([]byte(`{"ok":true,"orders":[{"day":"2026-11-19","is_sale":false,"items":[{"product_id":"3195","qty":9}]},{"day":"2026-11-20","is_sale":true,"items":[{"product_id":"4410","qty":3}]}],"next_after":null}`))
 		default:
 			w.WriteHeader(404)
 		}
@@ -88,8 +97,13 @@ func TestAPISourceReadsNetRevenueAndMargins(t *testing.T) {
 	if snap.Products[1].MarginPct != nil {
 		t.Fatal("a product the shop has no cost for got a margin")
 	}
-	// daily + two product pages (the cursor was followed)
-	if calls != 3 {
+	// units sold: sale orders only (the cancelled one with 9 is not), split into the last 14 days and the 14 before;
+	// stock from the API. MUTATION: drop the IsSale check → 3195 sells 11, red.
+	if p := snap.Products[0]; p.Units14 != 2 || p.UnitsPrev14 != 1 || p.Stock == nil || *p.Stock != 42 || snap.Products[1].Units14 != 3 {
+		t.Fatalf("momentum / stock: %+v %+v", snap.Products[0], snap.Products[1])
+	}
+	// daily + two product pages + two order pages (each cursor followed)
+	if calls != 5 {
 		t.Fatalf("%d api calls", calls)
 	}
 }

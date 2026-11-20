@@ -31,11 +31,12 @@ var AdFormats = []AdFormat{
 	{"collection", "Collection / Instant Experience", "مجموعة / تجربة فورية", "Instant Experience canvas + collection template (catalog product_set)", []string{"product_set_id|product_ids", "cover creative_id|video_id"}, []string{"feed", "stories"}, "Browse-to-buy on mobile for a theme (Ramadan glow, summer SPF)."},
 	{"catalog", "Advantage+ catalog ads", "إعلانات الكتالوج Advantage+", "product catalog + product_set_id, template_data; Localized Catalogs for Arabic", []string{"catalog_id", "product_set_id"}, []string{"feed", "reels", "stories"}, "Retargeting viewers/carts with the exact product, and broad prospecting across 900 SKUs."},
 	{"flexible", "Flexible format / Dynamic Creative", "تنسيق مرن / إبداع ديناميكي", "asset_feed_spec (images, videos, bodies, titles; ad_formats AUTOMATIC_FORMAT)", []string{"creative_ids(2+)"}, []string{"all"}, "Let Meta mix 2-10 assets and texts per person once single assets have proven themselves."},
-	{"click_to_whatsapp", "Click to WhatsApp", "النقر للمراسلة عبر واتساب", "destination_type WHATSAPP + call_to_action WHATSAPP_MESSAGE (needs a linked WhatsApp Business number)", []string{"whatsapp_number"}, []string{"feed", "stories", "reels"}, "UAE shoppers like to ask before buying (authenticity, shade, routine) -- high-intent chats."},
-	{"click_to_messenger", "Click to Messenger / Instagram Direct", "النقر للمراسلة (ماسنجر / إنستغرام)", "destination_type MESSENGER or INSTAGRAM_DIRECT", []string{"page_id|ig_account"}, []string{"feed", "stories"}, "Consultation-style ads (routine builder) where WhatsApp is not linked."},
-	{"whatsapp_status", "Ads in WhatsApp Status", "إعلانات حالة واتساب", "Ads in WhatsApp Status placement (where available)", []string{"creative_id|video_id(9:16)"}, []string{"whatsapp_status"}, "Extra 9:16 reach where Meta offers it; test small."},
 	{"partnership", "Partnership (creator) ads", "إعلانات الشراكة مع صانعات المحتوى", "Partnership Ads: boost creator media (partnership ad code) or new creative with sponsor identity", []string{"partnership_code|creator_ig_id"}, []string{"reels", "feed", "stories"}, "When the owner has a creator's permission/code; social proof without fake reviews."},
 }
+
+// NotOffered: chat ads the owner does not run (the owner, 20 Nov 2026: "we don't offer this things"). The executor
+// keeps the capability; the planner never sees these formats and validate drops any proposal that names one.
+var NotOffered = map[string]bool{"click_to_whatsapp": true, "click_to_messenger": true, "whatsapp_status": true}
 
 var formatIDs = func() []string {
 	var s []string
@@ -76,9 +77,9 @@ var audienceIDs = func() []string {
 	return s
 }()
 
-var placementIDs = []string{"reels", "stories", "feed", "explore", "whatsapp_status", "advantage_placements"}
+var placementIDs = []string{"reels", "stories", "feed", "explore", "advantage_placements"}
 
-var destinationIDs = []string{"website", "whatsapp", "messenger", "instagram_direct"}
+var destinationIDs = []string{"website"}
 
 // CostStrategy is the fixed playbook for low CPC/CPM with women in the GCC;
 // the planner reads it, the UI shows it on the Plan screen.
@@ -88,5 +89,4 @@ var CostStrategy = []string{
 	"Frequency: prospecting ads refresh before 7-day frequency passes ~2.5; retargeting capped near 3 per 7 days; fatigue rules pause and replace.",
 	"Cost: watch CPM (attention cost), CTR (hook), CPC (both) every cycle; a creative with CTR credibly below the account's is cut early before it wastes budget.",
 	"Bidding: highest volume with the owner's daily cap while weekly purchases are low; cost cap only once purchases are stable.",
-	"Conversations: Click to WhatsApp tests for high-intent questions (authenticity, routine); judged on purchases, not chats.",
 }

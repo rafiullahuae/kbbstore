@@ -5,7 +5,11 @@
 // fils exist only in the engine's executor.
 package brain
 
-import "time"
+import (
+	"time"
+
+	"kaa/model"
+)
 
 // Limits are the owner's hard limits (GET/PUT /api/limits). Zero daily or
 // monthly AED means "no limit set", which means nothing launches.
@@ -199,6 +203,10 @@ type CycleInput struct {
 	Trending           *TrendingReport  `json:"trending,omitempty"`            // BRAIN: trending products matched to the shop
 	PortfolioLearnings any              `json:"portfolio_learnings,omitempty"` // the engine cross-account aggregates
 	Videos             []VideoAsset     `json:"videos"`                        // BRAIN addition: the owner's ad videos with analysis + results
+	// the owner's Playbook (the shop above is already filtered by it), the ranked candidates and his job notes
+	Playbook *model.Playbook        `json:"playbook,omitempty"`
+	Ranked   []model.RankedProduct `json:"ranked,omitempty"`
+	JobNotes []string              `json:"job_notes,omitempty"`
 }
 
 // CycleOutput: Plan, Proposals and Report are the contract's. Verdicts,

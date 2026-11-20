@@ -104,12 +104,12 @@ func TestFormatValidation(t *testing.T) {
 	if p["format"] != "single_video" {
 		t.Fatal(p)
 	}
-	p = map[string]any{"format": "click_to_whatsapp"}
-	validFormat(p, shop, &bad)
-	if p["destination"] != "whatsapp" {
-		t.Fatal(p)
+	// chat ads are not offered (the owner): refused, and the planner is never told about them.
+	// MUTATION: drop the NotOffered check in validFormat → a WhatsApp ad passes, red.
+	if validFormat(map[string]any{"format": "click_to_whatsapp"}, shop, &bad) || !strings.Contains(msg, "not offered") {
+		t.Fatal("a WhatsApp ad passed")
 	}
-	if !strings.Contains(PlannerSystem(), "click_to_whatsapp") || strings.Contains(PlannerSystem(), "2026") {
+	if !strings.Contains(PlannerSystem(), "carousel") || strings.Contains(PlannerSystem(), "click_to_whatsapp") || strings.Contains(PlannerSystem(), "2026") {
 		t.Fatal("planner system must list formats and stay date-free")
 	}
 }

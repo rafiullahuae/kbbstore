@@ -71,10 +71,25 @@ type apiProducts struct {
 	Products []struct {
 		ID        string   `json:"id"`
 		MarginPct *float64 `json:"margin_pct"`
+		Stock     *int     `json:"stock"`
 		Variants  []struct {
 			CatalogID string `json:"catalog_id"`
+			Stock     *int   `json:"stock"`
 		} `json:"variants"`
 	} `json:"products"`
+	NextAfter *int `json:"next_after"`
+}
+
+// apiOrders: one page of GET /orders (only what the momentum signal needs).
+type apiOrders struct {
+	Orders []struct {
+		Day    string `json:"day"`
+		IsSale bool   `json:"is_sale"`
+		Items  []struct {
+			ProductID *string `json:"product_id"`
+			Qty       int     `json:"qty"`
+		} `json:"items"`
+	} `json:"orders"`
 	NextAfter *int `json:"next_after"`
 }
 
@@ -159,6 +174,7 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 	}
 
 	margins := map[string]float64{}
+	stock := map[string]int{}
 	after := 0
 	for page := 0; page < 50; page++ { // 50 x 200 = 10,000 products, far past this shop
 		var p apiProducts
@@ -166,6 +182,16 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 			return err
 		}
 		for _, pr := range p.Products {
+			if pr.Stock != nil {
+				stock[pr.ID] = *pr.Stock
+			}
+			for _, v := range pr.Variants {
+				if v.Stock != nil {
+					stock[v.CatalogID] = *v.Stock
+				} else if pr.Stock != nil {
+					stock[v.CatalogID] = *pr.Stock
+				}
+			}
 			if pr.MarginPct == nil {
 				continue
 			}
@@ -180,12 +206,61 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 		after = *p.NextAfter
 	}
 
+	// units sold per product: sale orders of the last 28 shop days, split 14 + 14 (the momentum signal)
+	units, prev := map[string]int{}, map[string]int{}
+	cut := today.AddDate(0, 0, -13).Format("2006-01-02")
+	oq := url.Values{"from": {today.AddDate(0, 0, -27).Format("2006-01-02")}, "to": {today.Format("2006-01-02")}, "limit": {"200"}}
+	after = 0
+	for page := 0; page < 50; page++ { // 10,000 orders in 4 weeks, far past this shop
+		oq.Set("after", strconv.Itoa(after))
+		var o apiOrders
+		if err := s.get(ctx, "/orders", oq, &o); err != nil {
+			if errors.Is(err, ErrUnauthorized) {
+				return err
+			}
+			units, prev = map[string]int{}, map[string]int{} // momentum is a bonus signal: without it the rest still holds
+			break
+		}
+		for _, od := range o.Orders {
+			if !od.IsSale {
+				continue
+			}
+			for _, it := range od.Items {
+				if it.ProductID == nil || it.Qty <= 0 {
+					continue
+				}
+				if od.Day >= cut {
+					units[*it.ProductID] += it.Qty
+				} else {
+					prev[*it.ProductID] += it.Qty
+				}
+			}
+		}
+		if o.NextAfter == nil {
+			break
+		}
+		after = *o.NextAfter
+	}
+
 	snap.Orders = orders
 	for i := range snap.Products {
-		if m, ok := margins[snap.Products[i].ID]; ok {
+		p := &snap.Products[i]
+		if m, ok := margins[p.ID]; ok {
 			m := m
-			snap.Products[i].MarginPct = &m
+			p.MarginPct = &m
 		}
+		if n, ok := stock[p.ID]; ok {
+			n := n
+			p.Stock = &n
+		}
+		g := p.ID // a variant line ("123-45") counts its product's sales: the orders name the product
+		if i := strings.IndexByte(g, '-'); i > 0 {
+			g = g[:i]
+		}
+		p.Units14, p.UnitsPrev14 = units[g], prev[g]
 	}
 	return nil
 }
+
+// TestBase: -mock only: the fake shop API on 127.0.0.1 stands in for the shop (the key never leaves the machine).
+func (s *APISource) TestBase(u string) { s.Base, s.anyBase = u, true }

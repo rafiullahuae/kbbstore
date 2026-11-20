@@ -60,6 +60,9 @@ func (b *Brain) Cycle(ctx context.Context, in CycleInput) (CycleOutput, error) {
 	}
 	econ := ComputeEconomics(b.Econ, in.Shop, in.Now)
 	rr := Evaluate(in, econ, b.Rules)
+	if in.Playbook != nil {
+		languageSlots(&rr, in.Playbook.Languages)
+	}
 	out := CycleOutput{Verdicts: rr.Verdicts, Economics: econ, Proposals: rr.Proposals, Model: "rules-only", Profile: in.Profile}
 	out.Plan = b.rulesPlan(in, rr)
 
@@ -166,6 +169,8 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 		return "", "", perr
 	}
 	out.Model = b.PlannerModel
+	props, pbDrop := checkPlaybook(props, in) // the owner's structured rules, checked on the answer in code
+	dropped = append(dropped, pbDrop...)
 	out.Dropped = append(out.Dropped, dropped...)
 	out.Proposals = mergeProposals(out.Proposals, props)
 	out.Learnings = clean(ans.Learnings, 8)
@@ -179,6 +184,24 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 	for i, cr := range reqs {
 		cr.PairID = fmt.Sprintf("p%s-%d", in.Now.Format("060102"), i)
 		cr.Wording = in.Limits.AdWording
+		cr.Brief = OwnerBrief(in.Playbook, cr.Brief)
+		if in.Playbook != nil { // a copy request may only name products the playbook allows
+			allowed := map[string]bool{}
+			for _, p := range in.Shop.Products {
+				allowed[p.ID] = true
+			}
+			var keep []string
+			for _, id := range cr.ProductIDs {
+				if allowed[id] {
+					keep = append(keep, id)
+				}
+			}
+			if len(cr.ProductIDs) > 0 && len(keep) == 0 {
+				out.Dropped = append(out.Dropped, fmt.Sprintf("copy %d: only products your playbook does not allow", i))
+				continue
+			}
+			cr.ProductIDs = keep
+		}
 		if cr.VideoID != "" {
 			for j := range in.Videos {
 				if in.Videos[j].ID == cr.VideoID {
@@ -684,9 +707,19 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 		hist = append(hist, map[string]any{"at": h.Time.Format("2006-01-02 15:04"), "kind": h.Kind, "object": h.Object, "summary": h.Summary, "outcome": h.Outcome})
 	}
 	var prods []map[string]any
-	for _, p := range pickProductsT(in.Shop, in.Research, in.Trending, 40) {
-		prods = append(prods, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED,
-			"margin_pct": p.MarginPct, "stock": p.Stock})
+	if len(in.Ranked) > 0 { // fresh-first ranking (playbook.go): score, its parts and the why, best first
+		for i, p := range in.Ranked {
+			if i >= 40 {
+				break
+			}
+			prods = append(prods, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Category, "price_aed": p.PriceAED,
+				"score": p.Score, "pinned": p.Pinned, "trending": p.Trending, "age_days": p.AgeDays, "units_14d": p.Units14, "why": p.Why})
+		}
+	} else {
+		for _, p := range pickProductsT(in.Shop, in.Research, in.Trending, 40) {
+			prods = append(prods, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED,
+				"margin_pct": p.MarginPct, "stock": p.Stock})
+		}
 	}
 	season := SeasonAt(in.Now)
 	sname := ""
@@ -694,7 +727,8 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 		sname = season.Name
 	}
 	return map[string]any{
-		"date": in.Now.Format("2006-01-02 Mon"), "season_now": sname, "payday_window": IsPayday(in.Now),
+		"owner_playbook": ownerBlock(in.Playbook, in.JobNotes),
+		"date":           in.Now.Format("2006-01-02 Mon"), "season_now": sname, "payday_window": IsPayday(in.Now),
 		"upcoming_seasons": Upcoming(in.Now, 60), "economics": rr.Econ,
 		"limits": in.Limits, "limits_set": rr.LimitsSet, "ad_wording_rules": firstNonEmpty(in.Limits.AdWording, Balanced), "promotion_approved": promo,
 		"evaluation_window": rr.Window, "account_ctr": rr.AccountCTR, "account_cpa": rr.AccountCPA,
@@ -876,12 +910,10 @@ func validFormat(params map[string]any, shop ShopSnapshot, bad *func(string)) bo
 			(*bad)(f + " needs 2-10 in-stock products with photos")
 			return false
 		}
-	case "click_to_whatsapp":
-		params["destination"] = "whatsapp"
-	case "click_to_messenger":
-		if params["destination"] != "instagram_direct" {
-			params["destination"] = "messenger"
-		}
+	}
+	if NotOffered[f] || (params["destination"] != nil && params["destination"] != "website") {
+		(*bad)(f + ": chat ads are not offered by the shop (the owner's decision)")
+		return false
 	}
 	return true
 }
@@ -905,7 +937,7 @@ func PlannerSystem() string {
 	}
 	fj, _ := json.Marshal(fs)
 	aj, _ := json.Marshal(as)
-	return plannerSystem + "\n\nAD FORMATS you can use (params.format; pick per goal):\n" + string(fj) +
+	return plannerSystem + "\n\n" + ownerRule + "\n\n" + AgencyPrompt() + "\nAD FORMATS you can use (params.format; pick per goal):\n" + string(fj) +
 		"\n\nAUDIENCES (params.audience on create_adset; tests carry one):\n" + string(aj) +
 		"\n\nCOST PLAYBOOK (low CPC/CPM, high CTR, women in the GCC):\n- " + strings.Join(CostStrategy, "\n- ")
 }

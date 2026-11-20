@@ -662,7 +662,19 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, edge string, for
 			return
 		}
 		id = s.id()
-		s.audiences = append(s.audiences, obj{"id": id, "name": form.Get("name"), "subtype": form.Get("subtype"), "rule": form.Get("rule")})
+		// size estimates the way Meta reports them (approximate_count_lower/upper_bound, delivery_status code 200):
+		// buyers ~1,500 (enough to seed a lookalike), site visitors ~12,000, lookalikes ~2M; "TINY" in the name = 40
+		lo := int64(12000)
+		switch {
+		case strings.Contains(form.Get("name"), "TINY"):
+			lo = 40
+		case form.Get("subtype") == "LOOKALIKE":
+			lo = 2000000
+		case strings.Contains(form.Get("rule"), `"Purchase"`):
+			lo = 1500
+		}
+		s.audiences = append(s.audiences, obj{"id": id, "name": form.Get("name"), "subtype": form.Get("subtype"), "rule": form.Get("rule"),
+			"approximate_count_lower_bound": lo, "approximate_count_upper_bound": lo + lo/10, "delivery_status": obj{"code": 200, "description": "This audience is ready for use."}})
 	case "video_ads":
 		switch form.Get("upload_phase") {
 		case "start":
