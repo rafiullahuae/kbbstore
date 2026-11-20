@@ -282,7 +282,8 @@ func (b *Brain) copyAsk(cr CopyRequest, prods []Product, r Research) []byte {
 			angles = append(angles, n.Title)
 		}
 	}
-	ask, _ := json.Marshal(map[string]any{"owner_brief_first": cr.Brief != "", "products": pinfo, "angle": cr.Angle, "brief": cr.Brief, "template": cr.Template,
+	facts := []string{"authentic Korean skincare and beauty", "delivery across the UAE", "prices in AED as given per product"}
+	ask, _ := json.Marshal(map[string]any{"structure": "hook -> benefit -> proof/ingredient -> reason to buy (shop_facts only) -> CTA", "shop_facts": facts, "owner_brief_first": cr.Brief != "", "products": pinfo, "angle": cr.Angle, "brief": cr.Brief, "template": cr.Template,
 		"promotion_approved": b.PromoApproved, "wording_rules": firstNonEmpty(cr.Wording, Balanced), "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea", "video": videoBrief(cr.Video)})
 	return ask
 }

@@ -206,3 +206,39 @@ func TestStrictAndRelaxed(t *testing.T) {
 		t.Fatal("cure claims block in every mode")
 	}
 }
+
+// Benefit-first copy (the owner, 20 Nov 2026) stays inside Balanced rules: the benefit, the ingredient, the Korean
+// angle and the reason to buy pass; a timed result, a cure or a guarantee dressed as a benefit is blocked.
+// MUTATION: drop the unrealistic_outcome rule in Lint → "Calms redness in 3 days" passes, red.
+func TestBenefitFirstCopyStaysBalanced(t *testing.T) {
+	good := []string{
+		"Weightless hydration in one step. Heartleaf 77% helps calm the look of redness for sensitive skin. Authentic from Korea, delivered across the UAE. AED 99.",
+		"Your glass-skin finish starts here: a gentle low-pH gel cleanser for oily, blemish-prone skin, ingredient-first the Korean way. Shop now.",
+		"Rice and niacinamide for a visibly brighter, dewy glow. Layer it after your toner. Authentic K-beauty, AED 85.",
+	}
+	for _, g := range good {
+		if r := Lint(CopyFields{PrimaryText: g, Headline: "Visibly calmer skin, the K-beauty way", CTA: "SHOP_NOW"}, LintOptions{Lang: "en", Strictness: Balanced}); !r.OK {
+			t.Errorf("benefit copy %q flagged: [%s]", g, rulesOf(r))
+		}
+	}
+	goodAR := []string{
+		"ترطيب خفيف بخطوة واحدة. مستخلص الهارتليف يساعد على تهدئة مظهر الاحمرار للبشرة الحساسة. أصلي من كوريا مع توصيل داخل الإمارات.",
+		"إشراقة ندية على الطريقة الكورية: الأرز والنياسيناميد لبشرة تبدو أكثر نضارة. تسوّقي الآن.",
+	}
+	for _, g := range goodAR {
+		if r := Lint(CopyFields{PrimaryText: g, Headline: "نضارة كورية أصلية", CTA: "SHOP_NOW"}, LintOptions{Lang: "ar", Strictness: Balanced}); !r.OK {
+			t.Errorf("Arabic benefit copy %q flagged: [%s]", g, rulesOf(r))
+		}
+	}
+	bad := []struct{ text, rule string }{
+		{"Calms redness in 3 days with heartleaf.", "unrealistic_outcome"},
+		{"Centella that cures acne for good.", "medical_claim"},
+		{"Guaranteed glass skin from the first use.", "unrealistic_outcome"},
+	}
+	for _, c := range bad {
+		r := Lint(CopyFields{PrimaryText: c.text}, LintOptions{Lang: "en", Strictness: Balanced})
+		if !hasRule(r, c.rule) || r.OK {
+			t.Errorf("%q: want %s, got [%s]", c.text, c.rule, rulesOf(r))
+		}
+	}
+}

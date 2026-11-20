@@ -101,22 +101,23 @@ var (
 	enAssert = regexp.MustCompile(`(?i)\b(?:(?:your|ur)\s+(?:[a-z]+\s+){0,2}?(?:` + condWords + `)\b|you(?:'ve| have|'re| are)?\s+(?:got\s+|have\s+|suffering from\s+|dealing with\s+)(?:[a-z]+\s+){0,2}?(?:` + condWords + `)\b)`)
 	enProne  = regexp.MustCompile(`(?i)^(?:-?\s*)(prone|type)\b`)
 
-	enAgeYou    = regexp.MustCompile(`(?i)\b(your age|younger[- ]looking you|in your (20|30|40|50)s|are you (over )?(30|40|50)|you look older|aging you)\b`)
-	enAge       = regexp.MustCompile(`(?i)\b(look(ing)? younger|over (30|35|40|45|50)\b|turning (30|40|50))`)
-	enSuffer    = regexp.MustCompile(`(?i)\b(struggl(e|es|ing) with|suffer(s|ing)? (from|with)|dealing with|tired of|sick of|fed up with|embarrassed (by|of|about)|insecure about|hate (your|their)|ashamed of|self-conscious about|do you have|have you got)\b`)
-	enInferior  = regexp.MustCompile(`(?i)\b(ugly|uglier|disgusting|hideous|gross|nobody wants)\b`)
-	enNegative  = regexp.MustCompile(`(?i)\b(embarrassing|unattractive|flaws?|flawed|imperfections?|bad skin|problem skin|hide (your|those|the)|fix your (face|skin)|ruin(ing|s)? your)\b`)
-	enMedical   = regexp.MustCompile(`(?i)\b(cures?|cured|curing|heals?|healing|treats?|treatment for|medical[- ]grade|prescription|eliminates? (acne|eczema|psoriasis|rosacea|wrinkles|scars|spots|breakouts|pimples)|gets? rid of (acne|eczema|psoriasis|rosacea|scars|breakouts|pimples))\b`)
-	enMedWord   = regexp.MustCompile(`(?i)\b(therapeutic|anti[- ]inflammatory|antibacterial|antifungal|repairs? dna|clinically proven|dermatologist[- ](approved|recommended|prescribed))\b`)
-	enDisease   = regexp.MustCompile(`(?i)\b(diabetes|herpes|thyroid|psoriasis|ebola|cancer|autism|alzheimer'?s|parkinson'?s|hiv)\b`)
-	enOutcome   = regexp.MustCompile(`(?i)\b(guarantee(d|s)?|100% (results|effective|guaranteed)|instant(ly)? (results|clear|glow|transformation)|overnight (results|transformation|miracle)|results in \d+ (days?|hours?|weeks?)|(clear|perfect|flawless) skin in \d+ (days?|hours?|weeks?)|in (just )?\d+ (days?|hours?) (you|your|skin|results))\b`)
-	enHype      = regexp.MustCompile(`(?i)\b(permanent(ly)?|forever|miracle|magic(al)? (cream|serum|results)|never (again|age))\b`)
-	enBeforeAft = regexp.MustCompile(`(?i)\b(before\s*(and|&|/|-)\s*after|before-after)\b`)
-	enWhitening = regexp.MustCompile(`(?i)\b(whiten(ing|s)?|bleach(ing)?|skin lighten(ing|er)?|lighten (your|the) skin|fairer skin|fair skin|fairer you|lighter skin tone)\b`)
-	enDiscount  = regexp.MustCompile(`(?i)(\d+\s?%\s?(off|discount)|\bsale\b|\bdiscount(s|ed)?\b|\bclearance\b|\bwas (aed|dhs?)\s?\d|\bcoupon\b|\bpromo code\b|\bbogo\b|buy one get one)`)
-	enExclusive = regexp.MustCompile(`(?i)(#\s?1\b|\bnumber one\b|\bno\.? ?1\b|\bthe best (in|skincare|serum|cream)\b|\bbest in (the )?(uae|dubai|gcc|world)\b|\bthe only\b|\bunlike other (brands|shops|stores)\b|\bcheapest\b)`)
-	enFakeRev   = regexp.MustCompile(`(★|⭐){3,}|(?i)\b(rated|rating of) [45](\.\d)? stars?\b|(?i)["“][^"”]{8,}["”]\s*[-–—]\s*[A-Z][a-z]+`)
-	enSPF       = regexp.MustCompile(`(?i)\bspf\s?\d+`)
+	enAgeYou      = regexp.MustCompile(`(?i)\b(your age|younger[- ]looking you|in your (20|30|40|50)s|are you (over )?(30|40|50)|you look older|aging you)\b`)
+	enAge         = regexp.MustCompile(`(?i)\b(look(ing)? younger|over (30|35|40|45|50)\b|turning (30|40|50))`)
+	enSuffer      = regexp.MustCompile(`(?i)\b(struggl(e|es|ing) with|suffer(s|ing)? (from|with)|dealing with|tired of|sick of|fed up with|embarrassed (by|of|about)|insecure about|hate (your|their)|ashamed of|self-conscious about|do you have|have you got)\b`)
+	enInferior    = regexp.MustCompile(`(?i)\b(ugly|uglier|disgusting|hideous|gross|nobody wants)\b`)
+	enNegative    = regexp.MustCompile(`(?i)\b(embarrassing|unattractive|flaws?|flawed|imperfections?|bad skin|problem skin|hide (your|those|the)|fix your (face|skin)|ruin(ing|s)? your)\b`)
+	enMedical     = regexp.MustCompile(`(?i)\b(cures?|cured|curing|heals?|healing|treats?|treatment for|medical[- ]grade|prescription|eliminates? (acne|eczema|psoriasis|rosacea|wrinkles|scars|spots|breakouts|pimples)|gets? rid of (acne|eczema|psoriasis|rosacea|scars|breakouts|pimples))\b`)
+	enMedWord     = regexp.MustCompile(`(?i)\b(therapeutic|anti[- ]inflammatory|antibacterial|antifungal|repairs? dna|clinically proven|dermatologist[- ](approved|recommended|prescribed))\b`)
+	enDisease     = regexp.MustCompile(`(?i)\b(diabetes|herpes|thyroid|psoriasis|ebola|cancer|autism|alzheimer'?s|parkinson'?s|hiv)\b`)
+	enBenefitTime = regexp.MustCompile(`(?i)\b(calm|clear|fade|reduc|brighten|smooth|firm|transform|repair|heal|lighten|tighten|shrink|plump|glow|hydrat|soothe|even)\w*\b[^.!?\n]{0,40}?\b(in|within) (just |only )?\d+ (days?|hours?|weeks?|nights?)\b`)
+	enOutcome     = regexp.MustCompile(`(?i)\b(guarantee(d|s)?|100% (results|effective|guaranteed)|instant(ly)? (results|clear|glow|transformation)|overnight (results|transformation|miracle)|results in \d+ (days?|hours?|weeks?)|(clear|perfect|flawless) skin in \d+ (days?|hours?|weeks?)|in (just )?\d+ (days?|hours?) (you|your|skin|results))\b`)
+	enHype        = regexp.MustCompile(`(?i)\b(permanent(ly)?|forever|miracle|magic(al)? (cream|serum|results)|never (again|age))\b`)
+	enBeforeAft   = regexp.MustCompile(`(?i)\b(before\s*(and|&|/|-)\s*after|before-after)\b`)
+	enWhitening   = regexp.MustCompile(`(?i)\b(whiten(ing|s)?|bleach(ing)?|skin lighten(ing|er)?|lighten (your|the) skin|fairer skin|fair skin|fairer you|lighter skin tone)\b`)
+	enDiscount    = regexp.MustCompile(`(?i)(\d+\s?%\s?(off|discount)|\bsale\b|\bdiscount(s|ed)?\b|\bclearance\b|\bwas (aed|dhs?)\s?\d|\bcoupon\b|\bpromo code\b|\bbogo\b|buy one get one)`)
+	enExclusive   = regexp.MustCompile(`(?i)(#\s?1\b|\bnumber one\b|\bno\.? ?1\b|\bthe best (in|skincare|serum|cream)\b|\bbest in (the )?(uae|dubai|gcc|world)\b|\bthe only\b|\bunlike other (brands|shops|stores)\b|\bcheapest\b)`)
+	enFakeRev     = regexp.MustCompile(`(★|⭐){3,}|(?i)\b(rated|rating of) [45](\.\d)? stars?\b|(?i)["“][^"”]{8,}["”]\s*[-–—]\s*[A-Z][a-z]+`)
+	enSPF         = regexp.MustCompile(`(?i)\bspf\s?\d+`)
 
 	ctaAllowed = map[string]bool{"SHOP_NOW": true, "LEARN_MORE": true, "ORDER_NOW": true, "BUY_NOW": true, "SEE_MORE": true, "GET_OFFER": true}
 )
@@ -227,6 +228,8 @@ func Lint(c CopyFields, o LintOptions) LintResult {
 		}
 		if m := enOutcome.FindString(text); m != "" {
 			add("unrealistic_outcome", field, m, "META-HW clickbait / UAE-MC: guaranteed, instant or timed results.", "Describe texture, ingredient, routine instead.")
+		} else if m := enBenefitTime.FindString(text); m != "" { // a benefit with a deadline ("calms redness in 3 days"); delivery times stay fine
+			add("unrealistic_outcome", field, m, "META-HW: a skin result promised within a set timeframe.", "'helps calm the look of redness' (no timeframe).")
 		}
 		if m := enHype.FindString(text); m != "" {
 			add("hype_wording", field, m, "UAE-MC: exaggerated wording.", "")
