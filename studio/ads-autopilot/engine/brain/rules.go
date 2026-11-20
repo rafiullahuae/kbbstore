@@ -388,7 +388,7 @@ func judgeAd(a Ad, life, all Agg, days []MetricRow, now time.Time, e Economics, 
 	}
 	if life.Spend >= cfg.KillMinSpendMult*e.TargetCPA && v.PWinBE <= cfg.KillP {
 		v.Verdict = "kill"
-		v.Why = fmt.Sprintf("AED %.0f spent, %d purchases: only %.0f%% chance its CPA beats break-even (AED %.0f).", life.Spend, life.Purch, v.PWinBE*100, e.BreakEvenCPA)
+		v.Why = fmt.Sprintf("AED %.0f spent, %d purchases: only %s chance its CPA beats break-even (AED %.0f).", life.Spend, life.Purch, pct(v.PWinBE), e.BreakEvenCPA)
 		v.Signals = []string{"posterior_kill"}
 		return v
 	}
@@ -410,12 +410,12 @@ func judgeAd(a Ad, life, all Agg, days []MetricRow, now time.Time, e Economics, 
 	}
 	if v.PWinTgt >= cfg.ScaleP && life.Purch >= 3 {
 		v.Verdict = "keep"
-		v.Why = fmt.Sprintf("Winner: %d purchases at AED %.0f CPA, %.0f%% likely to beat target AED %.0f.", life.Purch, life.CPA(), v.PWinTgt*100, e.TargetCPA)
+		v.Why = fmt.Sprintf("Winner: %d purchases at AED %.0f CPA, %s likely to beat target AED %.0f.", life.Purch, life.CPA(), pct(v.PWinTgt), e.TargetCPA)
 		v.Signals = []string{"winner"}
 		return v
 	}
 	v.Verdict = "watch"
-	v.Why = fmt.Sprintf("%d purchases on AED %.0f; %.0f%% likely to beat break-even -- keep collecting data.", life.Purch, life.Spend, v.PWinBE*100)
+	v.Why = fmt.Sprintf("%d purchases on AED %.0f; %s likely to beat break-even -- keep collecting data.", life.Purch, life.Spend, pct(v.PWinBE))
 	return v
 }
 
@@ -426,10 +426,10 @@ func judgeBudget(level, id string, w Agg, e Economics, prior float64, cfg RulesC
 	switch {
 	case w.Spend >= cfg.CutMinSpendMult*e.TargetCPA && v.PWinBE <= cfg.KillP:
 		v.Verdict = "cut"
-		v.Why = fmt.Sprintf("Settled 7 days: AED %.0f, %d purchases; %.0f%% chance of beating break-even. Budget down one step.", w.Spend, w.Purch, v.PWinBE*100)
+		v.Why = fmt.Sprintf("Settled 7 days: AED %.0f, %d purchases; %s chance of beating break-even. Budget down one step.", w.Spend, w.Purch, pct(v.PWinBE))
 	case v.PWinTgt >= cfg.ScaleP && w.Purch >= cfg.ScaleMinPurch && w.CPA() <= e.TargetCPA:
 		v.Verdict = "scale"
-		v.Why = fmt.Sprintf("Settled 7 days: CPA AED %.0f vs target %.0f, %.0f%% likely to keep beating it. Budget up one step.", w.CPA(), e.TargetCPA, v.PWinTgt*100)
+		v.Why = fmt.Sprintf("Settled 7 days: CPA AED %.0f vs target %.0f, %s likely to keep beating it. Budget up one step.", w.CPA(), e.TargetCPA, pct(v.PWinTgt))
 	default:
 		v.Verdict = "keep"
 		v.Why = fmt.Sprintf("Settled 7 days: AED %.0f, %d purchases. No budget change.", w.Spend, w.Purch)
@@ -565,4 +565,15 @@ func firstNonEmpty(s ...string) string {
 		}
 	}
 	return ""
+}
+
+// pct prints a probability for the owner: "<1%", "37%", ">99%".
+func pct(p float64) string {
+	switch {
+	case p < 0.01:
+		return "<1%"
+	case p > 0.99:
+		return ">99%"
+	}
+	return fmt.Sprintf("%.0f%%", p*100)
 }
