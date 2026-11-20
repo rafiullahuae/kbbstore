@@ -18,7 +18,7 @@ type Deps struct {
 	Result func(kind string, v any)
 }
 
-// Handler serves POST /api/brain/plan | /api/brain/research | /api/brain/copy.
+// Handler serves POST /api/brain/plan | research | copy | video | profile.
 // Mount it at "/api/brain/" behind the engine's X-KAA token check. A plan
 // here is computed and returned; whether anything executes is the
 // executor's decision (mode off/shadow/auto), never the brain's.
@@ -61,6 +61,9 @@ func Handler(b *Brain, d Deps) http.Handler {
 				a.Model = "local-only (" + verr.Error() + ")"
 			}
 			out = a
+		case "profile":
+			p := BuildProfile(in.Account.ID, in)
+			out = p
 		case "copy":
 			var req CopyRequest
 			if e := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&req); e != nil || len(req.ProductIDs) == 0 {

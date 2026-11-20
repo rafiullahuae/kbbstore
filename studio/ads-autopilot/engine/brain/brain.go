@@ -49,9 +49,13 @@ func (b *Brain) Cycle(ctx context.Context, in CycleInput) (CycleOutput, error) {
 	if in.Now.IsZero() {
 		in.Now = time.Now()
 	}
+	if in.Profile == nil {
+		p := BuildProfile(in.Account.ID, in)
+		in.Profile = &p
+	}
 	econ := ComputeEconomics(b.Econ, in.Shop, in.Now)
 	rr := Evaluate(in, econ, b.Rules)
-	out := CycleOutput{Verdicts: rr.Verdicts, Economics: econ, Proposals: rr.Proposals, Model: "rules-only"}
+	out := CycleOutput{Verdicts: rr.Verdicts, Economics: econ, Proposals: rr.Proposals, Model: "rules-only", Profile: in.Profile}
 	out.Plan = b.rulesPlan(in, rr)
 
 	var llmErr error
@@ -79,6 +83,8 @@ type plannerAnswer struct {
 		ProductIDs []string `json:"product_ids"`
 		Template   string   `json:"template"`
 		BudgetAED  float64  `json:"budget_aed"`
+		Format     string   `json:"format"`
+		Audience   string   `json:"audience"`
 	} `json:"tests"`
 	Allocation []struct {
 		Bucket   string  `json:"bucket"`
@@ -104,7 +110,7 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 	payload := plannerInput(in, rr, b.PromoApproved)
 	user, _ := json.Marshal(payload)
 	req := Request{
-		Model: b.PlannerModel, MaxTokens: 16000, System: CachedSystem(plannerSystem),
+		Model: b.PlannerModel, MaxTokens: 16000, System: CachedSystem(PlannerSystem()),
 		Messages: []Message{{Role: "user", Content: "Cycle input (computed by code; all numbers AED):\n" + string(user)}},
 		Output:   JSONOutput(plannerSchema(), "medium"),
 	}
@@ -346,6 +352,16 @@ func (b *Brain) validate(a plannerAnswer, in CycleInput, rr RulesResult, known m
 				continue
 			}
 		case "create_adset":
+			if _, ok := params["audience"]; !ok {
+				if params["lang"] == "en" {
+					params["audience"] = "women_uae_en"
+				} else {
+					params["audience"] = "women_gcc_ar"
+				}
+			}
+			if _, ok := params["placements"]; !ok {
+				params["placements"] = []any{"advantage_placements"}
+			}
 			cid, _ := params["campaign_id"].(string)
 			if _, ok := known[cid]; !ok && !newIDs[cid] {
 				bad("create_adset needs an existing or new campaign_id")
@@ -382,6 +398,9 @@ func (b *Brain) validate(a plannerAnswer, in CycleInput, rr RulesResult, known m
 				params["path"] = v.Path
 			}
 		case "create_ad":
+			if !validFormat(params, in.Shop, &bad) {
+				continue
+			}
 			as, _ := params["adset_id"].(string)
 			if _, ok := known[as]; !ok && !newIDs[as] {
 				bad("create_ad needs an existing or new adset_id")
@@ -453,7 +472,8 @@ func (b *Brain) applyPlan(pl *Plan, a plannerAnswer, in CycleInput, rr RulesResu
 				lang = "ar"
 			}
 			pl.Tests = append(pl.Tests, PlanTest{Name: t.Name, Hypothesis: t.Hypothesis, Lang: lang, Angle: t.Angle,
-				ProductIDs: t.ProductIDs, Template: oneOf(t.Template, templateIDs, "clean"), BudgetAED: round2(math.Max(0, t.BudgetAED)), Status: "planned"})
+				ProductIDs: t.ProductIDs, Template: oneOf(t.Template, templateIDs, "clean"), BudgetAED: round2(math.Max(0, t.BudgetAED)), Status: "planned",
+				Format: oneOf(t.Format, formatIDs, "single_image"), Audience: oneOf(t.Audience, audienceIDs, "women_gcc_ar")})
 		}
 	}
 	if len(a.Allocation) > 0 {
@@ -647,6 +667,7 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 		"rules_proposals_already_queued": rr.Proposals, "tree": tree, "learning_table": rr.Learning,
 		"past_learnings": learned, "recent_history": hist, "research": notes, "creative_library": lib, "products": prods,
 		"orders_source": in.Shop.OrdersSource, "videos": videoSummary(in.Videos, rr.Econ),
+		"learned_profile": profileBrief(in.Profile), "portfolio_profile": profileBrief(in.Portfolio),
 	}
 }
 
@@ -777,4 +798,80 @@ func addUsageTotals(u *Usage, x Usage) {
 	u.CacheWriteTokens += x.CacheWriteTokens
 	u.WebSearches += x.WebSearches
 	u.CostUSD = round4(u.CostUSD + x.CostUSD)
+}
+
+// validFormat fills a missing format from the creative and checks what each
+// format needs that the brain can see (products for carousel/collection).
+func validFormat(params map[string]any, shop ShopSnapshot, bad *func(string)) bool {
+	cr, _ := params["creative_id"].(string)
+	f, _ := params["format"].(string)
+	if f == "" {
+		f = "single_image"
+		if strings.HasPrefix(cr, "video:") {
+			f = "single_video"
+		}
+		params["format"] = f
+	}
+	switch f {
+	case "carousel", "collection":
+		ids, _ := params["product_ids"].([]any)
+		n := 0
+		for _, id := range ids {
+			if len(productsByID(shop, []string{fmt.Sprint(id)})) == 1 {
+				n++
+			}
+		}
+		if n < 2 || n > 10 {
+			(*bad)(f + " needs 2-10 in-stock products with photos")
+			return false
+		}
+	case "click_to_whatsapp":
+		params["destination"] = "whatsapp"
+	case "click_to_messenger":
+		if params["destination"] != "instagram_direct" {
+			params["destination"] = "messenger"
+		}
+	}
+	return true
+}
+
+// PlannerSystem is the stable planner prompt plus the static format,
+// audience and cost playbooks (deterministic JSON: the cache prefix holds).
+func PlannerSystem() string {
+	type f struct {
+		ID, When   string
+		Needs      []string
+		Placements []string
+	}
+	var fs []f
+	for _, x := range AdFormats {
+		fs = append(fs, f{x.ID, x.When, x.Needs, x.Placements})
+	}
+	type a struct{ ID, Name, When string }
+	var as []a
+	for _, x := range AudiencePresets {
+		as = append(as, a{x.ID, x.Name, x.When})
+	}
+	fj, _ := json.Marshal(fs)
+	aj, _ := json.Marshal(as)
+	return plannerSystem + "\n\nAD FORMATS you can use (params.format; pick per goal):\n" + string(fj) +
+		"\n\nAUDIENCES (params.audience on create_adset; tests carry one):\n" + string(aj) +
+		"\n\nCOST PLAYBOOK (low CPC/CPM, high CTR, women in the GCC):\n- " + strings.Join(CostStrategy, "\n- ")
+}
+
+// profileBrief: the profile trimmed for the prompt (top cuts only).
+func profileBrief(p *LearningProfile) any {
+	if p == nil {
+		return nil
+	}
+	top := func(s []Slice) []Slice {
+		if len(s) > 6 {
+			return s[:6]
+		}
+		return s
+	}
+	return map[string]any{"account": p.Account, "history_days": p.Days, "baselines": p.Baselines, "by_lang": top(p.ByLang),
+		"by_angle": top(p.ByAngle), "by_template": top(p.ByTemplate), "by_format": top(p.ByFormat), "by_placement": top(p.ByPlacement),
+		"by_season": top(p.BySeason), "by_weekday": p.ByWeekday, "creative_half_life_days": p.HalfLifeDays, "fatigue_curve": p.FatigueCurve,
+		"winners": clean(p.Winners, 8), "evidence": clean(p.Evidence, 8)}
 }

@@ -134,6 +134,9 @@ func Evaluate(in CycleInput, econ Economics, cfg RulesConfig) RulesResult {
 		return m[id]
 	}
 	for _, r := range in.Metrics {
+		if r.Placement != "" { // breakdown rows: the profile reads them, totals must not double count
+			continue
+		}
 		get(all, r.ObjectID).add(r)
 		if !settled(r) {
 			continue
@@ -151,6 +154,9 @@ func Evaluate(in CycleInput, econ Economics, cfg RulesConfig) RulesResult {
 	prior := econ.TargetCPA
 	if acct.Purch >= 10 {
 		prior = acct.CPA()
+		res.AccountCPA = prior
+	} else if in.Profile != nil && in.Profile.Baselines["90d"].Purchases >= 10 {
+		prior = in.Profile.Baselines["90d"].CPA // trained baseline when the last 30 days are thin
 		res.AccountCPA = prior
 	}
 	z := func(p *Agg) Agg {

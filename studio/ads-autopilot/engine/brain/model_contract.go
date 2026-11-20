@@ -77,6 +77,7 @@ type Ad struct {
 	Status         string    `json:"status"`
 	EffectiveState string    `json:"effective_status"` // ACTIVE, DISAPPROVED, WITH_ISSUES ...
 	CreativeID     string    `json:"creative_id"`      // local library id
+	Format         string    `json:"format"`           // BRAIN addition: AdFormats id the ad was made as
 	Language       string    `json:"lang"`
 	ReviewFeedback string    `json:"review_feedback"`
 	CreatedAt      time.Time `json:"created_at"`
@@ -97,6 +98,7 @@ type MetricRow struct {
 	RevenueAED  float64 `json:"revenue"`
 	Frequency   float64 `json:"frequency"`
 	Settling    bool    `json:"settling"`
+	Placement   string  `json:"placement,omitempty"` // BRAIN addition: set on placement-breakdown rows (reels, stories, feed...); totals rows leave it empty
 }
 
 // ShopSnapshot is what the shop told the engine (v0: the public feed only).
@@ -195,16 +197,18 @@ type LogEntry struct {
 }
 
 type CycleInput struct {
-	Now       time.Time    `json:"now"`
-	Limits    Limits       `json:"limits"`
-	Account   Account      `json:"account"`
-	Tree      []Campaign   `json:"tree"`
-	Metrics   []MetricRow  `json:"metrics"`
-	Shop      ShopSnapshot `json:"shop"`
-	Creatives []Creative   `json:"creatives"`
-	Research  Research     `json:"research"`
-	History   []LogEntry   `json:"history"`
-	Videos    []VideoAsset `json:"videos"` // BRAIN addition: the owner's ad videos with analysis + results
+	Now       time.Time        `json:"now"`
+	Limits    Limits           `json:"limits"`
+	Account   Account          `json:"account"`
+	Tree      []Campaign       `json:"tree"`
+	Metrics   []MetricRow      `json:"metrics"`
+	Shop      ShopSnapshot     `json:"shop"`
+	Creatives []Creative       `json:"creatives"`
+	Research  Research         `json:"research"`
+	History   []LogEntry       `json:"history"`
+	Profile   *LearningProfile `json:"profile,omitempty"`   // BRAIN addition: this account's learned profile (brain builds it when nil)
+	Portfolio *LearningProfile `json:"portfolio,omitempty"` // BRAIN addition: the cross-account profile
+	Videos    []VideoAsset     `json:"videos"`              // BRAIN addition: the owner's ad videos with analysis + results
 }
 
 // CycleOutput: Plan, Proposals and Report are the contract's. Verdicts,
@@ -217,14 +221,15 @@ type CycleOutput struct {
 	Proposals []Proposal `json:"proposals"`
 	Report    string     `json:"report"` // the daily summary, AR + EN
 
-	Verdicts  []Verdict    `json:"verdicts"`
-	Designs   []DesignSpec `json:"designs"`
-	CopySets  []CopySet    `json:"copy_sets"`
-	Learnings []string     `json:"learnings"`
-	Economics Economics    `json:"economics"`
-	Model     string       `json:"model"` // which model planned ("rules-only" without Claude)
-	Usage     Usage        `json:"usage"`
-	Dropped   []string     `json:"dropped"` // planner proposals the brain refused, with the reason
+	Verdicts  []Verdict        `json:"verdicts"`
+	Designs   []DesignSpec     `json:"designs"`
+	CopySets  []CopySet        `json:"copy_sets"`
+	Learnings []string         `json:"learnings"`
+	Economics Economics        `json:"economics"`
+	Model     string           `json:"model"` // which model planned ("rules-only" without Claude)
+	Usage     Usage            `json:"usage"`
+	Profile   *LearningProfile `json:"profile,omitempty"` // the profile this cycle planned with
+	Dropped   []string         `json:"dropped"`           // planner proposals the brain refused, with the reason
 }
 
 type Proposal struct {
@@ -258,6 +263,8 @@ type PlanTest struct {
 	ProductIDs []string `json:"product_ids"`
 	Template   string   `json:"template"`
 	BudgetAED  float64  `json:"budget_aed"` // per day
+	Format     string   `json:"format"`     // BRAIN addition: an AdFormats id
+	Audience   string   `json:"audience"`   // BRAIN addition: an AudiencePresets id
 	Status     string   `json:"status"`     // planned | running | won | lost
 }
 

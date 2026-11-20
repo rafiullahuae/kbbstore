@@ -35,5 +35,10 @@ mut video.go '(t.YTop < 0.14 || t.YBottom > 0.65)' '(t.YTop < 0.14)' 'video bott
 mut video.go 'if pr, ok := idx[p.ProductID]; ok && p.Confidence >= 0.4 {' 'if pr, ok := idx[p.ProductID]; ok || true {' 'video product ids not checked'
 mut video.go 'if i.Severity == "block" && s > 30 {' 'if false {' 'blocked video score cap'
 mut brain.go 'if !videoRunnable(v) {' 'if false {' 'upload a blocked video'
+mut profile.go 'if r.Placement != "" {
+			addTo("placement"' 'if false {
+			addTo("placement"' 'profile counts placement rows twice'
+mut profile.go 'if w.CTR() <= 0.7*first.CTR() {' 'if w.CTR() <= 0.3*first.CTR() {' 'half-life threshold'
+mut brain.go 'if n < 2 || n > 10 {' 'if n < 1 {' 'carousel product count'
 echo "mutations killed: $pass, survived: $fail"
 [ "$fail" -eq 0 ]
