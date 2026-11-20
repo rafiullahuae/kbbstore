@@ -78,6 +78,11 @@ func (e *Engine) save(acct, name string, v any) {
 type AccountSettings struct {
 	AdWording     string `json:"ad_wording"`     // strict | balanced | relaxed
 	PromoApproved bool   `json:"promo_approved"` // an authorised promotion is running
+	// Creation (creation.go): "with_me" (default: the owner creates with Claude on his Max plan; the app notifies
+	// him) | "api" (the autopilot writes new ads itself through the API, using credits). FallbackHours > 0: a request
+	// he has not started within that many hours is created through the API after all (OFF by default, the owner).
+	CreationMode  string `json:"creation_mode"`
+	FallbackHours int    `json:"fallback_hours"`
 }
 
 func (e *Engine) settings(acct string) AccountSettings {
@@ -86,6 +91,7 @@ func (e *Engine) settings(acct string) AccountSettings {
 	if s.AdWording != Strict && s.AdWording != Relaxed {
 		s.AdWording = Balanced
 	}
+	normCreation(&s)
 	return s
 }
 
@@ -110,6 +116,7 @@ func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOut
 	b := e.B.clone() // per-call copy: settings differ per account
 	st := e.settings(acct)
 	b.PromoApproved = st.PromoApproved
+	b.DeferCopy = st.CreationMode == CreationWithMe
 	// daily trending refresh rides on the cycle when it is stale (never blocks a cycle on failure)
 	if b.hasClaude() && TrendingDue(e.trending(), bin.Now) {
 		if tr, err := b.Trending(ctx, bin.Shop, bin.Now); err == nil {
@@ -133,6 +140,7 @@ func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOut
 			}
 		}
 	}
+	e.creationAfterCycle(ctx, acct, b, bin, &out, st)
 	e.save(acct, "last_cycle", out)
 	if len(out.Designs) > 0 { // archive: the library shows each creative from its design
 		arch := []DesignSpec{}
@@ -253,7 +261,7 @@ func (e *Engine) FromModel(in model.CycleInput) CycleInput {
 	lib := map[string]string{}
 	for _, c := range in.Creatives {
 		out.Creatives = append(out.Creatives, Creative{ID: c.ID, Lang: c.Lang, Format: c.Format, Headline: c.Headline, PrimaryText: c.PrimaryText, CTA: c.CTA, Link: c.Link,
-			ProductIDs: c.ProductIDs, Angle: c.Angle, Source: c.Source, CreatedAt: c.CreatedAt, LintOK: true})
+			ProductIDs: c.ProductIDs, Angle: c.Angle, Source: c.Source, CreatedAt: c.CreatedAt, LintOK: true, Approved: c.Approved})
 		lib[c.ID] = c.Lang
 		if c.MetaID != "" {
 			lib[c.MetaID] = c.Lang

@@ -29,6 +29,8 @@ type BrainDeps struct {
 	LLM     LLM
 	Log     func(kind, summary string, data any)
 	DataDir string // the brain may keep its own notes under DataDir/brain/
+	// Publish: push an SSE event to every open tab ({account, data}); nil in tests.
+	Publish func(name string, v any)
 }
 
 type CycleInput struct {
@@ -313,6 +315,7 @@ type Creative struct {
 	VideoID     string    `json:"video_id,omitempty"`
 	MetaID      string    `json:"meta_creative_id,omitempty"`
 	Used        bool      `json:"used"`
+	Approved    bool      `json:"approved,omitempty"` // the owner said "Run it" (made with Claude): the next cycle tests it first
 }
 
 // ── the audit log ──

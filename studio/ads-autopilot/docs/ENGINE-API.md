@@ -62,3 +62,26 @@ picture, or the frame the video analysis saved (`videos/<name>.jpg`). The brain'
 Three ad accounts (`MockAccounts`), each with an owner campaign; the fake Claude answers with scripted tool calls
 (`metamock/claude.go`). Test endpoints: `/api/test/meta-inject`, `meta-writes`, `meta-tag` `{id, tag: WINNER|LOSER}`,
 `clock` `{advance_hours}` (moves the engine's and the fake Meta's clock), `claude-calls`.
+
+## Create with Claude + the Claude-app connector (Nov 2026)
+One creation box (✨ top bar, Overview, Creatives, key C) and the owner's own Claude app (Max plan) through a local MCP
+connector. Both feed the same pipeline: catalogue check → policy linter → local render + quality gate → executor.
+
+| Method + path | Body → answer |
+|---|---|
+| POST /api/brain/x/create | `{prompt, product_ids, occasion, formats, langs, video_id, photo, request_id, key}` or a follow-up `{session_id, edit, target, key}` (one Claude API call), or authored `{authored:[ideas], key}` / `{session_id, revise:{…}, key}` (no model call: the MCP tools) → NDJSON `think` / `lint` / `done {session}` / `error`. The same `key` returns the same session; a second call while the first runs waits for it. A follow-up merges ONLY the fields Claude lists in `changed`. |
+| GET /api/brain/x/create | the account's sessions (newest first) with `outcome {verdict: won\|lost\|running\|not_run, spend, purchases, roas}`; winners are fed to the next ask |
+| PUT /api/brain/x/create/{id} | `{used, saved, ran, proposals}` — what the owner did with it |
+| GET /api/brain/x/creation | `{mode: with_me\|api, fallback_hours, requests[], notifications[]}`; pushed as SSE `creation` whenever it changes |
+| POST /api/brain/x/creation/{id}/start \| dismiss | Start opens Claude (`claude://claude.ai/new?q=<brief>`, brief on the clipboard) on a Mac → `{brief, url, opened}` |
+| GET /api/brain/x/brief, /products | the MCP `get_brief` / `list_products` data |
+| PUT /api/brain/x/settings | also `{creation_mode: with_me\|api, fallback_hours: 0–168}` (fields not sent keep their value; default with_me, fallback 0 = off) |
+| PUT /api/brain/x/gen/one-key | `{key}` — the ONE "AI pictures & video" key (Google Gemini: Gemini image + Veo); `""` removes it |
+| POST /api/launch | `{creative_ids[≤12], launch, key}` → creatives `approved` for the next cycle; `launch:true` also adds one small test campaign + ad set(s) + ads as owner proposals (`claude-cc<hash>-…`) and runs each ad through `/api/proposals/{id}/approve`'s path. Idempotent. |
+| POST /api/render | `{session_id, op: preview\|save, rev}` → NDJSON `queued` / `progress {done,total}` / `done {result}` / `error {open_app}`. The open tab draws (SSE `render.request`, answer `POST /api/render/{job}`); jobs are kept until done and re-sent to a tab that (re)connects; one job per (session, rev, op). |
+| GET /api/mcp, POST /api/mcp/install, POST /api/mcp/seen | the connector's status; install merges `mcpServers.kbb-ads-autopilot = {command: <engine>, args: [-mcp, -data, <data>]}` into Claude desktop's config (old file backed up; a broken file is refused untouched) |
+
+`engine -mcp -data <dir>`: stdio MCP server (JSON-RPC 2.0, newline-delimited) for Claude desktop; finds the running
+engine in `<data>/engine.json`. Tools: get_brief, list_products, get_research, create_ad_set, revise, save_to_library,
+run_it (progress notifications when a progressToken is sent). Tests: `KAA_NOTIFY_CMD`, `KAA_OPEN_CMD`, `KAA_CLAUDE_CONFIG`.
+Check: `NODE_PATH=… node tools/create-check.cjs [--shots]`.

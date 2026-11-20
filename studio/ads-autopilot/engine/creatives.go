@@ -127,11 +127,16 @@ func (c *creativeLib) Add(cr model.Creative, now time.Time) (model.Creative, err
 	}
 	cr.PNG, cr.Video = "", ""
 	cr.CreatedAt = now.UTC()
-	cr.MetaID, cr.ImageHash, cr.VideoID, cr.Used = "", "", "", false
+	cr.MetaID, cr.ImageHash, cr.VideoID, cr.Used, cr.Approved = "", "", "", false, false
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, x := range c.list {
 		if x.ID == cr.ID {
+			// the same picture posted twice (a retried save: Create with Claude names each by its content) is the
+			// same creative, not a second one
+			if strings.HasPrefix(cr.ID, "cc-") && x.Lang == cr.Lang && x.Format == cr.Format && x.Headline == cr.Headline {
+				return x, nil
+			}
 			return cr, fmt.Errorf("a creative %q already exists", cr.ID)
 		}
 	}

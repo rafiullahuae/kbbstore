@@ -6,6 +6,7 @@ import { renderSpec, FAMILIES as TEMPLATES, FAMILY_LABELS, toPNG } from '../crea
 import { renderVideo } from '../creative/motion.js';
 import { score, shipDesign } from '../creative/quality.js';
 import { generateBackground } from '../creative/gen-ui.js';
+import { openCreate } from '../create/create.js';
 
 let tab = 'images', langF = 'all', busy = '';
 const thumbs = new Map();
@@ -17,11 +18,12 @@ export function render(S, el) {
   const designs = S.cache.get(`${getAccount()}|designs`);
   const lib = S.cache.get(`${getAccount()}|creatives`);
   el.innerHTML = `<div class="page"><div class="page-h"><div><h1>${esc(tt('Creatives', 'الإعلانات'))}</h1><p>${esc(tt('Every idea ships as an Arabic + English pair in 1:1, 4:5 and 9:16. Original art from the shop\'s own photos.', 'كل فكرة بنسختين عربية وإنجليزية بثلاثة مقاسات، من صور المتجر نفسها.'))}</p></div>
-    <div class="row"><div class="tabs">${[['images', 'Images', 'الصور'], ['motion', 'Motion ads', 'إعلانات متحركة']].map(([k, en, ar]) => `<button type="button" data-tab="${k}" class="${tab === k ? 'on' : ''}">${esc(tt(en, ar))}</button>`).join('')}</div>
+    <div class="row"><div class="tabs">${[['images', 'Images', 'الصور'], ['motion', 'Motion ads', 'إعلانات متحركة'], ['claude', 'Made with Claude', 'صُنع مع Claude']].map(([k, en, ar]) => `<button type="button" data-tab="${k}" class="${tab === k ? 'on' : ''}">${esc(tt(en, ar))}</button>`).join('')}</div>
     <div class="seg">${[['all', 'All', 'الكل'], ['ar', 'Arabic', 'العربية'], ['en', 'English', 'الإنجليزية']].map(([k, en, ar]) => `<button type="button" data-l="${k}" class="${langF === k ? 'on' : ''}">${esc(tt(en, ar))}</button>`).join('')}</div></div></div><div id="cv"></div></div>`;
-  el.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; render(S, el); }; });
+  el.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; render(S, el); load(S).then((c) => { if (c) render(S, el); }); }; });
   el.querySelectorAll('[data-l]').forEach((b) => { b.onclick = () => { langF = b.dataset.l; render(S, el); }; });
   const v = el.querySelector('#cv');
+  if (tab === 'claude') { madeWithClaude(S, v); return; }
   if (!designs || !lib) { v.innerHTML = `<div class="lib">${'<div class="sk" style="height:320px"></div>'.repeat(8)}</div>`; return; }
   if (tab === 'images') images(S, v, designs, lib); else motion(S, v, designs, lib);
 }
@@ -186,9 +188,25 @@ function motion(S, v, designs) {
   };
 }
 
+// Made with Claude: every creation session (the box or the owner's Claude app), what ran, and how it did.
+const VERD = { won: ['Won', 'فاز', 'acc'], lost: ['Lost', 'خسر', ''], running: ['Running', 'يعمل', ''], not_run: ['Not run yet', 'لم يُشغَّل', ''] };
+function madeWithClaude(S, v) {
+  const ss = S.cache.get(`${getAccount()}|ccsessions`);
+  if (!ss) { v.innerHTML = `<div class="cc-hist">${'<div class="sk" style="height:150px"></div>'.repeat(6)}</div>`; return; }
+  if (!ss.length) { v.innerHTML = `<div class="card">${empty(tt('Nothing made with Claude yet', 'لا شيء صُنع مع Claude بعد'), tt('Press ✨ Create with Claude (or C) and say what you want.', 'اضغطي ✨ أنشئي مع Claude (أو C) وقولي ما تريدين.'))}</div>`; return; }
+  v.innerHTML = `<div class="cc-hist">${ss.map((s) => { const o = s.outcome || { verdict: 'not_run' }; const [en, ar, cls] = VERD[o.verdict] || VERD.not_run; const d0 = (s.designs || [])[0] || {};
+    return `<div class="card" data-sess="${esc(s.id)}" tabindex="0" role="button"><header><h2 style="font-size:15px">${txt(s.prompt || d0.headline || s.id)}</h2></header>
+      <div class="row small"><span class="chip ${cls}">${esc(tt(en, ar))}${o.spend ? ` · ROAS ${o.roas}` : ''}</span><span class="chip">${esc(s.source === 'claude_app' ? tt('Claude app · Max', 'تطبيق Claude · Max') : tt('Box · API', 'الصندوق · API'))}</span>
+      <span class="muted">${esc(new Date(s.at).toLocaleDateString())}</span></div>
+      <p class="small ink2" style="margin:8px 0 0">${esc(tt(`${(s.ideas || []).length} idea(s) · ${(s.designs || []).length} designs · ${(s.turns || []).length} turn(s) · ${(s.saved || []).length} saved · ${(s.ran || []).length} ran`, `${(s.ideas || []).length} فكرة · ${(s.designs || []).length} تصميم · ${(s.turns || []).length} جولة · ${(s.saved || []).length} محفوظ · ${(s.ran || []).length} شُغّل`))}</p>
+      <p class="small muted" style="margin:4px 0 0">${txt(d0.headline || '')}</p></div>`; }).join('')}</div>`;
+  v.querySelectorAll('[data-sess]').forEach((n) => { n.onclick = () => openCreate({ session: ss.find((s) => s.id === n.dataset.sess) }); n.onkeydown = (e) => { if (e.key === 'Enter') n.click(); }; });
+}
+
 export async function load(S) {
   const id = getAccount();
   const need = [];
+  if (tab === 'claude' && !S.cache.has(`${id}|ccsessions`)) need.push(api('/api/brain/x/create').catch(() => []).then((x) => S.cache.set(`${id}|ccsessions`, x || [])));
   if (!S.cache.has(`${id}|designs`)) need.push(api('/api/brain/x/designs').catch(() => []).then((x) => S.cache.set(`${id}|designs`, x)));
   if (!S.cache.has(`${id}|creatives`)) need.push(api('/api/creatives').catch(() => []).then((x) => S.cache.set(`${id}|creatives`, x || [])));
   if (!need.length) return false;

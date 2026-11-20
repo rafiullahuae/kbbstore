@@ -7,6 +7,7 @@ package metamock
 //
 //	schema with "proposals" → the planner     "sets"  → copy (AR + EN)         "notes" → research notes
 //	schema with "items"     → trending items  "hook"  → video analysis (vision)
+//	schema with "ideas"     → Create with Claude (first ask; follow-ups: shorter headline / pink / price / toner)
 //	web_search tool only    → a cited briefing (trending or research, by the system prompt)
 //	anything else           → plain text ("mock answer": the connection test)
 //
@@ -81,6 +82,9 @@ func claudeAnswer(body map[string]any) (map[string]any, string) {
 	switch {
 	case props["proposals"] != nil:
 		return respond(fixPlan), "plan"
+	case props["ideas"] != nil: // Create with Claude (brain/create.go)
+		msgs, _ := json.Marshal(body["messages"])
+		return respond(createAnswer(string(msgs))), "create"
 	case props["sets"] != nil: // the product's brand in the headline, so each product's pair is its own
 		msgs, _ := json.Marshal(body["messages"])
 		fix := fixCopy
@@ -121,4 +125,96 @@ func claudeAnswer(body map[string]any) (map[string]any, string) {
 		return msg("end_turn", content), "research-search"
 	}
 	return msg("end_turn", []any{map[string]any{"type": "text", "text": "mock answer"}}), "text"
+}
+
+// createAnswer: the box. The product follows the words in the ask (sunscreen / toner / else the cleanser), "3 ads"
+// gives three ideas, and a follow-up changes exactly one thing and says so in "changed", so the brain's merge is
+// what the checks measure.
+func createAnswer(msgs string) string {
+	low := strings.ToLower(strings.ReplaceAll(msgs, `\"`, `"`))
+	type set struct {
+		Lang        string   `json:"lang"`
+		Headline    string   `json:"headline"`
+		PrimaryText string   `json:"primary_text"`
+		Sub         string   `json:"sub"`
+		Bullets     []string `json:"bullets"`
+		Badge       string   `json:"badge"`
+		CTA         string   `json:"cta"`
+		Hooks       []string `json:"hooks"`
+	}
+	type idea struct {
+		ProductIDs []string `json:"product_ids"`
+		Angle      string   `json:"angle"`
+		Hook       string   `json:"hook"`
+		Template   string   `json:"template"`
+		Palette    []string `json:"palette"`
+		ShowPrice  bool     `json:"show_price"`
+		Formats    []string `json:"formats"`
+		Motion     bool     `json:"motion"`
+		Scene      string   `json:"scene"`
+		Sets       []set    `json:"sets"`
+	}
+	edit := strings.Contains(low, "follow-up:")
+	ask, req := low, low
+	if i := strings.Index(low, `"instruction":`); edit && i >= 0 {
+		ask = low[i:]
+	}
+	if i := strings.Index(low, `"request":`); !edit && i >= 0 {
+		req = low[i:]
+	}
+	pid, name, nameAR, angle := "3195", "COSRX Low pH Good Morning Gel Cleanser", "غسول COSRX الصباحي اللطيف", "gentle morning cleanse"
+	sun := strings.Contains(req, "sunscreen") || strings.Contains(req, "spf") || strings.Contains(req, "واقي") || strings.Contains(req, `"4410"`)
+	if (!edit && sun) || (edit && strings.Contains(low, `"product_ids":["4410"]`)) {
+		pid, name, nameAR, angle = "4410", "Beauty of Joseon Relief Sun", "واقي Beauty of Joseon الخفيف", "light daily SPF for oily skin"
+	}
+	if (!edit && (strings.Contains(req, "toner") || strings.Contains(req, "تونر"))) || strings.Contains(ask, "toner") || strings.Contains(ask, "تونر") {
+		pid, name, nameAR, angle = "5120", "Anua Heartleaf 77% Toner", "تونر Anua بالهارتليف", "calming heartleaf toner"
+	}
+	n := 1
+	if edit { // the whole current set comes back (every idea carries a "template")
+		n = strings.Count(low, `"template":`)
+		if n < 1 || n > 5 {
+			n = 1
+		}
+	}
+	if !edit && (strings.Contains(req, "3 ads") || strings.Contains(req, "٣ إعلانات") || strings.Contains(req, "3 إعلانات")) {
+		n = 3
+	}
+	fams := []string{"glow", "ingredient", "editorial"}
+	angles := []string{angle, "texture you can feel", "a K-beauty classic"}
+	var ideas []idea
+	for i := 0; i < n; i++ {
+		ideas = append(ideas, idea{ProductIDs: []string{pid}, Angle: angles[i%3], Hook: "The lightest step of your morning", Template: fams[i%3],
+			Palette: []string{}, Formats: []string{"1:1", "4:5", "9:16"}, Motion: true,
+			Sets: []set{
+				{Lang: "ar", Headline: "خطوة يومية خفيفة من كوريا", PrimaryText: nameAR + "، خطوة يومية لطيفة في روتينكِ. أصلي من كوريا، توصيل داخل الإمارات.", Sub: nameAR, Bullets: []string{"أصلي ١٠٠٪", "قوام خفيف"}, Badge: "K-Beauty", CTA: "SHOP_NOW", Hooks: []string{"أخف خطوة في صباحكِ"}},
+				{Lang: "en", Headline: "A light daily step from Korea", PrimaryText: name + ", a gentle daily step in your routine. Authentic from Korea, delivered across the UAE.", Sub: name, Bullets: []string{"100% authentic", "Lightweight feel"}, Badge: "K-Beauty", CTA: "SHOP_NOW", Hooks: []string{"The lightest step of your morning"}},
+			}})
+	}
+	said, changed := "Done: Arabic + English ads for "+name+" in 1:1, 4:5 and 9:16, with a motion version.", []string{}
+	if edit {
+		switch {
+		case strings.Contains(ask, "shorter"), strings.Contains(ask, "أقصر"):
+			for i := range ideas {
+				ideas[i].Sets[0].Headline, ideas[i].Sets[1].Headline = "خفيف من كوريا", "Light, from Korea"
+			}
+			said, changed = "Shorter headlines; nothing else changed.", []string{"headline"}
+		case strings.Contains(ask, "pink"), strings.Contains(ask, "وردي"):
+			for i := range ideas {
+				ideas[i].Palette = []string{"#F7C6D9", "#E2557F", "#FFF1F5"}
+			}
+			said, changed = "More pink; the copy is the same.", []string{"palette"}
+		case strings.Contains(ask, "price"), strings.Contains(ask, "السعر"):
+			for i := range ideas {
+				ideas[i].ShowPrice = true
+			}
+			said, changed = "The price is on the design now.", []string{"show_price"}
+		case strings.Contains(ask, "toner"), strings.Contains(ask, "تونر"):
+			said, changed = "Swapped to the Anua toner.", []string{"products", "sub", "primary_text"}
+		default:
+			said = "Nothing to change."
+		}
+	}
+	b, _ := json.Marshal(map[string]any{"said": said, "ideas": ideas, "changed": changed})
+	return string(b)
 }

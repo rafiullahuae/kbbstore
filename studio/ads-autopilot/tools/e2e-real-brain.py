@@ -130,7 +130,14 @@ def run(base):
     s, bad = call(base, "PUT", "/api/limits", {"wording": "loose"})
     check(s == 400, "an unknown wording rule is refused (%s)" % (bad or {}).get("error"))
 
-    # plan preview (planner + copy through the scripted Claude)
+    # creation mode "with me in Claude" (the default): the planner's copy is NOT written through the API; it waits
+    # for the owner as a creation request
+    s, pl = call(base, "POST", "/api/brain/plan", {})
+    s, cyc = call(base, "GET", "/api/brain/x/cycle")
+    check(len(cyc.get("creation_needed") or []) >= 1 and not (cyc.get("copy_sets") or []),
+          "with-me mode: %d creation request(s), %d copy sets written through the API" % (len(cyc.get("creation_needed") or []), len(cyc.get("copy_sets") or [])))
+    # plan preview in "Automatic (API)" mode (planner + copy through the scripted Claude)
+    call(base, "PUT", "/api/brain/x/settings", {"creation_mode": "api"})
     s, pl = call(base, "POST", "/api/brain/plan", {})
     if s != 200:
         print("       plan preview answered %d: %s" % (s, str(pl)[:300]))

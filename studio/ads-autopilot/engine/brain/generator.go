@@ -369,6 +369,32 @@ func (e *Engine) serveGen(w http.ResponseWriter, r *http.Request, p string, js f
 		}
 		e.log("config", "generator key saved for "+q.Name, map[string]any{"key": secrets.Describe(e.genSecrets(), q.Secret)})
 		js(e.genSettingsView(now))
+	case p == "gen/one-key" && r.Method == http.MethodPut:
+		// "AI pictures & video": ONE Google Gemini API key gives both the images (Gemini image) and the video (Veo);
+		// saving it makes them the providers, so the owner never picks between models ("" removes it).
+		var in struct{ Key string }
+		if decodeSmall(r, &in) != nil {
+			bad(400, "bad JSON")
+			return
+		}
+		in.Key = strings.TrimSpace(in.Key)
+		var err error
+		if in.Key == "" {
+			err = e.genSecrets().Delete("gen_google")
+		} else if err = secrets.ValidValue(in.Key); err == nil {
+			err = e.genSecrets().Set("gen_google", in.Key)
+		}
+		if err != nil {
+			bad(400, err.Error())
+			return
+		}
+		if in.Key != "" {
+			s := e.genSettings()
+			s.Image, s.Video = "gemini", "veo"
+			e.save("", "gen_settings", s)
+		}
+		e.log("config", "AI pictures & video key (Google Gemini) "+map[bool]string{true: "saved", false: "removed"}[in.Key != ""], map[string]any{"key": secrets.Describe(e.genSecrets(), "gen_google")})
+		js(e.genSettingsView(now))
 	case p == "gen/prompt" && r.Method == http.MethodPost:
 		var in SceneRequest
 		if decodeSmall(r, &in) != nil {
@@ -554,7 +580,11 @@ func (e *Engine) genSettingsView(now time.Time) map[string]any {
 		q := genProviders[i]
 		ps = append(ps, pv{GenProvider: q, Key: secrets.Describe(e.genSecrets(), q.Secret), Model: e.genModel(&q)})
 	}
-	return map[string]any{"providers": ps, "budget_usd": s.BudgetUSD, "spent_usd": e.spentThisMonth(now), "image": s.Image, "video": s.Video, "month": now.Format("2006-01")}
+	img, vid := genProvider("gemini"), genProvider("veo")
+	one := map[string]any{"name": "Google Gemini API key", "key": secrets.Describe(e.genSecrets(), "gen_google"), "active": s.Image == "gemini" && s.Video == "veo",
+		"image_model": e.genModel(img), "video_model": e.genModel(vid), "image_usd": img.PriceUSD, "video_usd_per_s": vid.PriceUSD,
+		"key_url": img.KeyURL, "doc_url": "https://ai.google.dev/gemini-api/docs/pricing", "terms": img.Terms}
+	return map[string]any{"providers": ps, "budget_usd": s.BudgetUSD, "spent_usd": e.spentThisMonth(now), "image": s.Image, "video": s.Video, "month": now.Format("2006-01"), "one_key": one}
 }
 
 // ---------- files ----------

@@ -18,6 +18,9 @@ import * as approvals from './screens/approvals.js';
 import * as settings from './screens/settings.js';
 import * as welcome from './screens/welcome.js';
 import { renderPending } from './creative/render.js';
+import { openCreate } from './create/create.js';
+import { onRenderRequest } from './create/remote.js';
+import { creationBanner, wireBanner, loadCreation, setCreation, CS } from './create/banner.js';
 
 const I = {
   overview: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>', portfolio: '<path d="M3 7h18v13H3zM8 7V4h8v3"/>',
@@ -74,8 +77,25 @@ export function rerender() {
   const t0 = performance.now();
   if (!['welcome', 'portfolio'].includes(S.route) && !S.state) { view.innerHTML = skeleton(); return; }
   mod.render(S, view);
+  decorate();
   S.lastRender = performance.now() - t0;
   if (mod.load) mod.load(S).then((changed) => { if (changed && gen === renderGen) rerender(); }).catch((e) => toast(e.message));
+}
+
+// decorate: the Create-with-Claude button on Overview + Creatives, and the creation banner on Overview + Approvals
+// (pushed over SSE; see create/banner.js). Rendered with the screen, once, no measuring.
+function decorate() {
+  let h = view.querySelector('.page-h');
+  const pg = view.querySelector('.page');
+  if (!h && pg && S.route === 'overview') { pg.insertAdjacentHTML('afterbegin', '<div class="page-h cc-ov"><div></div></div>'); h = pg.firstElementChild; }
+  if (!h) return;
+  if (['overview', 'creatives'].includes(S.route) && !h.querySelector('[data-cc-open]')) {
+    h.insertAdjacentHTML('beforeend', `<button type="button" class="cc-btn" data-cc-open>✨ ${esc(tt('Create with Claude', 'أنشئي مع Claude'))} <kbd>C</kbd></button>`);
+  }
+  if (['overview', 'approvals'].includes(S.route) && CS.account === getAccount()) {
+    const b = creationBanner();
+    if (b) { h.insertAdjacentHTML('afterend', b); wireBanner(view, rerender); }
+  }
 }
 
 function go() {
@@ -113,6 +133,8 @@ function paintTop() {
     `<button type="button" data-mode="${id}" class="${mode === id ? 'on' : ''}" title="${esc(id === 'shadow' ? tt('Practice: it plans and logs; Meta is not touched.', 'تدريب: يخطط ويسجّل دون أي تغيير على ميتا.') : id === 'auto' ? tt('Auto: it acts inside your limits.', 'تلقائي: ينفّذ ضمن حدودك.') : tt('Off: nothing runs.', 'متوقف: لا شيء يعمل.'))}">${esc(modeName(id))}</button>`).join('');
   document.getElementById('kill').textContent = tt('Stop everything', 'إيقاف كل شيء');
   document.getElementById('search').placeholder = tt('Search screens, campaigns, ads…', 'ابحثي في الشاشات والحملات…');
+  document.getElementById('cc-top').innerHTML = `✨ <span>${esc(tt('Create with Claude', 'أنشئي مع Claude'))}</span>`;
+  document.getElementById('cc-top').title = tt('Create with Claude (C)', 'أنشئي مع Claude (C)');
   for (const b of document.querySelectorAll('#lang button')) b.classList.toggle('on', b.dataset.l === getLang());
 }
 
@@ -133,6 +155,7 @@ export function switchAccount(id) {
   paintAccount(); paintTop(); paintNav();
   rerender(); // instant from the warmed cache
   refreshState(id).catch((e) => toast(e.message));
+  loadCreation(id).then(() => rerender()).catch(() => {});
 }
 
 let pendingTimer = 0;
@@ -157,6 +180,7 @@ document.addEventListener('click', async (e) => {
   if (!(e.target instanceof Element)) return;
   const menu = document.getElementById('acct-menu');
   if (e.target.closest('#acct-btn')) { menu.hidden = !menu.hidden; return; }
+  if (e.target.closest('#cc-top, [data-cc-open]')) { openCreate(); return; }
   const pick = e.target.closest('[data-acct]');
   if (pick) { menu.hidden = true; switchAccount(pick.dataset.acct); return; }
   if (menu && !e.target.closest('#acct')) menu.hidden = true;
@@ -197,6 +221,7 @@ document.addEventListener('keydown', (e) => {
   const n = e.key === '0' ? 10 : parseInt(e.key, 10);
   if (n >= 1 && n <= ROUTES.length) { location.hash = '#/' + ROUTES[n - 1][0]; e.preventDefault(); }
   else if (e.key === 't' || e.key === 'T') toggleTheme();
+  else if (e.key === 'c' || e.key === 'C') { e.preventDefault(); openCreate(); }
   else if (e.key === 'l' || e.key === 'L') { setLang(getLang() === 'ar' ? 'en' : 'ar'); paintTop(); paintNav(); paintAccount(); go(); }
   else if (e.key === 'r' || e.key === 'R') runCycle();
   else if (e.key === 'a' || e.key === 'A') document.getElementById('acct-btn')?.click();
@@ -233,13 +258,35 @@ window.addEventListener('hashchange', go);
   paintAccount();
   let onboarded = false; try { onboarded = localStorage.getItem('kaa.onboarded') === '1'; } catch {}
   if ((!onboarded && !okAll) || !S.accounts.length) { if (!location.hash.startsWith('#/welcome')) location.hash = '#/welcome'; }
-  if (getAccount()) await refreshState().catch((e) => toast(e.message));
+  if (getAccount()) await Promise.all([refreshState().catch((e) => toast(e.message)), loadCreation(getAccount())]);
   go();
   for (const a of S.accounts) if (a.id !== getAccount()) refreshState(a.id).catch(() => {});
   events((type, d) => {
     if (type === 'disconnected') { S.connHTML = `<span class="dot bad"></span><span>${esc(tt('Reconnecting…', 'إعادة الاتصال…'))}</span>`; paintNav(); return; }
-    if (type === 'hello' || type === 'heartbeat') return;
+    if (type === 'hello') { // (re)connected: anything pushed while the stream was down is read once, then pushes take over
+      S.sseAt = Date.now();
+      const id = getAccount();
+      loadCreation(id).then(() => { CS.seen = true; if (id === getAccount() && ['overview', 'approvals'].includes(S.route)) rerender(); }).catch(() => {});
+      return;
+    }
+    if (type === 'heartbeat') return;
     const acct = d && d.account;
+    if (type === 'render.request') { // the Claude-app connector asks this tab to draw (create/remote.js)
+      if (acct && acct !== getAccount()) switchAccount(acct);
+      onRenderRequest(d);
+      return;
+    }
+    if (type === 'creation') { // a creation request / notification, pushed the moment it exists
+      const prev = new Set(((CS.account === acct && CS.view && CS.view.notifications) || []).map((n) => n.at));
+      if (acct === getAccount()) {
+        setCreation(acct, d.data);
+        const fresh = (d.data.notifications || []).filter((n) => !prev.has(n.at));
+        if (fresh.length && CS.seen) toast(`${fresh[0].title}: ${getLang() === 'ar' ? fresh[0].body_ar : fresh[0].body}`);
+        CS.seen = true;
+        if (['overview', 'approvals'].includes(S.route)) rerender();
+      }
+      return;
+    }
     if (type === 'alert' || type === 'action.alert') toast((d.data && d.data.text) || d.text || 'Alert');
     if (['metrics.updated', 'cycle.end', 'action.execution', 'action.kill', 'research.updated', 'backfill.progress', 'connections'].includes(type)) {
       const ids = acct ? [acct] : [...S.states.keys()];

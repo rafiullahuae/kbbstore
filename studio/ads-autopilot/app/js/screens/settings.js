@@ -4,6 +4,7 @@ import { api, getAccount } from '../api.js';
 import { refreshState, refreshAccounts } from '../main.js';
 import { brainSettings, saveBrainSettings } from '../data.js';
 import { mountGenerators } from '../creative/gen-ui.js';
+import { mountOneKey, mountClaudeApp, mountCreationMode } from '../create/settings-cc.js';
 
 let tab = 'limits';
 let wording = null;
@@ -63,8 +64,9 @@ export function render(S, el) {
   if (tab === 'limits') {
     v.innerHTML = `<div class="card"><header><h2>${esc(tt('Limits', 'الحدود'))} · ${esc(st.account.name || '')}</h2><span class="sub">${esc(tt('Only going above these needs you. No limit = nothing launches.', 'فقط تجاوز هذه الحدود يحتاجك. بلا حدود = لا شيء يُطلق.'))}</span></header>${limitsForm(st.limits, { wording: st.limits.wording || (wording && wording.ad_wording) || 'balanced' })}
       <label class="row small" style="margin-top:10px"><input type="checkbox" id="promo" ${wording && wording.promo_approved ? 'checked' : ''}> ${esc(tt('An authorised promotion is running (allows discount wording, with original price + % shown)', 'يوجد عرض مرخّص (يسمح بصياغة الخصم مع إظهار السعر الأصلي والنسبة)'))}</label>
-      <div class="row" style="margin-top:14px"><button type="button" id="saveL">${esc(tt('Save', 'حفظ'))}</button></div></div>`;
+      <div class="row" style="margin-top:14px"><button type="button" id="saveL">${esc(tt('Save', 'حفظ'))}</button></div></div><div id="cm-mount" style="margin-top:16px"></div>`;
     wireWording(v);
+    mountCreationMode(v.querySelector('#cm-mount'), getAccount());
     v.querySelector('#saveL').onclick = async () => {
       const prev = {}; for (const k of LIMIT_KEYS) if (st.limits[k] !== undefined) prev[k] = st.limits[k];
       const next = readLimits(v, st.limits);
@@ -81,8 +83,9 @@ export function render(S, el) {
       ${connCard('meta', 'Meta', c.meta, [['token', tt('System-user token', 'رمز مستخدم النظام'), true, c.meta?.token], ['app_id', tt('App ID', 'معرّف التطبيق'), false, c.meta?.app_id], ['app_secret', tt('App secret', 'سر التطبيق'), true, c.meta?.app_secret]])}
       ${connCard('claude', 'Claude', c.claude, [['api_key', tt('Anthropic API key', 'مفتاح Anthropic'), true, c.claude?.key]])}
       ${connCard('shop', tt('Shop', 'المتجر'), c.shop, [['feed_url', tt('Product feed', 'كتالوج المنتجات'), false, c.shop?.feed_url, 'https://kbeautybliss.com/feeds/meta-catalog.xml'], ['token', tt('Shop connection key', 'مفتاح ربط المتجر'), true, c.shop?.token]])}</div>
-      <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div id="gen-mount" style="margin-top:16px"></div>`;
-    mountGenerators(v.querySelector('#gen-mount')); // Generators + cut-out model (creative/gen-ui.js)
+      <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div class="grid g2" style="margin-top:16px"><div id="mcp-mount"></div><div id="ok-mount"></div></div>`;
+    mountClaudeApp(v.querySelector('#mcp-mount')); // Claude desktop connector (create/settings-cc.js)
+    mountOneKey(v.querySelector('#ok-mount')); // the ONE optional AI pictures & video key
     v.querySelectorAll('[data-save]').forEach((b) => {
       b.onclick = async () => {
         const card = b.closest('[data-conn]'), body = b.dataset.save === 'meta' ? { auth: 'system_user' } : {};
@@ -107,7 +110,9 @@ export function render(S, el) {
       <tr><td>${esc(tt('Season now', 'الموسم الحالي'))}</td><td class="n">${esc(e.season || '—')} ×${num(e.season_tolerance, 2)}</td></tr></tbody></table></div>
       <div class="card"><header><h2>${esc(tt('Keyboard', 'لوحة المفاتيح'))}</h2></header><table><tbody>
       ${[['⌘K', tt('search', 'بحث')], ['1–9, 0', tt('screens', 'الشاشات')], ['A', tt('account switcher', 'تبديل الحساب')], ['[ ]', tt('previous / next account', 'الحساب السابق / التالي')], ['R', tt('run a cycle', 'تشغيل دورة')], ['T', tt('light / dark', 'فاتح / داكن')], ['L', 'English / العربية']].map(([k, d]) => `<tr><td><kbd>${esc(k)}</kbd></td><td>${esc(d)}</td></tr>`).join('')}</tbody></table>
-      <p class="small"><a href="#/welcome">${esc(tt('Run the setup wizard again', 'تشغيل معالج الإعداد مرة أخرى'))}</a></p></div></div>`;
+      <p class="small"><a href="#/welcome">${esc(tt('Run the setup wizard again', 'تشغيل معالج الإعداد مرة أخرى'))}</a></p></div></div>
+      <h2 style="margin-top:18px">${esc(tt('Generators and cut-out (advanced)', 'المولّدات والقصّ (متقدم)'))}</h2><p class="small muted">${esc(tt('Every AI provider, its own key and price. Most people only need the one key in Connections.', 'كل مزوّد ذكاء اصطناعي بمفتاحه وسعره. يكفي معظم الناس المفتاح الواحد في الاتصالات.'))}</p><div id="gen-mount"></div>`;
+    mountGenerators(v.querySelector('#gen-mount')); // every provider + cut-out model (creative/gen-ui.js)
   }
   el.querySelectorAll('[data-tab]').forEach((b) => { b.onclick = () => { tab = b.dataset.tab; render(S, el); }; });
 }

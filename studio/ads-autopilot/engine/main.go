@@ -91,7 +91,11 @@ func main() {
 	afterUpdate := flag.Bool("after-update", false, "set by the engine itself when it restarts into a new version")
 	mock := flag.Bool("mock", false, "TESTS ONLY: run against an in-process fake Meta, fake Claude and fake shop feed (never the real ones)")
 	noSched := flag.Bool("no-scheduler", false, "TESTS ONLY: no automatic sync / cycles")
+	mcpMode := flag.Bool("mcp", false, "run as the Claude desktop connector (MCP over stdin/stdout) for the running engine")
 	flag.Parse()
+	if *mcpMode { // Claude desktop starts this; it talks to the engine the owner opened (mcp.go)
+		os.Exit(runMCP(*dataDir, os.Stdin, os.Stdout))
+	}
 
 	root, err := filepath.Abs(*dir)
 	if err != nil {
@@ -140,6 +144,7 @@ func main() {
 		log.Fatalf("listen: %v", err)
 	}
 	s.addr = ln.Addr().String()
+	s.writeEngineFile()
 	s.idleT = time.AfterFunc(5*time.Minute, s.stop) // nobody connected within 5 minutes: stop
 	srv := &http.Server{Handler: s, ReadHeaderTimeout: 20 * time.Second}
 	go func() {
@@ -439,6 +444,7 @@ func (s *server) events(w http.ResponseWriter, r *http.Request) {
 	}()
 	_, _ = io.WriteString(w, "retry: 2000\nevent: hello\ndata: {}\n\n")
 	fl.Flush()
+	s.resendRenders(ch) // render jobs are kept until done: a reconnected tab picks them up
 	tick := time.NewTicker(15 * time.Second)
 	defer tick.Stop()
 	for {
