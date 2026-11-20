@@ -313,6 +313,9 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			s.brainAPI(w, r, strings.TrimPrefix(p, "/api/brain/"), ac)
 		}
 	default:
+		if s.brainExtra(w, r, p) { // LANE BRAIN's routes (brain_wire.go)
+			return
+		}
 		if !s.updateAPI(w, r, p) {
 			jsonErr(w, 404, "no such endpoint")
 		}

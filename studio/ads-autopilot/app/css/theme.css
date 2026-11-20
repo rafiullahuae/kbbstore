@@ -1,0 +1,61 @@
+/* KBB Ads Autopilot THEME -- the whole look in one file.
+   Current: H · Sage Calm (full layout), picked by the owner 20 Nov 2026.
+   Components (app.css) use only these variables. --kaa-layout: sidebar | rail | tabs.
+   Arabic (<html lang="ar" dir="rtl">) mirrors everything; components use
+   logical properties (inset-inline, margin-inline, border-inline). */
+@font-face { font-family: "Plus Jakarta Sans"; src: url(../vendor/fonts/plus-jakarta-sans-latin-wght-normal.woff2) format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Inter"; src: url(../vendor/fonts/inter-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Tajawal"; src: url(../vendor/fonts/tajawal-arabic-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; }
+@font-face { font-family: "Tajawal"; src: url(../vendor/fonts/tajawal-arabic-700-normal.woff2) format("woff2"); font-weight: 700; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; }
+@font-face { font-family: "Cairo"; src: url(../vendor/fonts/cairo-arabic-wght-normal.woff2) format("woff2"); font-weight: 200 1000; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; }
+@font-face { font-family: "Cairo"; src: url(../vendor/fonts/cairo-latin-wght-normal.woff2) format("woff2"); font-weight: 200 1000; font-display: swap; unicode-range: U+0000-00FF; }
+@font-face { font-family: "Playfair Display"; src: url(../vendor/fonts/playfair-display-latin-wght-normal.woff2) format("woff2"); font-weight: 400 900; font-display: swap; }
+
+:root {
+  --kaa-layout: sidebar;
+  --font: "Inter", "Tajawal", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Plus Jakarta Sans", "Cairo", system-ui, sans-serif;
+  --font-ar: "Tajawal", "Cairo", "Geeza Pro", system-ui, sans-serif;
+  --font-ar-head: "Cairo", "Tajawal", system-ui, sans-serif;
+  --page-bg: linear-gradient(180deg, #f5f7f2, #edf1ea);
+  --bg: #f1f4ee;
+  --surface: #ffffff; --surface2: #f3f6f1; --surface3: #e3ece5;
+  --bar-bg: rgba(255, 255, 255, 0.6); --bar-blur: blur(14px) saturate(1.2);
+  --card-bg: #ffffff; --card-blur: none;
+  --ink: #1f2a24; --ink2: #3f4c44; --muted: #66756b;
+  --line: rgba(60, 96, 74, 0.13); --line2: rgba(60, 96, 74, 0.22);
+  --accent: #3f7d5c; --accent-ink: #ffffff; --accent-soft: #e3ece5; --accent-2: #c6395f; --accent-2-soft: #fbe9ee;
+  --hero-bg: linear-gradient(125deg, #3f7d5c, #8fb79d); --hero-ink: #ffffff;
+  --good: #2f7a52; --good-soft: #e3f1e8; --warn: #9a6a00; --warn-soft: #fbf1db; --bad: #c6395f; --bad-soft: #fbe9ee; --info: #2a6fb3; --info-soft: #e7f0f9;
+  --s-spend: #c6395f; --s-rev: #2a78d6; /* chart series: validated pair (CVD) */
+  --shadow: 0 1px 2px rgba(31, 42, 36, 0.04), 0 8px 24px rgba(31, 42, 36, 0.05);
+  --radius: 20px; --radius-hero: 24px; --radius-s: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page-bg: linear-gradient(180deg, #121814, #0e1310);
+    --bg: #111612; --surface: #18201b; --surface2: #1e2822; --surface3: #26332b;
+    --bar-bg: rgba(24, 32, 27, 0.72); --card-bg: #18201b;
+    --ink: #e8efe9; --ink2: #c3cec6; --muted: #8fa096; --line: rgba(160, 200, 175, 0.12); --line2: rgba(160, 200, 175, 0.22);
+    --accent: #7fc49c; --accent-ink: #0f1712; --accent-soft: #22362a; --accent-2: #f07a9c; --accent-2-soft: #3a1f2a;
+    --hero-bg: linear-gradient(125deg, #2c5a42, #557a62);
+    --good: #7fd3a2; --good-soft: #1a3324; --warn: #f1c46a; --warn-soft: #33290f; --bad: #ff8fa8; --bad-soft: #3a1a22; --info: #8ab9f0; --info-soft: #172537;
+    --s-spend: #D9557D; --s-rev: #3987e5;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page-bg: linear-gradient(180deg, #121814, #0e1310);
+  --bg: #111612; --surface: #18201b; --surface2: #1e2822; --surface3: #26332b;
+  --bar-bg: rgba(24, 32, 27, 0.72); --card-bg: #18201b;
+  --ink: #e8efe9; --ink2: #c3cec6; --muted: #8fa096; --line: rgba(160, 200, 175, 0.12); --line2: rgba(160, 200, 175, 0.22);
+  --accent: #7fc49c; --accent-ink: #0f1712; --accent-soft: #22362a; --accent-2: #f07a9c; --accent-2-soft: #3a1f2a;
+  --hero-bg: linear-gradient(125deg, #2c5a42, #557a62);
+  --good: #7fd3a2; --good-soft: #1a3324; --warn: #f1c46a; --warn-soft: #33290f; --bad: #ff8fa8; --bad-soft: #3a1a22; --info: #8ab9f0; --info-soft: #172537;
+  --s-spend: #D9557D; --s-rev: #3987e5;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+html[lang="ar"] { --font: var(--font-ar); --font-head: var(--font-ar-head); }
