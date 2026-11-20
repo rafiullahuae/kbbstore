@@ -2,6 +2,11 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.3.1
+- Settings → Updates: drop in an update or a small patch, review it, Install. It checks every file, restarts itself and checks its own health; if anything fails it goes back to your previous version by itself. Roll back is one button.
+- Keys: if macOS doesn't let the app read its saved keys it now says so (click Always Allow, then Try again) instead of showing them as not set. A key pasted into the wrong box is refused.
+- If the app is updated while the old engine is still running, a banner tells you to close the Terminal window and start again. Settings cards never disappear silently.
+
 ## 0.3.0
 - ✨ Create with Claude: one box (top bar, Overview, Creatives, or press C). Type what you want in Arabic or English; it picks the products, writes the words and makes every size plus a video. Change anything by typing ("shorter headline", "more pink"), then Run it, Save or Download.
 - Use your Claude Max plan for creating: Settings → Connections → Claude desktop → Install connector, then make ads by chatting in the Claude app.
