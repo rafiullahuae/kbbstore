@@ -431,6 +431,8 @@ const server = http.createServer(async (req, res) => {
     if (x === 'seg/status') return json(res, 200, { have: {}, models: [], assets: [], jobs: {} });
     if (x.startsWith('seg/mask')) { res.writeHead(204); return res.end(); }
     if (x === 'gen/settings') return json(res, 200, { providers: [], budget_usd: 0, spent_usd: 0, image: '', video: '', month: '' });
+    // Create with Claude: creation requests, empty here (the real shape of engine/brain/creation.go creationView)
+    if (x === 'creation') return json(res, 200, { mode: 'with_me', fallback_hours: 0, requests: [], notifications: [] });
     if (x === 'insights') return json(res, 200, insights(A));
     if (x === 'profile') return json(res, 200, A.profile);
     if (x === 'research') return json(res, 200, research);
