@@ -32,14 +32,16 @@ type Brain struct {
 	lastResearch Usage
 }
 
-func New(apiKey string) *Brain {
+func NewBrain(apiKey string) *Brain {
 	return &Brain{
 		Claude: &Claude{APIKey: apiKey, Fallback: true}, Econ: DefaultEcon(), Rules: DefaultRules(),
 		PlannerModel: ModelPlanner, SmallModel: ModelSmall, CopyModel: ModelPlanner, MaxCopyPerRun: 3,
 	}
 }
 
-func (b *Brain) hasClaude() bool { return b.Claude != nil && b.Claude.APIKey != "" }
+func (b *Brain) hasClaude() bool {
+	return b.Claude != nil && (b.Claude.APIKey != "" || b.Claude.LLM != nil)
+}
 
 // Cycle: rules first (always), then the planner (when Claude is connected).
 // If Claude is missing, refuses, or returns something unusable, the cycle
@@ -120,7 +122,7 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 	payload := plannerInput(in, rr, b.PromoApproved)
 	user, _ := json.Marshal(payload)
 	req := Request{
-		Model: b.PlannerModel, MaxTokens: 16000, System: CachedSystem(PlannerSystem()),
+		Purpose: "plan", Model: b.PlannerModel, MaxTokens: 16000, System: CachedSystem(PlannerSystem()),
 		Messages: []Message{{Role: "user", Content: "Cycle input (computed by code; all numbers AED):\n" + string(user)}},
 		Output:   JSONOutput(plannerSchema(), "medium"),
 	}
@@ -226,6 +228,7 @@ func parseAnswer(r *Response) (plannerAnswer, error) {
 }
 
 type objInfo struct {
+	managed             bool
 	level, status, lang string
 	budget, bid         float64
 	parent              string
@@ -234,11 +237,11 @@ type objInfo struct {
 func knownObjects(in CycleInput) map[string]objInfo {
 	m := map[string]objInfo{}
 	for _, c := range in.Tree {
-		m[c.ID] = objInfo{level: "campaign", status: c.Status, budget: c.DailyBudgetAED}
+		m[c.ID] = objInfo{level: "campaign", status: c.Status, budget: c.DailyBudgetAED, managed: c.MadeByApp}
 		for _, s := range c.AdSets {
-			m[s.ID] = objInfo{level: "adset", status: s.Status, lang: s.Language, budget: s.DailyBudgetAED, bid: s.BidAmountAED, parent: c.ID}
+			m[s.ID] = objInfo{level: "adset", status: s.Status, lang: s.Language, budget: s.DailyBudgetAED, bid: s.BidAmountAED, parent: c.ID, managed: c.MadeByApp}
 			for _, a := range s.Ads {
-				m[a.ID] = objInfo{level: "ad", status: a.Status, lang: firstNonEmpty(a.Language, s.Language), parent: s.ID}
+				m[a.ID] = objInfo{level: "ad", status: a.Status, lang: firstNonEmpty(a.Language, s.Language), parent: s.ID, managed: c.MadeByApp}
 			}
 		}
 	}
@@ -310,6 +313,10 @@ func (b *Brain) validate(a plannerAnswer, in CycleInput, rr RulesResult, known m
 			}
 		} else if !exists {
 			bad("unknown object id")
+			continue
+		}
+		if exists && !info.managed {
+			bad("belongs to the owner's own campaign; the app only changes what it made")
 			continue
 		}
 		v := verd[p.Target]
@@ -658,7 +665,7 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 		hist = append(hist, map[string]any{"at": h.Time.Format("2006-01-02 15:04"), "kind": h.Kind, "object": h.Object, "summary": h.Summary, "outcome": h.Outcome})
 	}
 	var prods []map[string]any
-	for _, p := range pickProducts(in.Shop, in.Research, 40) {
+	for _, p := range pickProductsT(in.Shop, in.Research, in.Trending, 40) {
 		prods = append(prods, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED,
 			"margin_pct": p.MarginPct, "stock": p.Stock})
 	}
@@ -678,6 +685,7 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 		"past_learnings": learned, "recent_history": hist, "research": notes, "creative_library": lib, "products": prods,
 		"orders_source": in.Shop.OrdersSource, "videos": videoSummary(in.Videos, rr.Econ),
 		"learned_profile": profileBrief(in.Profile), "portfolio_profile": profileBrief(in.Portfolio),
+		"trending_products": trendingBrief(in.Trending), "portfolio_learnings": in.PortfolioLearnings,
 	}
 }
 
@@ -697,6 +705,17 @@ var heroBrands = []string{"COSRX", "Beauty of Joseon", "Anua", "SKIN1004", "Torr
 // when the title/description mentions a researched angle/ingredient, then
 // hero brands, then mid-range price. Deterministic.
 func pickProducts(shop ShopSnapshot, r Research, n int) []Product {
+	return pickProductsT(shop, r, nil, n)
+}
+
+// pickProductsT: trending products the shop sells come first.
+func pickProductsT(shop ShopSnapshot, r Research, tr *TrendingReport, n int) []Product {
+	hot := map[string]bool{}
+	if tr != nil {
+		for _, id := range tr.Selling {
+			hot[id] = true
+		}
+	}
 	terms := map[string]bool{}
 	for _, note := range r.Notes {
 		for _, a := range note.Angles {
@@ -734,6 +753,9 @@ func pickProducts(shop ShopSnapshot, r Research, n int) []Product {
 		}
 		if p.MarginPct > 0 {
 			s += p.MarginPct / 50
+		}
+		if hot[p.ID] {
+			s += 6 // trending now and in stock
 		}
 		all = append(all, sc{p, s})
 	}
@@ -884,4 +906,10 @@ func profileBrief(p *LearningProfile) any {
 		"by_angle": top(p.ByAngle), "by_template": top(p.ByTemplate), "by_format": top(p.ByFormat), "by_placement": top(p.ByPlacement),
 		"by_season": top(p.BySeason), "by_weekday": p.ByWeekday, "creative_half_life_days": p.HalfLifeDays, "fatigue_curve": p.FatigueCurve,
 		"winners": clean(p.Winners, 8), "evidence": clean(p.Evidence, 8)}
+}
+
+// clone copies the configuration (not the mutex/usage state) for one call.
+func (b *Brain) clone() *Brain {
+	return &Brain{Claude: b.Claude, Econ: b.Econ, Rules: b.Rules, PlannerModel: b.PlannerModel, SmallModel: b.SmallModel,
+		CopyModel: b.CopyModel, PromoApproved: b.PromoApproved, MaxCopyPerRun: b.MaxCopyPerRun}
 }

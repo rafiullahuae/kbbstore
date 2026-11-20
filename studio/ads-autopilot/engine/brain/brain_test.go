@@ -116,7 +116,7 @@ func winnerInput() CycleInput {
 }
 
 func newTestBrain(url string) *Brain {
-	b := New("sk-test")
+	b := NewBrain("sk-test")
 	b.Claude.BaseURL = url
 	b.Claude.Backoff = time.Millisecond
 	return b
@@ -239,7 +239,7 @@ func TestRepairRound(t *testing.T) {
 
 // No key: rules-only, no network.
 func TestNoKeyRulesOnly(t *testing.T) {
-	b := New("")
+	b := NewBrain("")
 	out, err := b.Cycle(context.Background(), winnerInput())
 	if err != nil || out.Model != "rules-only" || out.Plan.Week == "" || len(out.Plan.Allocation) != 3 {
 		t.Fatalf("%v %+v", err, out.Plan)
@@ -285,7 +285,7 @@ func TestResearchKeepsOnlySourcedNotes(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
-	b := New("")
+	b := NewBrain("")
 	var got string
 	h := Handler(b, Deps{Input: func(context.Context) (CycleInput, error) { return winnerInput(), nil }, Result: func(k string, v any) { got = k }})
 	srv := httptest.NewServer(h)
@@ -309,7 +309,7 @@ func TestHandler(t *testing.T) {
 func TestNewAdsOnlyOnBatchDay(t *testing.T) {
 	var a plannerAnswer
 	_ = json.Unmarshal([]byte(goodPlan), &a)
-	b := New("")
+	b := NewBrain("")
 	for _, day := range []time.Time{tNow, time.Date(2026, 11, 23, 8, 0, 0, 0, time.UTC)} {
 		in := baseInput()
 		in.Now = day

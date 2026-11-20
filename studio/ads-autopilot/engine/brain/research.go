@@ -57,7 +57,7 @@ func (b *Brain) Research(ctx context.Context, in ResearchInput) (Research, error
 		now.Format("2 January 2006"), focus, strings.Join(brands, ", "), strings.Join(prev, "; "))
 	tool := map[string]any{"type": WebSearchTool, "name": "web_search", "max_uses": 12,
 		"user_location": map[string]any{"type": "approximate", "country": "AE", "city": "Dubai", "timezone": "Asia/Dubai"}}
-	req := Request{Model: b.PlannerModel, MaxTokens: 16000, System: CachedSystem(researchSystem),
+	req := Request{Purpose: "research", Model: b.PlannerModel, MaxTokens: 16000, System: CachedSystem(researchSystem),
 		Messages: []Message{{Role: "user", Content: ask}}, Tools: []any{tool}, Output: map[string]any{"effort": "medium"}}
 	var u Usage
 	var brief strings.Builder

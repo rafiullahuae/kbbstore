@@ -64,7 +64,7 @@ func TestBuildProfile(t *testing.T) {
 		t.Fatalf("winners %v evidence %v", p.Winners, p.Evidence)
 	}
 	// the cycle carries it and the planner sees it
-	out, _ := New("").Cycle(nil, in)
+	out, _ := NewBrain("").Cycle(nil, in)
 	if out.Profile == nil || out.Profile.Account != "" && out.Profile.Days != 118 {
 		t.Fatal("profile not attached")
 	}

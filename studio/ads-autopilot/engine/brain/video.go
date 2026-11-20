@@ -93,7 +93,7 @@ func (b *Brain) AnalyzeVideo(ctx context.Context, in VideoInput, shop ShopSnapsh
 	}
 	content = append(content, map[string]any{"type": "text", "text": fmt.Sprintf(
 		"Video %q, %.1f s, %dx%d. Owner's note: %q.\nCatalog (id | brand | title):\n%s\nAnalyse it.", in.Name, in.DurationS, in.Width, in.Height, in.Notes, strings.Join(cat, "\n"))})
-	req := Request{Model: b.PlannerModel, MaxTokens: 6000, System: CachedSystem(videoSystem),
+	req := Request{Purpose: "video", Model: b.PlannerModel, MaxTokens: 6000, System: CachedSystem(videoSystem),
 		Messages: []Message{{Role: "user", Content: content}}, Output: JSONOutput(videoSchema(), "low")}
 	resp, err := b.Claude.Send(ctx, req)
 	AddUsage(&u, b.PlannerModel, resp)

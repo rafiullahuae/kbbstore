@@ -83,7 +83,7 @@ func (b *Brain) copyFor(ctx context.Context, cr CopyRequest, shop ShopSnapshot, 
 	}
 	ask, _ := json.Marshal(map[string]any{"products": pinfo, "angle": cr.Angle, "brief": cr.Brief, "template": cr.Template,
 		"promotion_approved": b.PromoApproved, "wording_rules": firstNonEmpty(cr.Wording, Balanced), "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea", "video": videoBrief(cr.Video)})
-	req := Request{Model: b.CopyModel, MaxTokens: 8000, System: CachedSystem(copySystem),
+	req := Request{Purpose: "copy", Model: b.CopyModel, MaxTokens: 8000, System: CachedSystem(copySystem),
 		Messages: []Message{{Role: "user", Content: "Write the ad copy.\n" + string(ask)}},
 		Output:   JSONOutput(copySchema(), "medium")}
 	opts := func(lang string) LintOptions {

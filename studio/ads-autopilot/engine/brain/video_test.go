@@ -31,7 +31,7 @@ func TestVideoLocalChecks(t *testing.T) {
 		{540, 960, 75, "9:16", "too_long"},
 	}
 	for _, c := range cases {
-		a, _, err := New("").AnalyzeVideo(context.Background(), VideoInput{ID: "v", Width: c.w, Height: c.h, DurationS: c.d, HasAudio: true}, ShopSnapshot{})
+		a, _, err := NewBrain("").AnalyzeVideo(context.Background(), VideoInput{ID: "v", Width: c.w, Height: c.h, DurationS: c.d, HasAudio: true}, ShopSnapshot{})
 		if err != nil || a.Aspect != c.aspect || a.Model != "local-only" {
 			t.Fatalf("%dx%d: %+v %v", c.w, c.h, a, err)
 		}
@@ -39,7 +39,7 @@ func TestVideoLocalChecks(t *testing.T) {
 			t.Fatalf("%dx%d %.0fs: want issue %s, got %+v", c.w, c.h, c.d, c.issue, a.Issues)
 		}
 	}
-	a, _, _ := New("").AnalyzeVideo(context.Background(), VideoInput{ID: "v", Width: 540, Height: 960, DurationS: 12}, ShopSnapshot{})
+	a, _, _ := NewBrain("").AnalyzeVideo(context.Background(), VideoInput{ID: "v", Width: 540, Height: 960, DurationS: 12}, ShopSnapshot{})
 	if !hasIssue(a, "low_resolution", "fix") || !hasIssue(a, "no_audio", "tip") {
 		t.Fatalf("%+v", a.Issues)
 	}
@@ -122,7 +122,7 @@ func TestPlannerVideoProposals(t *testing.T) {
 {"kind":"upload_creative","target":"new:video-v2","params":{"media":"video","video_id":"v2"},"why":"x","confidence":0.8},
 {"kind":"create_ad","target":"new:ad-v1","params":{"adset_id":"s1","creative_id":"video:v1"},"why":"run it","confidence":0.8},
 {"kind":"create_ad","target":"new:ad-v2","params":{"adset_id":"s1","creative_id":"video:v2"},"why":"run it","confidence":0.8}]}`), &a)
-	b := New("")
+	b := NewBrain("")
 	rr := Evaluate(in, tEcon, b.Rules)
 	props, drop := b.validate(a, in, rr, knownObjects(in))
 	if find(props, "upload_creative", "new:video-v1") == nil || find(props, "create_ad", "new:ad-v1") == nil {

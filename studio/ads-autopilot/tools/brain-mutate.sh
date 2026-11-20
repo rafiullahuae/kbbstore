@@ -9,7 +9,7 @@ mut() { # file, from, to, label
   local f=$1 from=$2 to=$3 label=$4
   cp "$f" "$f.mutbak"
   python3 -I -c 'import sys;p,a,b=sys.argv[1:4];s=open(p).read();assert a in s,("missing",a);open(p,"w").write(s.replace(a,b,1))' "$f" "$from" "$to" || { echo "SKIP $label (pattern missing)"; mv "$f.mutbak" "$f"; return; }
-  if go test ./... >/dev/null 2>&1; then echo "SURVIVED  $label"; fail=$((fail+1)); else echo "killed    $label"; pass=$((pass+1)); fi
+  if go test . >/dev/null 2>&1; then echo "SURVIVED  $label"; fail=$((fail+1)); else echo "killed    $label"; pass=$((pass+1)); fi
   mv "$f.mutbak" "$f"
 }
 mut stats.go 'const PriorWeight = 2.0' 'const PriorWeight = 1.0' 'prior weight 2 -> 1'
@@ -40,5 +40,10 @@ mut profile.go 'if r.Placement != "" {
 			addTo("placement"' 'profile counts placement rows twice'
 mut profile.go 'if w.CTR() <= 0.7*first.CTR() {' 'if w.CTR() <= 0.3*first.CTR() {' 'half-life threshold'
 mut brain.go 'if n < 2 || n > 10 {' 'if n < 1 {' 'carousel product count'
+mut rules.go 'if managed {
+				baseProp' 'if true {
+				baseProp' 'propose on the owner campaigns'
+mut trending.go 'coverage(distinct, title) >= 0.6' 'coverage(distinct, title) >= 0' 'trending name match'
+mut trending.go 'if len(srcs) == 0 || strings.TrimSpace(it.Name) == "" {' 'if strings.TrimSpace(it.Name) == "" {' 'unsourced trending item'
 echo "mutations killed: $pass, survived: $fail"
 [ "$fail" -eq 0 ]

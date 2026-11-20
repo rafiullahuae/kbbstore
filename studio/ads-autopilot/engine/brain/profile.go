@@ -110,6 +110,38 @@ func BuildProfile(account string, in CycleInput) LearningProfile {
 		}
 	}
 	byAd := map[string][]MetricRow{}
+	// long history (campaign level, up to 37 months): baselines, weekday and
+	// season come from it when present (ad-level rows only cover recent months)
+	hasHist := false
+	for _, r := range in.Metrics {
+		if r.Level == "history" && !r.Settling {
+			hasHist = true
+			if p.FirstDay == "" || r.Date < p.FirstDay {
+				p.FirstDay = r.Date
+			}
+			if r.Date > p.LastDay {
+				p.LastDay = r.Date
+			}
+			all.add(r)
+			if r.Date >= cut(365) {
+				w365.add(r)
+			}
+			if r.Date >= cut(90) {
+				w90.add(r)
+			}
+			if r.Date >= cut(30) {
+				w30.add(r)
+			}
+			if t, err := time.Parse("2006-01-02", r.Date); err == nil {
+				addTo("weekday", t.Weekday().String()[:3], r, "")
+				if s := SeasonAt(t); s != nil {
+					addTo("season", s.Name, r, "")
+				} else {
+					addTo("season", "no season", r, "")
+				}
+			}
+		}
+	}
 	for _, r := range in.Metrics {
 		if r.Level != "ad" || r.Settling {
 			continue
@@ -118,21 +150,23 @@ func BuildProfile(account string, in CycleInput) LearningProfile {
 			addTo("placement", r.Placement, r, r.ObjectID)
 			continue
 		}
-		if p.FirstDay == "" || r.Date < p.FirstDay {
-			p.FirstDay = r.Date
-		}
-		if r.Date > p.LastDay {
-			p.LastDay = r.Date
-		}
-		all.add(r)
-		if r.Date >= cut(365) {
-			w365.add(r)
-		}
-		if r.Date >= cut(90) {
-			w90.add(r)
-		}
-		if r.Date >= cut(30) {
-			w30.add(r)
+		if !hasHist {
+			if p.FirstDay == "" || r.Date < p.FirstDay {
+				p.FirstDay = r.Date
+			}
+			if r.Date > p.LastDay {
+				p.LastDay = r.Date
+			}
+			all.add(r)
+			if r.Date >= cut(365) {
+				w365.add(r)
+			}
+			if r.Date >= cut(90) {
+				w90.add(r)
+			}
+			if r.Date >= cut(30) {
+				w30.add(r)
+			}
 		}
 		byAd[r.ObjectID] = append(byAd[r.ObjectID], r)
 		addTo("lang", adLang[r.ObjectID], r, r.ObjectID)
@@ -141,7 +175,7 @@ func BuildProfile(account string, in CycleInput) LearningProfile {
 			addTo("template", c.Template, r, r.ObjectID)
 		}
 		addTo("format", adFormat[r.ObjectID], r, r.ObjectID)
-		if t, err := time.Parse("2006-01-02", r.Date); err == nil {
+		if t, err := time.Parse("2006-01-02", r.Date); err == nil && !hasHist {
 			addTo("weekday", t.Weekday().String()[:3], r, r.ObjectID)
 			if s := SeasonAt(t); s != nil {
 				addTo("season", s.Name, r, r.ObjectID)

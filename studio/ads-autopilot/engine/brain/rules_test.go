@@ -18,7 +18,7 @@ func baseInput() CycleInput {
 	return CycleInput{
 		Now:    tNow,
 		Limits: Limits{DailyAED: 500, MonthlyAED: 12000, MaxBudgetStepPct: 20, CooldownHours: 72, MaxActiveAds: 10, Countries: []string{"AE"}, Autopilot: "auto"},
-		Tree: []Campaign{{ID: "c1", Name: "KBB Sales", Status: "ACTIVE", AdSets: []AdSet{
+		Tree: []Campaign{{ID: "c1", Name: "KBB Sales", Status: "ACTIVE", MadeByApp: true, AdSets: []AdSet{
 			{ID: "s1", CampaignID: "c1", Status: "ACTIVE", DailyBudgetAED: 200, Language: "ar", LearningStage: "SUCCESS",
 				CreatedAt: tNow.AddDate(0, 0, -40), LastSignificantEdit: tNow.AddDate(0, 0, -20),
 				Ads: []Ad{{ID: "a1", Status: "ACTIVE", Language: "ar", CreatedAt: tNow.AddDate(0, 0, -30)}}},
@@ -230,5 +230,17 @@ func TestBatchSlotsArabicFirst(t *testing.T) {
 	in.Now = tNow
 	if r := Evaluate(in, tEcon, DefaultRules()); len(r.NewAdSlots) != 0 {
 		t.Fatal("slots off batch day")
+	}
+}
+
+// The owner's own campaigns get verdicts but never proposals.
+// Mutation: drop the managed check in Evaluate -> a pause is proposed, red.
+func TestOwnersCampaignsUntouched(t *testing.T) {
+	in := baseInput()
+	in.Tree[0].MadeByApp = false
+	in.Metrics = rows("ad", "a1", 9, 3, 2.5*45, 0, 20000, 240, 1.2)
+	r := Evaluate(in, tEcon, DefaultRules())
+	if len(r.Proposals) != 0 || verdictOf(r, "a1").Verdict != "kill" {
+		t.Fatalf("%+v / %+v", r.Proposals, verdictOf(r, "a1"))
 	}
 }

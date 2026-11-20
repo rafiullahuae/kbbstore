@@ -1,21 +1,8 @@
-//go:build !kaa_model
-
-// LOCAL COPY OF THE CONTRACT TYPES -- REPLACE WITH engine/model AT INTEGRATION.
-//
-// LANE ENGINE owns engine/model and writes it in parallel with this lane. The
-// names below are EXACTLY the contract's (CONTRACT.md "The one rule"), so the
-// swap is mechanical:
-//
-//  1. delete engine/brain/go.mod (the brain then lives in the engine module);
-//  2. build with -tags kaa_model (model_alias.go turns every name below into an
-//     alias of engine/model's type), or delete this file and rename
-//     model_alias.go's build tag away;
-//  3. any field the brain added that engine/model lacks is listed in
-//     docs/BRAIN-INTEGRATION.md -- engine/model adds it (BRAIN may add fields,
-//     never rename).
-//
-// Money is AED (float64) everywhere in the brain. fils exist only in the
-// engine's executor.
+// The brain's own working types. The engine's contract types live in
+// engine/model; adapter.go converts model.CycleInput -> CycleInput and
+// CycleOutput -> model.CycleOutput (plus the brain's extra outputs, served by
+// the brain's own routes under /api/brain/x/). Money is AED everywhere here;
+// fils exist only in the engine's executor.
 package brain
 
 import "time"
@@ -197,18 +184,20 @@ type LogEntry struct {
 }
 
 type CycleInput struct {
-	Now       time.Time        `json:"now"`
-	Limits    Limits           `json:"limits"`
-	Account   Account          `json:"account"`
-	Tree      []Campaign       `json:"tree"`
-	Metrics   []MetricRow      `json:"metrics"`
-	Shop      ShopSnapshot     `json:"shop"`
-	Creatives []Creative       `json:"creatives"`
-	Research  Research         `json:"research"`
-	History   []LogEntry       `json:"history"`
-	Profile   *LearningProfile `json:"profile,omitempty"`   // BRAIN addition: this account's learned profile (brain builds it when nil)
-	Portfolio *LearningProfile `json:"portfolio,omitempty"` // BRAIN addition: the cross-account profile
-	Videos    []VideoAsset     `json:"videos"`              // BRAIN addition: the owner's ad videos with analysis + results
+	Now                time.Time        `json:"now"`
+	Limits             Limits           `json:"limits"`
+	Account            Account          `json:"account"`
+	Tree               []Campaign       `json:"tree"`
+	Metrics            []MetricRow      `json:"metrics"`
+	Shop               ShopSnapshot     `json:"shop"`
+	Creatives          []Creative       `json:"creatives"`
+	Research           Research         `json:"research"`
+	History            []LogEntry       `json:"history"`
+	Profile            *LearningProfile `json:"profile,omitempty"`             // BRAIN addition: this account's learned profile (brain builds it when nil)
+	Portfolio          *LearningProfile `json:"portfolio,omitempty"`           // BRAIN addition: the cross-account profile
+	Trending           *TrendingReport  `json:"trending,omitempty"`            // BRAIN: trending products matched to the shop
+	PortfolioLearnings any              `json:"portfolio_learnings,omitempty"` // the engine cross-account aggregates
+	Videos             []VideoAsset     `json:"videos"`                        // BRAIN addition: the owner's ad videos with analysis + results
 }
 
 // CycleOutput: Plan, Proposals and Report are the contract's. Verdicts,

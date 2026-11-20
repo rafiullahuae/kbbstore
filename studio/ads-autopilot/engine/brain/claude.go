@@ -26,6 +26,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"kaa/model"
 )
 
 const (
@@ -42,6 +44,7 @@ type Claude struct {
 	HTTP     *http.Client
 	Fallback bool          // send server-side fallbacks (dropped automatically if the API refuses the field)
 	Backoff  time.Duration // retry base delay (default 3s; tests shorten it)
+	LLM      model.LLM     // the engine's client: when set, every call goes through it (llm.go)
 }
 
 type Block struct {
@@ -56,6 +59,7 @@ type Message struct {
 }
 
 type Request struct {
+	Purpose   string         `json:"-"` // plan | research | copy | video (usage log)
 	Model     string         `json:"model"`
 	MaxTokens int            `json:"max_tokens"`
 	System    []Block        `json:"system,omitempty"`
@@ -127,6 +131,9 @@ var ErrNoKey = errors.New("claude: no API key saved (Settings -> Connections)")
 
 // Send posts one Messages request, retrying 429/5xx/529 twice with backoff.
 func (c *Claude) Send(ctx context.Context, req Request) (*Response, error) {
+	if c != nil && c.LLM != nil {
+		return c.viaLLM(ctx, req)
+	}
 	if c == nil || c.APIKey == "" {
 		return nil, ErrNoKey
 	}

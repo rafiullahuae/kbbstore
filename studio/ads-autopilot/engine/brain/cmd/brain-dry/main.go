@@ -38,7 +38,7 @@ func main() {
 		if err := dec.Decode(&v); err != nil {
 			fail(err)
 		}
-		a, _, err := brain.New(key).AnalyzeVideo(context.Background(), v.Video, v.Shop)
+		a, _, err := brain.NewBrain(key).AnalyzeVideo(context.Background(), v.Video, v.Shop)
 		if err != nil {
 			a.Model = "local-only (" + err.Error() + ")"
 		}
@@ -81,7 +81,7 @@ func main() {
 	if err := dec.Decode(&in); err != nil {
 		fail(err)
 	}
-	out, err := brain.New(key).Cycle(context.Background(), in)
+	out, err := brain.NewBrain(key).Cycle(context.Background(), in)
 	if err != nil {
 		fail(err)
 	}

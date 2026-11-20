@@ -134,7 +134,7 @@ func Evaluate(in CycleInput, econ Economics, cfg RulesConfig) RulesResult {
 		return m[id]
 	}
 	for _, r := range in.Metrics {
-		if r.Placement != "" { // breakdown rows: the profile reads them, totals must not double count
+		if r.Placement != "" || r.Level == "history" { // breakdown + long-history rows: the profile reads them; totals must not double count
 			continue
 		}
 		get(all, r.ObjectID).add(r)
@@ -220,7 +220,16 @@ func Evaluate(in CycleInput, econ Economics, cfg RulesConfig) RulesResult {
 	killed := 0
 	adLang := map[string]string{}
 
+	baseProp := propose
 	for _, c := range in.Tree {
+		// verdicts for every campaign; proposals only on campaigns the app made
+		// (the executor refuses the owner's own campaigns anyway)
+		managed := c.MadeByApp
+		propose = func(kind, target string, params map[string]any, why string, conf float64, ev ...string) {
+			if managed {
+				baseProp(kind, target, params, why, conf, ev...)
+			}
+		}
 		for _, s := range c.AdSets {
 			inLearning := adsetLearning(s, z(win[s.ID]), now, cfg)
 			for _, a := range s.Ads {
