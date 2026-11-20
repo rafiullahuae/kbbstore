@@ -3,7 +3,7 @@
 // The engine and the launcher carry the same string in engine/main.go (appName) and the .command file name.
 
 export const APP_NAME = 'KBB Studio';
-export const APP_VERSION = '1.4.1'; // also names the zip (tools/package-mac.sh): bump it for every zip sent to the owner
+export const APP_VERSION = '1.4.2'; // also names the zip (tools/package-mac.sh): bump it for every zip sent to the owner
 
 /** Workspaces the studio seeds on first run (the owner, 16 Nov). brandRef = folder under brands/ (R3's kits): the kit's
  *  colours, fonts, logo, industries, caption style and favourite recipes WIN (app/editor/kits.js); the values here are

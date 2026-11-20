@@ -2,6 +2,11 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.2
+- Fixed: Auto captions finished but wrote nothing on some Macs. When the Mac's graphics chip writes no words, the studio now writes the captions on the processor instead (slower the first time), and remembers to do that on this Mac.
+- Captions can never sit on "Writing captions…" for ever: a stuck run stops with a message and ↻ Try again.
+- When a clip gets no captions, the panel now says why for that clip, and 📋 Copy diagnostics copies a short report you can send.
+
 ## 1.4.1
 - The 10 slim contact cards now wear Planet Careers' own colours in Planet Careers: navy with red icon circles, a red running light and a red neon outline (the red used to turn white). KBB's cards and the old designs are unchanged.
 
