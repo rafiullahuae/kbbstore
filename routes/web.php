@@ -49,6 +49,7 @@ Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
     // Meta and TikTok catalog feeds (Lane MP): /feeds/meta-catalog.xml and
     // /feeds/tiktok-catalog.xml, the Google feed's builder with the ids the pixels send.
     require __DIR__.'/marketing-catalog-feeds.php';
+    require __DIR__.'/autopilot-api.php';
 
     /*
      * The fourth document of the same kind (Lane WAL): Apple's domain
@@ -610,6 +611,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Customers' emails and phones: this guarded group only.
         // codrefusals.view / codrefusals.manage, owner.
         require __DIR__.'/cod-refusals-admin.php';
+        require __DIR__.'/ads-autopilot-admin.php';
 
         // Growth & Marketing → Free gifts (Lane FG): spend ranges, their gifts,
         // the gift-only flag, display and texts. freegifts.view / freegifts.manage.

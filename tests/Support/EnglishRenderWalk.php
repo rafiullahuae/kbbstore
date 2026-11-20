@@ -1176,6 +1176,13 @@ final class EnglishRenderWalk
             // Lane MP: the Meta and TikTok catalog feeds, the same builder as Google's.
             'feeds/meta-catalog.xml' => $file,
             'feeds/tiktok-catalog.xml' => $file,
+            // KBB Ads Autopilot's read-only shop API (Lane AP-API): bearer-key JSON for
+            // the owner's Mac app, stateless, never a shopper page.
+            'autopilot-api/v1/ping' => $json,
+            'autopilot-api/v1/orders' => $json,
+            'autopilot-api/v1/orders/daily' => $json,
+            'autopilot-api/v1/refunds' => $json,
+            'autopilot-api/v1/products' => $json,
             // Apple's domain-association document (Lane WAL). Machine-facing in
             // the strictest sense: Apple's own fetcher reads it to verify this
             // domain, and Apple Pay draws no sheet until it has. Both spellings

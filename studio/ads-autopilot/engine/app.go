@@ -207,7 +207,7 @@ func (a *App) wire() {
 		feed = a.testFeedURL
 	}
 	a.mu.Lock()
-	a.meta, a.claude, a.shopSrc = mc, cc, shop.NewFeed(feed)
+	a.meta, a.claude, a.shopSrc = mc, cc, shop.New(feed, func() string { v, _ := a.sec.Get("shop_token"); return v })
 	if a.brain == nil {
 		a.brain = newBrain(model.BrainDeps{LLM: cc, Log: func(k, s string, d any) { a.st.Append(k, s, d) }, DataDir: a.st.Dir})
 	}

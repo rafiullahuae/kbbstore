@@ -25592,6 +25592,7 @@ var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 {{-- Store -> Quiqup (settings, modes, Go-Live gate) and the Orders list's Schedule with Quiqup sheet + Delivery card. Order matters: quiqup-orders uses quiqup-screen's helpers. (Lane QQB) --}}
 @include('admin.partials.quiqup-screen')
 @include('admin.partials.quiqup-orders')
+@include('admin.partials.ads-autopilot-screen')
 
 @verbatim
 <script>
