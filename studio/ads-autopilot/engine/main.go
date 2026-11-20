@@ -11,6 +11,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -19,6 +20,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
 	"log"
 	"mime"
@@ -223,6 +227,27 @@ var mockURL, mockClaudeURL string
 var MockAccounts = [][2]string{{"act_1000000001", "K-Beauty Bliss UAE"}, {"act_1000000002", "KBB Wholesale"}, {"act_1000000003", "KBB Saudi test"}}
 
 var mockOffset atomic.Int64 // -mock only: how far the clock has been moved (ns)
+
+var mockPhoto = sync.OnceValue(func() []byte { // -mock: a plain product-photo stand-in (a pink bottle on cream), 800×800
+	const n = 800
+	im := image.NewNRGBA(image.Rect(0, 0, n, n))
+	for y := 0; y < n; y++ {
+		for x := 0; x < n; x++ {
+			c := color.NRGBA{250, 244, 240, 255}
+			dx := float64(x - n/2)
+			switch {
+			case y > 300 && y < 700 && dx*dx < 150*150:
+				c = color.NRGBA{233, 170, 190, 255} // the bottle
+			case y > 220 && y <= 300 && dx*dx < 60*60:
+				c = color.NRGBA{60, 52, 58, 255} // its cap
+			}
+			im.SetNRGBA(x, y, c)
+		}
+	}
+	var b bytes.Buffer
+	_ = png.Encode(&b, im)
+	return b.Bytes()
+})
 
 func mockNow() time.Time { return time.Now().Add(time.Duration(mockOffset.Load())) }
 

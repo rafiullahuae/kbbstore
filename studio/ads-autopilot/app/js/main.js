@@ -93,7 +93,7 @@ function go() {
 function counts() {
   const st = S.state;
   const vids = S.cache.get(`${getAccount()}|videos`);
-  return { campaigns: st ? st.tree.length : '', videos: vids ? vids.length : '', approvals: st && st.autopilot.mode !== 'auto' ? st.proposals.length : '' };
+  return { campaigns: st ? st.tree.length : '', videos: vids ? vids.length : '', approvals: st && st.autopilot.mode !== 'auto' ? (st.pending || st.proposals).length : '' };
 }
 function paintNav() {
   const c = counts();

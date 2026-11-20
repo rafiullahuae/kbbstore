@@ -1,6 +1,6 @@
 import { tt } from '../i18n.js';
 import { esc, toast, empty, tip, txt } from '../ui.js';
-import { api, getAccount } from '../api.js';
+import { api, getAccount, hydrate, img } from '../api.js';
 import { dropList, S as STORE } from '../main.js';
 import { renderSpec, TEMPLATES, toPNG } from '../creative/render.js';
 import { recordMotion } from '../creative/motion.js';
@@ -34,9 +34,10 @@ function images(S, v, designs, lib) {
     <button type="button" id="gen" style="align-self:flex-end" ${busy ? 'disabled' : ''}>${esc(busy ? tt('Working…', 'جارٍ العمل…') : tt('Create', 'إنشاء'))}</button></div></div>
   ${ds.length || plain.length ? `<div class="lib">${ds.map((d) => `<div class="cr" data-d="${esc(d.id)}" tabindex="0" role="button"><div class="media" data-thumb="${esc(d.id)}">${thumbs.has(d.id) ? `<img src="${thumbs.get(d.id)}" alt="">` : '<div class="sk" style="height:100%"></div>'}<span class="tag">${esc((d.lang || '').toUpperCase())} · ${esc((d.formats || ['1:1']).join(' / '))}</span></div>
     <div class="meta"><b>${txt(d.headline)}</b><div class="row"><span class="chip">${esc(tt(...(TPL[d.template] || [d.template, d.template])))}</span><span class="chip">${esc(d.angle || '')}</span></div></div></div>`).join('')}
-    ${plain.map((c) => `<div class="cr"><div class="media" style="display:grid;place-items:center;padding:16px;text-align:center"><span>${txt(c.headline)}</span><span class="tag">${esc((c.lang || '').toUpperCase())} · ${esc(c.format || '')}</span></div><div class="meta"><span class="muted">${txt(c.primary_text || '')}</span></div></div>`).join('')}</div>`
+    ${plain.map((c) => `<div class="cr"><div class="media" ${c.media === 'png' || c.image_url ? '' : 'style="display:grid;place-items:center;padding:16px;text-align:center"'}>${libMedia(c)}<span class="tag">${esc((c.lang || '').toUpperCase())} · ${esc(c.media === 'mp4' ? tt('video', 'فيديو') : c.format || '')}${c.used ? ' · ' + esc(tt('live', 'منشور')) : ''}</span></div><div class="meta"><b>${txt(c.headline)}</b><span class="muted">${txt(c.primary_text || '')}</span></div></div>`).join('')}</div>`
     : `<div class="card">${empty(tt('No creatives yet', 'لا توجد إعلانات بعد'), tt('Create one above, or let the autopilot make them on the weekly batch day.', 'أنشئي إعلاناً أعلاه أو اتركي الطيار الآلي ينشئها في يوم الدفعة الأسبوعي.'))}</div>`}`;
   fill(v, ds);
+  hydrate(v); // the library's real pictures (GET /api/creatives/{id}/file, token in the header)
   v.querySelectorAll('[data-d]').forEach((n) => { n.onclick = () => preview(designs.find((d) => d.id === n.dataset.d)); n.onkeydown = (e) => { if (e.key === 'Enter') n.click(); }; });
   v.querySelector('#gen').onclick = async () => {
     const pid = v.querySelector('#g-p').value.trim();
@@ -51,6 +52,13 @@ function images(S, v, designs, lib) {
     dropList('designs', 'creatives');
     if (still()) { await load(STORE); render(STORE, document.getElementById('view')); }
   };
+}
+
+// libMedia: a stored creative as it really is: its PNG from the engine, the shop photo a starter ad uses, or its text.
+function libMedia(c) {
+  if (c.media === 'png') return `<img data-src="/api/creatives/${encodeURIComponent(c.id)}/file" alt="${esc(c.headline || '')}" loading="lazy">`;
+  if (!c.media && /^https:\/\/kbeautybliss\.com\//.test(c.image_url || '')) return `<img data-src="${esc(img(c.image_url))}" alt="${esc(c.headline || '')}" loading="lazy">`;
+  return `<span>${txt(c.headline)}</span>`;
 }
 
 export async function postDesigns(designs, source) {

@@ -81,8 +81,17 @@ func claudeAnswer(body map[string]any) (map[string]any, string) {
 	switch {
 	case props["proposals"] != nil:
 		return respond(fixPlan), "plan"
-	case props["sets"] != nil:
-		return respond(fixCopy), "copy"
+	case props["sets"] != nil: // the product's brand in the headline, so each product's pair is its own
+		msgs, _ := json.Marshal(body["messages"])
+		fix := fixCopy
+		for _, b := range []string{"Beauty of Joseon", "COSRX", "Anua"} {
+			if strings.Contains(string(msgs), b) {
+				fix = strings.Replace(strings.Replace(fix, `"headline":"روتين كوري أصيل"`, `"headline":"`+b+` الأصلي من كوريا"`, 1),
+					`"headline":"An authentic K-beauty routine"`, `"headline":"Authentic `+b+` from Korea"`, 1)
+				break
+			}
+		}
+		return respond(fix), "copy"
 	case props["notes"] != nil:
 		return respond(fixNotes), "research-notes"
 	case props["items"] != nil:

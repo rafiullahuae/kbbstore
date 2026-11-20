@@ -29,6 +29,12 @@ func (s *server) brainExtra(w http.ResponseWriter, r *http.Request, p string) bo
 	if !strings.HasPrefix(p, "/api/brain/x/") {
 		return false
 	}
+	if p == "/api/brain/x/img" && mockURL != "" { // -mock: the fake feed's photos do not exist; never fetch the shop
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "private, max-age=3600")
+		_, _ = w.Write(mockPhoto())
+		return true
+	}
 	a := s.app
 	a.mu.RLock()
 	eb, ok := a.brain.(*brain.Engine)
