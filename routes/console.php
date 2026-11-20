@@ -319,3 +319,17 @@ Schedule::command('kbb:quiqup-sync')
     ->everyMinute()
     ->withoutOverlapping(5)
     ->runInBackground();
+
+/*
+| ── META CONVERSIONS API RETRIES (Lane AP-API) ──────────────────────────────
+|
+| A Meta Purchase / OrderRefunded / OrderCancelled that failed for a reason
+| worth retrying (no answer, 429, 5xx, refused token) is kept encrypted in
+| marketing_capi_retries and re-sent from here: 5 min .. 12 h after the first
+| try, never past 47 h (Meta dedups a browser/server pair only within 48 h).
+| One indexed read a minute when nothing is due. Growth & Marketing -> Ads
+| Autopilot -> Measurement switches it off.
+*/
+Schedule::command('kbb:capi-retry')
+    ->everyMinute()
+    ->withoutOverlapping(5);

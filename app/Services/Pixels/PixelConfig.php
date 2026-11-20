@@ -64,10 +64,16 @@ final class PixelConfig
         'tiktok_eapi' => ['/^[01]$/', 'Send TikTok server events'],
         // 2.60.463: '' and 'late' fetch the pixel files after the page loads (Analytics::LATE); 'now' is the old head tags.
         'load_scripts' => ['/^(late|now)$/', 'When the tracking scripts load'],
+        // Lane AP-API (Growth & Marketing -> Ads Autopilot -> Measurement). '' reads as the
+        // default: PlatformClient::GRAPH_VERSION, and the three switches below ON.
+        'meta_graph_version' => ['/^v(25|26|27)\.0$/', 'Meta Graph API version'],
+        'meta_refund_events' => ['/^[01]$/', 'Send refunds and cancellations to Meta'],
+        'meta_capi_retry' => ['/^[01]$/', 'Retry Meta server events that failed'],
+        'meta_purchase_onhold' => ['/^[01]$/', 'Send Purchase when an order is put On hold'],
     ];
 
     /** Switches that read as ON when never set: a pasted token means "use it". */
-    private const DEFAULT_ON = ['meta_capi', 'ga4_mp', 'tiktok_eapi'];
+    private const DEFAULT_ON = ['meta_capi', 'ga4_mp', 'tiktok_eapi', 'meta_refund_events', 'meta_capi_retry', 'meta_purchase_onhold'];
 
     /**
      * The two verification codes live in the main `settings` map, not the

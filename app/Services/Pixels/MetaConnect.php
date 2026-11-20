@@ -99,7 +99,7 @@ final class MetaConnect
         $state = bin2hex(random_bytes(20));
         $request->session()->put(self::STATE_KEY, ['value' => $state, 'at' => time()]);
 
-        return ['ok' => true, 'url' => 'https://www.facebook.com/' . PlatformClient::GRAPH_VERSION . '/dialog/oauth?' . http_build_query([
+        return ['ok' => true, 'url' => 'https://www.facebook.com/' . PlatformClient::graphVersion() . '/dialog/oauth?' . http_build_query([
             'client_id' => $appId,
             'redirect_uri' => self::redirectUri(),
             'state' => $state,

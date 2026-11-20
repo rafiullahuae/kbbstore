@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Refund;
 use App\Services\Pixels\ServerEvents;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,10 @@ use Illuminate\Support\ServiceProvider;
  *   2. An order reaching a placed status — at creation or on any later status
  *      move — sends Purchase, after the transaction commits.
  *   3. A successful add-to-cart request sends AddToCart.
+ *   4. (Lane AP-API) A placed order moving to cancelled/failed sends Meta
+ *      OrderCancelled; a refund row reaching `succeeded` sends OrderRefunded.
+ *      Both after commit, both claimed once. Hooked off the models, so no
+ *      payment code changes (CLAUDE.md, payments freeze).
  */
 final class MarketingPixelsServiceProvider extends ServiceProvider
 {
@@ -51,7 +56,8 @@ final class MarketingPixelsServiceProvider extends ServiceProvider
                     app(ServerEvents::class)->captureContext($order, $request);
                 }
 
-                if (in_array((string) $order->status, ServerEvents::PLACED, true)) {
+                if (in_array((string) $order->status, ServerEvents::PLACED, true)
+                    && in_array((string) $order->status, app(ServerEvents::class)->placedStatuses(), true)) {
                     self::afterCommit(static fn () => app(ServerEvents::class)->purchase($order));
                 }
             } catch (\Throwable) {
@@ -65,9 +71,25 @@ final class MarketingPixelsServiceProvider extends ServiceProvider
                 }
 
                 $from = (string) $order->getOriginal('status');
+                $to = (string) $order->status;
+                $placed = app(ServerEvents::class)->placedStatuses();
 
-                if (! in_array($from, ServerEvents::PLACED, true) && in_array((string) $order->status, ServerEvents::PLACED, true)) {
+                if (! in_array($from, $placed, true) && in_array($to, $placed, true)) {
                     self::afterCommit(static fn () => app(ServerEvents::class)->purchase($order));
+                }
+
+                if (in_array($from, ServerEvents::PLACED, true) && in_array($to, ServerEvents::CANCELLED, true)) {
+                    self::afterCommit(static fn () => app(ServerEvents::class)->cancellation($order));
+                }
+            } catch (\Throwable) {
+            }
+        });
+
+        Refund::saved(static function (Refund $refund): void {
+            try {
+                // A row created with no status takes the column's default, 'succeeded'.
+                if ((string) ($refund->status ?? 'succeeded') === 'succeeded' && ($refund->wasRecentlyCreated || $refund->wasChanged('status'))) {
+                    self::afterCommit(static fn () => app(ServerEvents::class)->refund($refund));
                 }
             } catch (\Throwable) {
             }

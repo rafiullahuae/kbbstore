@@ -203,6 +203,19 @@ it('keeps a product\'s low-stock line and back-order flag off the public product
         ->and($this->getJson('/api/products/stocked-serum')->assertOk()->getContent())->not->toContain('low_stock_amount')->not->toContain('backorders');
 });
 
+it('keeps a product\'s cost price off the public product api', function () {
+    /*
+     * Lane AP-API added products.cost_price -- what the shop pays for a
+     * product, i.e. its margin, read only by the authenticated Ads Autopilot
+     * API. MUTATION: add 'cost_price' to Product::toApi(), or delete
+     * Product::$hidden and serialise a model anywhere public -> red.
+     */
+    product(['slug' => 'costed-serum', 'name' => 'Costed Serum', 'cost_price' => 4321]);
+
+    expect($this->getJson('/api/products')->assertOk()->getContent())->toContain('Costed Serum')->not->toContain('cost_price')->not->toContain('4321')->not->toContain('43.21')
+        ->and($this->getJson('/api/products/costed-serum')->assertOk()->getContent())->not->toContain('cost_price')->not->toContain('43.21');
+});
+
 it('keeps a product\'s own "You may also like" picks off the public product api', function () {
     /*
      * Lane PS added `products.also_like` — one product's hand-picked companions

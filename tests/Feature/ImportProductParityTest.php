@@ -780,12 +780,21 @@ it('adds no column to products, so the public API allowlist is unchanged', funct
      * per-product low-stock line and "keep selling at zero". DECIDED FIRST:
      * NOT in Product::toApi() -- stock thresholds are back-office. ApiSecurityTest
      * "keeps a product's low-stock line and back-order flag off the public product api".
+     *
+     * ── AND AN EIGHTH (Lane AP-API) ────────────────────────────────────────
+     *
+     * `cost_price`, by 2028_02_20_100000_create_ads_autopilot_api: what the shop
+     * pays for a product (fils, optional), for the Ads Autopilot to judge ads on
+     * margin. DECIDED FIRST: NOT in Product::toApi(), and in Product::$hidden so
+     * no toArray() anywhere carries it -- it is the shop's margin. Only the
+     * authenticated /autopilot-api/v1/products reads it. ApiSecurityTest "keeps
+     * a product's cost price off the public product api".
      */
     $columns = Schema::getColumnListing('products');
     sort($columns);
 
     expect($columns)->toBe([
-        'also_like', 'backorders', 'brand_id', 'brand_position', 'category_id', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
+        'also_like', 'backorders', 'brand_id', 'brand_position', 'category_id', 'cost_price', 'created_at', 'custom_tabs', 'deleted_at', 'description', 'featured',
         'gift_kind', 'gift_only', 'gtin', 'how_to_use', 'id', 'image', 'image_alts', 'images', 'ingredients', 'is_visible',
         'low_stock_amount', 'manage_stock', 'meta_feed', 'name', 'position', 'price', 'published_at', 'rating',
         'review_count', 'routine_concerns', 'routine_role', 'sale_ends_at', 'sale_price',

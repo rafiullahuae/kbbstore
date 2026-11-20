@@ -149,6 +149,12 @@ final class AdminCapabilities
         // again. Owner only, like the Payments screen it sits on.
         'codrefusals.view' => ['owner'],
         'codrefusals.manage' => ['owner'],
+        // Growth & Marketing -> Ads Autopilot (Lane AP-API). Connection keys
+        // that read the shop's orders and revenue, the Meta measurement
+        // switches and product cost prices. Owner only: a key is the whole
+        // sales ledger, and a cost price is the shop's margin.
+        'autopilot.view' => ['owner'],
+        'autopilot.manage' => ['owner'],
         // Store -> Quiqup and Schedule with Quiqup (Lane QQB, QUIQUP-PLAN §3.5).
         // `view` reads the screen, the sheet's preview and a shipment;
         // `ship` books, cancels, re-books and prints labels -- each one is a
@@ -2248,6 +2254,10 @@ final class AdminCapabilities
         // (Lane CODR) Refused deliveries. The GET reads; every other verb writes.
         ['GET', 'admin-api/cod-refusals', 'codrefusals.view'],
         ['*', 'admin-api/cod-refusals/**', 'codrefusals.manage'],
+        // (Lane AP-API) Ads Autopilot. GETs read; every other verb writes.
+        ['GET', 'admin-api/ads-autopilot', 'autopilot.view'],
+        ['GET', 'admin-api/ads-autopilot/**', 'autopilot.view'],
+        ['*', 'admin-api/ads-autopilot/**', 'autopilot.manage'],
         /*
          * Store -> SEO Keywords -- routes/seo-keywords-admin.php, Lane KW.
          * Reads first, then every other verb on the same prefix: the order is

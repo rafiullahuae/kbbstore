@@ -18,6 +18,13 @@ class Product extends Model
     protected $guarded = [];
 
     /**
+     * (Lane AP-API) What the shop pays for the product -- its margin. Read by
+     * the Autopilot API and Growth & Marketing -> Ads Autopilot only; hidden
+     * so no toArray()/JSON of a product anywhere can carry it out.
+     */
+    protected $hidden = ['cost_price'];
+
+    /**
      * Every write to this table drops App\Services\VariantPricing's snapshot.
      *
      * That class memoises the price range of EVERY variable, un-priced parent
