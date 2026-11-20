@@ -71,6 +71,7 @@ type server struct {
 	token      string
 	addr       string
 	app        *App
+	schedOn    atomic.Bool // the scheduler runs (not -no-scheduler): the page may ask for a warm-up
 	mu         sync.Mutex
 	clients    int
 	subs       map[chan []byte]bool
@@ -183,6 +184,7 @@ func main() {
 		}
 		<-s.healthGate
 		if !*noSched {
+			s.schedOn.Store(true)
 			s.sched.start(s.shutdown)
 		}
 	}()

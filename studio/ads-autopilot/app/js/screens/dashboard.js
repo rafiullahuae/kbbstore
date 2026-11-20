@@ -15,6 +15,12 @@ const HELP = {
   ctr: ['Link clicks ÷ impressions: how attractive the ads are.', 'النقرات ÷ مرات الظهور: جاذبية الإعلان.'],
 };
 const thumbs = new Map();
+// data age: numbers older than their schedule say so (the engine's warm-up is refreshing them), never stale silently
+const dataAge = (st) => {
+  const r = st.raw || {}, ls = r.last_sync, ns = r.next_sync;
+  if (!ls || String(ls).startsWith('0001') || !ns || String(ns).startsWith('0001') || Date.now() - Date.parse(ns) < 5 * 60e3) return '';
+  return `<span class="stale-age" id="data-age">${esc(tt('Numbers from', 'أرقام من'))} ${esc(ago(ls))}</span> · `;
+};
 
 export function render(S, el) {
   const st = S.state;
@@ -49,7 +55,7 @@ export function render(S, el) {
       <h2>${esc(live ? tt('Your ads are being looked after', 'إعلاناتك تحت الرعاية') : tt('Autopilot is off', 'الطيار الآلي متوقف'))}</h2>
       <p>${txt(doing)}</p>
       <div class="steps-pills">${steps.map(([, l, ok]) => `<span class="${ok ? 'done' : ''}">${ok ? '✓ ' : ''}${esc(l)}</span>`).join('')}</div>
-      <p class="small">${esc(tt('Next cycle', 'الدورة التالية'))}: ${esc(st.autopilot.next_cycle_at ? new Date(st.autopilot.next_cycle_at).toLocaleTimeString(getLang() === 'ar' ? 'ar-AE' : 'en-AE', { hour: '2-digit', minute: '2-digit' }) : tt('when the schedule runs', 'حسب الجدول'))} · ${esc(tt('planned by', 'خطّط له'))} ${esc(st.autopilot.model || '—')}</p>
+      <p class="small">${dataAge(st)}${esc(tt('Next cycle', 'الدورة التالية'))}: ${esc(st.autopilot.next_cycle_at ? new Date(st.autopilot.next_cycle_at).toLocaleTimeString(getLang() === 'ar' ? 'ar-AE' : 'en-AE', { hour: '2-digit', minute: '2-digit' }) : tt('when the schedule runs', 'حسب الجدول'))} · ${esc(tt('planned by', 'خطّط له'))} ${esc(st.autopilot.model || '—')}</p>
       <div class="row"><a href="#/plan"><button type="button" class="onhero solid">${esc(tt("Open today's plan", 'خطة اليوم'))}</button></a>
         <button type="button" class="onhero" id="why">${esc(tt('Ask Claude why', 'اسألي Claude لماذا'))}</button>
         <button type="button" class="onhero" id="rep">${esc(tt('Daily report AR/EN', 'التقرير اليومي ع/EN'))}</button>

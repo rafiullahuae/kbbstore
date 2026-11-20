@@ -43,7 +43,7 @@ export async function api(path, opts = {}) {
 // Server-sent events with automatic reconnect (EventSource does it itself).
 export function events(onEvent) {
   const es = new EventSource(`/api/events?t=${encodeURIComponent(token)}`);
-  for (const t of ['hello', 'heartbeat', 'connections', 'cycle.start', 'cycle.end', 'action.execution', 'action.safety', 'action.kill', 'action.alert', 'alert', 'metrics.updated', 'research.updated', 'backfill.progress', 'creation', 'render.request', 'update']) {
+  for (const t of ['hello', 'heartbeat', 'connections', 'cycle.start', 'cycle.end', 'action.execution', 'action.safety', 'action.kill', 'action.alert', 'alert', 'metrics.updated', 'research.updated', 'backfill.progress', 'creation', 'render.request', 'update', 'warmup']) {
     es.addEventListener(t, (ev) => { let d = {}; try { d = JSON.parse(ev.data || '{}'); } catch {} onEvent(t, d); });
   }
   es.onerror = () => onEvent('disconnected', {});

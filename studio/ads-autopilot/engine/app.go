@@ -116,6 +116,7 @@ type App struct {
 	testClaudeBase string
 	testFeedURL    string
 	noBackfill     bool        // Go tests that do not want the history import running in the background
+	warm           warmer      // the refresh on start / wake / page return (warmup.go)
 	updating       atomic.Bool // an update is being installed / checked: no sync or cycle starts (update_flow.go)
 }
 

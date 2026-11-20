@@ -16,20 +16,24 @@ type scheduler struct {
 	tick       time.Duration
 	attempt    map[string]time.Time // last sync attempt per account: a failing sync is retried every 5 min
 	tokenCheck time.Time
+	lastWall   time.Time     // onTick: the previous tick on the wall clock
+	lastMono   time.Duration // and on the monotonic clock
 }
 
 func newScheduler(a *App) *scheduler {
 	return &scheduler{a: a, tick: 30 * time.Second, attempt: map[string]time.Time{}}
 }
 
-func (s *scheduler) intervals() (time.Duration, time.Duration) {
-	s.a.mu.RLock()
-	defer s.a.mu.RUnlock()
-	syncEvery := time.Duration(s.a.cfg.SyncMinutes) * time.Minute
+func (s *scheduler) intervals() (time.Duration, time.Duration) { return s.a.intervals() }
+
+func (a *App) intervals() (time.Duration, time.Duration) {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	syncEvery := time.Duration(a.cfg.SyncMinutes) * time.Minute
 	if syncEvery < 15*time.Minute {
 		syncEvery = 15 * time.Minute
 	}
-	per := s.a.cfg.PlansPerDay
+	per := a.cfg.PlansPerDay
 	if per < 1 {
 		per = 1
 	}
@@ -48,8 +52,9 @@ func due(now, lastSync, lastCycle time.Time, syncEvery, cycleEvery time.Duration
 
 func (s *scheduler) start(stop <-chan struct{}) {
 	go func() {
-		last := time.Now()
-		s.step()
+		t0 := time.Now()
+		s.lastWall, s.lastMono = t0.Round(0), 0
+		s.a.warmUp(context.Background(), "start") // on open: everything fresh before the regular rhythm takes over
 		t := time.NewTicker(s.tick)
 		defer t.Stop()
 		for {
@@ -57,14 +62,24 @@ func (s *scheduler) start(stop <-chan struct{}) {
 			case <-stop:
 				return
 			case now := <-t.C:
-				if gap := now.Round(0).Sub(last.Round(0)); gap > 3*s.tick {
-					log.Printf("scheduler: woke after %s; catching up", gap.Round(time.Second))
-				}
-				last = now
-				s.step()
+				s.onTick(now.Round(0), now.Sub(t0)) // wall clock, and the monotonic clock (Sub of two monotonic times)
 			}
 		}
 	}()
+}
+
+// onTick: wall is the wall clock, mono the monotonic time since start. While a Mac sleeps the monotonic clock stops
+// and the wall clock does not, so a wall gap much larger than the monotonic gap (or a wall gap of several ticks: a
+// stalled process) is a wake: one warm-up runs instead of the step, catching up what fell due while away.
+func (s *scheduler) onTick(wall time.Time, mono time.Duration) {
+	wallGap, monoGap := wall.Sub(s.lastWall), mono-s.lastMono
+	s.lastWall, s.lastMono = wall, mono
+	if wallGap-monoGap > 2*s.tick || wallGap > 3*s.tick {
+		log.Printf("scheduler: woke after %s; refreshing", wallGap.Round(time.Second))
+		go s.a.warmUp(context.Background(), "wake")
+		return
+	}
+	s.step()
 }
 
 func (s *scheduler) step() {
@@ -84,6 +99,9 @@ func (s *scheduler) step() {
 				a.mu.Unlock()
 			}
 		}()
+	}
+	if a.warm.running.Load() { // a warm-up does this tick's work, in order
+		return
 	}
 	if !a.metaOK() || a.updating.Load() { // paused while an update installs
 		return
