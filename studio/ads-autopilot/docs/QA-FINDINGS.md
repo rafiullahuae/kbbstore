@@ -45,6 +45,8 @@ creatives and history all still there).
 
 ## For the STRATEGY lane (not edited here)
 
+**Fixed by the strategy lane (20 Nov 2026), each with a test:** 1 (an unreadable creative stops the ad: starter, jobs), 2 (`load` keeps `<name>.json.unreadable-<time>` + alert; `save` fsyncs and alerts on any failure — `TestUnreadableBrainFileIsKept`), 3 (trending failure logged), 4 (`(*brain.Engine).Refresh` + `(*Acct).Refresh`, called by the warm-up when no cycle is due — `TestRefreshPreparesOccasionsWithoutACycle`), 5 (the fake Veo may answer "done" at start: accepted; 15/15 runs green), 6 (`BrainDeps.Redact` → every app and account log — `TestGeneratorKeysAreRedacted`).
+
 1. **`engine/starter.go:339`** `cr, _, _ := ac.creatives.Get(crID)` ignores the error. If the creative cannot be read
    back, the upload proposal goes out with an empty headline and primary text. Expected: return the error from `addAd`
    so the starter reports "skipped: <why>" in Activity.
