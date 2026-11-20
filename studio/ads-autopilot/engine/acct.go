@@ -56,6 +56,8 @@ type Acct struct {
 	stateJSON []byte
 	linkState map[string]linkCheck
 	backfill  BackfillState
+	pending   PendingSet   // the last cycle's proposals and what became of each (Approvals)
+	starter   StarterState // the first launch (starter.go)
 
 	work        sync.Mutex // sync / cycle / kill on this account: one at a time
 	cycleCancel context.CancelFunc
@@ -93,6 +95,8 @@ func openAcct(a *App, id string) (*Acct, error) {
 	_ = st.Load("report", &ac.report)
 	_ = st.Load("alerts", &ac.alerts)
 	_ = st.Load("history/state", &ac.backfill)
+	_ = st.Load("proposals", &ac.pending)
+	_ = st.Load("starter", &ac.starter)
 	var ls struct{ LastCycle time.Time }
 	_ = st.Load("cycle", &ls)
 	ac.lastCycle = ls.LastCycle
@@ -126,8 +130,9 @@ func (ac *Acct) wire() {
 	_ = ac.st.Load("safety", &ss)
 	sn.State = &ss
 	ex := &executor.Executor{Meta: mc, Act: act, Ledger: ac.ledger, Creatives: ac.creatives, Log: ac.logf,
-		Links:   func() model.AccountLinks { ac.mu.RLock(); defer ac.mu.RUnlock(); return ac.settings.Links },
-		Persist: func(l *executor.Ledger) { _ = ac.st.Save("ledger", l.Snapshot()) },
+		Links:     func() model.AccountLinks { ac.mu.RLock(); defer ac.mu.RUnlock(); return ac.settings.Links },
+		Persist:   func(l *executor.Ledger) { _ = ac.st.Save("ledger", l.Snapshot()) },
+		VideoFile: a.videoFile,
 		Safety: func(ctx context.Context) error { // after any write: re-read Meta, then size the net to what now runs
 			if err := ac.Sync(ctx); err != nil {
 				ac.alertOnce("Sync after changes failed: " + err.Error())
@@ -150,6 +155,17 @@ func (ac *Acct) Settings() AcctSettings {
 	ac.mu.RLock()
 	defer ac.mu.RUnlock()
 	return ac.settings
+}
+
+// accountRef: the account as last read, with its id even before the first sync. The brain keys its own files by
+// that id: a plan made before the first sync was stored under "" and the screens, reading after a sync, saw none.
+// Caller holds ac.mu (read).
+func (ac *Acct) accountRef() model.Account {
+	acc := ac.account
+	if acc.ID == "" {
+		acc.ID = ac.id
+	}
+	return acc
 }
 
 func (ac *Acct) saveSettings() {
@@ -439,24 +455,16 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 	}
 	a.mu.RLock()
 	shopSnap, research, learnings, br := a.shopSnap, a.research, a.learnings, a.brain
-	globalD, globalM := a.cfg.GlobalDailyAED, a.cfg.GlobalMonthlyAED
-	usage := a.meta.Usage()
 	a.mu.RUnlock()
 	ac.mu.RLock()
 	st := ac.settings
-	in := model.CycleInput{Now: a.now(), Limits: st.Limits, Account: ac.account, Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: st.Links, Learnings: learnings}
+	in := model.CycleInput{Now: a.now(), Limits: st.Limits, Account: ac.accountRef(), Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: st.Links, Learnings: learnings}
 	ex := ac.exec
 	ac.mu.RUnlock()
 	in.Metrics = ac.metricRows()
 	in.Creatives = ac.creatives.all()
 	in.History = ac.st.Recent(200, "execution", "check", "cycle", "kill", "alert", "safety")
 	in.LongHistory, in.Creatives37 = ac.longHistory()
-	effective := st.Limits
-	if !st.Automated {
-		effective.Autopilot = model.AutopilotOff // a read-only account: the brain may plan, nothing is executed
-	} else if mode != model.AutopilotAuto && effective.Autopilot == model.AutopilotAuto {
-		effective.Autopilot = model.AutopilotShadow // a shadow cycle never writes, whatever the setting
-	}
 	co, err := br.Cycle(ctx, in)
 	if err != nil {
 		ac.alert("error", "The planner failed: "+err.Error()+" (nothing was changed)")
@@ -465,16 +473,24 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		return out, err
 	}
 	ac.st.Append("cycle", fmt.Sprintf("plan: %d proposals", len(co.Proposals)), co)
-	oc, om := ac.others()
-	env := executor.Env{Now: a.now(), Limits: effective, Tree: in.Tree, MonthSpendAED: ac.monthSpend(), Ledger: ac.ledger, Usage: usage, Loc: ac.loc(),
-		Links: st.Links, GlobalDailyAED: globalD, GlobalMonthlyAED: globalM, OtherCommitted: oc, OtherMonthProjected: om}
-	if l, ok := br.(interface{ Lint(model.Proposal) []string }); ok {
-		env.Lint = func(p model.Proposal) []string { return append(executor.BuiltinLint(p), l.Lint(p)...) }
+	// a shadow cycle never writes, whatever the setting; an auto cycle writes only when the account is set to auto
+	cycleMode := model.AutopilotShadow
+	if mode == model.AutopilotAuto && st.Limits.Autopilot == model.AutopilotAuto {
+		cycleMode = model.AutopilotAuto
+	}
+	env := ac.env(cycleMode)
+	// the first launch does not wait for the weekly batch day (starter.go)
+	sp, stWhy := ac.starterPlan(ctx, in, co.Proposals, env)
+	if len(sp) > 0 {
+		co.Proposals = append(dropCreates(co.Proposals), sp...)
+		out["starter"] = map[string]any{"proposals": len(sp), "why": stWhy, "mode": env.Limits.Autopilot}
 	}
 	var results []executor.Result
 	if len(co.Proposals) > 0 {
 		results = ex.Run(ctx, env, co.Proposals)
 	}
+	ac.keepProposals(t0, env.Limits.Autopilot, co.Proposals, results)
+	ac.noteStarter(co.Proposals, results, env.Limits.Autopilot, stWhy)
 	counts := map[string]int{}
 	for _, r := range results {
 		counts[r.Status]++
@@ -700,7 +716,15 @@ func (ac *Acct) stateBytes() []byte {
 		"shop":            shopInfo,
 		"research_at":     researchAt,
 		"claude_usage":    usage,
+		"starter":         ac.starter,
 	}
+	nWait := 0
+	for _, it := range ac.pending.Items {
+		if waiting(it.Status) {
+			nWait++
+		}
+	}
+	st["proposals_waiting"] = nWait
 	if ac.safety != nil && ac.safety.State != nil {
 		st["safety"] = ac.safety.State.LastReport
 	}

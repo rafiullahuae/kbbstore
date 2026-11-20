@@ -93,7 +93,7 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 			req.ProductIDs = req.ProductIDs[:3]
 		}
 		req.Template = oneOf(req.Template, templateIDs, "")
-		req.Wording = e.settings(acct).AdWording
+		req.Wording = Wording(input().Limits, e.settings(acct))
 		res, err := e.B.Copy(ctx, req, shopFromModel(input().Shop), e.richResearch())
 		if err != nil {
 			bad(502, err.Error())
@@ -208,7 +208,7 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 				bad(400, "bad JSON")
 				return
 			}
-			in.ID, in.Name, in.Wording = v.ID, v.Name, e.settings(acct).AdWording
+			in.ID, in.Name, in.Wording = v.ID, v.Name, Wording(input().Limits, e.settings(acct))
 			if len(in.Frames) > 0 {
 				if b, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(in.Frames[0].JPEG, "data:image/jpeg;base64,")); err == nil && len(b) < 512<<10 {
 					_ = os.WriteFile(thumb, b, 0o600)

@@ -221,7 +221,7 @@ const since = (n) => dstr(now.getTime() - n * DAY);
 const totals = (A) => A.metrics.filter((r) => r.level === 'campaign');
 function kpis(A) { const c = totals(A); return { today: agg(c.filter((r) => r.date === today)), '7d': agg(c.filter((r) => r.date >= since(7))), '30d': agg(c.filter((r) => r.date >= since(30))) }; }
 const limitsSet = (A) => A.cfg.limits.daily_aed > 0 && A.cfg.limits.monthly_aed > 0;
-function engineLimits(A) { const L = A.cfg.limits; return { daily_aed: L.daily_aed, monthly_aed: L.monthly_aed, max_budget_step_pct: L.max_budget_step_pct, cooldown_hours: L.cooldown_hours, max_active_ads: L.max_active_ads, countries: L.countries, autopilot: L.autopilot, target_cpa_aed: L.target_cpa_aed || 0, kill_multiple: L.kill_multiple || 3 }; }
+function engineLimits(A) { const L = A.cfg.limits; return { daily_aed: L.daily_aed, monthly_aed: L.monthly_aed, max_budget_step_pct: L.max_budget_step_pct, cooldown_hours: L.cooldown_hours, max_active_ads: L.max_active_ads, countries: L.countries, autopilot: L.autopilot, target_cpa_aed: L.target_cpa_aed || 0, kill_multiple: L.kill_multiple || 3, wording: L.wording || '' }; }
 function alertsOf(A) {
   const out = [];
   if (!limitsSet(A)) out.push({ at: now.toISOString(), level: 'warn', text: 'No limits set: the autopilot cannot launch anything in this account.' });
@@ -357,7 +357,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET') return json(res, 200, engineLimits(A));
     const b = await body(req);
     if (!b) return json(res, 400, { error: 'bad JSON' });
-    const allowed = ['daily_aed', 'monthly_aed', 'max_budget_step_pct', 'cooldown_hours', 'max_active_ads', 'countries', 'autopilot', 'target_cpa_aed', 'kill_multiple'];
+    const allowed = ['daily_aed', 'monthly_aed', 'max_budget_step_pct', 'cooldown_hours', 'max_active_ads', 'countries', 'autopilot', 'target_cpa_aed', 'kill_multiple', 'wording'];
     const unknown = Object.keys(b).filter((k) => !allowed.includes(k));
     if (unknown.length) return json(res, 400, { error: `bad JSON: json: unknown field "${unknown[0]}"` }); // the engine refuses unknown fields
     const n = Object.assign({}, A.cfg.limits, b);
@@ -391,6 +391,32 @@ const server = http.createServer(async (req, res) => {
     A.creatives.push({ id, lang: b.lang, format: b.format, headline: b.headline || '', primary_text: b.primary_text || '', cta: b.cta || 'SHOP_NOW', link: b.link, product_ids: b.product_ids || [], angle: b.angle || '', source: b.source || 'brain', created_at: new Date().toISOString(), media: b.video ? 'mp4' : 'png' });
     addLog(A, 'config', id, `creative added: ${id} (${b.lang} ${b.format}, ${b.source || 'brain'}, ${Math.round(buf.length / 1024)} KB)`, 'saved');
     return json(res, 200, A.creatives[A.creatives.length - 1]);
+  }
+  // the engine's per-proposal approvals (proposals.go): the last plan's proposals with what became of each
+  if (p === '/api/proposals' && req.method === 'GET') {
+    const auto = A.cfg.limits.autopilot === 'auto';
+    A.decided = A.decided || {};
+    const items = (A.brain ? A.brain.proposals : []).map((q) => { const pr = Object.assign({}, q.params); if (pr.daily_budget_aed != null) { pr.daily_budget = pr.daily_budget_aed; delete pr.daily_budget_aed; }
+      return { id: q.id, kind: q.kind, target: String(q.target || '').replace(/^new:/, 'tmp:'), params: pr, why: q.why, confidence: q.confidence, evidence: q.evidence || [], status: A.decided[q.id] || (auto ? 'done' : 'shadow'), by: A.decided[q.id] ? 'owner' : 'cycle' }; });
+    return json(res, 200, { cycle_at: now.toISOString(), mode: auto ? 'auto' : 'shadow', proposals: items });
+  }
+  const pm = /^\/api\/proposals\/([A-Za-z0-9:._-]+)\/(approve|reject)$/.exec(p);
+  if (pm && req.method === 'POST') {
+    A.decided = A.decided || {};
+    const q = (A.brain ? A.brain.proposals : []).find((x) => x.id === pm[1]);
+    if (!q) return json(res, 404, { error: 'no proposal ' + pm[1] + ' in the last plan' });
+    if (A.decided[q.id]) return json(res, 409, { error: 'this proposal is not waiting for a decision (it is ' + A.decided[q.id] + ')' });
+    A.decided[q.id] = pm[2] === 'approve' ? 'done' : 'rejected';
+    addLog(A, 'approval', q.target, 'owner ' + (pm[2] === 'approve' ? 'approved ' : 'said not now to ') + q.kind + ' ' + q.target, A.decided[q.id]);
+    return json(res, 200, pm[2] === 'approve' ? { account: A.cfg.id, id: q.id, ran: 1, counts: { done: 1 }, results: [] } : { account: A.cfg.id, id: q.id, status: 'rejected' });
+  }
+  const cf = /^\/api\/creatives\/([a-z0-9][a-z0-9_-]{2,63})\/file$/.exec(p);
+  if (cf && req.method === 'GET') {
+    const c = A.creatives.find((x) => x.id === cf[1]);
+    const f = c && path.join(TMP, 'creatives', c.id + (c.media === 'mp4' ? '.media' : '.png'));
+    if (!c || !fs.existsSync(f)) return json(res, 404, { error: 'this creative has no stored picture or video' });
+    res.writeHead(200, { 'content-type': c.media === 'mp4' ? 'video/mp4' : 'image/png', 'cache-control': 'private, max-age=86400' });
+    return res.end(fs.readFileSync(f));
   }
   if (p === '/api/brain/plan' && req.method === 'POST') { runBrain(A); return json(res, 200, { plan: A.brain.plan, proposals: A.brain.proposals, report: A.brain.report }); }
   // ---- the brain's own routes (/api/brain/x/), as engine/brain/httpx.go serves them ----

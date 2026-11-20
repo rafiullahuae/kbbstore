@@ -187,6 +187,15 @@ var RuploadBase = "https://rupload.facebook.com/video-ads-upload"
 // resumed from status.uploading_phase.bytes_transferred after a drop) → upload_phase=finish → poll status until
 // video_status "ready" (processing makes the thumbnails). Returns the video id.
 func (c *Client) UploadVideoResumable(ctx context.Context, act string, data []byte, waitReady time.Duration) (string, error) {
+	return c.UploadVideoReader(ctx, act, bytes.NewReader(data), int64(len(data)), waitReady)
+}
+
+// UploadVideoReader: the same resumable upload, read from r (an open file of the owner's video in the data folder),
+// so a long video is streamed from disk rather than held in memory.
+func (c *Client) UploadVideoReader(ctx context.Context, act string, r io.ReaderAt, size int64, waitReady time.Duration) (string, error) {
+	if size <= 0 {
+		return "", fmt.Errorf("the video is empty")
+	}
 	var st struct {
 		VideoID   string `json:"video_id"`
 		UploadURL string `json:"upload_url"`
@@ -207,13 +216,17 @@ func (c *Client) UploadVideoResumable(ctx context.Context, act string, data []by
 			}
 			_ = c.sleep(ctx, time.Duration(2<<attempt)*time.Second)
 		}
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, up, bytes.NewReader(data[offset:]))
+		if offset < 0 || offset > size {
+			offset = 0
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, up, io.NewSectionReader(r, offset, size-offset))
 		if err != nil {
 			return "", err
 		}
+		req.ContentLength = size - offset
 		req.Header.Set("Authorization", "OAuth "+c.Token())
 		req.Header.Set("offset", strconv.FormatInt(offset, 10))
-		req.Header.Set("file_size", strconv.Itoa(len(data)))
+		req.Header.Set("file_size", strconv.FormatInt(size, 10))
 		resp, err := c.HTTP.Do(req)
 		if err != nil {
 			continue

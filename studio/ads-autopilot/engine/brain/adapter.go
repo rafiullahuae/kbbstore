@@ -89,6 +89,19 @@ func (e *Engine) settings(acct string) AccountSettings {
 	return s
 }
 
+// Wording: the owner's ad-wording rule. The engine's /api/limits (Limits.Wording) is the source; the brain's own
+// settings file is kept only as the fallback for an account whose limits do not carry it yet.
+func Wording(l model.Limits, st AccountSettings) string {
+	switch l.Wording {
+	case Strict, Balanced, Relaxed:
+		return l.Wording
+	}
+	return st.AdWording
+}
+
+// TrendingProductIDs: the shop's products that are trending now (the engine's first launch picks them first).
+func (e *Engine) TrendingProductIDs() []string { return e.trending().Selling }
+
 // ---------- model.Brain ----------
 
 func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOutput, error) {
@@ -232,6 +245,7 @@ func parseT(s string) time.Time {
 func (e *Engine) FromModel(in model.CycleInput) CycleInput {
 	acct := in.Account.ID
 	st := e.settings(acct)
+	st.AdWording = Wording(in.Limits, st)
 	out := CycleInput{Now: in.Now, Account: Account{ID: acct, Name: in.Account.Name, Currency: in.Account.Currency, Timezone: in.Account.Timezone, SpendCapAED: in.Account.SpendCapAED},
 		Limits: Limits{DailyAED: in.Limits.DailyAED, MonthlyAED: in.Limits.MonthlyAED, MaxBudgetStepPct: in.Limits.MaxBudgetStepPct, CooldownHours: in.Limits.CooldownHours,
 			MaxActiveAds: in.Limits.MaxActiveAds, Countries: in.Limits.Countries, Autopilot: in.Limits.Autopilot, AdWording: st.AdWording},
@@ -429,6 +443,19 @@ func ToModel(o CycleOutput) model.CycleOutput {
 			f, _ := pp["format"].(string)
 			if pp["media"] == "video" {
 				f = "single_video"
+				// the owner's video goes up from the data folder (executor: video_path), with its Arabic copy
+				if path, ok := pp["path"].(string); ok {
+					pp["video_path"] = path
+					delete(pp, "path")
+				}
+				vid := fmt.Sprint(pp["video_id"])
+				for _, lang := range []string{"ar", "en"} {
+					for _, cs := range o.CopySets {
+						if cs.VideoID == vid && cs.Lang == lang && pp["primary_text"] == nil {
+							pp["primary_text"], pp["headline"] = cs.PrimaryText, cs.Headline
+						}
+					}
+				}
 			}
 			if ef, ok := formatToEngine[f]; ok {
 				pp["format"] = ef
@@ -436,6 +463,13 @@ func ToModel(o CycleOutput) model.CycleOutput {
 				pp["format"] = "image"
 			}
 		case "create_ad":
+			if cr, ok := pp["creative_id"].(string); ok && strings.HasPrefix(cr, "video:") { // the upload of that video
+				for _, u := range o.Proposals {
+					if u.Kind == "upload_creative" && fmt.Sprint(u.Params["video_id"]) == strings.TrimPrefix(cr, "video:") {
+						pp["creative_id"] = tmpID(u.Target)
+					}
+				}
+			}
 			if _, ok := pp["name"]; !ok {
 				pp["name"] = "KAA: " + strings.TrimPrefix(p.Target, "new:")
 			}

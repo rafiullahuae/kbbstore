@@ -78,6 +78,7 @@ type Server struct {
 	AppID      string
 	AppSecret  string
 	rules      []obj
+	tags       map[string]string // seeded results by object id (WINNER / LOSER), as if in its name
 	audiences  []obj
 	idem       map[string]idemRec
 	budgetTS   map[string][]time.Time
@@ -132,6 +133,19 @@ func (s *Server) AddAccount(id, name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.accounts[id] = obj{"id": id, "name": name, "currency": "AED", "timezone_name": "Asia/Dubai", "spend_cap": "0", "amount_spent": "50000", "account_status": 1, "min_daily_budget": 367}
+}
+
+// SeedFor: an owner campaign (one ad set, one ad) in another ad account, so each account shows its own data.
+func (s *Server) SeedFor(act, name string, dailyFils int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	c := s.id()
+	s.campaigns = append(s.campaigns, obj{"id": c, "_act": act, "name": name, "objective": "OUTCOME_SALES", "status": "ACTIVE", "effective_status": "ACTIVE",
+		"daily_budget": strconv.Itoa(dailyFils), "bid_strategy": "LOWEST_COST_WITHOUT_CAP", "created_time": "2026-09-15T10:00:00+0400", "updated_time": "2026-09-15T10:00:00+0400"})
+	a := s.id()
+	s.adsets = append(s.adsets, obj{"id": a, "_act": act, "campaign_id": c, "name": name + " – set", "status": "ACTIVE", "effective_status": "ACTIVE",
+		"optimization_goal": "OFFSITE_CONVERSIONS", "targeting": obj{"geo_locations": obj{"countries": []string{"AE"}}}})
+	s.ads = append(s.ads, obj{"id": s.id(), "_act": act, "adset_id": a, "campaign_id": c, "name": name + " – ad", "status": "ACTIVE", "effective_status": "ACTIVE", "creative": obj{"id": s.id()}})
 }
 
 // AccountObj: a copy of one account's fields.
@@ -290,12 +304,28 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.fail(w, 400, 100, 0, "unknown upload", false)
 			return
 		}
-		v["_bytes"] = len(body)
+		off, _ := strconv.Atoi(r.Header.Get("offset"))
+		v["_bytes"] = off + len(body)
+		v["_file_size"] = r.Header.Get("file_size")
 		s.ok(w, obj{"success": true})
 		return
 	}
 	if r.URL.Path == "/__mock/writes" {
 		s.ok(w, s.writes)
+		return
+	}
+	if r.URL.Path == "/__mock/tag" && r.Method == http.MethodPost { // seeded results: {"id": "<object id>", "tag": "WINNER"|"LOSER"|""}
+		var in struct{ ID, Tag string }
+		_ = json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&in)
+		if in.Tag != "WINNER" && in.Tag != "LOSER" && in.Tag != "" {
+			s.fail(w, 400, 100, 0, "tag: WINNER, LOSER or empty", false)
+			return
+		}
+		if s.tags == nil {
+			s.tags = map[string]string{}
+		}
+		s.tags[in.ID] = in.Tag
+		s.ok(w, obj{"ok": true})
 		return
 	}
 	prefix := "/" + s.Version + "/"
@@ -369,6 +399,7 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request, path string, form
 		case "campaigns":
 			s.list(w, form, s.mine(s.campaigns))
 		case "adsets":
+			s.learningTick()
 			s.list(w, form, s.mine(s.adsets))
 		case "ads":
 			s.reviewTick()
@@ -551,7 +582,7 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, edge string, for
 			s.fail(w, 400, 100, 1487079, "targeting: countries is required", false)
 			return
 		}
-		if form.Get("optimization_goal") == "OFFSITE_CONVERSIONS" && !strings.Contains(form.Get("promoted_object"), "pixel_id") {
+		if form.Get("optimization_goal") == "OFFSITE_CONVERSIONS" && !strings.Contains(form.Get("promoted_object"), "pixel_id") && !strings.Contains(form.Get("promoted_object"), "product_set_id") { // catalog ad sets promote a product set (META-FACTS §14)
 			s.fail(w, 400, 100, 1815437, "promoted_object with pixel_id is required", false)
 			return
 		}
@@ -815,6 +846,22 @@ func (s *Server) reviewTick() {
 	}
 }
 
+// learningTick: an ad set leaves Meta's learning phase a week after its campaign was made (the mock has no
+// conversion counting; a week is Meta's own window).
+func (s *Server) learningTick() {
+	for _, a := range s.adsets {
+		li, _ := a["learning_stage_info"].(obj)
+		if li == nil || li["status"] != "LEARNING" {
+			continue
+		}
+		if c := s.parent(s.campaigns, fmt.Sprint(a["campaign_id"])); c != nil {
+			if t, err := time.Parse("2006-01-02T15:04:05-0700", fmt.Sprint(c["created_time"])); err == nil && s.Now().Sub(t) >= 7*24*time.Hour {
+				a["learning_stage_info"] = obj{"status": "SUCCESS"}
+			}
+		}
+	}
+}
+
 // insights: deterministic numbers per object per day. Spend ~ its budget share; an object whose name contains
 // "LOSER" spends and never buys; "WINNER" buys at a low CPA.
 func (s *Server) insights(w http.ResponseWriter, form url.Values) {
@@ -843,7 +890,12 @@ func (s *Server) insights(w http.ResponseWriter, form url.Values) {
 	for d := since; !d.After(until); d = d.AddDate(0, 0, 1) {
 		day := d.Format("2006-01-02")
 		for _, o := range src {
-			created := fmt.Sprint(o["created_time"])
+			created, _ := o["created_time"].(string)
+			if created == "" { // ad sets and ads: no results before their campaign existed
+				if c := s.parent(s.campaigns, fmt.Sprint(o["campaign_id"])); c != nil {
+					created, _ = c["created_time"].(string)
+				}
+			}
 			if len(created) >= 10 && created[:10] > day {
 				continue
 			}
@@ -855,12 +907,12 @@ func (s *Server) insights(w http.ResponseWriter, form url.Values) {
 			impr := int64(spend * 45)
 			clicks := impr / 90
 			purchases := float64(r % 4)
-			if strings.Contains(name, "LOSER") {
-				purchases = 0
-				spend += 60
-			}
 			if strings.Contains(name, "WINNER") {
 				purchases = 3 + float64(r%3)
+			}
+			if strings.Contains(name, "LOSER") { // the more specific verdict: a losing ad inside a winning campaign loses
+				purchases = 0
+				spend += 60
 			}
 			value := purchases * 140
 			row := obj{"date_start": day, "date_stop": day, "spend": fmt.Sprintf("%.2f", spend), "impressions": strconv.FormatInt(impr, 10),
@@ -885,11 +937,12 @@ func (s *Server) insights(w http.ResponseWriter, form url.Values) {
 }
 
 func (s *Server) nameChain(o obj) string {
-	n := fmt.Sprint(o["name"])
+	n := fmt.Sprint(o["name"]) + " " + s.tags[fmt.Sprint(o["id"])]
 	if a := s.parent(s.adsets, fmt.Sprint(o["adset_id"])); a != nil {
-		n += " " + fmt.Sprint(a["name"])
+		n += " " + fmt.Sprint(a["name"]) + " " + s.tags[fmt.Sprint(a["id"])]
 	}
 	if c := s.parent(s.campaigns, fmt.Sprint(o["campaign_id"])); c != nil {
+		n += " " + s.tags[fmt.Sprint(c["id"])]
 		n += " " + fmt.Sprint(c["name"])
 	}
 	return n

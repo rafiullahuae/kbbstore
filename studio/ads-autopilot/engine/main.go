@@ -11,6 +11,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -19,6 +20,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
 	"log"
 	"mime"
@@ -33,6 +37,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -187,6 +192,14 @@ func setupMock(a *App) (*metamock.Server, error) {
 	m := metamock.New("EAAMOCKTOKEN0000000000000000", "act_1000000001")
 	m.AppID, m.AppSecret = "1234567890123", "mockappsecret0000"
 	m.Seed()
+	// several ad accounts, so the account switch runs on the real engine: each has its own owner campaign
+	for _, x := range MockAccounts[1:] {
+		m.AddAccount(x[0], x[1])
+		m.SeedFor(x[0], "Owner – "+x[1], 3000)
+	}
+	// one clock for the engine and the fake Meta; /api/test/clock moves both (the checks skip days)
+	a.now = mockNow
+	m.Now = mockNow
 	mu, err := m.Start()
 	if err != nil {
 		return nil, err
@@ -202,13 +215,41 @@ func setupMock(a *App) (*metamock.Server, error) {
 	a.cfg.Selected = m.Account
 	_ = a.st.Save("config", a.cfg)
 	log.Printf("TEST MODE: Meta → %s, Claude + feed → %s (never the real services)", mu, au)
-	mockURL, mockServer = mu, m
+	mockURL, mockClaudeURL, mockServer = mu, au, m
 	return m, nil
 }
 
 var mockServer *metamock.Server
 
-var mockURL string
+var mockURL, mockClaudeURL string
+
+// MockAccounts: the -mock portfolio (id, name). The first is the linked, automated one.
+var MockAccounts = [][2]string{{"act_1000000001", "K-Beauty Bliss UAE"}, {"act_1000000002", "KBB Wholesale"}, {"act_1000000003", "KBB Saudi test"}}
+
+var mockOffset atomic.Int64 // -mock only: how far the clock has been moved (ns)
+
+var mockPhoto = sync.OnceValue(func() []byte { // -mock: a plain product-photo stand-in (a pink bottle on cream), 800×800
+	const n = 800
+	im := image.NewNRGBA(image.Rect(0, 0, n, n))
+	for y := 0; y < n; y++ {
+		for x := 0; x < n; x++ {
+			c := color.NRGBA{250, 244, 240, 255}
+			dx := float64(x - n/2)
+			switch {
+			case y > 300 && y < 700 && dx*dx < 150*150:
+				c = color.NRGBA{233, 170, 190, 255} // the bottle
+			case y > 220 && y <= 300 && dx*dx < 60*60:
+				c = color.NRGBA{60, 52, 58, 255} // its cap
+			}
+			im.SetNRGBA(x, y, c)
+		}
+	}
+	var b bytes.Buffer
+	_ = png.Encode(&b, im)
+	return b.Bytes()
+})
+
+func mockNow() time.Time { return time.Now().Add(time.Duration(mockOffset.Load())) }
 
 func (s *server) stop() { s.stopOnce.Do(func() { close(s.shutdown) }) }
 

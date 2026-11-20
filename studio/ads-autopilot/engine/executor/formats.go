@@ -164,7 +164,13 @@ func ValidateParams(p model.Proposal, links model.AccountLinks) error {
 			return errors.New("no Facebook Page linked")
 		}
 		switch f {
-		case "image", "video":
+		case "image":
+		case "video":
+			if vp, ok := pr["video_path"]; ok {
+				if s, _ := vp.(string); !VideoPathRe.MatchString(s) {
+					return errors.New("video_path must be one of the owner's videos in the data folder (videos/<name>.mp4|mov|m4v)")
+				}
+			}
 		case "carousel":
 			cards := anyList(pr, "cards")
 			if len(cards) < 2 || len(cards) > 10 {

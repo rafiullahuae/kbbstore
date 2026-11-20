@@ -10,7 +10,7 @@ const GCC = [['AE', 'UAE', 'الإمارات'], ['SA', 'Saudi Arabia', 'السع
 const WORDING = { strict: ['Strict', 'صارمة', 'Blocks every risky pattern, incl. discounts and clinical words.', 'تمنع كل صياغة فيها مخاطرة، ومنها الخصومات والكلمات الطبية.'],
   balanced: ['Balanced', 'متوازنة', 'Default. Acne / blemish / pore products are advertised with product framing; blocks only "your acne"-style claims, cure claims, timed results, before/after and fake reviews.', 'الافتراضي: يُعلَن عن منتجات حب الشباب بصياغة تصف المنتج؛ يمنع فقط ادعاءات مثل «حبوبكِ» والعلاج والنتائج المؤقتة وقبل/بعد والمراجعات المزيفة.'],
   relaxed: ['Relaxed', 'مرنة', 'Before/after and strong negative words become warnings; cure claims and personal-attribute claims still block.', 'قبل/بعد والكلمات السلبية تصبح تحذيرات؛ ادعاءات العلاج تبقى ممنوعة.'] };
-const LIMIT_KEYS = ['daily_aed', 'monthly_aed', 'max_budget_step_pct', 'cooldown_hours', 'max_active_ads', 'countries', 'autopilot', 'target_cpa_aed', 'kill_multiple'];
+const LIMIT_KEYS = ['daily_aed', 'monthly_aed', 'max_budget_step_pct', 'cooldown_hours', 'max_active_ads', 'countries', 'autopilot', 'target_cpa_aed', 'kill_multiple', 'wording'];
 
 export function limitsForm(L, opts = {}) {
   const set = L.daily_aed > 0 && L.monthly_aed > 0;
@@ -39,6 +39,7 @@ export function readLimits(root, L) {
   Object.assign(out, { daily_aed: +v('daily_aed').value || 0, monthly_aed: +v('monthly_aed').value || 0, autopilot: v('autopilot').value,
     countries: [...root.querySelectorAll('[name="country"]:checked')].map((c) => c.value) });
   for (const n of ['max_budget_step_pct', 'cooldown_hours', 'max_active_ads', 'target_cpa_aed', 'kill_multiple']) if (v(n)) out[n] = +v(n).value || 0;
+  if (root.querySelector('[data-w]')) out.wording = readWording(root); // the ad-wording rule lives on /api/limits (the brain reads it there)
   return out;
 }
 export const readWording = (root) => (root.querySelector('[data-w].on') || {}).dataset?.w || 'balanced';
@@ -59,7 +60,7 @@ export function render(S, el) {
   el.innerHTML = `<div class="page"><div class="page-h"><div><h1>${esc(tt('Settings', 'الإعدادات'))}</h1><p>${esc(st.account.name || '')} · ${esc(getAccount())}</p></div></div><div class="tabs">${[['limits', 'Limits', 'الحدود'], ['connections', 'Connections', 'الاتصالات'], ['accounts', 'Accounts', 'الحسابات'], ['advanced', 'Advanced', 'متقدم']].map(([k, en, ar]) => `<button type="button" data-tab="${k}" class="${tab === k ? 'on' : ''}">${esc(tt(en, ar))}</button>`).join('')}</div><div id="tabv"></div></div>`;
   const v = el.querySelector('#tabv');
   if (tab === 'limits') {
-    v.innerHTML = `<div class="card"><header><h2>${esc(tt('Limits', 'الحدود'))} · ${esc(st.account.name || '')}</h2><span class="sub">${esc(tt('Only going above these needs you. No limit = nothing launches.', 'فقط تجاوز هذه الحدود يحتاجك. بلا حدود = لا شيء يُطلق.'))}</span></header>${limitsForm(st.limits, { wording: (wording && wording.ad_wording) || 'balanced' })}
+    v.innerHTML = `<div class="card"><header><h2>${esc(tt('Limits', 'الحدود'))} · ${esc(st.account.name || '')}</h2><span class="sub">${esc(tt('Only going above these needs you. No limit = nothing launches.', 'فقط تجاوز هذه الحدود يحتاجك. بلا حدود = لا شيء يُطلق.'))}</span></header>${limitsForm(st.limits, { wording: st.limits.wording || (wording && wording.ad_wording) || 'balanced' })}
       <label class="row small" style="margin-top:10px"><input type="checkbox" id="promo" ${wording && wording.promo_approved ? 'checked' : ''}> ${esc(tt('An authorised promotion is running (allows discount wording, with original price + % shown)', 'يوجد عرض مرخّص (يسمح بصياغة الخصم مع إظهار السعر الأصلي والنسبة)'))}</label>
       <div class="row" style="margin-top:14px"><button type="button" id="saveL">${esc(tt('Save', 'حفظ'))}</button></div></div>`;
     wireWording(v);

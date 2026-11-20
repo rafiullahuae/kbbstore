@@ -19,8 +19,9 @@ export function normAccounts(r) {
 
 export async function loadState(id) {
   const h = { headers: { 'X-KAA-Account': id } };
-  const [st, cyc, ins, log] = await Promise.all([
+  const [st, cyc, ins, log, pend] = await Promise.all([
     api('/api/state', h), api('/api/brain/x/cycle', h).catch(() => ({})), api('/api/brain/x/insights', h).catch(() => ({})), api('/api/log?limit=40', h).catch(() => ({ entries: [] })),
+    api('/api/proposals', h).catch(() => ({ proposals: [] })),
   ]);
   const verd = Object.fromEntries(((cyc && cyc.verdicts) || []).map((v) => [v.object, v]));
   const entries = (log.entries || []).slice().reverse();
@@ -56,6 +57,11 @@ export async function loadState(id) {
     activity: entries.slice(0, 14).map((x) => ({ at: x.at, kind: x.kind, text: x.summary })),
     designs_pending: (cyc && cyc.designs) || [], copy_sets: (cyc && cyc.copy_sets) || [], backfill: st.backfill || null, links: st.links || {},
     creatives_count: typeof st.creatives === 'number' ? st.creatives : 0, claude_usage: st.claude_usage || null, shop: st.shop || {},
+    // the engine's per-proposal list (Approvals): what waits for the owner, and the first launch in Practice
+    pending: ((pend && pend.proposals) || []).filter((p) => ['shadow', 'failed', 'refused'].includes(p.status)).map((p) => Object.assign({}, p, {
+      params: Object.assign({}, p.params, p.params && p.params.daily_budget != null ? { daily_budget_aed: p.params.daily_budget } : {}),
+      starter: String(p.id).startsWith('starter-'), reason: (p.result && (p.result.error || (p.result.decision && (p.result.decision.reasons || [])[0]))) || '' })),
+    starter: st.starter || null,
   };
 }
 function validT(t) { return t && !String(t).startsWith('0001') ? t : ''; }

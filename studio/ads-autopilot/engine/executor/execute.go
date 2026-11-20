@@ -17,6 +17,11 @@ import (
 )
 
 // CreativeStore: the creative library in the data folder (engine side).
+type ReaderAtCloser interface {
+	ReadAt(p []byte, off int64) (int, error)
+	Close() error
+}
+
 type CreativeStore interface {
 	Get(id string) (model.Creative, []byte, error) // the creative and its media bytes (png or mp4)
 	Put(c model.Creative) error
@@ -31,6 +36,9 @@ type Executor struct {
 	Log       func(kind, summary string, data any)
 	Persist   func(*Ledger)
 	Safety    func(ctx context.Context) error // the Meta-side safety net, run after any write
+	// VideoFile opens one of the owner's files in the data folder by its relative path (videos/<id>.mp4, its .jpg
+	// cover). The engine's implementation refuses anything outside the videos folder (no .., no symlink out).
+	VideoFile func(rel string) (ReaderAtCloser, int64, error)
 
 	mu sync.Mutex // one batch at a time
 }
@@ -326,9 +334,9 @@ func (x *Executor) afterStatus(env *Env, n *node, status string) {
 	case "adset":
 		n.adset.Status, n.adset.EffectiveStatus = status, status
 	case "ad":
-		if status == "ACTIVE" && n.ad.Status != "ACTIVE" {
-			env.ActivatedNow++
-		}
+		// n points into env.Tree, so ActiveAds(env.Tree) already counts this ad from now on; ActivatedNow is only
+		// for activations the tree does not show (counting both refused the 4th ad of a batch at max_active_ads 6
+		// with 4 running: "7 ads are active")
 		n.ad.Status, n.ad.EffectiveStatus = status, status
 	}
 }

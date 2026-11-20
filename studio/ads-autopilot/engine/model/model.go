@@ -172,6 +172,9 @@ type Limits struct {
 	Autopilot        string   `json:"autopilot"` // off | shadow | auto
 	TargetCPAAED     float64  `json:"target_cpa_aed"`
 	KillMultiple     float64  `json:"kill_multiple"`
+	// Wording: how strict the ad-copy policy checker is (Settings → Limits → Ad wording rules): strict | balanced |
+	// relaxed ("" = balanced). The brain reads it from here.
+	Wording string `json:"wording,omitempty"`
 }
 
 func DefaultLimits() Limits {
@@ -304,6 +307,8 @@ type Creative struct {
 	Source      string    `json:"source"` // brain | owner
 	CreatedAt   time.Time `json:"created_at"`
 	Media       string    `json:"media,omitempty"`      // "png" | "mp4" | "" (what the data folder holds)
+	ImageURL    string    `json:"image_url,omitempty"`  // no media: the shop's own photo (https://kbeautybliss.com/…), sent as link_data.picture
+	Starter     bool      `json:"starter,omitempty"`    // made by the engine for the first launch (starter set)
 	ImageHash   string    `json:"image_hash,omitempty"` // after upload_creative
 	VideoID     string    `json:"video_id,omitempty"`
 	MetaID      string    `json:"meta_creative_id,omitempty"`

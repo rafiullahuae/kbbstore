@@ -36,7 +36,9 @@ def check(cond, what):
 def main():
     work = tempfile.mkdtemp(prefix="kaa-check-")
     exe = os.path.join(work, "kaa")
-    env = dict(os.environ, CGO_ENABLED="0", KAA_SECRETS_FILE="1")
+    # KAA_BRAIN=stub: this check tests the executor and safety net against the stub brain's fixed proposals (the real
+    # brain end to end is tools/e2e-real-brain.py)
+    env = dict(os.environ, CGO_ENABLED="0", KAA_SECRETS_FILE="1", KAA_BRAIN="stub")
     subprocess.run(["go", "build", "-o", exe, "."], cwd=os.path.join(ROOT, "engine"), env=env, check=True)
     data = os.path.join(work, "data")
     proc = subprocess.Popen([exe, "-dir", ROOT, "-data", data, "-mock", "-no-browser", "-no-scheduler", "-port", "0", "-idle", "10m"],

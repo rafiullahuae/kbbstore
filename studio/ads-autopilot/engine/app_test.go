@@ -305,7 +305,7 @@ func secondAccount(t *testing.T, ac *Acct, m *metamock.Server) *Acct {
 	a := ac.app
 	m.AddAccount("act_1000000002", "KBB KSA")
 	c := a.testMeta(context.Background())
-	if !c.OK || c.Accounts != 2 {
+	if !c.OK || c.Accounts < 2 { // -mock already lists several accounts (MockAccounts)
 		t.Fatalf("portfolio %+v", c)
 	}
 	b, err := a.Acct("act_1000000002")
@@ -374,7 +374,7 @@ func TestTwoAccounts(t *testing.T) {
 		Accounts []accountView `json:"accounts"`
 	}
 	_ = json.Unmarshal(w.Body.Bytes(), &al)
-	if len(al.Accounts) != 2 || !al.Accounts[0].Automated || al.Accounts[0].Autopilot != model.AutopilotOff || al.Accounts[1].Autopilot != model.AutopilotAuto {
+	if len(al.Accounts) != len(MockAccounts) || !al.Accounts[0].Automated || al.Accounts[0].Autopilot != model.AutopilotOff || al.Accounts[1].Autopilot != model.AutopilotAuto {
 		t.Fatalf("accounts %s", w.Body)
 	}
 	r = httptest.NewRequest("GET", "/api/state?account=act_999999999", nil)
