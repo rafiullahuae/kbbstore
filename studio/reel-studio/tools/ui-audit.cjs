@@ -362,6 +362,13 @@ function measure() {
       await page.click('.tbp [data-tbp-tab="words"]'); await page.click('.tbp .tb-mode [data-v="carousel"]'); await page.waitForTimeout(300); await audit('tb-editor:carousel');
       await page.click('.tbp [data-tbp-cancel]'); await page.evaluate(() => { kbbEditor.history.undo(); });
     });
+    // a slim contact card (themes/cta2.js): the designs, then Show / Colours / Motion scrolled into view (undo)
+    await tryStep('contact-card', async () => {
+      await page.evaluate(async () => { const TH = await import('/app/themes/index.js'); const it = TH.placeElement(kbbEditor.context(), 'cta', { t0: 0.3 }); kbbEditor.select([it.id]); kbbEditor.showSide('inspector'); });
+      await page.waitForSelector('[data-cta-show]'); await page.waitForTimeout(300); await audit('inspector-contact-card');
+      for (const sel of ['[data-cta-show]', '[data-cta-speed]']) { await page.evaluate((sel) => document.querySelector(sel)?.scrollIntoView({ block: 'center' }), sel); await page.waitForTimeout(250); await audit('inspector-contact-card:' + sel.slice(6, -1)); }
+      await page.evaluate(() => { kbbEditor.history.undo(); });
+    });
     await page.click('.side-tab[data-side="captions"]');
     await page.click('.rs-cap-tabs button[data-tab="transcript"]').catch(() => {});
     await tryStep('export', async () => { await page.click('.export-btn'); await page.waitForSelector('#x-go'); await page.waitForTimeout(400); await audit('export', wsId === 'kbb' ? 'export' : null); await closeModal(); });

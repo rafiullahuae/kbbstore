@@ -1,0 +1,30 @@
+PASS 10 slim designs listed first (shimmer, ticker, runner, ringing, underline, flow, split, typewriter, sparkle, neon), 25 in all
+PASS the 15 old designs are all still offered
+PASS a newly placed Contact card (no design picked) is a slim one: shimmer
+PASS every slim card ≤ 60 % of the old one's height on 9:16 (old Phone + WhatsApp: box 929×232, ink 242 px): shimmer 929×133 (ink 135, 57 %), ticker 929×103 (ink 106, 44 %), runner 929×124 (ink 134, 53 %), ringing 929×133 (ink 136, 57 %), underline 929×116 (ink 81, 50 %), flow 929×109 (ink 112, 47 %), split 929×126 (ink 134, 54 %), typewriter 929×116 (ink 119, 50 %), sparkle 929×124 (ink 127, 53 %), neon 929×124 (ink 132, 53 %)
+PASS every slim card keeps moving for the whole 12 s (pixels changed between frames 0.5 s apart at 1 s · 5.6 s · 10.9 s): shimmer 7538/3544/4570, ticker 2199/2256/2246, runner 13205/13185/12971, ringing 581/568/630, underline 2545/4667/809, flow 121/136/142, split 10411/207/2870, typewriter 689/643/576, sparkle 495/4702/2493, neon 6879/7508/150
+PASS Animation off holds still (6 s vs 10.5 s: shimmer 0, ticker 0, runner 0, ringing 0, underline 0, flow 0, split 0, typewriter 0, sparkle 0, neon 0)
+PASS all 100 show / hide toggles change the card (min 88 px changed)
+PASS "Number" off: no design draws the number any more (none drawn)
+PASS "Background" off (+ border, glow, sparkles off): the bar is see-through (alpha at its right end: shimmer 0, ticker 0, runner 0, ringing 0, underline 0, flow 0, split 0, typewriter 0, sparkle 0, neon 0)
+PASS all 70 colour pickers reach the pixels (min 30 px changed)
+PASS a picked background (#2040e0) is the bar's colour, give or take the design's own shading (RGB distance < 110 at the bar's right end: shimmer 31, ticker 0, runner 9, ringing 105, underline 11, flow 48, split 0, typewriter 0, sparkle 101, neon 13)
+PASS speed (slow / fast), intensity (0 vs 100 %) and corners (square vs pill) each change every design: shimmer 5154/1682/197/912, ticker 3357/2233/1090/615, runner 7610/7489/7138/3804, ringing 840/536/124/815, underline 5704/5672/2725/776, flow 3367/3561/6712/515, split 14294/14141/15008/3411, typewriter 395/938/74/597, sparkle 6507/4876/968/738, neon 3601/3601/13449/4703
+PASS the 15 old designs draw byte-identical to before (120 frames, English + Arabic, in / hold / out)
+PASS the label and the number are inspector text fields (bothLbl=CALL OR WHATSAPP · phone=+971 50 123 4567)
+PASS double-click the slim card's label on the video: an input opens (bothLbl “CALL OR WHATSAPP”), typing replaces it → “BOOK YOUR GLOW-UP”
+PASS Inspector → Contact card shows Show / Colours / Motion controls for a slim card (true,true,true,true,true)
+PASS "💬 WhatsApp icon" unticked: ONE undo step (1), ⌘Z puts the style back byte for byte (true)
+PASS a background colour dragged through 4 values: ONE undo step (1), the last value kept (#7a1f4f)
+PASS the intensity slider dragged: ONE undo step (1) → 1
+PASS speed Fast: ONE undo step (1)
+PASS three ⌘Z: the card is exactly as placed
+PASS draw time per frame at 1080×1920 (ms, CPU 2D canvas, swiftshader): shimmer 1.901, ticker 0.781, runner 1.827, ringing 1.342, underline 0.217, flow 1.112, split 1.2, typewriter 0.841, sparkle 1.556, neon 2.064, phonewa (old) 2.948, sparkle + all on 1.552 — worst slim 2.064 ms (< 4)
+PASS preview = export with two slim cards on (Glass shimmer + Running light): mean difference 1s 2.05, 2.6s 1.93, 4.3s 2.27, 5.6s 3.38 (/255, < 6)
+PASS search finds and opens the new controls: “hide whatsapp icon” → Contact card · show or hide parts (ringed, visible) · “cta colour” → Contact card · colours of each part (ringed, visible) · “cta speed” → Contact card · speed, intensity, corners (ringed, visible)
+PASS no sideways scroll at 1280×800 (scrollWidth 1280)
+PASS shots in shots/cta2/: 31 images
+PASS no console errors (0)
+PASS no network outside the engine (0)
+
+ALL PASS · 55 s

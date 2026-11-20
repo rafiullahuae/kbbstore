@@ -13,11 +13,13 @@ import * as A from './art.js';
 import { tx, noteSlot } from './text.js';
 import { drawIcon } from './el2-icons.js';
 import { qrMatrix, drawQr } from './qr.js';
+import { CTA2_DESIGNS, drawCta2, lookOf } from './cta2.js';
 
 const { clamp, easeOut, easeIn, back, TAU, mix, rgba, onColor, lum } = A;
 
-/** the designs: id, label, the card's shape (width / height), the note on its chip */
-export const CTA_DESIGNS = [
+/** the designs: id, label, the card's shape (width / height), the note on its chip. The ten slim, always-moving bars of
+ * ./cta2.js come first (the owner, 20 Nov: "less height … animated continues"); the first 15 cards follow, unchanged */
+const CTA1_DESIGNS = [
   { id: 'call', label: 'Call us', ar: 3.6, note: 'Phone icon + your number' },
   { id: 'whatsapp', label: 'WhatsApp', ar: 3.6, note: 'Chat icon + your WhatsApp number' },
   { id: 'phonewa', label: 'Phone + WhatsApp', ar: 4.0, note: 'Two icons side by side + the number' },
@@ -34,7 +36,11 @@ export const CTA_DESIGNS = [
   { id: 'strip', label: 'Contact strip', ar: 5.2, note: 'Phone · WhatsApp · website · @handle' },
   { id: 'tap', label: 'Tap to call (animated)', ar: 2.1, note: 'A button pressed by a tapping hand' },
 ];
-export const ctaById = (id) => CTA_DESIGNS.find((d) => d.id === id) || CTA_DESIGNS[0];
+export const CTA_DESIGNS = [...CTA2_DESIGNS, ...CTA1_DESIGNS];
+/** the design for an id (an unknown one draws as 'Call us', as it always has) */
+export const ctaById = (id) => CTA_DESIGNS.find((d) => d.id === id) || CTA1_DESIGNS[0];
+/** a newly placed Contact card's design: the first slim bar */
+export const CTA_DEFAULT = CTA2_DESIGNS[0].id;
 
 const clean = (s) => String(s ?? '').trim();
 const handle = (s) => { const v = clean(s).replace(/^https?:\/\/(www\.)?[a-z.]+\.[a-z]+\/(@)?/i, '').replace(/[/?#].*$/, '').replace(/^@/, ''); return v ? '@' + v : ''; };
@@ -272,7 +278,9 @@ D.tap = (c, S, P, cw, ch, U) => {
  * design's shape, centred in the box; in and out it slides and pops.
  */
 export function drawCta(c, K, S) {
-  const des = ctaById(S.style?.variant), m = motion(S); if (m.k <= 0.001) return;
+  const des0 = ctaById(S.style?.variant);
+  if (des0.slim) { drawCta2(c, S, des0, palette(S, K), { num: num(S), ar: isAr(S), word: (k) => W0(S, k) }); return; }
+  const des = des0, m = motion(S); if (m.k <= 0.001) return;
   const P = palette(S, K), U = Math.min(S.w, S.h) * 3;
   const cw = Math.min(S.w, S.h * des.ar), ch = cw / des.ar, x = (S.w - cw) / 2, y = (S.h - ch) / 2;
   c.save(); c.globalAlpha *= m.a;
@@ -284,7 +292,13 @@ export function drawCta(c, K, S) {
 /** the box a card starts in: its shape, in the lower middle of the frame (canvas px) */
 export function ctaBox(variant, W, H) {
   const des = ctaById(variant), u = Math.min(W, H), land = W > H * 1.05;
-  let w = Math.min(W * 0.86, u * 1.1); if (des.ar < 1.2) w = u * 0.5; else if (des.ar < 2.2) w = Math.min(W * 0.8, u * 0.86);
+  let w = Math.min(W * 0.86, u * (des.slim ? 0.95 : 1.1)); if (des.ar < 1.2) w = u * 0.5; else if (des.ar < 2.2) w = Math.min(W * 0.8, u * 0.86);
   const h = w / des.ar;
   return { x: Math.round((W - w) / 2), y: Math.round(Math.min(H * (land ? 0.62 : 0.6) - h / 2, H - h - H * 0.06)), w: Math.round(w), h: Math.round(h) };
+}
+
+/** a slim card's colours as drawn now (the inspector's colour pickers start from them) */
+export function ctaColors(style, K) {
+  const des = ctaById(style?.variant); if (!des.slim) return null;
+  return lookOf(style, des, palette({ style }, K)).C;
 }

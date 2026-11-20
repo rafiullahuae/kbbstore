@@ -3,7 +3,8 @@
 // mention). Every change is ONE undo step (sliders coalesce into one while dragged).
 import { h, clear, slider, toast } from '../editor/ui.js';
 import { ops } from '../core/history.js';
-import { CTA_DESIGNS, ctaById, drawCta, contactOf } from './cta.js';
+import { CTA_DESIGNS, ctaById, drawCta, contactOf, ctaColors } from './cta.js';
+import { CTA2_PARTS, CTA2_COLORS } from './cta2.js';
 import { LOGO_SHAPES, badgeOf, preparedLogo, prepareLogo, logoSrcOf, plateOf } from './logo-badge.js';
 import { BADGE_LOOKS, loadBadgeAssets } from './globe-badge.js';
 import { REGIONS, placeName } from './country-words.js';
@@ -36,7 +37,17 @@ function css() {
 .e2-quick { border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 7px; background: rgba(255,255,255,.03); }
 .e2-quick .chip { cursor: pointer; font-size: 11.5px; }
 .e2-quick select { min-width: 0; flex: 1 1 120px; }
-.e2-place { width: 100%; }`;
+.e2-place { width: 100%; }
+.e2-grid.slim .e2-opt canvas { aspect-ratio: 5 / 1; }
+.e2-sub { font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 2px 0 -2px; }
+.e2-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.e2-checks label { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.e2-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 10px; }
+.e2-col { display: flex; align-items: center; gap: 6px; font-size: 12px; min-width: 0; }
+.e2-col span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.e2-col input[type=color] { width: 30px; height: 24px; padding: 0; border: 1px solid var(--line2, rgba(255,255,255,.16)); border-radius: 6px; background: none; cursor: pointer; flex: none; }
+.e2-col button { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 2px; font-size: 13px; flex: none; }
+.e2-col button[disabled] { visibility: hidden; }`;
   document.head.appendChild(s);
 }
 
@@ -63,7 +74,7 @@ function ctaSections(insp, item) {
   const ed = insp.ed, s = item.style || {}, K = kitFor(s.theme || 'travel', s.colors || null);
   const thumbs = [];
   const thumb = (id) => {
-    const cv = h('canvas', { width: 192, height: 120 }); thumbs.push([cv, id]); return cv;
+    const cv = ctaById(id).slim ? h('canvas', { width: 300, height: 60 }) : h('canvas', { width: 192, height: 120 }); thumbs.push([cv, id]); return cv;
   };
   const paint = () => {
     for (const [cv, id] of thumbs) {
@@ -83,13 +94,53 @@ function ctaSections(insp, item) {
   const con = s.contact || {}, ws = ed.context?.().workspace || {}, fresh = contactOf(ws);
   const have = ['phone', 'whatsapp', 'email', 'website', 'instagram', 'tiktok'].filter((k) => con[k]);
   const differs = JSON.stringify(fresh) !== JSON.stringify(con);
+  const des = ctaById(s.variant || 'phonewa'), slim = CTA_DESIGNS.filter((d) => d.slim), cards = CTA_DESIGNS.filter((d) => !d.slim);
+  const onPick = (v) => { pick(v); insp.render(true); };
   const sec = insp.section('Contact card',
-    picker(CTA_DESIGNS.map((d) => [d.id, d.label, `${d.label}: ${d.note}`]), s.variant || 'phonewa', (v) => { pick(v); insp.render(true); }, '', thumb),
-    h('div.e2-row', h('span.lbl', 'Colours'), segBtns([['brand', 'Company'], ['theme', 'Theme']], s.palette || 'brand', (v) => writeStyle(insp, item, (st) => { st.palette = v; }, 'Contact card colours'))),
+    h('p.e2-sub', 'Slim · always moving'),
+    picker(slim.map((d) => [d.id, d.label, `${d.label}: ${d.note}`]), s.variant || 'phonewa', onPick, '.two.slim', thumb),
+    h('p.e2-sub', 'Cards'),
+    picker(cards.map((d) => [d.id, d.label, `${d.label}: ${d.note}`]), s.variant || 'phonewa', onPick, '', thumb),
+    h('div.e2-row', h('span.lbl', 'Colours'), segBtns([['brand', 'Company'], ['theme', 'Theme']], s.palette || 'brand', (v) => writeStyle(insp, item, (st) => { st.palette = v; if (st.ctaLook?.col) delete st.ctaLook.col; }, 'Contact card colours'))),
     h('div.e2-row', h('span.lbl', 'Words'), segBtns([['en', 'English'], ['ar', 'عربي']], s.lang || 'en', (v) => writeStyle(insp, item, (st) => { st.lang = v; }, 'Contact card language'))),
+    ...(des.slim ? ctaLookControls(insp, item, s, K) : []),
     h('p.e2-note', have.length ? `From ⚙ Configure → Contact & social: ${have.join(', ')}. Every word is editable in Text below, or double-click it on the video.` : 'Nothing in ⚙ Configure → Contact & social yet: the card shows placeholders. Fill them there, or type over them in Text below.'),
     h('button.btn.small', { type: 'button', title: 'Take the phone, WhatsApp, email, website and handles from ⚙ Configure → Contact & social again', disabled: !differs, dataset: { e2Refresh: '1' }, on: { click: () => { refreshContact(ed.context(), item.id); insp.seal(); insp.render(true); toast('Contact card updated from Configure · ⌘Z undoes', 'ok'); } } }, differs ? '↻ Use Configure’s contact details' : '✓ Matches Configure'));
   return [sec];
+}
+/**
+ * a slim card's own controls (style.ctaLook): show / hide every part, a colour for each role, the motion's speed and
+ * intensity, the roundness. Each change is ONE undo step (a colour or a slider being dragged coalesces into one).
+ */
+function ctaLookControls(insp, item, s, K) {
+  const ed = insp.ed, look = s.ctaLook || {}, C = ctaColors(s, K) || {}, des = ctaById(s.variant);
+  const set = (fn, label, live = false) => {
+    const it = cur(ed, item.id); if (!it) return;
+    const style = JSON.parse(JSON.stringify(it.style || {})); style.ctaLook = style.ctaLook || {}; fn(style.ctaLook);
+    ed.apply(ops.setItems([{ id: it.id, props: { style } }], label));
+    if (!live) { insp.seal(); insp.render(true); }
+  };
+  const shown = (k) => (look.show?.[k] != null ? !!look.show[k] : k === 'sparkles' ? !!des.on?.includes(k) : !des.off.includes(k));
+  const bare = (l) => l.replace(/^[^A-Za-z]+/, '');
+  const checks = h('div.e2-checks', CTA2_PARTS.map(([k, l]) => h('label', { title: `Show or hide: ${bare(l)}` },
+    h('input', { type: 'checkbox', checked: shown(k), dataset: { ctaShow: k }, on: { change: (e) => set((L) => { L.show = { ...(L.show || {}), [k]: e.target.checked }; }, (e.target.checked ? 'Show ' : 'Hide ') + bare(l).toLowerCase()) } }), l)));
+  const cols = h('div.e2-cols', CTA2_COLORS.map(([k, l]) => {
+    const own = !!look.col?.[k];
+    return h('label.e2-col', { title: `${l} colour${own ? ' (your own)' : ' (from the company / theme colours)'}` },
+      h('input', { type: 'color', value: C[k] || '#ffffff', 'aria-label': l + ' colour', dataset: { ctaCol: k }, on: { input: (e) => set((L) => { L.col = { ...(L.col || {}), [k]: e.target.value }; }, l + ' colour', true), change: () => { insp.seal(); insp.render(true); } } }),
+      h('span', l),
+      h('button', { type: 'button', title: `Back to the ${s.palette === 'theme' ? 'theme' : 'company'} colour`, 'aria-label': 'Reset ' + l, disabled: !own, dataset: { ctaColReset: k }, on: { click: (e) => { e.preventDefault(); set((L) => { if (L.col) delete L.col[k]; }, l + ' colour reset'); } } }, '↺'));
+  }));
+  const amt = slider({ label: 'Intensity', min: 0, max: 1, step: 0.05, value: Number.isFinite(+look.amt) && look.amt !== null ? +look.amt : 0.6, fmt: (v) => Math.round(v * 100) + '%', onInput: (v) => set((L) => { L.amt = v; }, 'Contact card intensity', true), onDone: () => insp.seal() });
+  const round = slider({ label: 'Corners', min: 0, max: 1, step: 0.05, value: Number.isFinite(+look.round) && look.round !== null ? +look.round : des.round, fmt: (v) => (v >= 0.99 ? 'Pill' : v <= 0.01 ? 'Square' : Math.round(v * 100) + '%'), onInput: (v) => set((L) => { L.round = v; }, 'Contact card corners', true), onDone: () => insp.seal() });
+  amt.querySelector('input').dataset.ctaAmt = '1'; round.querySelector('input').dataset.ctaRound = '1';
+  return [
+    h('p.e2-sub', 'Show'), checks,
+    h('p.e2-sub', 'Colours'), cols,
+    h('p.e2-sub', 'Motion'),
+    h('div.e2-row', { dataset: { ctaSpeed: '1' } }, h('span.lbl', 'Speed'), segBtns([['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']], look.speed || 'normal', (v) => set((L) => { L.speed = v; }, 'Contact card speed'))),
+    amt, round,
+  ];
 }
 function segBtns(list, value, onPick) {
   const box = h('div.seg');

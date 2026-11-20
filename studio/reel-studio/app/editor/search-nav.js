@@ -7,6 +7,7 @@
 import { crawl, currentScreen, splitIcon, labelOf } from '../core/search-crawl.js';
 import { normalize } from '../core/search.js';
 import { h, toast, modal } from './ui.js';
+import { CTA2_IDS } from '../themes/cta2.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const frame = () => new Promise((r) => requestAnimationFrame(() => r()));
@@ -76,6 +77,8 @@ function ensureSelection(need) {
   // contact cards, the logo badge, country badges, cut-out transitions (themes/el2-panel.js)
   const EL2 = { cta: ['cta', 'a contact card: Themes → Place elements → Contact card → ＋'], logo: ['logo', 'a logo badge: Themes → One click → 🔰 Logo badge'], cbadge: ['cbadge', 'a country badge: Themes → One click → 🌐 Badge every country I mention'], endscreen: ['endscreen', 'an ending screen: Themes → One click → 🏁 Add ending screen'], tbehind: ['tbehind', 'a text-behind element: Themes → One click → 🔤 Text behind me'] };
   if (EL2[need] && !pick((it) => it.type === 'theme.el' && it.style?.el === EL2[need][0])) return 'Place ' + EL2[need][1] + '.';
+  // a slim contact card's own controls (Show · Colours · Motion) are there only for the slim designs (themes/cta2.js)
+  if (need === 'cta2' && !pick((it) => it.type === 'theme.el' && it.style?.el === 'cta' && CTA2_IDS.has(it.style?.variant))) return 'Place a slim contact card first: Themes → Place elements → Contact card → ＋ (or pick a Slim design in Inspector → Contact card).';
   if (need === 'cutout' && !pick((it) => it.type === 'theme.trans' && /^cut-/.test(it.style?.kind || ''))) return 'Put a cut-out transition on a cut first: Themes → Transitions between clips → Person stays, background swaps → ＋.';
   if (need === 'multi' && ed.sel.size < 2) return 'Select two or more items first (Shift-click them on the timeline or drag a box on the video).';
   return null;
@@ -172,7 +175,7 @@ export async function goTo(entry, { run = false } = {}) {
     hint = ensureSelection(go.need);
     if (hint && go.need === 'capsules') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', label: 'Capsules carousel' } }); }
     if (hint && go.need === 'theme') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', label: 'Add at the playhead' } }); }
-    if (hint && /^(cta|logo|cbadge|cutout|endscreen|tbehind)$/.test(go.need)) { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', sel: go.need === 'cutout' ? '[data-place-trans="cut-bgswap"]' : go.need === 'cta' ? '[data-place="cta"]' : go.need === 'tbehind' ? '[data-tb-add]' : '[data-e2-quick]' } }); }
+    if (hint && /^(cta|cta2|logo|cbadge|cutout|endscreen|tbehind)$/.test(go.need)) { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', side: 'mod:themes', sel: go.need === 'cutout' ? '[data-place-trans="cut-bgswap"]' : /^cta2?$/.test(go.need) ? '[data-place="cta"]' : go.need === 'tbehind' ? '[data-tb-add]' : '[data-e2-quick]' } }); }
     if (hint && go.need === 'text') { toast(hint, 'info', 4200); return goTo({ go: { screen: 'editor', bin: 'Text', label: 'Title' } }); }
     if (hint) toast(hint, 'info', 4200);
   }
