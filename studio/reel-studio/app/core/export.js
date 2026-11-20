@@ -13,6 +13,7 @@ import { projectDuration, findMedia, itemDur, srcTime } from './project.js';
 import { retimedSound, needsRetimedSound } from './retime-audio.js';
 import { usesFrameStream, blendWeight, speedAt } from './retime.js';
 import { blendInto } from './frames.js';
+import { levelAt, hasGainCurve } from './audio-gain.js';
 
 export const QUALITY = {
   small: { label: 'Small file', bpp: 0.07 },
@@ -65,6 +66,14 @@ const gainFade = (item, t, d, fi, fo) => {
   return f;
 };
 
+/** the loop region of a looped item, clamped to the buffer ({a,b} source s), or null */
+function loopOf(item, dur) {
+  const L = item.loop; if (!L) return null;
+  const a = Math.max(0, Math.min(+L.a || 0, dur)), b = Math.min(dur, +L.b || dur);
+  return b - a > 0.05 ? { a, b } : null;
+}
+const wrapLoop = (L, s) => (s < L.b ? s : L.a + ((s - L.b) % (L.b - L.a)));
+
 /** mix the whole timeline to a 48 kHz stereo AudioBuffer (null when nothing is audible) */
 export async function mixAudio(project, media, T) {
   const list = audibleItems(project);
@@ -88,20 +97,24 @@ export async function mixAudio(project, media, T) {
       buf = a.buffer;
       const skip = Math.max(0, -item.t0);
       off = item.in + skip; len = Math.min(item.out, buf.duration) - off;
+      // a looped music bed (item.loop {a,b}): the buffer repeats a..b for the item's whole length (len = play time)
+      if (loopOf(item, buf.duration)) { const L = loopOf(item, buf.duration); off = wrapLoop(L, off); len = (item.out - item.in) / (item.speed || 1) - skip; }
     }
     if (len <= 0 || start >= T) continue;
     const s = ctx.createBufferSource(), g = ctx.createGain();
     s.buffer = buf;
+    const L = !needsRetimedSound(item) && loopOf(item, buf.duration);
+    if (L) { s.loop = true; s.loopStart = L.a; s.loopEnd = L.b; }
     s.connect(g); g.connect(ctx.destination);
     const v = item.volume * (track.volume ?? 1), d = itemDur(item);
     const fi = Math.min(item.fadeIn || 0, d), fo = Math.min(item.fadeOut || 0, d);
-    if (item.kf?.volume?.length && d > 0) {
+    if (hasGainCurve(item) && d > 0) {
       // keyframed volume (music ducked under speech) x fades, as one gain curve at 200 points/s — the same
       // numbers the preview uses (evalProp + fadeAt), so what he hears is what is exported
       const n = Math.max(2, Math.ceil(d * 200) + 1), curve = new Float32Array(n);
       for (let i = 0; i < n; i++) {
         const t = item.t0 + (d * i) / (n - 1);
-        curve[i] = Math.max(0, evalProp(item, 'volume', t)) * (track.volume ?? 1) * gainFade(item, t, d, fi, fo);
+        curve[i] = levelAt(item, t) * (track.volume ?? 1) * gainFade(item, t, d, fi, fo);
       }
       g.gain.value = curve[0];      // no other event may sit inside the curve's time range
       g.gain.setValueCurveAtTime(curve, Math.max(0, item.t0), d);

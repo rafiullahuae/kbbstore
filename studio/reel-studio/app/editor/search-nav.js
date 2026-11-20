@@ -71,6 +71,7 @@ function ensureSelection(need) {
   };
   if (need === 'none') { if (ed.sel.size) ed.select([]); return null; }
   if (need === 'clip' && !pick((it, tr) => it.type === 'clip' && (tr.kind === 'video' || tr.kind === 'overlay'))) return 'Add a video first: Left panel → Media → “Add videos, photos, music”.';
+  if (need === 'music' && !pick((it, tr) => it.type === 'audio' && tr.kind === 'music')) return 'Add music first: Do it for me → 🎵 Add music, or Left panel → Music → +.';
   if (need === 'text' && !pick((it) => it.type === 'text')) return 'Add a text first: Left panel → Text, then pick Title or Subtitle.';
   if (need === 'capsules' && !pick((it) => it.type === 'theme.el' && it.style?.el === 'capsules')) return 'Place a capsules carousel first: Themes → Capsules carousel → ＋.';
   if (need === 'theme' && !pick((it) => /^theme\.(el|sting|outro)$/.test(it.type) && !/^(capsules|grade|wipe|confetti)$/.test(it.style?.el || ''))) return 'Place a theme element first: Themes → Place elements (a lower third, an end card …) → ＋.';

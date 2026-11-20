@@ -3,7 +3,7 @@
 // clock and the sound drift apart by more than 45 ms (a seek, a pause, an edit) — never per frame — and its gain
 // follows the clip's volume, ducking keyframes and fades smoothly (15 ms), so nothing clicks.
 
-import { evalProp, fadeAt } from '../core/render.js';
+import { audioGain } from '../core/audio-gain.js';
 
 export class PreviewAudio {
   constructor() { this.nodes = new Map(); this.ac = null; }
@@ -39,7 +39,7 @@ export class PreviewAudio {
         this.nodes.set(item.id, n);
       }
       if (n) {
-        const v = Math.max(0, Math.min(2, evalProp(item, 'volume', t) * (track.volume ?? 1) * fadeAt(item, t)));
+        const v = Math.max(0, Math.min(2, audioGain(item, t) * (track.volume ?? 1)));
         n.g.gain.setTargetAtTime(v, now, 0.015);
       }
     }

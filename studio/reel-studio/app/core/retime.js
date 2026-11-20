@@ -113,7 +113,12 @@ export function fracTime(it, f) {
 export function srcTime(it, t) {
   const D = retimeDur(it), S = it.out - it.in;
   if (it.freeze) return it.in;
-  if (!hasCurve(it) && !it.reverse) return Math.min(it.out, Math.max(it.in, it.in + (t - it.t0) * (it.speed || 1)));
+  if (!hasCurve(it) && !it.reverse) {
+    const s = Math.min(it.out, Math.max(it.in, it.in + (t - it.t0) * (it.speed || 1)));
+    // a looped music bed (audio/music.js): source a..b repeats to fill the item
+    const L = it.loop;
+    return L && L.b - L.a > 0.05 && s >= L.b ? L.a + ((s - L.b) % (L.b - L.a)) : s;
+  }
   const x = D > 0 ? Math.min(1, Math.max(0, (t - it.t0) / D)) : 0, f = fracSrc(it, x);
   return it.reverse ? it.out - f * S : it.in + f * S;
 }

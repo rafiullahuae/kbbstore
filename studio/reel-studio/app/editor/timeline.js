@@ -45,6 +45,9 @@ export class Timeline {
     this.scroll.addEventListener('dblclick', (e) => {
       const el = e.target.closest?.('.tl-item'); const it = el && findItem(this.ed.project, el.dataset.id)?.item;
       if (it?.type === 'theme.el' && it.style?.el === 'tbehind') import('../themes/textbehind-popup.js').then((m) => m.openTbEditor(this.ed, it.id));
+      // a double-click on a music clip opens the Music Library beside the video (audio/music-library.js)
+      const tr = it && findItem(this.ed.project, it.id)?.track;
+      if (it?.type === 'audio' && tr?.kind === 'music') import('../audio/music-library.js').then((m) => m.openMusicLibrary(this.ed, { itemId: it.id }));
     });
     this.scroll.addEventListener('wheel', (e) => {
       if (e.ctrlKey || e.metaKey) { e.preventDefault(); this.zoom(e.deltaY < 0 ? 1.15 : 0.87, e.clientX); }
@@ -275,7 +278,7 @@ export class Timeline {
     const it = hit?.item; if (!it || hit.track.locked) return;
     const m = it.media ? findMedia(ed.project, it.media) : null;
     const hasSrc = m && m.kind !== 'image';
-    const s0 = { t0: it.t0, in: it.in, out: it.out, dur: itemDur(it), end: itemEnd(it) }, sp = it.speed || 1;
+    const s0 = { t0: it.t0, in: it.in, out: it.out, dur: itemDur(it), end: itemEnd(it), loop: !!it.loop }, sp = it.speed || 1;
     const pts = this.snapPoints(new Set([id]));
     const ripple = e.altKey, followers = ripple ? TD.trimFollowers(hit.track, it) : [];
     const x0 = e.clientX, MIN = 0.1;
@@ -311,7 +314,7 @@ export class Timeline {
         const sd = this.snapT([s0.end + dt], pts); dt += sd; this.showSnapLine(sd ? s0.end + dt : null);
         let out = s0.out + dt * sp;
         out = Math.max(s0.in + MIN * sp, out);
-        if (hasSrc) out = Math.min(out, m.dur || out);
+        if (hasSrc && !s0.loop) out = Math.min(out, m.dur || out);   // a looped music bed may run on (it repeats)
         props = { out }; dEnd = (out - s0.out) / sp;
       }
       ed.apply(ops.setItems([{ id, props }, ...(ripple ? TD.rippleProps(followers, dEnd) : [])], ripple ? 'Ripple trim' : 'Trim'));

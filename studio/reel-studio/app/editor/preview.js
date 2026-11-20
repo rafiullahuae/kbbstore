@@ -8,6 +8,7 @@ import { previewStream, usesFrameStream, blendWeight } from '../core/retime.js';
 import { needsRetimedSound, retimedSoundNow } from '../core/retime-audio.js';
 import { blendInto } from '../core/frames.js';
 import { PreviewAudio } from './preview-audio.js';
+import { audioGain } from '../core/audio-gain.js';
 import { ops } from '../core/history.js';
 import { seekExact } from '../core/media.js';
 import { canvasGrab, drawCanvasOverlays, canvasHover, canvasMenu } from '../core/modules.js';
@@ -111,14 +112,16 @@ export class Preview {
         used.add(el);
         const want = srcTime(item, t);
         const rendered = needsRetimedSound(item) && rate === 1 && retimedSoundNow(store, item, m);
-        const audible = playing && !track.muted && !item.muted && m.hasAudio && rate === 1 && !rendered && !item.reverse;
+        // hush: the Music Library's "Preview with my video" plays its candidate song in place of the music track
+        const audible = playing && !track.muted && !item.muted && m.hasAudio && rate === 1 && !rendered && !item.reverse && !(this.hushMusic && track.kind === 'music');
         // a media whose sound was replaced (media.audio, e.g. a cleaned voice) plays it from a second element
         const alt = store.audioElement?.(m);
         if (alt) used.add(alt);
         const v = Math.max(0.0625, Math.min(16, speedAt(item, t) * rate));
         for (const x of alt ? [el, alt] : [el]) {
           x.muted = !audible || (alt && x === el);
-          x.volume = Math.max(0, Math.min(1, evalProp(item, 'volume', t) * (track.volume ?? 1) * fadeAt(item, t)));   // kf.volume = ducking
+          // volume × ducking × fades (core/audio-gain.js, the export's own numbers); above 100 % through a Web Audio gain
+          this.setLevel(x, audioGain(item, t) * (track.volume ?? 1));
           if (playing) {
             x.preservesPitch = item.keepPitch !== false;
             const err = want - x.currentTime;
@@ -142,6 +145,21 @@ export class Preview {
     for (const el of this.mediaEls()) if (!used.has(el) && el.pause && !el.paused) el.pause();
     if (playing) this.audio.sync(t, sounds); else this.audio.stop();
     return used;
+  }
+
+  /** an element's level 0..2: up to 1 on el.volume; louder (Volume above 100 %) routes it once through a Web Audio gain */
+  setLevel(x, v) {
+    v = Math.max(0, Math.min(2, v || 0));
+    const r = this.boosted?.get(x);
+    if (!r && v <= 1) { x.volume = v; return; }
+    if (!r) {
+      const ac = this.audio.ctx(); if (!ac) { x.volume = Math.min(1, v); return; }
+      try { const src = ac.createMediaElementSource(x), g = ac.createGain(); src.connect(g); g.connect(ac.destination); (this.boosted ||= new WeakMap()).set(x, g); }
+      catch { x.volume = Math.min(1, v); return; }
+    }
+    const g = this.boosted.get(x); x.volume = 1;
+    if (g.context.state === 'suspended') g.context.resume().catch(() => {});
+    if (Math.abs(g.gain.value - v) > 1e-3) g.gain.setTargetAtTime(v, g.context.currentTime, 0.015);
   }
 
   /** the decoder stream for a media: the stream, undefined while it opens (a redraw follows), null when unavailable */

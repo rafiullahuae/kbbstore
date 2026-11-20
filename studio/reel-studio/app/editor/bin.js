@@ -68,6 +68,8 @@ export class Bin {
     b.appendChild(h('p.muted.small', kind === 'music'
       ? 'Starter music (made for the studio, free to use) and your own tracks — drop .mp3/.m4a/.wav files into library/music/user.'
       : 'Sound effects (made for the studio, free to use). Drag one onto the SFX track, or press +.'));
+    // the Music Library window (audio/music-library.js): moods, preview with the video, favourites, replace in one step
+    if (kind === 'music') b.appendChild(h('button.btn.wide', { dataset: { musicOpen: '1' }, title: 'Songs by mood with a preview before you apply (double-click the music on the timeline opens it too)', on: { click: () => { const ed = this.ed, sel = ed.selectedItems().find((x) => x.item.type === 'audio' && x.track.kind === 'music'), first = ed.project.tracks.find((t) => t.kind === 'music')?.items[0]; import('../audio/music-library.js').then((L) => L.openMusicLibrary(ed, { itemId: sel?.item.id || first?.id })); } } }, '📚 Open the Music Library'));
     const filter = h('input.lib-filter', { type: 'search', placeholder: kind === 'music' ? 'Search title, mood, bpm…' : 'Search sounds…', 'aria-label': 'Search' });
     const list = h('div.lib-list', h('p.muted', 'Loading…'));
     b.append(hoverToggles({ sound: true, mine: false }), filter, list);
@@ -209,7 +211,7 @@ export class Bin {
 export async function libraryRows(ed, kind) {
   const A = await import('../auto/index.js');
   const lib = await A.library(ed.context());
-  if (kind === 'music') return lib.music.map((t) => ({ src: t.src || 'library/music/' + t.file, title: t.title, dur: t.duration, meta: [t.source === 'user' ? 'your track' : t.mood, t.bpm ? Math.round(t.bpm) + ' bpm' : '', fmtDur(t.duration)].filter(Boolean).join(' · '), search: [t.title, t.mood, ...(t.tags || []), t.bpm, t.energy].join(' ').toLowerCase() }));
+  if (kind === 'music') return lib.music.map((t) => ({ src: t.src || 'library/music/' + t.file, title: t.title, dur: t.duration, meta: [t.source === 'user' ? 'your track' : t.style || t.mood, t.bpm ? Math.round(t.bpm) + ' bpm' : '', fmtDur(t.duration)].filter(Boolean).join(' · '), search: [t.title, t.mood, ...(t.tags || []), t.bpm, t.energy].join(' ').toLowerCase() }));
   return lib.sfx.map((s) => ({ src: 'library/sfx/' + s.file, dur: s.duration, title: s.id.replace(/[-_]+/g, ' '), meta: [s.category, fmtDur(s.duration)].filter(Boolean).join(' · '), search: [s.id, s.category].join(' ').toLowerCase() }));
 }
 

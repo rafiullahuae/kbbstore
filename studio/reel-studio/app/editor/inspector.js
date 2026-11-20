@@ -17,6 +17,8 @@ let CAPS_PANEL = null; import('../themes/capsules-panel.js').then((m) => { CAPS_
 let TEXT_PANEL = null; import('../themes/text-panel.js').then((m) => { TEXT_PANEL = m; }).catch(() => {});
 // contact cards, the logo badge, country badges and the cut-out transitions (themes/el2-panel.js), loaded the same way
 let EL2_PANEL = null; import('../themes/el2-panel.js').then((m) => { EL2_PANEL = m; }).catch(() => {});
+// the background music's own section (audio/music.js): volume, fades, start at, loop, auto-duck, replace song
+let MUSIC_PANEL = null; import('../audio/music.js').then((m) => { MUSIC_PANEL = m; }).catch(() => {});
 
 const FONTS = ['system-ui', 'Helvetica Neue', 'Avenir Next', 'Futura', 'Gill Sans', 'Georgia', 'Didot', 'Baskerville', 'Times New Roman', 'Courier New', 'Arial Rounded MT Bold', 'Impact', 'Geeza Pro', 'Damascus', 'Baghdad'];
 const pct = (v) => Math.round(v * 100) + '%';
@@ -137,8 +139,11 @@ export class Inspector {
     if (item.type === 'shape') this.shapePanel(item);
     if (item.type === 'sticker') this.stickerPanel(item);
     if (/^theme\./.test(item.type)) this.themePanel(item, track);
-    if (item.type === 'clip' || item.type === 'audio') this.timingPanel(item, m);
-    if (m?.hasAudio && (item.type === 'clip' || item.type === 'audio')) this.audioPanel(item);
+    // music: its own section first (volume, fades, start at, loop, auto-duck, replace); speed folded below it
+    const music = item.type === 'audio' && track.kind === 'music' && MUSIC_PANEL;
+    if (music) this.el.append(MUSIC_PANEL.musicSection(this, item, track, m));
+    if (item.type === 'clip' || item.type === 'audio') { this.timingPanel(item, m); if (music) { const sp = this.el.lastElementChild; if (sp?.tagName === 'DETAILS') sp.open = false; } }
+    if (m?.hasAudio && (item.type === 'clip' || item.type === 'audio') && !music) this.audioPanel(item);
     for (const sec of inspectorSections(item, track, m)) { try { const el = sec.render(ed.context(), item, track, m); if (el) this.el.append(el); } catch (e) { console.warn('[inspector]', sec.id, e); } }
     if (item.type === 'clip') { this.lookPanel(item); this.cropZoomPanel(item, m); }
     // text behind the host: its own editor beside the video holds position, size, rotation and opacity
