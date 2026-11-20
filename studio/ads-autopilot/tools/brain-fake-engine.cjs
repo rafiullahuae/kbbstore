@@ -310,7 +310,7 @@ const server = http.createServer(async (req, res) => {
     const f = path.normalize(path.join(APP, rel === '/' ? 'index.html' : rel));
     if (!p.startsWith('/app') || !f.startsWith(APP) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache',
-      'content-security-policy': "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
+      'content-security-policy': "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
     return fs.createReadStream(f).pipe(res);
   }
   if (p === '/api/info') return json(res, 200, { app: 'KBB Ads Autopilot', version: '0.3.0-fake', apiLevel: 1, token: TOKEN, dataDir: '~/KBB Ads Autopilot Data' });
