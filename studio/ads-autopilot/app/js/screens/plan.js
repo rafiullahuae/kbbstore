@@ -1,10 +1,19 @@
 import { t, tt } from '../i18n.js';
 import { esc, aed, tip, empty } from '../ui.js';
+import { jobsCard, wireJobs, loadJobs } from './jobs-ui.js';
+
+export const load = () => loadJobs(false);
 
 const FORMAT = { single_image: 'Single image', single_video: 'Single video', reels_stories: 'Reels & Stories', carousel: 'Carousel', collection: 'Collection', catalog: 'Advantage+ catalog', flexible: 'Flexible format', click_to_whatsapp: 'Click to WhatsApp', click_to_messenger: 'Click to Messenger', whatsapp_status: 'WhatsApp Status', partnership: 'Partnership' };
 const AUD = { women_gcc_ar: 'Arabic-speaking women 18-45, GCC', women_uae_en: 'English-speaking women 18-45, UAE', broad: 'Broad (Advantage+)', retarget_viewers: 'Product viewers 14d', retarget_cart: 'Cart abandoners 7d', retarget_engagers: 'Video viewers & engagers', lookalike_buyers: 'Lookalike of buyers', existing_customers: 'Existing customers' };
 
 export function render(S, el) {
+  inner(S, el);
+  const pg = el.querySelector('.page');
+  if (pg) { pg.insertAdjacentHTML('afterbegin', jobsCard(S)); wireJobs(S, el, () => render(S, el)); }
+}
+
+function inner(S, el) {
   const st = S.state;
   const p = st.plan;
   if (!p && st.engine_plan && (st.engine_plan.steps || []).length) {
@@ -26,7 +35,7 @@ export function render(S, el) {
       ${(p.allocation || []).map((a) => `<div style="margin-bottom:10px"><div class="spread small"><b>${esc(a.bucket)}</b><span class="num">${Math.round(a.share_pct)}% · ${aed(a.daily_aed)}/${esc(tt('day', 'يوم'))}</span></div><div class="bar-s"><i style="width:${Math.max(0, Math.min(100, a.share_pct))}%"></i></div><span class="small muted">${esc(a.why)}</span></div>`).join('')}
       <h3 style="margin-top:12px">${esc(tt('Audience & cost playbook', 'خطة الجمهور والتكلفة'))}</h3>
       <ul class="small ink2" style="padding-inline-start:18px;margin:6px 0">
-        <li>${esc(tt('Advantage+ audience with suggestions: women 18-45, Arabic, GCC, skincare & K-beauty interests.', 'جمهور Advantage+ مع اقتراحات: نساء ١٨-٤٥، العربية، الخليج، اهتمامات العناية والجمال الكوري.'))}</li>
+        <li>${esc(tt('Advantage+ audience with your age and gender as suggestions; recent buyers excluded (Strategy → Your playbook).', 'جمهور Advantage+ مع العمر والجنس كاقتراحات؛ استبعاد المشترين الجدد.'))}</li>
         <li>${esc(tt('Reels and Stories first (9:16), Advantage+ placements on, 4:5 for feed.', 'الريلز والستوريز أولاً (٩:١٦) مع تفعيل أماكن الظهور التلقائية و٤:٥ للخلاصة.'))}</li>
         <li>${esc(tt('Creative-first targeting: many distinct creatives instead of narrow interests.', 'الاستهداف بالإبداع: إعلانات متنوعة بدل اهتمامات ضيقة.'))}</li>
         <li>${esc(tt('Frequency kept under ~2.5/week for prospecting; fatigued ads replaced.', 'تكرار أقل من ٢٫٥ أسبوعياً؛ استبدال الإعلانات المرهقة.'))}</li></ul></div>

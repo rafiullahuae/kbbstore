@@ -1,8 +1,10 @@
 import { tt } from '../i18n.js';
-import { esc, aed, num, pct, tip, empty } from '../ui.js';
+import { esc, aed, num, pct, tip, empty, toast } from '../ui.js';
 import { api, getAccount } from '../api.js';
 
 let scope = 'account';
+const learn = new Map(); // account → /api/brain/x/learning
+window.addEventListener('kaa:stale', (e) => (e.detail || []).forEach((id) => learn.delete(id)));
 const data = new Map();
 export function render(S, el) {
   const key = scope === 'account' ? getAccount() : 'portfolio';
@@ -19,6 +21,7 @@ export function render(S, el) {
     ${['30d', '90d', '365d', 'all'].map((w) => `<div class="kpi"><span class="l">${esc(tt('Baseline', 'المعدل'))} ${esc(w)}</span><span class="v num">${aed((b[w] || {}).cpa)}</span><span class="d">${esc(tt('CPA', 'تكلفة الطلب'))} · ROAS ${num((b[w] || {}).roas, 2)} · CTR ${pct((b[w] || {}).ctr)}</span></div>`).join('')}
     <div class="kpi"><span class="l">${esc(tt('Creative half-life', 'عمر الإعلان'))} ${tip(tt('Days until an ad\'s CTR typically falls 30% below its first week. New creative is planned before this.', 'الأيام حتى تنخفض نسبة النقر ٣٠٪ عن أسبوعها الأول.'))}</span><span class="v num">${p.creative_half_life_days ? num(p.creative_half_life_days) + ' ' + esc(tt('days', 'يوماً')) : '—'}</span><span class="d">${(p.fatigue_curve || []).map((x) => num(x, 2)).join(' → ')}</span></div>
   </section>
+  ${scope === 'account' ? learnSection(learn.get(getAccount())) : ''}
   <div class="grid g2">
     <div class="card"><header><h2>${esc(tt('What wins here', 'ما ينجح هنا'))}</h2></header><div class="list">${(p.winners || []).map((w) => `<div>✓ <span>${esc(w)}</span></div>`).join('') || `<div class="muted">${esc(tt('No credible winner yet.', 'لا رابح مؤكد بعد.'))}</div>`}</div></div>
     <div class="card"><header><h2>${esc(tt('Evidence & warnings', 'أدلة وتحذيرات'))}</h2></header><div class="list">${(p.evidence || []).map((w) => `<div>• <span>${esc(w)}</span></div>`).join('') || `<div class="muted">—</div>`}</div></div>
@@ -32,6 +35,7 @@ export function render(S, el) {
 }
 export async function load() {
   const key = scope === 'account' ? getAccount() : 'portfolio';
+  if (scope === 'account' && !learn.has(key)) { learn.set(key, await api('/api/brain/x/learning').catch(() => null)); if (data.has(key)) return location.hash.startsWith('#/learned'); }
   if (data.has(key)) return false;
   if (scope === 'account') data.set(key, (await api('/api/brain/x/profile')) || {});
   else data.set(key, fromLearnings(await api('/api/learnings', { noAccount: true }).catch(() => [])));
@@ -56,3 +60,29 @@ function fromLearnings(ls) {
   return { days, first_day: from, last_day: to, baselines: { all: { cpa: purch ? spend / purch : 0, roas, ctr: 0 } },
     by_format: cut('format'), by_angle: cut('angle'), by_country: cut('country'), by_objective: cut('objective'), by_audience: cut('audience'), winners: [], evidence: [] };
 }
+
+// The self-learning loop (engine brain/learn.go): what it learned and changed this week, whether its predictions are
+// getting better, the lessons it plans with, and the thresholds it tuned (with undo).
+function learnSection(l) {
+  if (!l) return '';
+  const w = (l.weekly || []).slice(-1)[0];
+  const h = l.health || [];
+  const maxE = Math.max(0.01, ...h.map((x) => x.mean_abs_log_error));
+  return `<div class="grid g21" data-learning><div class="card"><header><h2>${esc(tt('What I learned and changed', 'ما تعلّمته وما غيّرته'))}</h2><span class="sub">${esc(w ? w.week : '')}</span></header>
+    ${w ? `<div class="bi"><pre class="report">${esc(w.en)}</pre><pre class="report rtl" dir="rtl" lang="ar">${esc(w.ar)}</pre></div>` : `<p class="muted">${esc(tt('The first weekly report comes after the first week of finished tests (each test is judged 9 days after it starts).', 'أول تقرير أسبوعي بعد أسبوع من الاختبارات المكتملة.'))}</p>`}
+    ${(l.lessons || []).length ? `<h3>${esc(tt('Lessons it plans with', 'الدروس التي يخطط بها'))}</h3><div class="list">${l.lessons.slice(0, 8).map((x) => `<div><span class="chip ${x.kind === 'win' ? 'acc' : 'warn'}">${esc(x.kind)}</span><span class="small">${esc(tt(x.text, x.text_ar))}</span></div>`).join('')}</div>` : ''}</div>
+  <div class="card"><header><h2>${esc(tt('Is it getting better?', 'هل يتحسّن؟'))} ${tip(tt('Each launch is recorded with the cost per order it expected; 9 days later it is scored against the real one. Lower error = better predictions.', 'كل إطلاق يُسجّل بتوقعه ثم يُقارن بالنتيجة بعد ٩ أيام.'))}</h2></header>
+    ${h.length ? `<div class="list">${h.slice(-8).map((x) => `<div class="small"><span style="width:70px">${esc(x.week)}</span><span class="bar-s" style="flex:1"><i style="width:${Math.round((x.mean_abs_log_error / maxE) * 100)}%"></i></span><span>${num((Math.exp(x.mean_abs_log_error) - 1) * 100)}% · ${num(x.scored)} ${esc(tt('tests', 'اختبارات'))}</span></div>`).join('')}</div>` : `<p class="muted small">${esc(tt('No finished tests yet.', 'لا اختبارات مكتملة بعد.'))}</p>`}
+    <p class="small">${esc(tt('Open predictions', 'توقعات مفتوحة'))}: <b>${num(l.open)}</b> · ${esc(tt('scored', 'مقيّمة'))}: <b>${num(l.scored)}</b> · ${esc(tt('cells learned', 'خلايا متعلّمة'))}: <b>${num(l.cells)}</b></p>
+    <h3>${esc(tt('Its own thresholds', 'حدوده الذاتية'))}</h3>
+    <p class="small">${esc(tt('Mode', 'الوضع'))}: <b>${esc(l.self_tune)}</b>${l.tuned && l.tuned.hard_stop_mult ? ` · ${esc(tt('stop after', 'الإيقاف بعد'))} <b>${num(l.tuned.hard_stop_mult, 1)}×</b> ${esc(l.tuned.applied ? tt('(applied)', '(مطبّق)') : tt('(proposed)', '(مقترح)'))}` : ''}</p>
+    <div class="list">${(l.changes || []).slice(-5).reverse().map((c) => `<div class="small ink2">${esc(c)}</div>`).join('') || `<div class="small muted">${esc(tt('No changes yet.', 'لا تغييرات بعد.'))}</div>`}</div>
+    <div class="row">${l.tuned && l.tuned.hard_stop_mult && !l.tuned.applied ? `<button type="button" class="small" data-lapply>${esc(tt('Apply the proposal', 'تطبيق المقترح'))}</button>` : ''}${l.tuned && l.tuned.hard_stop_mult ? `<button type="button" class="ghost small" data-lreset>${esc(tt('Undo its tuning', 'التراجع عن ضبطه'))}</button>` : ''}</div></div></div>`;
+}
+
+document.addEventListener('click', async (ev) => {
+  const a = ev.target.closest && ev.target.closest('[data-lapply],[data-lreset]');
+  if (!a) return;
+  const path = a.hasAttribute('data-lapply') ? 'learning/apply-proposal' : 'learning/reset-tuning';
+  try { learn.set(getAccount(), await api('/api/brain/x/' + path, { method: 'POST', body: {} })); location.hash = '#/learned'; window.dispatchEvent(new HashChangeEvent('hashchange')); } catch (e) { toast(e.message); }
+});

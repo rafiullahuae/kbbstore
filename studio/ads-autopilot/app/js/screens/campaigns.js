@@ -1,8 +1,11 @@
 import { t, tt } from '../i18n.js';
 import { esc, aed, num, pct, verdictChip, ago, txt, tip } from '../ui.js';
+import { funnelCards, loadFunnel } from './funnel-ui.js';
+
+export const load = () => loadFunnel(false);
 
 let filter = 'all';
-const FORMAT = { single_image: ['Image', 'صورة'], single_video: ['Video', 'فيديو'], carousel: ['Carousel', 'دوّار'], collection: ['Collection', 'مجموعة'], catalog: ['Catalog', 'كتالوج'], flexible: ['Flexible', 'مرن'], click_to_whatsapp: ['WhatsApp', 'واتساب'], reels_stories: ['Reels', 'ريلز'] };
+const FORMAT = { single_image: ['Image', 'صورة'], single_video: ['Video', 'فيديو'], carousel: ['Carousel', 'دوّار'], collection: ['Collection', 'مجموعة'], catalog: ['Catalog', 'كتالوج'], flexible: ['Flexible', 'مرن'], reels_stories: ['Reels', 'ريلز'] };
 
 export function render(S, el) {
   const st = S.state;
@@ -30,6 +33,7 @@ export function render(S, el) {
     <span class="muted small">${nAr} ${esc(t('Arabic'))} · ${nEn} ${esc(t('English'))} · ${esc(tt('metrics: last 7 days', 'المقاييس: آخر ٧ أيام'))} ${tip(tt('Verdicts come from Bayesian statistics on settled data (the last 2 days are excluded while purchases are still being attributed).', 'الأحكام من إحصاء بايزي على بيانات مكتملة (يُستبعد آخر يومين).'))}</span></div>
   <div class="card" style="padding:0;overflow:auto"><table><thead><tr><th>${esc(tt('Campaign / ad set / ad', 'الحملة / المجموعة / الإعلان'))}</th><th>${esc(t('Status'))}</th><th>${esc(tt('Budget/day', 'الميزانية/يوم'))}</th><th class="n">${esc(t('Spend'))}</th><th class="n">${esc(t('Orders'))}</th><th class="n">${esc(t('CPA'))}</th><th class="n">${esc(t('ROAS'))}</th><th class="n">${esc(t('CPC'))}</th><th class="n">${esc(t('CTR'))}</th><th class="n">${esc(tt('Freq.', 'التكرار'))}</th><th>${esc(tt('Verdict', 'الحكم'))}</th><th>${esc(t('Why'))}</th></tr></thead>
   <tbody>${rows || `<tr><td colspan="12" class="empty">${esc(tt('No campaigns yet. Once limits are set, the autopilot creates one Advantage+ sales campaign.', 'لا توجد حملات بعد. بعد تحديد الحدود ينشئ الطيار الآلي حملة مبيعات Advantage+.'))}</td></tr>`}</tbody></table></div>
+  ${funnelCards()}
   <div class="card"><header><h2>${esc(t('Proposals'))} <span class="muted small">(${pr.length})</span></h2><span class="pill ${esc(st.autopilot.mode)}">${esc(st.autopilot.mode === 'auto' ? tt('executed inside your limits', 'تُنفَّذ ضمن حدودك') : tt('logged only (shadow/off)', 'تُسجَّل فقط'))}</span></header>
   <div class="list">${pr.map((p) => `<div><span class="chip">${esc(p.kind)}</span><span><b>${esc(p.target)}</b> ${p.params && p.params.daily_budget_aed ? `→ ${aed(p.params.daily_budget_aed)}/${esc(tt('day', 'يوم'))}` : ''} ${p.params && p.params.format ? `<span class="chip">${esc(p.params.format)}</span>` : ''}<br><span class="ink2">${esc(p.why)}</span> <span class="muted small">· ${esc(tt('confidence', 'الثقة'))} ${pct(p.confidence, 0)}</span></span></div>`).join('') || `<div class="muted">${esc(tt('Nothing to change right now.', 'لا شيء يحتاج تغييراً الآن.'))}</div>`}</div></div>
   </div>`;

@@ -138,7 +138,11 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 			}
 		}
 		days := int(start.Sub(now).Hours()/24 + 0.5)
-		j := Job{ID: id, Kind: "occasion", Title: fmt.Sprintf("%s in %d days — ads ready for your approval", inst.Name, days), TitleAR: fmt.Sprintf("%s بعد %d يوماً — الإعلانات جاهزة لموافقتك", inst.NameAR, days),
+		title, titleAR := fmt.Sprintf("%s in %d days — ads ready for your approval", inst.Name, days), fmt.Sprintf("%s بعد %d يوماً — الإعلانات جاهزة لموافقتك", inst.NameAR, days)
+		if days <= 0 {
+			title, titleAR = fmt.Sprintf("%s (on now, until %s) — ads ready for your approval", inst.Name, inst.End), fmt.Sprintf("%s (جارٍ حتى %s) — الإعلانات جاهزة لموافقتك", inst.NameAR, inst.End)
+		}
+		j := Job{ID: id, Kind: "occasion", Title: title, TitleAR: titleAR,
 			Why: brief, When: when, Status: "planned", ProductIDs: pids, Lang: strings.Join(pb.Languages, "+"), Format: "image", CopyDirection: o.Angle,
 			Audience: "the prospecting campaign (Advantage+ audience), budget one step up from 3 days before", Source: "occasion", Target: inst.ID, Creatives: crs, Occasion: &inst, UpdatedAt: now.UTC()}
 		j.logf(now, "prepared %d ads for %s (%s → %s%s); waiting for your approval", len(crs), inst.Name, inst.Start, inst.End, map[bool]string{true: ", estimated date", false: ""}[inst.Estimated])
@@ -165,7 +169,7 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 			if left <= d && left > 0 && !containsInt(j.Reminded, d) {
 				j.Reminded = append(j.Reminded, d)
 				j.logf(now, "reminder: %d days left, not approved yet", left)
-				ac.notifyOwner(fmt.Sprintf("%s in %d days — not approved yet", j.Occasion.Name, left), "Approvals → Occasions", "الموافقات ← المناسبات")
+				ac.notifyOwner(fmt.Sprintf("%s in %d days — not approved yet · %s بعد %d أيام — لم تتم الموافقة بعد", j.Occasion.Name, left, j.Occasion.NameAR, left), "Approvals → Occasions", "الموافقات ← المناسبات")
 			}
 		}
 	}

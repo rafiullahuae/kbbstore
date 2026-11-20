@@ -13,6 +13,7 @@ import * as audiences from './screens/audiences.js';
 import * as research from './screens/research.js';
 import * as learned from './screens/learned.js';
 import * as plan from './screens/plan.js';
+import * as strategy from './screens/strategy.js';
 import * as activity from './screens/activity.js';
 import * as approvals from './screens/approvals.js';
 import * as settings from './screens/settings.js';
@@ -28,13 +29,13 @@ const I = {
   campaigns: '<path d="M4 5h16M4 12h10M4 19h6"/>', creatives: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
   videos: '<rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 10l4-2v8l-4-2"/>', audiences: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 11a3 3 0 1 0 0-6M21 20c0-2-1.5-4-4-4.7"/>',
   research: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>', learned: '<path d="M12 3l9 5-9 5-9-5 9-5zM5 10.5V16c0 1.7 3.1 3 7 3s7-1.3 7-3v-5.5"/>',
-  plan: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/>', activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  strategy: '<path d="M4 20l6-6 4 4 6-10M14 8h6v6"/>', plan: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/>', activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
   approvals: '<path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/>', settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
 };
 const GROUPS = [
   ['RUN', 'تشغيل', [['overview', 'Overview', 'نظرة عامة', overview], ['portfolio', 'Portfolio', 'المحفظة', portfolio], ['campaigns', 'Campaigns', 'الحملات', campaigns],
     ['creatives', 'Creatives', 'الإعلانات', creatives], ['videos', 'Videos', 'الفيديوهات', videos], ['audiences', 'Audiences', 'الجماهير', audiences]]],
-  ['THINK', 'تفكير', [['research', 'Research', 'أبحاث السوق', research], ['learned', 'What it learned', 'ما تعلّمه', learned], ['plan', 'Plan', 'الخطة', plan]]],
+  ['THINK', 'تفكير', [['strategy', 'Strategy', 'الاستراتيجية', strategy], ['research', 'Research', 'أبحاث السوق', research], ['learned', 'What it learned', 'ما تعلّمه', learned], ['plan', 'Plan', 'الخطة', plan]]],
   ['CONTROL', 'تحكّم', [['activity', 'Activity', 'السجل', activity], ['approvals', 'Approvals', 'الموافقات', approvals], ['settings', 'Settings', 'الإعدادات', settings]]],
 ];
 const ROUTES = GROUPS.flatMap((g) => g[2]);
@@ -303,6 +304,7 @@ window.addEventListener('hashchange', go);
     if (type === 'alert' || type === 'action.alert') toast((d.data && d.data.text) || d.text || 'Alert');
     if (['metrics.updated', 'cycle.end', 'action.execution', 'action.kill', 'research.updated', 'backfill.progress', 'connections'].includes(type)) {
       const ids = acct ? [acct] : [...S.states.keys()];
+      window.dispatchEvent(new CustomEvent('kaa:stale', { detail: ids })); // strategy / jobs / funnel / occasions caches
       for (const id of ids) { S.cache.forEach((_, k) => { if (k.startsWith(id + '|')) S.cache.delete(k); }); refreshState(id).catch(() => {}); }
       if (type !== 'backfill.progress') refreshAccounts().catch(() => {});
     }

@@ -61,7 +61,7 @@ export async function loadState(id) {
     pending: ((pend && pend.proposals) || []).filter((p) => ['shadow', 'failed', 'refused'].includes(p.status)).map((p) => Object.assign({}, p, {
       params: Object.assign({}, p.params, p.params && p.params.daily_budget != null ? { daily_budget_aed: p.params.daily_budget } : {}),
       starter: String(p.id).startsWith('starter-'), reason: (p.result && (p.result.error || (p.result.decision && (p.result.decision.reasons || [])[0]))) || '' })),
-    starter: st.starter || null,
+    starter: st.starter || null, readiness: st.readiness || [],
   };
 }
 function validT(t) { return t && !String(t).startsWith('0001') ? t : ''; }

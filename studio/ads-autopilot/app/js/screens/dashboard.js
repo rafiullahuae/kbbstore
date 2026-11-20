@@ -1,5 +1,6 @@
 // Overview (H · Sage Calm): live hero + limits, 6 KPI tiles with sparklines,
 // spend vs sales + who is buying, creatives + trending now, plan / needs you / accounts.
+import { readinessCard } from './funnel-ui.js';
 import { tt, getLang } from '../i18n.js';
 import { esc, aed, num, pct, ago, lineChart, spark, txt, tip, verdictChip, toast } from '../ui.js';
 import { api, getAccount, authed } from '../api.js';
@@ -42,7 +43,7 @@ export function render(S, el) {
   const sp = st.split || {};
   const arS = (sp.ar && sp.ar.spend) || 0, enS = (sp.en && sp.en.spend) || 0, arShare = arS + enS ? arS / (arS + enS) : 0;
   const props = st.proposals || [];
-  el.innerHTML = `<div class="page">
+  el.innerHTML = `<div class="page">${readinessCard(st, 'overview')}
   <section class="grid g21">
     <div class="hero" aria-label="${esc(tt('What it is doing now', 'ما يفعله الآن'))}">
       <span class="live">${live ? '<i></i>' : ''}${esc(live ? tt('Live · ' + (mode === 'auto' ? 'Auto' : 'Practice'), 'مباشر · ' + (mode === 'auto' ? 'تلقائي' : 'تدريب')) : tt('Off', 'متوقف'))}</span>

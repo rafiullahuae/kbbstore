@@ -5,6 +5,10 @@ import { tt } from '../i18n.js';
 import { esc, aed, pct, toast, empty } from '../ui.js';
 import { api } from '../api.js';
 import { refreshState } from '../main.js';
+import { readinessCard } from './funnel-ui.js';
+import { occasionsCard, loadOccasions, wireOccasions } from './occasions-ui.js';
+
+export const load = () => loadOccasions(false);
 
 let busy = '';
 export function render(S, el) {
@@ -16,6 +20,8 @@ export function render(S, el) {
     <span class="row"><button type="button" class="small" data-ok="${esc(p.id)}" ${busy ? 'disabled' : ''}>${esc(tt('Approve', 'موافقة'))}</button><button type="button" class="ghost small" data-no="${esc(p.id)}" ${busy ? 'disabled' : ''}>${esc(tt('Not now', 'ليس الآن'))}</button></span></div>`;
   el.innerHTML = `<div class="page"><div class="page-h"><div><h1>${esc(tt('Approvals', 'الموافقات'))}</h1><p>${esc(auto ? tt('Auto mode: changes inside your limits run by themselves; nothing waits.', 'الوضع التلقائي: التغييرات ضمن حدودك تُنفَّذ وحدها.') : tt('Practice mode: what the autopilot would do. Approve one to run it for real — your limits are still checked.', 'وضع التدريب: ما سيفعله الطيار الآلي. وافقي على أي منها لتنفيذه فعلاً — حدودك تُفحص دائماً.'))}</p></div>
   ${!auto && props.length ? `<button type="button" id="all" ${busy ? 'disabled' : ''}>${esc(tt('Approve all', 'الموافقة على الكل'))}</button>` : ''}</div>
+  ${occasionsCard()}
+  ${props.length && !auto ? '' : readinessCard(st, 'approvals')}
   ${starter ? `<div class="card"><header><h2>${esc(tt('First launch', 'الإطلاق الأول'))}</h2><span class="sub">${esc(st.starter.why || '')}</span></header><p class="small ink2">${esc(tt('Nothing of the app\'s is running in this account, so in Auto it starts this set at once instead of waiting for the weekly batch day.', 'لا يعمل أي إعلان للتطبيق في هذا الحساب، لذا في الوضع التلقائي يبدأ هذه المجموعة فوراً بدل انتظار يوم الدفعة الأسبوعي.'))}</p></div>` : ''}
   <div class="card">${props.length && !auto ? `<div class="list">${props.map(row).join('')}</div>`
     : empty(tt('Nothing needs you', 'لا شيء يحتاجك'), auto ? tt('The autopilot acts inside your limits.', 'يعمل الطيار الآلي ضمن حدودك.') : tt('No proposals right now.', 'لا مقترحات الآن.'))}</div>
@@ -25,6 +31,7 @@ export function render(S, el) {
     return r;
   };
   const after = async () => { busy = ''; await refreshState(); };
+  wireOccasions(el, () => render(S, el));
   el.querySelectorAll('[data-ok]').forEach((b) => { b.onclick = async () => {
     busy = b.dataset.ok; render(S, el);
     try { const r = await decide(b.dataset.ok, 'approve'); toast(tt('Approved: ', 'تمت الموافقة: ') + Object.entries(r.counts || {}).map(([k, v]) => `${k} ${v}`).join(', ')); } catch (e) { toast(e.message); }

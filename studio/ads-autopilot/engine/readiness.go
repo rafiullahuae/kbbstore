@@ -71,12 +71,6 @@ func (ac *Acct) readiness() []Blocker {
 	if starter.State == "skipped" && starter.Why != "" {
 		add("starter", "The first launch is waiting: "+starter.Why+".", "الإطلاق الأول ينتظر: "+starter.Why, "#/plan", "Plan")
 	}
-	js := ac.jobSet()
-	for _, j := range js.Jobs {
-		if j.Status == "planned" && j.Kind == "occasion" {
-			add("occasion-"+j.ID, j.Title+" is ready for your approval.", j.TitleAR+" جاهزة لموافقتك.", "#/approvals", "Approvals → Occasions")
-		}
-	}
 	if b == nil {
 		b = []Blocker{}
 	}
