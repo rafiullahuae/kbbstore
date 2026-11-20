@@ -442,6 +442,11 @@ F.offer = (x, s, W, H, A, P) => {
     K.silk(x, W, H, P.deep, K.mix(P.rose, P.deep, 0.35), M.time, 9, 4);
     K.sparkles(x, W, H, 13, 22, P.goldLight, M.t, M.time);
   });
+  // a soft deep scrim behind the heading: the silk highlights and gold sparkles behind small white text (the brand
+  // eyebrow) measured 4.0:1 on some photos -- the quality gate refused 4 of 60 -- so the top band is held dark enough
+  const scrim = x.createLinearGradient(0, 0, 0, H * 0.42);
+  scrim.addColorStop(0, K.rgba(P.deep, 0.62)); scrim.addColorStop(0.7, K.rgba(P.deep, 0.35)); scrim.addColorStop(1, K.rgba(P.deep, 0));
+  x.fillStyle = scrim; x.fillRect(0, 0, W, H * 0.42);
   const hb = header(x, s, P, { x0: z.m, x1: W - z.m, y: z.top, color: '#FFFFFF', eyebrowColor: '#FFFFFF', subColor: '#FFFFFF', size: W * (z.sq ? 0.078 : 0.088), sub: !(z.sq || z.tall) });
   const footY = z.tall ? z.bot - W * 0.045 : H - W * 0.065;
   const podTop = footY - W * (z.tall ? 0.085 : 0.11);
