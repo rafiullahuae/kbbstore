@@ -38,12 +38,27 @@ SSE events carry `{"account": "act_…" | "" (app-wide), "data": …}`.
 | Method + path | Body → answer |
 |---|---|
 | GET /api/state | one call for the dashboard: `{account_id, automated, account, links, link_checks, limits, limits_set, campaigns:[…adsets:[…ads:[…]]] each with last7 KPIs, kpis:{today,7d,30d:{spend,purchases,revenue,cpa,roas,cpc,ctr,cpm,frequency,clicks,impressions}}, committed_daily, month_spend, plan, report:{date,text}, alerts[], last_sync, last_cycle, next_sync, next_cycle, cycle_running, backfill, safety (last report), connections, shop, research_at, claude_usage, creatives}` — served from memory (< 2 ms measured) |
-| GET/PUT /api/limits | `{daily_aed, monthly_aed, max_budget_step_pct, cooldown_hours, max_active_ads, countries[], autopilot: off\|shadow\|auto, target_cpa_aed, kill_multiple}` (fields not sent keep their value) |
-| POST /api/cycle | `{mode: "shadow"\|"auto"}` → `{account, counts:{done,refused,shadow,failed,duplicate}, results[], proposals, ms}`; 409 while one runs |
+| GET/PUT /api/limits | `{daily_aed, monthly_aed, max_budget_step_pct, cooldown_hours, max_active_ads, countries[], autopilot: off\|shadow\|auto, target_cpa_aed, kill_multiple, wording: strict\|balanced\|relaxed}` (fields not sent keep their value; the brain reads `wording` here) |
+| POST /api/cycle | `{mode: "shadow"\|"auto"}` → `{account, counts:{done,refused,shadow,failed,duplicate}, results[], proposals, ms, starter?:{proposals, why, mode}}`; 409 while one runs. First launch: Auto (or Practice) + limits + none of the app's campaigns running or spending in 7 days → the starter set (starter.go) at once |
+| GET /api/proposals | the last cycle's proposals `{cycle_at, mode, proposals:[{id, kind, target, params, why, confidence, evidence, status: shadow\|refused\|failed\|done\|duplicate\|rejected, result, decided_at, by: cycle\|owner}]}` |
+| POST /api/proposals/{id}/approve | runs that one proposal + the waiting ones it names (its tmp: campaign / ad set / creative / product set / audience), in plan order, through every executor check (account automated, limits set, autopilot not off) → `{account, id, ran, counts, results[]}`; 404 unknown, 409 not waiting / busy |
+| POST /api/proposals/{id}/reject | Not now → `{account, id, status:"rejected"}` (nothing written) |
 | POST /api/sync | → `{ok, account, at}` |
 | POST /api/safety | → the safety report `{spend_cap:{before,target,after,action,reason}, rules:[{name,id,action}], alerts[]}` |
 | GET/POST /api/backfill | status / start or resume the history import (`?again=1` to redo) |
 | GET /api/log?after=&limit=&kind=a,b | the account's audit log `{account, entries:[{seq,at,kind,summary,data}], last}`; `&scope=app` = the app-wide log |
-| GET/POST /api/creatives | the account's creative library (POST `{id?, lang, format, png\|video (base64), headline, primary_text, cta, link (kbeautybliss.com), product_ids, angle, source}`) |
+| GET/POST /api/creatives | the account's creative library (POST `{id?, lang, format, png\|video (base64), headline, primary_text, cta, link (kbeautybliss.com), product_ids, angle, source}`); a starter creative has no media and `image_url` (the shop's photo, sent as link_data.picture) |
+| GET /api/creatives/{id}/file | the stored PNG / MP4 of one of THIS account's creatives (Range works); 404 for no media / another account's id |
 | POST /api/brain/plan | a plan preview for this account (nothing executed) |
 | POST /api/brain/copy | `{product_ids, langs, angle}` → `{variants[]}` |
+
+## upload_creative with the owner's own video
+`{format: "video", video_path: "videos/<name>.mp4|mov|m4v", primary_text, headline?, link?, cta?, thumbnail_url? | thumbnail_creative_id?}`:
+the file is read from the data folder's `videos/` only (symlinks resolved, regular files, ≤ 4 GB), streamed to Meta's
+resumable upload once per file (the Meta video id is kept in the ledger), and the cover is `thumbnail_url`, a library
+picture, or the frame the video analysis saved (`videos/<name>.jpg`). The brain's `path` param maps to it.
+
+## -mock (checks only)
+Three ad accounts (`MockAccounts`), each with an owner campaign; the fake Claude answers with scripted tool calls
+(`metamock/claude.go`). Test endpoints: `/api/test/meta-inject`, `meta-writes`, `meta-tag` `{id, tag: WINNER|LOSER}`,
+`clock` `{advance_hours}` (moves the engine's and the fake Meta's clock), `claude-calls`.
