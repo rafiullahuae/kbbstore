@@ -243,6 +243,33 @@ completely separate. also mention this in the master plan file."* Concretely:
 | 19 Nov | KBB Studio v1.2.3: phone clips export the right way up. An iPhone's rotation tag was applied by the preview but not by the WebCodecs export, so a 9:16 story came out sideways. Every decoded frame is now turned by the track's display matrix (rotate-check: red on the old code, green now). | Done |
 | 19 Nov | KBB Studio v1.3.0: in-app updates, the studio's own equivalent of the website's Core Updates (⚙ Configure → ⬆ Updates: review card, sha256 for every file, staged swap with automatic undo, restart, one-level roll back, history; update-check, Go tests). Move or copy a reel between companies (⇄ in Recent reels; move-check). Website packages can never carry studio files (`NEVER_SHIP` + StudioNeverShipsTest). One zip with everything since v1.2.0. | Done |
 | 16 Nov | Owner: **Brief → Designs** (type a brief, get 6–8 professional editable ads; same reader drives Brief → Reel). Offline by default and fully capable (rule parser + a small local language model on the Mac GPU, downloaded once after permission); optional "Connect Claude" with his key, off by default; AI-generated visuals offline (local image model on the Mac GPU, procedural artwork, restyled icon set, generated colour schemes) — owner, 16 Nov. | Planned (after round 1) |
+| 19 Nov | KBB Studio v1.3.2–1.3.3: text behind the host (big word or country carousel behind the person, optional JOBS IN line), its own side editor window with live preview, ✓ Apply / Cancel; fixed "Finding the person…" never clearing and words running past the video. | Done (zips sent) |
+| 20 Nov | KBB Studio v1.4.0: 10 slim always-moving contact cards with show/hide, per-part colours, speed/intensity/corners; country flag colours for text behind the host (259 countries + regions, stripes/solid/two-tone, per-country overrides); background-music controls (volume to 200 %, fades, start-at, loop, auto-duck) + a Music Library window with preview, and 33 new original viral-style tracks (60 total). | Done (zip sent) |
+| 20 Nov | KBB Studio v1.4.1: slim contact cards keep Planet Careers' red (navy + red were near in brightness, red was swapped for white). | Done (zip sent) |
+| 20 Nov | KBB Studio: auto captions write nothing on the owner's reel (Planet Careers, duplicated reel, text-behind on top, Hindi/Urdu speech) — lane finding the root cause; first fix in: a GPU that writes nothing falls back to the CPU, no run can sit forever or end silent. | In progress |
+| 20 Nov | Old ad build folders removed from the repo tree (docs/plans/black-friday-ads, free-gifts-ad; still in git history) — the studio makes ads now. docs/plans/black-friday stays (SaleTemplates uses it). | Done |
+
+## ▲ SEPARATE PROJECT — KBB Ads Autopilot (NOT the website)  *(opened 20 November 2026)*
+
+The owner's own offline Mac app that runs kbeautybliss.com's Meta (Facebook + Instagram) ads end to end: market and
+trend research, Arabic-first ad copy and designs, his own videos analysed and used, launching, watching, stopping
+losers, testing new creatives, scaling winners, and always holding the plan — "a full-time media buyer". Lives in
+`studio/ads-autopilot/` (never in a website package: `studio/` is in NEVER_SHIP); its own zip and updater.
+Contract: `studio/ads-autopilot/CONTRACT.md`. Research: `reports/Claude Meta ads autopilot.md`.
+
+**Owner's decisions (20 Nov):** Mac only, auto-connects to the shop, Meta and Claude on open, catches up on what happened
+while closed; while the Mac is closed Meta's own Automated Rules + the account spending limit protect the account; fully
+automatic inside daily/monthly AED limits he sets in the app (no limit = nothing launches); Arabic audience first;
+skincare wording rules "Balanced" (acne products allowed, personal-attribute / cure claims rewritten); must work with an
+UNVERIFIED Meta business; SaaS-style instant UI; a separate app from KBB Studio.
+
+| Date | Ads Autopilot item | State |
+|---|---|---|
+| 20 Nov | Research report (Meta API, CAPI/catalog, Claude architecture, decision rules, UAE policy/legal risks) | Done |
+| 20 Nov | Lane ENGINE: Go engine, Keychain secrets, Meta/Claude/shop connections, sync, executor + guardrails (fils only in executor, caps, ±20 %, 72 h cooldown, paused-then-activate, kill switch, audit log), Meta-side safety rules + spend_cap, mock Meta, launcher, updater | In progress |
+| 20 Nov | Lane BRAIN: statistics/rules (Bayesian kill/keep, learning phase, fatigue, seasonality), Claude planner + research (web search), AR/EN copy + policy linter, ad designs, video analysis, SaaS UI (Dashboard, Campaigns, Creatives, Research, Plan, Activity, Settings) | In progress |
+| 20 Nov | WEBSITE dependency: an authenticated read-only orders/margins endpoint so the autopilot judges on real net revenue (own capability, fails closed, allowlisted fields) — ships as a website package | Queued |
+| 20 Nov | Shop measurement gaps found by the research: no refund/cancel event to Meta, no CAPI retry, `onhold` counted as Purchase, Graph API pinned v25.0 (v27 current), no consent gate — website lane | Queued |
 
 ## Mobile app — planning ledger  *(opened 12 November 2026, kept running)*
 
