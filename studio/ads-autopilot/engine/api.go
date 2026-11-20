@@ -330,6 +330,17 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		writeJSON(w, out)
 	case strings.HasPrefix(p, "/api/creatives/") && strings.HasSuffix(p, "/file") && (r.Method == http.MethodGet || r.Method == http.MethodHead):
 		s.creativeFile(w, r, strings.TrimSuffix(strings.TrimPrefix(p, "/api/creatives/"), "/file"))
+	case p == "/api/playbook" || p == "/api/jobs" || strings.HasPrefix(p, "/api/jobs/") || p == "/api/funnel": // media-buying lane (playbook.go, jobs.go, funnel.go)
+		if ac := s.acct(w, r); ac != nil {
+			switch {
+			case p == "/api/playbook":
+				s.playbookAPI(w, r, ac)
+			case p == "/api/funnel":
+				s.funnelAPI(w, r, ac)
+			default:
+				s.jobsAPI(w, r, ac, strings.TrimPrefix(strings.TrimPrefix(p, "/api/jobs"), "/"))
+			}
+		}
 	case p == "/api/proposals" || strings.HasPrefix(p, "/api/proposals/"):
 		s.proposalsAPI(w, r, p)
 	case p == "/api/launch" && r.Method == http.MethodPost: // Create with Claude → Run it / Launch now (create_wire.go)

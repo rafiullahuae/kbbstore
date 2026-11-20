@@ -58,6 +58,9 @@ type Acct struct {
 	backfill  BackfillState
 	pending   PendingSet   // the last cycle's proposals and what became of each (Approvals)
 	starter   StarterState // the first launch (starter.go)
+	pb        *model.Playbook  // the owner's Playbook (playbook.go); nil = the defaults
+	audiences []model.Audience // custom audiences with Meta's sizes, read every sync
+	jobs      JobSet           // the editable job queue (jobs.go)
 
 	work        sync.Mutex // sync / cycle / kill on this account: one at a time
 	cycleCancel context.CancelFunc
@@ -97,6 +100,9 @@ func openAcct(a *App, id string) (*Acct, error) {
 	_ = st.Load("history/state", &ac.backfill)
 	_ = st.Load("proposals", &ac.pending)
 	_ = st.Load("starter", &ac.starter)
+	_ = st.Load("audiences", &ac.audiences)
+	_ = st.Load("jobs", &ac.jobs)
+	ac.loadPlaybook()
 	var ls struct{ LastCycle time.Time }
 	_ = st.Load("cycle", &ls)
 	ac.lastCycle = ls.LastCycle
@@ -343,6 +349,13 @@ func (ac *Acct) Sync(ctx context.Context) error {
 	ac.st.Append("snapshot", fmt.Sprintf("sync %s..%s: %d campaigns, %d metric rows; spend cap %.2f AED", sinceS, untilS, len(tree), len(rows), acc.SpendCapAED),
 		map[string]any{"since": sinceS, "until": untilS, "campaigns": len(tree), "rows": len(rows), "account": acc})
 	ac.publish("metrics.updated", map[string]any{"at": ac.lastSync, "rows": len(rows)})
+	// the account's custom audiences with Meta's size estimates (the funnel waits for a big-enough one). Not fatal.
+	if aus, err := mc.Audiences(ctx, ac.id); err == nil {
+		ac.mu.Lock()
+		ac.audiences, ac.stateJSON = aus, nil
+		ac.mu.Unlock()
+		_ = ac.st.Save("audiences", aus)
+	}
 	return nil
 }
 
@@ -464,9 +477,16 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 	a.mu.RUnlock()
 	ac.mu.RLock()
 	st := ac.settings
-	in := model.CycleInput{Now: a.now(), Limits: st.Limits, Account: ac.accountRef(), Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: st.Links, Learnings: learnings}
+	in := model.CycleInput{Now: a.now(), Limits: st.Limits, Account: ac.accountRef(), Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: st.Links, Learnings: learnings,
+		Audiences: append([]model.Audience(nil), ac.audiences...)}
 	ex := ac.exec
 	ac.mu.RUnlock()
+	// the owner's Playbook, in code, before the brain or the funnel builder sees one product (playbook.go)
+	fshop, pb, excluded := ac.filteredShop(shopSnap)
+	in.Shop, in.Playbook, in.JobNotes = fshop, &pb, ac.jobNotes()
+	if len(excluded) > 0 {
+		out["playbook_excluded"] = len(excluded)
+	}
 	in.Metrics = ac.metricRows()
 	in.Creatives = ac.creatives.all()
 	in.History = ac.st.Recent(200, "execution", "check", "cycle", "kill", "alert", "safety")
@@ -491,12 +511,33 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		co.Proposals = append(dropCreates(co.Proposals), sp...)
 		out["starter"] = map[string]any{"proposals": len(sp), "why": stWhy, "mode": env.Limits.Autopilot}
 	}
+	// the editable job queue (jobs.go): refreshed from this plan; due jobs become proposals now
+	ac.refreshJobs(in, co.Plan, sp, stWhy, env)
+	jobProps, ownerProps := ac.dueJobs(ctx, in, env, env.Limits.Autopilot)
+	co.Proposals = append(co.Proposals, jobProps...)
+	if j := ac.jobByID(jobFirstLaunch); j != nil && j.Status == "approved" && env.Limits.Autopilot == model.AutopilotShadow && len(sp) > 0 {
+		var rest []model.Proposal // the owner approved the first launch on the Plan screen: it runs for real
+		for _, p := range co.Proposals {
+			if strings.HasPrefix(p.ID, "starter-") {
+				ownerProps = append(ownerProps, p)
+			} else {
+				rest = append(rest, p)
+			}
+		}
+		co.Proposals = rest
+	}
+	co.Proposals = holdRetargeting(co.Proposals, in, ac.loc())
 	var results []executor.Result
 	if len(co.Proposals) > 0 {
 		results = ex.Run(ctx, env, co.Proposals)
 	}
+	if len(ownerProps) > 0 && st.Automated && st.Limits.Set() && st.Limits.Autopilot != model.AutopilotOff {
+		results = append(results, ex.Run(ctx, ac.env(model.AutopilotAuto), ownerProps)...)
+		co.Proposals = append(co.Proposals, ownerProps...)
+	}
 	ac.keepProposals(t0, env.Limits.Autopilot, co.Proposals, results)
 	ac.noteStarter(co.Proposals, results, env.Limits.Autopilot, stWhy)
+	ac.noteJobs(results, env.Limits.Autopilot)
 	counts := map[string]int{}
 	for _, r := range results {
 		counts[r.Status]++

@@ -75,6 +75,22 @@ func (x *Executor) createAdSet(ctx context.Context, env *Env, act string, p mode
 	name := managedName(str(p.Params, "name"))
 	form := url.Values{"name": {name}, "campaign_id": {cid}, "status": {"PAUSED"}, "billing_event": {"IMPRESSIONS"},
 		"optimization_goal": {d.goal}, "targeting": {jsonStr(targeting)}, "start_time": {env.Now.UTC().Format(time.RFC3339)}}
+	if d.goal == "OFFSITE_CONVERSIONS" { // 7-day click / 1-day view, sent explicitly (META-FACTS §16b: attribution_spec)
+		form.Set("attribution_spec", jsonStr([]map[string]any{{"event_type": "CLICK_THROUGH", "window_days": 7}, {"event_type": "VIEW_THROUGH", "window_days": 1}}))
+	}
+	if b, ok := num(p.Params, "spend_cap"); ok { // an ad-set spend cap under a campaign budget (existing customers, §2b)
+		if cn.campaign.DailyBudgetAED <= 0 {
+			return "", nil, errors.New("an ad-set spend cap needs a campaign budget")
+		}
+		if b > cn.campaign.DailyBudgetAED {
+			return "", nil, fmt.Errorf("the ad-set spend cap AED %.2f is above its campaign budget AED %.2f", b, cn.campaign.DailyBudgetAED)
+		}
+		fs, err := filsStr(b)
+		if err != nil {
+			return "", nil, err
+		}
+		form.Set("daily_spend_cap", fs)
+	}
 	switch {
 	case str(p.Params, "product_set_id") != "": // catalog ads: the product set is what the ad set promotes
 		po := map[string]string{"product_set_id": str(p.Params, "product_set_id")}
@@ -350,6 +366,8 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 			k := map[string]any{"link": link, "name": h, "call_to_action": ctaFor(p, c, link)}
 			if c.Media == "png" {
 				k["image_hash"] = c.ImageHash
+			} else if c.Media == "" && ShopURL(c.ImageURL) { // a shop-photo creative (no stored media): the card shows the shop's photo
+				k["picture"] = c.ImageURL
 			} else {
 				k["video_id"] = c.VideoID
 				if th := str(m, "thumbnail_url"); th != "" {
@@ -450,6 +468,13 @@ func (x *Executor) createAudience(ctx context.Context, act string, p model.Propo
 			"event_sources":     []any{map[string]string{"id": l.PixelID, "type": "pixel"}},
 			"retention_seconds": int(days) * 86400,
 			"filter":            map[string]any{"operator": "and", "filters": []any{map[string]string{"field": "event", "operator": "eq", "value": str(pr, "event")}}}}}}}
+		// exclusions (META-FACTS §15b: rule {inclusions, exclusions}, each a rule set): "bought in the last N days"
+		if ev, xd := str(pr, "exclude_event"), intOf(pr, "exclude_days"); ev != "" && xd > 0 {
+			rule["exclusions"] = map[string]any{"operator": "or", "rules": []any{map[string]any{
+				"event_sources":     []any{map[string]string{"id": l.PixelID, "type": "pixel"}},
+				"retention_seconds": xd * 86400,
+				"filter":            map[string]any{"operator": "and", "filters": []any{map[string]string{"field": "event", "operator": "eq", "value": ev}}}}}}
+		}
 		form.Set("prefill", "1")
 	case "page", "instagram":
 		src, ev := map[string]string{"id": l.PageID, "type": "page"}, "page_engaged"

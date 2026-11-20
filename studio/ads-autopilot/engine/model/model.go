@@ -121,6 +121,15 @@ type PlanStep struct {
 	When   string `json:"when"` // "now", "today", "2026-11-22", "after 30 purchases" …
 	Title  string `json:"title"`
 	Detail string `json:"detail,omitempty"`
+	// structured (media-buying lane): the engine turns these into editable jobs (jobs.go)
+	Kind       string   `json:"kind,omitempty"` // test | seasonal | refresh
+	Date       string   `json:"date,omitempty"` // YYYY-MM-DD it is planned for
+	Lang       string   `json:"lang,omitempty"`
+	Format     string   `json:"format,omitempty"`
+	Angle      string   `json:"angle,omitempty"`
+	ProductIDs []string `json:"product_ids,omitempty"`
+	Target     string   `json:"target,omitempty"` // refresh: the tiring ad
+	Why        string   `json:"why,omitempty"`
 }
 
 type ResearchInput struct {

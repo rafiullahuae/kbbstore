@@ -230,6 +230,7 @@ type CycleOutput struct {
 	Dropped   []string         `json:"dropped"`           // planner proposals the brain refused, with the reason
 	// CreationNeeded: copy requests left for the owner (creation mode "with me in Claude"), see creation.go
 	CreationNeeded []CopyRequest `json:"creation_needed,omitempty"`
+	BatchDate      string        `json:"batch_date,omitempty"` // the next weekly batch day (YYYY-MM-DD), for the job queue
 }
 
 type Proposal struct {

@@ -409,6 +409,7 @@ func (a *App) testShop(ctx context.Context) connShop {
 		return c
 	}
 	c.OK, c.Products = true, len(snap.Products)
+	a.stampFirstSeen(&snap)
 	a.mu.Lock()
 	a.shopSnap = snap
 	a.mu.Unlock()

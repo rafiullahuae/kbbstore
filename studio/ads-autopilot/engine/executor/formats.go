@@ -152,6 +152,23 @@ func ValidateParams(p model.Proposal, links model.AccountLinks) error {
 		} else if pr["placements"] != nil {
 			return errors.New("placements is an object")
 		}
+		if rt, ok := pr["retarget"].(map[string]any); ok {
+			days := intOf(rt, "days")
+			evs := strs(rt, "events")
+			if !idRe.MatchString(str(rt, "product_set_id")) || days < 1 || days > 180 || len(evs) == 0 || intOf(rt, "exclude_purchase_days") < 0 || intOf(rt, "exclude_purchase_days") > 180 {
+				return errors.New("retarget: product_set_id, days 1–180, events, exclude_purchase_days 0–180")
+			}
+			for _, e := range evs {
+				if e != "ViewContent" && e != "AddToCart" && e != "InitiateCheckout" {
+					return errors.New("retarget events: ViewContent, AddToCart or InitiateCheckout")
+				}
+			}
+		} else if pr["retarget"] != nil {
+			return errors.New("retarget is an object")
+		}
+		if v, ok := num(pr, "spend_cap"); ok && (v <= 0 || v > 100000) {
+			return errors.New("spend_cap: AED per day, above 0")
+		}
 		if pr["frequency_cap"] != nil {
 			return errors.New("frequency_cap: Meta takes frequency_control_specs only on REACH / THRUPLAY ad sets; a sales ad set cannot have one (META-FACTS §16)")
 		}
@@ -244,6 +261,9 @@ func ValidateParams(p model.Proposal, links model.AccountLinks) error {
 			if days < 1 || days > 180 {
 				return errors.New("retention_days 1–180 for a website audience")
 			}
+			if ev := str(pr, "exclude_event"); ev != "" && (!audienceEvents[ev] || intOf(pr, "exclude_days") < 1 || intOf(pr, "exclude_days") > 180) {
+				return errors.New("exclude_event needs a pixel event and exclude_days 1–180")
+			}
 		case "page", "instagram":
 			if str(pr, "source") == "page" && links.PageID == "" || str(pr, "source") == "instagram" && links.InstagramUserID == "" {
 				return errors.New("link the Page / Instagram account first")
@@ -314,7 +334,28 @@ func adSetTargeting(pr map[string]any, countries []string) (map[string]any, erro
 			}
 		}
 	}
+	// existing customers: the custom audience is a hard inclusion, never relaxed (META-FACTS §2b)
+	if v, ok := num(pr, "strict_audiences"); ok && v == 1 {
+		t["targeting_relaxation_types"] = map[string]int{"custom_audience": 0, "lookalike": 0}
+	}
+	// dynamic retargeting: people who did these events on products of the set and did not buy (META-FACTS §14b)
+	if rt, ok := pr["retarget"].(map[string]any); ok {
+		var inc []map[string]any
+		for _, ev := range strs(rt, "events") {
+			inc = append(inc, map[string]any{"retention_seconds": intOf(rt, "days") * 86400, "rule": map[string]any{"event": map[string]string{"eq": ev}}})
+		}
+		spec := map[string]any{"product_set_id": str(rt, "product_set_id"), "inclusions": inc}
+		if xd := intOf(rt, "exclude_purchase_days"); xd > 0 {
+			spec["exclusions"] = []map[string]any{{"retention_seconds": xd * 86400, "rule": map[string]any{"event": map[string]string{"eq": "Purchase"}}}}
+		}
+		t["product_audience_specs"] = []map[string]any{spec}
+	}
 	return t, nil
+}
+
+func intOf(p map[string]any, k string) int {
+	f, _ := num(p, k)
+	return int(f)
 }
 
 // enhancementsSpec: degrees_of_freedom_spec with the brain's allow-listed choices and product_extensions OPT_OUT

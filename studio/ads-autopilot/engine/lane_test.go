@@ -240,8 +240,8 @@ func TestStarterLaunchesAtOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := out["counts"].(map[string]int)
-	camps := objStatus(m, "campaigns", "KAA: Starter")
-	ads := objStatus(m, "ads", "KAA: Starter")
+	camps := objStatus(m, "campaigns", "KAA:")
+	ads := objStatus(m, "ads", "KAA:")
 	if c["done"] == 0 || c["failed"]+c["refused"] != 0 || len(camps) != 2 || len(ads) < 3 {
 		t.Fatalf("starter: counts %v, campaigns %v, ads %v (%v)", c, camps, ads, out["results"])
 	}
@@ -253,8 +253,8 @@ func TestStarterLaunchesAtOnce(t *testing.T) {
 	ar, en := 0, 0
 	for _, o := range m.Objects("ads") {
 		n, _ := o["name"].(string)
-		ar += map[bool]int{true: 1}[strings.HasPrefix(n, "KAA: Starter AR")]
-		en += map[bool]int{true: 1}[strings.HasPrefix(n, "KAA: Starter EN")]
+		ar += map[bool]int{true: 1}[strings.HasPrefix(n, "KAA: Prospecting AR")]
+		en += map[bool]int{true: 1}[strings.HasPrefix(n, "KAA: Prospecting EN")]
 	}
 	if ar <= en || en != 1 {
 		t.Fatalf("Arabic first: %d AR, %d EN", ar, en)

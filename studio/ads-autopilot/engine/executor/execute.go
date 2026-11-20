@@ -124,6 +124,16 @@ func (x *Executor) resolve(p model.Proposal) model.Proposal {
 			q.Params[k] = out
 		}
 	}
+	if rt, ok := q.Params["retarget"].(map[string]any); ok { // the dynamic-retargeting product set (a tmp: of this plan)
+		c := map[string]any{}
+		for k, v := range rt {
+			c[k] = v
+		}
+		if s, ok := c["product_set_id"].(string); ok && strings.HasPrefix(s, "tmp:") {
+			c["product_set_id"] = x.Ledger.Resolve(s)
+		}
+		q.Params["retarget"] = c
+	}
 	return q
 }
 

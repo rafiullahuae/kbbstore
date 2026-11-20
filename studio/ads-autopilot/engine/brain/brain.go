@@ -65,6 +65,7 @@ func (b *Brain) Cycle(ctx context.Context, in CycleInput) (CycleOutput, error) {
 	}
 	out := CycleOutput{Verdicts: rr.Verdicts, Economics: econ, Proposals: rr.Proposals, Model: "rules-only", Profile: in.Profile}
 	out.Plan = b.rulesPlan(in, rr)
+	out.BatchDate = nextWeekday(in.Now, b.Rules.BatchWeekday)
 
 	var llmErr error
 	var nEN, nAR string
@@ -963,4 +964,10 @@ func profileBrief(p *LearningProfile) any {
 func (b *Brain) clone() *Brain {
 	return &Brain{Claude: b.Claude, Econ: b.Econ, Rules: b.Rules, PlannerModel: b.PlannerModel, SmallModel: b.SmallModel,
 		CopyModel: b.CopyModel, PromoApproved: b.PromoApproved, MaxCopyPerRun: b.MaxCopyPerRun, DeferCopy: b.DeferCopy}
+}
+
+// nextWeekday: today when it is that weekday, else the next one (YYYY-MM-DD).
+func nextWeekday(t time.Time, wd time.Weekday) string {
+	d := (int(wd) - int(t.Weekday()) + 7) % 7
+	return t.AddDate(0, 0, d).Format("2006-01-02")
 }

@@ -406,13 +406,19 @@ func ToModel(o CycleOutput) model.CycleOutput {
 	pl := model.Plan{UpdatedAt: o.Plan.GeneratedAt, Summary: strings.TrimSpace(o.Plan.Summary + "\n" + o.Plan.SummaryAR)}
 	for _, t := range o.Plan.Tests {
 		pl.Steps = append(pl.Steps, model.PlanStep{When: "batch day", Title: fmt.Sprintf("%s test: %s", strings.ToUpper(t.Lang), t.Name),
-			Detail: strings.TrimSpace(fmt.Sprintf("%s · angle %s · %s · %s · %s", t.Hypothesis, t.Angle, t.Format, t.Audience, t.Template))})
+			Detail: strings.TrimSpace(fmt.Sprintf("%s · angle %s · %s · %s · %s", t.Hypothesis, t.Angle, t.Format, t.Audience, t.Template)),
+			Kind:   "test", Date: o.BatchDate, Lang: t.Lang, Format: t.Format, Angle: t.Angle, ProductIDs: t.ProductIDs, Why: t.Hypothesis})
+	}
+	for _, v := range o.Verdicts { // a tiring ad gets a fresh concept on the next batch day
+		if v.Verdict == "fatigued" && v.Level == "ad" {
+			pl.Steps = append(pl.Steps, model.PlanStep{When: "batch day", Title: "Refresh a tiring ad", Detail: v.Why, Kind: "refresh", Date: o.BatchDate, Target: v.Object, Why: v.Why})
+		}
 	}
 	for _, a := range o.Plan.Allocation {
 		pl.Steps = append(pl.Steps, model.PlanStep{When: "daily", Title: fmt.Sprintf("%s: %.0f%% (AED %.0f/day)", a.Bucket, a.SharePct, a.DailyAED), Detail: a.Why})
 	}
 	for _, s := range o.Plan.Seasonal {
-		pl.Steps = append(pl.Steps, model.PlanStep{When: s.PrepFrom, Title: s.Name + " " + s.NameAR, Detail: s.Action})
+		pl.Steps = append(pl.Steps, model.PlanStep{When: s.PrepFrom, Title: s.Name + " " + s.NameAR, Detail: s.Action, Kind: "seasonal", Date: s.PrepFrom, Why: s.Action})
 	}
 	out := model.CycleOutput{Plan: pl, Report: o.Report}
 	for _, p := range o.Proposals {
