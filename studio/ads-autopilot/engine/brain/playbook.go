@@ -96,7 +96,7 @@ func adDays(in CycleInput) (map[string]int, map[string]bool) {
 }
 
 // RankFor: the ranked candidates for this cycle (the shop is already filtered by the engine).
-func RankFor(in CycleInput, mshop model.ShopSnapshot, pb model.Playbook, baseline string, verdicts []Verdict) []model.RankedProduct {
+func RankFor(in CycleInput, mshop model.ShopSnapshot, pb model.Playbook, baseline string, verdicts []Verdict, boost map[string]float64) []model.RankedProduct {
 	var tr []string
 	if in.Trending != nil {
 		tr = in.Trending.Selling
@@ -123,7 +123,7 @@ func RankFor(in CycleInput, mshop model.ShopSnapshot, pb model.Playbook, baselin
 			}
 		}
 	}
-	return model.Rank(mshop.Products, pb, model.RankSignals{Now: in.Now, Trending: tr, AdDays: days, Fatigued: fat, Baseline: baseline})
+	return model.Rank(mshop.Products, pb, model.RankSignals{Now: in.Now, Trending: tr, AdDays: days, Fatigued: fat, Baseline: baseline, Boost: boost})
 }
 
 // ownerBlock: the planner's first input field. The instructions are passed verbatim.

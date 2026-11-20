@@ -113,6 +113,31 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 		e.load(acct, "designs_archive", &arch)
 		e.save(acct, "designs_archive", append(arch, res.Designs...))
 		js(res)
+	case p == "strategy": // Strategy screen: how it decides, with this account's live numbers
+		js(e.strategy(acct, e.FromModel(input())))
+	case p == "learning" && r.Method == http.MethodGet: // What it learned: weekly report, health, lessons, tuning
+		js(e.learning(acct, e.FromModel(input())))
+	case p == "learning/reset-tuning" && r.Method == http.MethodPost: // undo the self-tuned thresholds
+		var L Ledger
+		e.load(acct, "ledger", &L)
+		was := L.Tuned
+		L.Tuned = Tuned{}
+		L.Changes = append(L.Changes, time.Now().Format("2006-01-02")+": you reset the self-tuned thresholds to your own / the defaults")
+		e.save(acct, "ledger", L)
+		e.log("learning", "owner reset the self-tuned thresholds", was)
+		js(e.learning(acct, e.FromModel(input())))
+	case p == "learning/apply-proposal" && r.Method == http.MethodPost: // "ask me" mode: the owner applies the proposal
+		var L Ledger
+		e.load(acct, "ledger", &L)
+		if L.Tuned.HardStopMult <= 0 || L.Tuned.Applied {
+			bad(409, "no proposal is waiting")
+			return
+		}
+		L.Tuned.Applied = true
+		L.Changes = append(L.Changes, time.Now().Format("2006-01-02")+fmt.Sprintf(": you applied the proposal: stop after %.1f× break-even CPA", L.Tuned.HardStopMult))
+		e.save(acct, "ledger", L)
+		e.log("learning", "owner applied the self-tuning proposal", L.Tuned)
+		js(e.learning(acct, e.FromModel(input())))
 	case p == "insights":
 		js(Insights(e.FromModel(input())))
 	case p == "profile":

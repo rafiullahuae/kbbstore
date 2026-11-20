@@ -120,7 +120,9 @@ func (ac *Acct) jobNotes() []string {
 	return out
 }
 
-func open(status string) bool { return status == "planned" || status == "approved" || status == "waiting" }
+func open(status string) bool {
+	return status == "planned" || status == "approved" || status == "waiting"
+}
 
 // upsert: a job the plan (re)proposes. What the owner decided (status, edits, his time) is kept.
 func upsert(js *JobSet, j Job, now time.Time) {

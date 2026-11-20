@@ -143,6 +143,7 @@ type Creative struct {
 	CreatedAt   time.Time `json:"created_at"`
 	LintOK      bool      `json:"lint_ok"`
 	Approved    bool      `json:"approved,omitempty"` // the owner made it with Claude and said Run it
+	MetaID      string    `json:"meta_creative_id,omitempty"`
 }
 
 // Research is the brain's market memory: dated notes with sources.
@@ -207,6 +208,7 @@ type CycleInput struct {
 	Playbook *model.Playbook        `json:"playbook,omitempty"`
 	Ranked   []model.RankedProduct `json:"ranked,omitempty"`
 	JobNotes []string              `json:"job_notes,omitempty"`
+	Lessons  []Lesson              `json:"lessons,omitempty"` // learn.go: what wins / loses in this account
 }
 
 // CycleOutput: Plan, Proposals and Report are the contract's. Verdicts,

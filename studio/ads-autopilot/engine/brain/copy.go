@@ -67,22 +67,7 @@ func (b *Brain) copyFor(ctx context.Context, cr CopyRequest, shop ShopSnapshot, 
 	if len(prods) == 0 {
 		return nil, nil, u, fmt.Errorf("no in-stock product with a photo among %v", cr.ProductIDs)
 	}
-	var pinfo []map[string]any
-	for _, p := range prods {
-		desc := p.Description
-		if len([]rune(desc)) > 700 {
-			desc = string([]rune(desc)[:700])
-		}
-		pinfo = append(pinfo, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED, "description": desc})
-	}
-	var angles []string
-	for _, n := range r.Notes {
-		if len(angles) < 8 {
-			angles = append(angles, n.Title)
-		}
-	}
-	ask, _ := json.Marshal(map[string]any{"products": pinfo, "angle": cr.Angle, "brief": cr.Brief, "template": cr.Template,
-		"promotion_approved": b.PromoApproved, "wording_rules": firstNonEmpty(cr.Wording, Balanced), "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea", "video": videoBrief(cr.Video)})
+	ask := b.copyAsk(cr, prods, r)
 	req := Request{Purpose: "copy", Model: b.CopyModel, MaxTokens: 8000, System: CachedSystem(copySystem),
 		Messages: []Message{{Role: "user", Content: "Write the ad copy.\n" + string(ask)}},
 		Output:   JSONOutput(copySchema(), "medium")}
@@ -279,4 +264,25 @@ func videoBrief(v *VideoAsset) any {
 	a := v.Analysis
 	return map[string]any{"name": v.Name, "angle": a.Angle, "hook": a.Hook, "on_screen_text": a.OnScreenText, "language": a.Language,
 		"aspect": a.Aspect, "duration_s": a.DurationS, "note": "Write the ad text that runs WITH this video (primary text, headline); the first line should match the video's hook."}
+}
+
+// copyAsk: the user turn of a copy request, exactly as sent (the Plan screen's "Show the brief" reads it too).
+func (b *Brain) copyAsk(cr CopyRequest, prods []Product, r Research) []byte {
+	var pinfo []map[string]any
+	for _, p := range prods {
+		desc := p.Description
+		if len([]rune(desc)) > 700 {
+			desc = string([]rune(desc)[:700])
+		}
+		pinfo = append(pinfo, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED, "description": desc})
+	}
+	var angles []string
+	for _, n := range r.Notes {
+		if len(angles) < 8 {
+			angles = append(angles, n.Title)
+		}
+	}
+	ask, _ := json.Marshal(map[string]any{"owner_brief_first": cr.Brief != "", "products": pinfo, "angle": cr.Angle, "brief": cr.Brief, "template": cr.Template,
+		"promotion_approved": b.PromoApproved, "wording_rules": firstNonEmpty(cr.Wording, Balanced), "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea", "video": videoBrief(cr.Video)})
+	return ask
 }

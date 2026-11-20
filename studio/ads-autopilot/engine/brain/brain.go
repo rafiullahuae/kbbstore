@@ -185,7 +185,7 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 	for i, cr := range reqs {
 		cr.PairID = fmt.Sprintf("p%s-%d", in.Now.Format("060102"), i)
 		cr.Wording = in.Limits.AdWording
-		cr.Brief = OwnerBrief(in.Playbook, cr.Brief)
+		cr.Brief = OwnerBrief(in.Playbook, strings.TrimSpace(lessonsBrief(in.Lessons)+"\n"+cr.Brief))
 		if in.Playbook != nil { // a copy request may only name products the playbook allows
 			allowed := map[string]bool{}
 			for _, p := range in.Shop.Products {
@@ -570,6 +570,11 @@ func (b *Brain) rulesPlan(in CycleInput, rr RulesResult) Plan {
 		pl.Allocation[i].DailyAED = round2(in.Limits.DailyAED * pl.Allocation[i].SharePct / 100)
 	}
 	angles := topAngles(in.Research, 6)
+	if len(in.Lessons) > 0 { // learn.go: ~80% of new concepts on winning angles, every 5th on an untested one
+		if ex := exploreAngles(in.Lessons, angles, 10); len(ex) > 0 {
+			angles = ex
+		}
+	}
 	prods := pickProducts(in.Shop, in.Research, 6)
 	slots := []string{}
 	for i := 0; i < rr.NewAdSlots["ar"]; i++ {
@@ -729,6 +734,7 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 	}
 	return map[string]any{
 		"owner_playbook": ownerBlock(in.Playbook, in.JobNotes),
+		"lessons":        lessonsBrief(in.Lessons),
 		"date":           in.Now.Format("2006-01-02 Mon"), "season_now": sname, "payday_window": IsPayday(in.Now),
 		"upcoming_seasons": Upcoming(in.Now, 60), "economics": rr.Econ,
 		"limits": in.Limits, "limits_set": rr.LimitsSet, "ad_wording_rules": firstNonEmpty(in.Limits.AdWording, Balanced), "promotion_approved": promo,

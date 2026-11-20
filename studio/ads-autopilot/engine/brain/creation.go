@@ -455,8 +455,22 @@ func (e *Engine) brief(acct string, in CycleInput) map[string]any {
 			open = append(open, map[string]any{"id": r.ID, "title": r.Title, "product_ids": r.ProductIDs, "angle": r.Angle, "count": r.Count})
 		}
 	}
+	if len(in.Ranked) > 0 { // the playbook-filtered, fresh-first ranking with its why
+		top = nil
+		for i, p := range in.Ranked {
+			if i >= 8 {
+				break
+			}
+			top = append(top, map[string]any{"id": p.ID, "title": p.Title, "price_aed": p.PriceAED, "trending": p.Trending, "pinned": p.Pinned, "why": p.Why})
+		}
+	}
 	st := e.settings(acct)
+	owner := ""
+	if in.Playbook != nil {
+		owner = in.Playbook.Instructions
+	}
 	return map[string]any{
+		"owner_instructions_always_obey": owner, "lessons": lessonsBrief(in.Lessons),
 		"account": acct, "open_requests": open, "products_to_push": top, "tiring_ads": fatigued, "research": notes,
 		"plan_summary": last.Plan.Summary,
 		"brand_rules": []string{

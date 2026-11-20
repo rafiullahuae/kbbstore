@@ -131,10 +131,29 @@ func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOut
 			e.log("research", fmt.Sprintf("trending products: %d items, %d in the shop, %d to consider stocking", len(tr.Items), len(tr.Selling), len(tr.ConsiderStocking)), nil)
 		}
 	}
+	// the self-learning loop (learn.go): score what is due, tune inside the owner's bounds, then plan with it
+	var L Ledger
+	e.load(acct, "ledger", &L)
+	econ := ComputeEconomics(b.Econ, bin.Shop, bin.Now)
+	if n := L.Score(bin, econ.TargetCPA); n > 0 {
+		e.log("learning", fmt.Sprintf("scored %d finished tests against their predictions", n), nil)
+	}
+	if bin.Playbook != nil {
+		for _, ch := range L.Tune(bin, b.Rules, econ, bin.Playbook.SelfTune, bin.Playbook.TuneBounds) {
+			e.log("learning", ch, L.Tuned)
+		}
+		b.Rules = L.Apply(b.Rules, bin.Playbook.Knobs, bin.Playbook.TuneBounds)
+	}
+	bin.Lessons = L.Lessons(econ.TargetCPA)
 	out, err := b.Cycle(ctx, bin)
 	if err != nil {
 		return model.CycleOutput{}, err
 	}
+	L.Record(bin, out)
+	if w := L.Weekly(bin.Now, econ.TargetCPA); w != nil {
+		e.log("learning", "weekly report: "+strings.SplitN(w.EN, "\n", 2)[0], w)
+	}
+	e.save(acct, "ledger", L)
 	// keep designs the UI has not rendered yet
 	var prev CycleOutput
 	if e.load(acct, "last_cycle", &prev) {
@@ -267,7 +286,7 @@ func (e *Engine) FromModel(in model.CycleInput) CycleInput {
 	lib := map[string]string{}
 	for _, c := range in.Creatives {
 		out.Creatives = append(out.Creatives, Creative{ID: c.ID, Lang: c.Lang, Format: c.Format, Headline: c.Headline, PrimaryText: c.PrimaryText, CTA: c.CTA, Link: c.Link,
-			ProductIDs: c.ProductIDs, Angle: c.Angle, Source: c.Source, CreatedAt: c.CreatedAt, LintOK: true, Approved: c.Approved})
+			ProductIDs: c.ProductIDs, Angle: c.Angle, Source: c.Source, CreatedAt: c.CreatedAt, LintOK: true, Approved: c.Approved, MetaID: c.MetaID})
 		lib[c.ID] = c.Lang
 		if c.MetaID != "" {
 			lib[c.MetaID] = c.Lang
@@ -326,10 +345,14 @@ func (e *Engine) FromModel(in model.CycleInput) CycleInput {
 	if len(in.Learnings) > 0 {
 		out.PortfolioLearnings = in.Learnings
 	}
+	var L Ledger
+	e.load(acct, "ledger", &L)
+	tgt := ComputeEconomics(e.B.Econ, out.Shop, in.Now).TargetCPA
+	out.Lessons = L.Lessons(tgt)
 	if in.Playbook != nil {
 		pb := *in.Playbook
 		out.Playbook = &pb
-		out.Ranked = RankFor(out, in.Shop, pb, feedBaseline(in.Shop), nil)
+		out.Ranked = RankFor(out, in.Shop, pb, feedBaseline(in.Shop), nil, L.ProductBoost(tgt))
 	}
 	out.JobNotes = in.JobNotes
 	return out
@@ -507,3 +530,18 @@ func ToModel(o CycleOutput) model.CycleOutput {
 	}
 	return out
 }
+
+// TargetCPA: the target CPA the economics compute from the shop's real orders and cost prices (the funnel sizes its
+// ad sets with it).
+func (e *Engine) TargetCPA(s model.ShopSnapshot) float64 {
+	return ComputeEconomics(e.B.Econ, shopFromModel(s), time.Now()).TargetCPA
+}
+
+// CopyPrompt: the system prompt and the user turn a copy request sends Claude (read-only "Show the brief").
+func (e *Engine) CopyPrompt(in model.CopyInput) (string, string) {
+	cr := CopyRequest{ProductIDs: in.ProductIDs, Angle: in.Angle, Brief: in.Brief}
+	return copySystem, "Write the ad copy.\n" + string(e.B.copyAsk(cr, productsByID(shopFromModel(in.Shop), in.ProductIDs), e.richResearch()))
+}
+
+// PlannerPrompt: the planner's system prompt (stable text, cached).
+func (e *Engine) PlannerPrompt() string { return PlannerSystem() }

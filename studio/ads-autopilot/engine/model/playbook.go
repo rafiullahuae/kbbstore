@@ -43,10 +43,18 @@ type Knobs struct {
 	BatchDay          string  `json:"batch_day"`            // mon..sun, the weekly day new ads go out (default mon)
 	MaxNewAdsBatch    int     `json:"max_new_ads_batch"`    // new ads per weekly batch (default 4)
 	// the low-budget agency playbook's tier thresholds (Strategy → Our playbook)
-	SmallBudgetAED     float64 `json:"small_budget_aed"`      // under this AED/day the account runs the small-budget structure (default 150)
+	SmallBudgetAED     float64 `json:"small_budget_aed"`       // under this AED/day the account runs the small-budget structure (default 150)
 	RetargetMaxFreq    float64 `json:"retarget_max_frequency"` // retargeting is scaled only while its 7-day frequency is below this (default 3)
 	CostCapMinConvWeek int     `json:"cost_cap_min_conv_week"` // cost cap is suggested only from this many purchases a week (default 50)
 	ConversionsPerWeek int     `json:"conversions_per_week"`   // what one ad set needs a week to exit learning (default 50, Meta)
+}
+
+// TuneBounds: the range inside which the self-learning loop may move a threshold on its own.
+type TuneBounds struct {
+	HardStopMin float64 `json:"hard_stop_min"` // the "stop a non-buyer after N x break-even CPA" multiple (default 2..4)
+	HardStopMax float64 `json:"hard_stop_max"`
+	FatigueMin  float64 `json:"fatigue_freq_min"` // the tiring frequency (default 2..3.5)
+	FatigueMax  float64 `json:"fatigue_freq_max"`
 }
 
 // Defaults of the knobs that have one (the rest are the brain's RulesConfig).
@@ -57,7 +65,7 @@ const (
 	DefConversionsPerWeek = 50
 )
 
-func (k Knobs) SmallBudget() float64 { return orF(k.SmallBudgetAED, DefSmallBudgetAED) }
+func (k Knobs) SmallBudget() float64  { return orF(k.SmallBudgetAED, DefSmallBudgetAED) }
 func (k Knobs) RetargetFreq() float64 { return orF(k.RetargetMaxFreq, DefRetargetMaxFreq) }
 func (k Knobs) CostCapWeek() int      { return orI(k.CostCapMinConvWeek, DefCostCapMinConvWeek) }
 func (k Knobs) ConvWeek() int         { return orI(k.ConversionsPerWeek, DefConversionsPerWeek) }
@@ -76,24 +84,27 @@ func orI(x, d int) int {
 }
 
 type Playbook struct {
-	Instructions      string    `json:"instructions"` // free text, Arabic or English: sent to Claude verbatim, first, with priority
-	Focus             []PBRule  `json:"focus"`
-	Avoid             []PBRule  `json:"avoid"`
-	FreshnessPct      float64   `json:"freshness_pct"`  // "Prefer new & trending" 0..100
-	MinStock          int       `json:"min_stock"`      // products with fewer units in stock are never advertised (unknown stock passes)
-	MinMarginPct      float64   `json:"min_margin_pct"` // products below this margin are never advertised (unknown margin passes)
-	Countries         []string  `json:"countries"`      // empty = the countries in Limits
-	AgeMin            int       `json:"age_min"`
-	AgeMax            int       `json:"age_max"`
-	Gender            string    `json:"gender"`              // women | all
-	Languages         []string  `json:"languages"`           // which ad languages run: ar, en
-	ExcludeBuyersDays int       `json:"exclude_buyers_days"` // prospecting leaves out people who bought in this many days (0 = no)
-	Split             Split     `json:"split"`       // at or above the small-budget tier
-	SmallSplit        Split     `json:"small_split"` // under it (agency rule: ~80% prospecting / ~20% retargeting, no separate existing-customer spend)
-	OffersAllowed     bool      `json:"offers_allowed"` // discount / sale wording may be used
-	Knobs             Knobs     `json:"knobs"`
-	UpdatedAt         time.Time `json:"updated_at"`
-	Version           int       `json:"version"`
+	Instructions      string   `json:"instructions"` // free text, Arabic or English: sent to Claude verbatim, first, with priority
+	Focus             []PBRule `json:"focus"`
+	Avoid             []PBRule `json:"avoid"`
+	FreshnessPct      float64  `json:"freshness_pct"`  // "Prefer new & trending" 0..100
+	MinStock          int      `json:"min_stock"`      // products with fewer units in stock are never advertised (unknown stock passes)
+	MinMarginPct      float64  `json:"min_margin_pct"` // products below this margin are never advertised (unknown margin passes)
+	Countries         []string `json:"countries"`      // empty = the countries in Limits
+	AgeMin            int      `json:"age_min"`
+	AgeMax            int      `json:"age_max"`
+	Gender            string   `json:"gender"`              // women | all
+	Languages         []string `json:"languages"`           // which ad languages run: ar, en
+	ExcludeBuyersDays int      `json:"exclude_buyers_days"` // prospecting leaves out people who bought in this many days (0 = no)
+	Split             Split    `json:"split"`               // at or above the small-budget tier
+	SmallSplit        Split    `json:"small_split"`         // under it (agency rule: ~80% prospecting / ~20% retargeting, no separate existing-customer spend)
+	OffersAllowed     bool     `json:"offers_allowed"`      // discount / sale wording may be used
+	Knobs             Knobs    `json:"knobs"`
+	// "Let it tune its own rules": off | bounds (default: it changes a threshold itself, only inside TuneBounds) | ask
+	SelfTune   string     `json:"self_tune"`
+	TuneBounds TuneBounds `json:"tune_bounds"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	Version    int        `json:"version"`
 }
 
 // DefaultPlaybook: what the owner asked for on 20 Nov ships ON (CLAUDE.md "what he asked for ships on"): new and
@@ -103,7 +114,7 @@ func DefaultPlaybook() Playbook {
 		Instructions: "Focus on the latest arrivals and the products trending now. Do not push old evergreen items (for example snail mucin) unless the shop's own sales show they are winning.\n" +
 			"ركّز على أحدث المنتجات والأكثر رواجاً الآن. لا تروّج للمنتجات القديمة (مثل سنيل ميوسين) إلا إذا أثبتت مبيعات المتجر أنها تربح.",
 		Focus: []PBRule{}, Avoid: []PBRule{}, FreshnessPct: 70, MinStock: 3, AgeMin: 18, AgeMax: 45, Gender: "women",
-		Languages: []string{"ar", "en"}, ExcludeBuyersDays: 180, Split: Split{Prospecting: 70, Retargeting: 20, Existing: 10}, SmallSplit: Split{Prospecting: 80, Retargeting: 20},
+		Languages: []string{"ar", "en"}, SelfTune: "bounds", TuneBounds: TuneBounds{2, 4, 2, 3.5}, ExcludeBuyersDays: 180, Split: Split{Prospecting: 70, Retargeting: 20, Existing: 10}, SmallSplit: Split{Prospecting: 80, Retargeting: 20},
 	}
 }
 
@@ -224,6 +235,19 @@ func (p Playbook) Normalize() Playbook {
 		k.ConversionsPerWeek = 0
 	}
 	p.Knobs = k
+	if p.SelfTune != "off" && p.SelfTune != "ask" {
+		p.SelfTune = "bounds"
+	}
+	tb := p.TuneBounds
+	tb.HardStopMin, tb.HardStopMax = clampF(tb.HardStopMin, 1.5, 10), clampF(tb.HardStopMax, 1.5, 10)
+	tb.FatigueMin, tb.FatigueMax = clampF(tb.FatigueMin, 1, 10), clampF(tb.FatigueMax, 1, 10)
+	if tb.HardStopMin > tb.HardStopMax || tb.HardStopMax == 1.5 && tb.HardStopMin == 1.5 {
+		tb.HardStopMin, tb.HardStopMax = d.TuneBounds.HardStopMin, d.TuneBounds.HardStopMax
+	}
+	if tb.FatigueMin > tb.FatigueMax || tb.FatigueMax == 1 && tb.FatigueMin == 1 {
+		tb.FatigueMin, tb.FatigueMax = d.TuneBounds.FatigueMin, d.TuneBounds.FatigueMax
+	}
+	p.TuneBounds = tb
 	return p
 }
 
@@ -390,6 +414,7 @@ type RankSignals struct {
 	AdDays   map[string]int
 	Fatigued map[string]bool
 	Baseline string
+	Boost    map[string]float64 // learned: -1..1 per product from the outcomes ledger (brain/learn.go)
 }
 
 func groupNum(id string) (int, bool) {
@@ -493,8 +518,14 @@ func Rank(prods []Product, pb Playbook, sig RankSignals) []RankedProduct {
 			fat = math.Max(fat, 0.7)
 			rp.Why = append(rp.Why, "its ad is tiring (frequency / CTR)")
 		}
-		score := F*(0.5*trend+0.5*newS) + (1-F)*0.5*mg + 0.35*mom + 0.15*st - 0.3*fat
-		rp.Parts = map[string]float64{"trend": r3(trend), "new": r3(newS), "momentum": r3(mom), "margin": r3(mg), "stock": r3(st), "fatigue": r3(fat)}
+		learned := clampF(sig.Boost[p.ID], -1, 1)
+		if learned >= 0.2 {
+			rp.Why = append(rp.Why, "won in this account's own ads before")
+		} else if learned <= -0.2 {
+			rp.Why = append(rp.Why, "lost in this account's own ads before")
+		}
+		score := F*(0.5*trend+0.5*newS) + (1-F)*0.5*mg + 0.35*mom + 0.15*st - 0.3*fat + 0.25*learned
+		rp.Parts = map[string]float64{"trend": r3(trend), "new": r3(newS), "momentum": r3(mom), "margin": r3(mg), "stock": r3(st), "fatigue": r3(fat), "learned": r3(learned)}
 		rp.Score = math.Round(clampF(score, 0, 2)*1000) / 10
 		if pb.Pinned(p) {
 			rp.Pinned = true

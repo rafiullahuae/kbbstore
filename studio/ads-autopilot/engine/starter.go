@@ -267,7 +267,9 @@ func (ac *Acct) targetCPA(in model.CycleInput) float64 {
 	ac.app.mu.RLock()
 	br := ac.app.brain
 	ac.app.mu.RUnlock()
-	if t, ok := br.(interface{ TargetCPA(model.ShopSnapshot) float64 }); ok {
+	if t, ok := br.(interface {
+		TargetCPA(model.ShopSnapshot) float64
+	}); ok {
 		if v := t.TargetCPA(in.Shop); v > 0 {
 			return v
 		}
@@ -293,9 +295,9 @@ func ownerCopyBrief(pb model.Playbook, extra string) string {
 // FunnelBudgets: the first build's daily budgets (AED) by the agency playbook's tier: prospecting campaign budget
 // (incl. the existing-customer cap inside it), the existing-customer ad-set cap, catalog retargeting.
 type FunnelBudgets struct {
-	Tier                                 string
+	Tier                                  string
 	Prospecting, ExistingCap, Retargeting float64
-	Total                                float64
+	Total                                 float64
 }
 
 func funnelBudgets(total float64, pb model.Playbook, dailyLimit, minDaily float64, catalog bool) FunnelBudgets {
@@ -466,13 +468,13 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 	split := nSets >= 2 && nAR > 0 && nEN > 0 // AR and EN ad sets only when the budget feeds both through learning
 	ps := []model.Proposal{{ID: id("sales"), Kind: model.KindCreateCampaign, Target: "tmp:" + tag + "-sales",
 		Params: map[string]any{"name": "Prospecting · Advantage+ sales", "daily_budget": fb.Prospecting, "type": "sales", "bid_strategy": "LOWEST_COST_WITHOUT_CAP"},
-		Why: fmt.Sprintf("The funnel's main campaign: Advantage+ sales finds new customers (AED %.0f/day, %s-budget tier, %.0f%% of the room under your limits). Lowest cost bidding until it has ~50 purchases a week.", fb.Prospecting, fb.Tier, starterShare*100), Confidence: 0.7,
+		Why:    fmt.Sprintf("The funnel's main campaign: Advantage+ sales finds new customers (AED %.0f/day, %s-budget tier, %.0f%% of the room under your limits). Lowest cost bidding until it has ~50 purchases a week.", fb.Prospecting, fb.Tier, starterShare*100), Confidence: 0.7,
 		Evidence: []string{fmt.Sprintf("daily limit AED %.0f, committed AED %.0f, target CPA AED %.0f → %d ad set(s) can exit learning", lim.DailyAED, executor.CommittedDaily(env.Tree), tCPA, nSets)}}}
 	var exclude []any
 	if pb.ExcludeBuyersDays > 0 {
 		ps = append(ps, model.Proposal{ID: id("buyers"), Kind: model.KindCreateAudience, Target: "tmp:" + tag + "-buyers",
 			Params: map[string]any{"name": fmt.Sprintf("Buyers %dd", pb.ExcludeBuyersDays), "source": "website", "event": "Purchase", "retention_days": float64(pb.ExcludeBuyersDays)},
-			Why: fmt.Sprintf("Everyone who bought in the last %d days, so prospecting spends on new customers only (your playbook).", pb.ExcludeBuyersDays), Confidence: 0.8})
+			Why:    fmt.Sprintf("Everyone who bought in the last %d days, so prospecting spends on new customers only (your playbook).", pb.ExcludeBuyersDays), Confidence: 0.8})
 		exclude = []any{"tmp:" + tag + "-buyers"}
 	}
 	newSet := func(key, name string) model.Proposal {
@@ -526,7 +528,7 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 		ps = append(ps,
 			model.Proposal{ID: id("past"), Kind: model.KindCreateAudience, Target: "tmp:" + tag + "-past",
 				Params: map[string]any{"name": "Past buyers 30–180d", "source": "website", "event": "Purchase", "retention_days": 180.0, "exclude_event": "Purchase", "exclude_days": 30.0},
-				Why: "Customers who bought 30 to 180 days ago: due for a refill or the next routine step.", Confidence: 0.7},
+				Why:    "Customers who bought 30 to 180 days ago: due for a refill or the next routine step.", Confidence: 0.7},
 			model.Proposal{ID: id("existing"), Kind: model.KindCreateAdSet, Target: "tmp:" + tag + "-existing",
 				Params: map[string]any{"name": "Prospecting · existing customers (capped)", "campaign_id": "tmp:" + tag + "-sales", "countries": countries, "destination": "website",
 					"advantage_audience": 0.0, "custom_audiences": []any{"tmp:" + tag + "-past"}, "strict_audiences": 1.0, "spend_cap": fb.ExistingCap},
@@ -558,7 +560,7 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 				Params: map[string]any{"name": "Retargeting · in stock, playbook-allowed", "filter": filter}, Why: "Only in-stock products your playbook allows (avoid list and stock / margin floors) can appear.", Confidence: 0.75},
 			model.Proposal{ID: id("catalog"), Kind: model.KindCreateCampaign, Target: "tmp:" + tag + "-cat",
 				Params: map[string]any{"name": "Retargeting · Advantage+ catalog", "daily_budget": fb.Retargeting, "type": "catalog", "bid_strategy": "LOWEST_COST_WITHOUT_CAP"},
-				Why: fmt.Sprintf("Retargeting with the exact product each person looked at (AED %.0f/day, %.0f%% split).", fb.Retargeting, pb.SplitFor(lim.DailyAED).Retargeting), Confidence: 0.7},
+				Why:    fmt.Sprintf("Retargeting with the exact product each person looked at (AED %.0f/day, %.0f%% split).", fb.Retargeting, pb.SplitFor(lim.DailyAED).Retargeting), Confidence: 0.7},
 			model.Proposal{ID: id("adset-cat"), Kind: model.KindCreateAdSet, Target: "tmp:" + tag + "-catset",
 				Params: map[string]any{"name": "Retargeting · viewed or carted 14d, not bought", "campaign_id": "tmp:" + tag + "-cat", "countries": countries, "product_set_id": "tmp:" + tag + "-ps",
 					"advantage_audience": 0.0, "retarget": map[string]any{"product_set_id": "tmp:" + tag + "-ps", "days": 14.0, "events": []any{"ViewContent", "AddToCart"}, "exclude_purchase_days": 14.0}},
