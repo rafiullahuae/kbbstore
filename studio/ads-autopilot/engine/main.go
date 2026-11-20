@@ -43,6 +43,7 @@ import (
 
 	"kaa/metamock"
 	"kaa/model"
+	"kaa/secrets"
 	"kaa/store"
 )
 
@@ -70,6 +71,7 @@ type server struct {
 	token      string
 	addr       string
 	app        *App
+	schedOn    atomic.Bool // the scheduler runs (not -no-scheduler): the page may ask for a warm-up
 	mu         sync.Mutex
 	clients    int
 	subs       map[chan []byte]bool
@@ -182,6 +184,7 @@ func main() {
 		}
 		<-s.healthGate
 		if !*noSched {
+			s.schedOn.Store(true)
 			s.sched.start(s.shutdown)
 		}
 	}()
@@ -229,8 +232,19 @@ func setupMock(a *App) (*metamock.Server, error) {
 		return nil, err
 	}
 	a.testMetaBase, a.testClaudeBase, a.testFeedURL = mu, au, au+"/feed.xml"
-	_ = a.sec.Set("meta_token", m.Token)
-	_ = a.sec.Set("anthropic_key", aux.Key)
+	// The throwaway keys go to the data folder's file, NEVER the Keychain: a Keychain item is service + name, shared by
+	// every data folder, so a -mock run on the owner's Mac (any check script) would write EAAMOCK… over his real Meta
+	// token and Claude key -- his keys "vanish" with no trace. The brain's generator keys follow (KAA_SECRETS_FILE).
+	_ = os.Setenv("KAA_SECRETS_FILE", "1")
+	if a.sec == nil || a.sec.Kind() != "file" {
+		a.sec = secrets.NewFile(a.st.Dir, a.st.AddSecret)
+	}
+	if err := a.sec.Set("meta_token", m.Token); err != nil {
+		return nil, err
+	}
+	if err := a.sec.Set("anthropic_key", aux.Key); err != nil {
+		return nil, err
+	}
 	a.cfg.Selected = m.Account
 	_ = a.st.Save("config", a.cfg)
 	log.Printf("TEST MODE: Meta → %s, Claude + feed → %s (never the real services)", mu, au)

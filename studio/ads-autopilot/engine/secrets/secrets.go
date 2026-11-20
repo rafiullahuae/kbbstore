@@ -147,15 +147,67 @@ func CheckFormat(name, v string) error {
 	return nil
 }
 
+// securityPath / goos: the Keychain tool and the platform (the tests put a fake macOS `security` here).
+var (
+	securityPath = "/usr/bin/security"
+	goos         = runtime.GOOS
+)
+
 // New picks the Keychain on macOS, the file elsewhere. onValue is told every value loaded or saved (the audit log
-// registers it for redaction).
+// registers it for redaction). dataDir is the DATA folder: nothing here ever looks at the app folder, its path, the
+// engine binary or VERSION, so replacing the app folder, an update and a roll back all read the same keys.
+//
+// Why a NEW engine binary is never locked out (Apple, `man security`, add-generic-password: "-T appPath Specify an
+// application which may access this item", "-A Allow any application to access this item without warning (insecure,
+// not recommended!)"; SecKeychainItemCreateFromContent with no initial access trusts only the calling application):
+// the item is created WITHOUT -A and WITHOUT -T, so the one application macOS trusts with it is the process that made
+// it -- /usr/bin/security, Apple-signed, the same path on every Mac and every version of this app. Every read goes
+// through that same /usr/bin/security, so the reader matches the creator whatever engine binary started it (a new
+// build has a new hash; it never touches the Keychain itself). -T with the engine's path would pin THIS build's hash
+// and prompt after every update; -A would let any app read the keys silently. TestKeysSurviveFolderReplacement pins
+// both flags absent.
 func New(dataDir string, onValue func(string)) Store {
-	if runtime.GOOS == "darwin" && os.Getenv("KAA_SECRETS_FILE") == "" {
-		if _, err := os.Stat("/usr/bin/security"); err == nil {
+	if goos == "darwin" && os.Getenv("KAA_SECRETS_FILE") == "" {
+		if _, err := os.Stat(securityPath); err == nil {
 			return &keychain{cache: map[string]string{}, on: onValue, index: filepath.Join(dataDir, "keys-index.json"), run: run}
 		}
 	}
+	return NewFile(dataDir, onValue)
+}
+
+// NewFile: the 0600 file store in dataDir, whatever the platform (-mock uses it, so a test run on a Mac never writes
+// its throwaway keys over the owner's real ones in the Keychain: the Keychain item is service + name, shared by every
+// data folder).
+func NewFile(dataDir string, onValue func(string)) Store {
 	return &fileStore{path: filepath.Join(dataDir, "secrets.json"), on: onValue}
+}
+
+// Key: one key's value for a client that asks on every request, remembering why the last read failed, so the client
+// says "could not be read" instead of "no key saved" (when macOS refused the read after a restart, every Meta call
+// said "no Meta token saved" although the token was in the Keychain).
+type Key struct {
+	s    Store
+	name string
+	mu   sync.Mutex
+	err  error
+}
+
+func NewKey(s Store, name string) *Key { return &Key{s: s, name: name} }
+
+// Value: the key, or "" (not set, or not readable: Err says which).
+func (k *Key) Value() string {
+	v, err := k.s.Get(k.name)
+	k.mu.Lock()
+	k.err = err
+	k.mu.Unlock()
+	return v
+}
+
+// Err: why the last Value() was "" (nil: plainly not set, or read fine).
+func (k *Key) Err() error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.err
 }
 
 // ── macOS Keychain ──
@@ -205,7 +257,7 @@ func (k *keychain) Kind() string { return "keychain" }
 func run(stdin string, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second) // macOS may be asking the owner meanwhile
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "/usr/bin/security", args...)
+	cmd := exec.CommandContext(ctx, securityPath, args...)
 	if stdin != "" {
 		cmd.Stdin = strings.NewReader(stdin)
 	}
@@ -264,6 +316,15 @@ func (k *keychain) Set(name, value string) error {
 			return fmt.Errorf("macOS didn't let the app save the key in the Keychain. Click “Always Allow” when macOS asks, then save again.")
 		}
 		return fmt.Errorf("Keychain: %v", clipErr(err.Error()))
+	}
+	// read it back: `security -i` can end with exit 0 when the command inside it failed, and a save that did not
+	// happen must not say "saved" (the key would look gone at the next start)
+	if out, err := k.run("", "find-generic-password", "-s", Service, "-a", name, "-w"); err != nil || strings.TrimRight(out, "\r\n") != value {
+		why := "it was not there when read back"
+		if err != nil {
+			why = clipErr(err.Error())
+		}
+		return fmt.Errorf("The key did not reach the macOS Keychain (%s), so it was not saved. Try again; if it keeps failing, open Keychain Access and unlock the login keychain.", why)
 	}
 	k.mu.Lock()
 	k.cache[name] = value

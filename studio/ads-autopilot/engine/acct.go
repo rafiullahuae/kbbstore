@@ -79,7 +79,9 @@ func openAcct(a *App, id string) (*Acct, error) {
 	}
 	ac := &Acct{id: id, app: a, st: st, metrics: map[string]model.MetricRow{}, linkState: map[string]linkCheck{}}
 	ac.settings.Limits = model.DefaultLimits()
-	_ = st.Load("settings", &ac.settings)
+	if err := st.Load("settings", &ac.settings); err != nil { // never silently back to the defaults (store keeps a copy)
+		st.Append("alert", "This account's saved limits could not be read: "+err.Error()+". Check Settings → Limits before turning Auto on.", model.Alert{At: a.now().UTC(), Level: "warn", Text: err.Error()})
+	}
 	var snap struct {
 		Account  model.Account     `json:"account"`
 		Tree     []model.Campaign  `json:"tree"`

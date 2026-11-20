@@ -120,7 +120,7 @@ function paintNav() {
   const c = counts();
   document.getElementById('nav').innerHTML = GROUPS.map(([g, gar, items]) => `<div class="grp">${esc(tt(g, gar))}</div>` + items.map(([id, en, ar]) =>
     `<a href="#/${id}" data-route="${id}" class="${S.route === id ? 'on' : ''}" title="${esc(tt(en, ar))}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">${I[id]}</svg><span class="lbl">${esc(tt(en, ar))}</span>${c[id] ? `<span class="cnt ${id === 'approvals' ? 'hot' : ''}">${c[id]}</span>` : ''}</a>`).join('')).join('') +
-    `<div class="nav-foot"><div class="conn" id="conn">${S.connHTML || ''}</div><button class="ghost small" id="theme" type="button" title="${esc(tt('Light / dark (T)', 'فاتح / داكن (T)'))}">◐ ${esc(tt('Theme', 'المظهر'))}</button></div>`;
+    `<div class="nav-foot"><div class="conn" id="conn">${S.connHTML || ''}</div><div class="warm-at" id="warm-at">${warmAt()}</div><button class="ghost small" id="theme" type="button" title="${esc(tt('Light / dark (T)', 'فاتح / داكن (T)'))}">◐ ${esc(tt('Theme', 'المظهر'))}</button></div>`;
   document.getElementById('theme').onclick = toggleTheme;
 }
 
@@ -152,7 +152,7 @@ export function switchAccount(id) {
   if (!id || id === getAccount()) return;
   setAccount(id);
   try { localStorage.setItem('kaa.account', id); } catch {}
-  api('/api/accounts/select', { method: 'POST', body: { account: id }, noAccount: true }).catch(() => {});
+  api('/api/accounts/select', { method: 'POST', body: { account: id }, noAccount: true }).catch((x) => toast(tt('The engine did not record the account switch: ', 'لم يسجّل المحرك تبديل الحساب: ') + x.message));
   paintAccount(); paintTop(); paintNav();
   rerender(); // instant from the warmed cache
   refreshState(id).catch((e) => toast(e.message));
@@ -241,6 +241,61 @@ export async function runCycle() {
 }
 window.addEventListener('hashchange', go);
 
+// ---------- warm-up bar (engine warmup.go) ----------
+// While the engine refreshes itself (on start, after the Mac wakes, when this page comes back) a slim row under the
+// top bar shows each step; offline it says it is waiting and when it tries again; finished, the nav foot says
+// "Up to date · 10:42". The numbers on screen stay as they were meanwhile (no blank screens).
+const WSTEP = { connections: ['Meta · Claude · shop', 'ميتا · Claude · المتجر'], sync: ['Meta numbers', 'أرقام ميتا'], research: ['Research', 'الأبحاث'], cycle: ['Plan', 'الخطة'] };
+const WICON = { ok: '✓', skipped: '–', failed: '!', offline: '×', running: '…', waiting: '·' };
+const hhmm = (iso) => new Date(iso).toLocaleTimeString(getLang() === 'ar' ? 'ar-AE' : 'en-AE', { hour: '2-digit', minute: '2-digit' });
+const realTime = (iso) => !!iso && !String(iso).startsWith('0001');
+const warmProblem = (w) => !w.running && !w.offline && (w.steps || []).some((x) => x.state === 'failed');
+function warmAt() {
+  const w = S.warm;
+  if (!w || w.running || !realTime(w.last_full)) return '';
+  return `<span class="dot ok"></span><span>${esc(tt('Up to date', 'محدَّث'))} · ${esc(hhmm(w.last_full))}</span>`;
+}
+function paintWarm() {
+  const el = document.getElementById('warm'), at = document.getElementById('warm-at');
+  if (at) at.innerHTML = warmAt();
+  if (!el) return;
+  const w = S.warm;
+  if (!w || !(w.running || w.offline || warmProblem(w))) { el.hidden = true; el.innerHTML = ''; return; }
+  const steps = (w.steps || []).map((x) => `<span class="ws ${esc(x.state)}" data-step="${esc(x.id)}" title="${esc(x.note || '')}">${esc(tt(...(WSTEP[x.id] || [x.id, x.id])))} <i>${WICON[x.state] || ''}</i></span>`).join('');
+  let head, cls, more = '';
+  if (w.running) { head = tt('Updating…', 'جارٍ التحديث…'); cls = 'run'; }
+  else if (w.offline) {
+    head = tt('No internet: waiting', 'لا يوجد اتصال بالإنترنت: ننتظر') + (realTime(w.retry_at) ? ` · ${tt('tries again at', 'المحاولة التالية')} ${hhmm(w.retry_at)}` : '');
+    cls = 'off'; more = `<button type="button" class="ghost small" id="warm-try">${esc(tt('Try again', 'حاولي مرة أخرى'))}</button>`;
+  } else {
+    const bad = (w.steps || []).find((x) => x.state === 'failed');
+    head = tt('Updated with a problem', 'تم التحديث مع مشكلة'); cls = 'warn';
+    more = `<span class="wnote">${esc(String(bad.note || '').slice(0, 160))}</span><a href="#/settings">${esc(tt('Settings', 'الإعدادات'))}</a>`;
+  }
+  el.hidden = false;
+  el.className = 'warm ' + cls;
+  el.innerHTML = `<b>${esc(head)}</b><span class="wsteps">${steps}</span>${more}`;
+  const b = document.getElementById('warm-try');
+  if (b) b.onclick = () => warmNow('online');
+}
+async function warmNow(reason) {
+  ensureEvents();
+  try { const r = await api('/api/warmup', { method: 'POST', noAccount: true, body: { reason } }); S.warm = r.state; paintWarm(); }
+  catch (x) { S.connHTML = `<span class="dot bad"></span><span>${esc(tt('Engine not answering: ', 'المحرك لا يستجيب: ') + x.message)}</span>`; paintNav(); }
+}
+// the stream: EventSource reconnects by itself after a drop, but not once the browser CLOSED it (a long sleep can):
+// then a new one is opened when the page is shown again or the network comes back
+let es = null, onEv = null;
+function ensureEvents() { if (onEv && (!es || es.readyState === 2)) es = events(onEv); }
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { hiddenAt = Date.now(); return; }
+  ensureEvents();
+  if (hiddenAt && Date.now() - hiddenAt > 5 * 60e3) warmNow('page'); // away a while: the engine refreshes (once)
+  hiddenAt = 0;
+});
+window.addEventListener('online', () => warmNow('online'));
+
 // ---------- start ----------
 (async function start() {
   try { const th = localStorage.getItem('kaa.theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
@@ -260,7 +315,16 @@ window.addEventListener('hashchange', go);
     view.innerHTML = `<div class="page"><div class="alert danger stale-engine" id="stale-engine" role="alert"><div><b>${esc(tt('The app was updated, but the old engine is still running.', 'تم تحديث التطبيق، لكن المحرك القديم ما زال يعمل.'))}</b><br>${esc(tt('Close the KBB Ads Autopilot Terminal window, then double-click “Start KBB Ads Autopilot” again. Nothing is lost: your accounts, keys and history stay as they are.', 'أغلقي نافذة Terminal الخاصة بـ KBB Ads Autopilot، ثم انقري مرتين على «Start KBB Ads Autopilot» مرة أخرى. لا يضيع شيء: حساباتك ومفاتيحك وسجلك تبقى كما هي.'))}<br><span class="small muted" dir="ltr">${esc(stale === 'api' ? `engine ${v.version || '?'} (API level ${v.apiLevel ?? '?'}) is older than this app (needs API level 2)` : `engine started as ${v.version}, the app folder is now ${v.folderVersion}`)}</span></div></div></div>`;
     return;
   }
-  const [acc, connections] = await Promise.all([api('/api/accounts', { noAccount: true }).catch(() => ({ accounts: [] })), api('/api/connections', { noAccount: true })]);
+  // A failed read is NOT "no accounts": the old .catch(() => ({ accounts: [] })) sent him to the first-run wizard as if
+  // his accounts were gone, and a failed /api/connections left the skeleton up for good. Say so, with Try again.
+  let acc, connections;
+  try { [acc, connections] = await Promise.all([api('/api/accounts', { noAccount: true }), api('/api/connections', { noAccount: true })]); }
+  catch (x) {
+    S.connHTML = `<span class="dot bad"></span><span>${esc(tt('Engine not answering', 'المحرك لا يستجيب'))}</span>`; paintNav();
+    view.innerHTML = `<div class="page"><div class="card empty" id="start-failed" role="alert"><b>${esc(tt('Your accounts could not be read from the engine.', 'تعذّرت قراءة حساباتك من المحرك.'))}</b><span>${esc(tt('Nothing is lost. ', 'لم يضع شيء. ') + x.message)}</span><button type="button" id="start-retry">${esc(tt('Try again', 'حاولي مرة أخرى'))}</button></div></div>`;
+    document.getElementById('start-retry').onclick = () => start();
+    return;
+  }
   const r = normAccounts(acc);
   S.accounts = r.rows; S.conn = connections;
   let saved = ''; try { saved = localStorage.getItem('kaa.account') || ''; } catch {}
@@ -274,7 +338,9 @@ window.addEventListener('hashchange', go);
   go();
   if (!location.hash.includes('tab=updates')) startupNote(); // an automatic roll back he has not seen yet
   for (const a of S.accounts) if (a.id !== getAccount()) refreshState(a.id).catch(() => {});
-  events((type, d) => {
+  api('/api/warmup', { noAccount: true }).then((w) => { S.warm = w; paintWarm(); }).catch(() => {}); // an older engine has none: no bar
+  onEv = (type, d) => {
+    if (type === 'warmup') { const was = S.warm && S.warm.running; S.warm = d.data; paintWarm(); if (was && !d.data.running) refreshAccounts().catch(() => {}); return; }
     if (type === 'disconnected') { S.connHTML = `<span class="dot bad"></span><span>${esc(tt('Reconnecting…', 'إعادة الاتصال…'))}</span>`; paintNav(); return; }
     if (type === 'hello') { // (re)connected: anything pushed while the stream was down is read once, then pushes take over
       S.sseAt = Date.now();
@@ -306,5 +372,6 @@ window.addEventListener('hashchange', go);
       for (const id of ids) { S.cache.forEach((_, k) => { if (k.startsWith(id + '|')) S.cache.delete(k); }); refreshState(id).catch(() => {}); }
       if (type !== 'backfill.progress') refreshAccounts().catch(() => {});
     }
-  });
+  };
+  es = events(onEv);
 })();
