@@ -190,7 +190,38 @@ func shortTitle(p model.Product) string {
 }
 
 // fallbackCopy: plain, policy-safe wording (no claims about skin) when Claude is not connected.
-func fallbackCopy(p model.Product, lang string) (string, string) {
+// benefitOf: a policy-safe benefit line from the product's own category / title words (no claims beyond them).
+func benefitOf(p model.Product, lang string) string {
+	t := strings.ToLower(p.Title + " " + p.Category)
+	type b struct{ key, en, ar string }
+	for _, x := range []b{
+		{"sun", "Lightweight daily sun care with a comfortable, non-sticky finish", "حماية يومية خفيفة من الشمس بلمسة مريحة غير لزجة"},
+		{"cleanser", "A gentle cleanse that leaves skin feeling fresh, not tight", "تنظيف لطيف يترك البشرة منتعشة دون شدّ"},
+		{"toner", "A calming toner step for a fresh, balanced feel", "خطوة تونر مهدئة لإحساس منتعش ومتوازن"},
+		{"serum", "A lightweight serum step for a dewy, glowing look", "سيروم خفيف لإطلالة ندية ومشرقة"},
+		{"essence", "A lightweight essence step for a dewy, glowing look", "إسنس خفيف لإطلالة ندية ومشرقة"},
+		{"cream", "Rich, comforting hydration that helps skin feel soft", "ترطيب غني ومريح يساعد البشرة على النعومة"},
+		{"mask", "A soothing mask moment in your routine", "لحظة ماسك مهدئة في روتينك"},
+		{"lip", "Soft, hydrated-looking lips", "شفاه تبدو ناعمة ومرطبة"},
+		{"set", "A complete Korean routine in one set", "روتين كوري متكامل في مجموعة واحدة"},
+	} {
+		if strings.Contains(t, x.key) {
+			if lang == "ar" {
+				return x.ar
+			}
+			return x.en
+		}
+	}
+	if lang == "ar" {
+		return "عناية كورية لطيفة تعتمد على المكونات"
+	}
+	return "Gentle, ingredient-first Korean skincare"
+}
+
+// fallbackCopy: benefit-first template wording (benefit -> Korean angle -> reason to buy -> CTA) when Claude is not
+// connected or creation waits for the owner: the product's benefit from its own category, the price, and only the
+// offers the Playbook lists (free gift, the coupon code). No claims about skin.
+func fallbackCopy(p model.Product, lang string, pb model.Playbook) (string, string) {
 	brand := p.Brand
 	if brand == "" {
 		brand = "K-Beauty"
@@ -199,10 +230,28 @@ func fallbackCopy(p model.Product, lang string) (string, string) {
 	if p.SaleAED > 0 && p.SaleAED < price {
 		price = p.SaleAED
 	}
-	if lang == "ar" {
-		return shortTitle(p), fmt.Sprintf("%s الأصلي من كوريا، متوفر الآن في K-Beauty Bliss بسعر %.0f درهم. توصيل داخل الإمارات.", brand, price)
+	gift, code := pb.OffersAllowed && pb.FreeGift, ""
+	if pb.OffersAllowed {
+		code = pb.CouponCode
 	}
-	return shortTitle(p), fmt.Sprintf("Authentic %s from Korea, in stock now at K-Beauty Bliss for AED %.0f. Delivery across the UAE.", brand, price)
+	if lang == "ar" {
+		t := fmt.Sprintf("%s. %s الأصلي من كوريا، بسعر %.0f درهم مع توصيل داخل الإمارات.", benefitOf(p, "ar"), brand, price)
+		if gift {
+			t += " هدية مجانية مع كل طلب."
+		}
+		if code != "" {
+			t += " استخدمي الكود " + code + "."
+		}
+		return shortTitle(p), t + " تسوّقي الآن."
+	}
+	t := fmt.Sprintf("%s. Authentic %s from Korea, AED %.0f, delivered across the UAE.", benefitOf(p, "en"), brand, price)
+	if gift {
+		t += " Free gift with every order."
+	}
+	if code != "" {
+		t += " Use code " + code + " at checkout."
+	}
+	return shortTitle(p), t + " Shop now."
 }
 
 // starterCreative: an unused designed creative of the product in that language, else a library entry made from the
@@ -226,7 +275,7 @@ func (ac *Acct) starterCreative(ctx context.Context, p model.Product, lang strin
 			return id, nil
 		}
 	}
-	h, t := fallbackCopy(p, lang)
+	h, t := fallbackCopy(p, lang, ac.playbook())
 	if cp, ok := copyOf(p)[lang]; ok && cp[0] != "" && cp[1] != "" {
 		h, t = cp[0], cp[1]
 	}
@@ -283,8 +332,12 @@ func ownerCopyBrief(pb model.Playbook, extra string) string {
 	if strings.TrimSpace(pb.Instructions) != "" {
 		parts = append(parts, "OWNER'S INSTRUCTIONS (always obey):\n"+pb.Instructions)
 	}
-	if !pb.OffersAllowed {
-		parts = append(parts, "No discount or sale wording (the owner has not allowed offers).")
+	if true {
+		if of := pb.OfferFacts(); len(of) > 0 {
+			parts = append(parts, "OFFERS YOU MAY USE in the reason-to-buy step (exactly these, nothing else): "+strings.Join(of, "; ")+". Never a percentage or an amount off.")
+		} else {
+			parts = append(parts, "No offer wording at all (the owner switched offers off). Never a percentage or an amount off.")
+		}
 	}
 	if strings.TrimSpace(extra) != "" {
 		parts = append(parts, extra)
@@ -623,6 +676,7 @@ func (ac *Acct) starterSkip(why string) string {
 	ac.mu.Unlock()
 	_ = ac.st.Save("starter", s)
 	ac.alertOnce("The first launch is waiting: " + why)
+	ac.st.Append("starter", "the first launch is waiting: "+why, s) // Activity shows every skip
 	return why
 }
 

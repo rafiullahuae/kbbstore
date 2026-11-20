@@ -121,6 +121,8 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			}()
 		}
 		writeJSON(w, map[string]string{"selected": ac.id})
+	case strings.HasPrefix(p, "/api/accounts/") && strings.HasSuffix(p, "/autolink") && r.Method == http.MethodPost: // readiness.go
+		s.autolink(w, r, strings.TrimSuffix(strings.TrimPrefix(p, "/api/accounts/"), "/autolink"))
 	case strings.HasPrefix(p, "/api/accounts/") && r.Method == http.MethodPut:
 		s.putAccount(w, r, strings.TrimPrefix(p, "/api/accounts/"))
 	case p == "/api/limits/global" && r.Method == http.MethodGet:
@@ -330,9 +332,11 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		writeJSON(w, out)
 	case strings.HasPrefix(p, "/api/creatives/") && strings.HasSuffix(p, "/file") && (r.Method == http.MethodGet || r.Method == http.MethodHead):
 		s.creativeFile(w, r, strings.TrimSuffix(strings.TrimPrefix(p, "/api/creatives/"), "/file"))
-	case p == "/api/playbook" || p == "/api/jobs" || strings.HasPrefix(p, "/api/jobs/") || p == "/api/funnel": // media-buying lane (playbook.go, jobs.go, funnel.go)
+	case p == "/api/playbook" || p == "/api/jobs" || strings.HasPrefix(p, "/api/jobs/") || p == "/api/funnel" || p == "/api/occasions": // media-buying lane (playbook.go, jobs.go, funnel.go, occasions.go)
 		if ac := s.acct(w, r); ac != nil {
 			switch {
+			case p == "/api/occasions":
+				s.occasionsAPI(w, r, ac)
 			case p == "/api/playbook":
 				s.playbookAPI(w, r, ac)
 			case p == "/api/funnel":

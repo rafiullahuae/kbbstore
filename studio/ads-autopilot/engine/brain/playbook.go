@@ -163,8 +163,12 @@ func OwnerBrief(pb *model.Playbook, extra string) string {
 	if pb != nil && strings.TrimSpace(pb.Instructions) != "" {
 		parts = append(parts, "OWNER'S INSTRUCTIONS (always obey):\n"+pb.Instructions)
 	}
-	if pb != nil && !pb.OffersAllowed {
-		parts = append(parts, "No discount or sale wording (the owner has not allowed offers).")
+	if pb != nil {
+		if of := (*pb).OfferFacts(); len(of) > 0 {
+			parts = append(parts, "OFFERS YOU MAY USE in the reason-to-buy step (exactly these, nothing else): "+strings.Join(of, "; ")+". Never a percentage or an amount off.")
+		} else {
+			parts = append(parts, "No offer wording at all (the owner switched offers off). Never a percentage or an amount off.")
+		}
 	}
 	if s := strings.TrimSpace(extra); s != "" {
 		parts = append(parts, s)

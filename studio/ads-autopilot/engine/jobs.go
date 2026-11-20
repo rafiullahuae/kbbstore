@@ -59,8 +59,13 @@ type Job struct {
 	Source        string    `json:"source"` // funnel | planner | season
 	ProposalIDs   []string  `json:"proposal_ids,omitempty"`
 	Result        string    `json:"result,omitempty"`
-	Log           []JobLog  `json:"log,omitempty"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	// occasions (occasions.go): the prepared ads, the ones the owner rejected, the dates, the reminders sent
+	Creatives []string                `json:"creatives,omitempty"`
+	Rejected  []string                `json:"rejected,omitempty"`
+	Occasion  *model.OccasionInstance `json:"occasion,omitempty"`
+	Reminded  []int                   `json:"reminded,omitempty"`
+	Log       []JobLog                `json:"log,omitempty"`
+	UpdatedAt time.Time               `json:"updated_at"`
 }
 
 type JobSet struct {
@@ -162,7 +167,7 @@ func upsert(js *JobSet, j Job, now time.Time) {
 }
 
 // refreshJobs: the queue from this cycle's plan, the first launch and the funnel's missing pieces.
-func (ac *Acct) refreshJobs(in model.CycleInput, plan model.Plan, starter []model.Proposal, stWhy string, env executor.Env) {
+func (ac *Acct) refreshJobs(ctx context.Context, in model.CycleInput, plan model.Plan, starter []model.Proposal, stWhy string, env executor.Env) {
 	now := env.Now
 	loc := ac.loc()
 	js := ac.jobSet()
@@ -208,17 +213,6 @@ func (ac *Acct) refreshJobs(in model.CycleInput, plan model.Plan, starter []mode
 		case "refresh":
 			upsert(&js, Job{ID: "refresh-" + s.Target, Kind: "refresh", Title: "Refresh a tiring ad", TitleAR: "تجديد إعلان مُرهَق", Why: s.Why, When: at, Status: "planned",
 				Target: s.Target, Lang: "ar", Format: "image", Source: "planner", ProductIDs: []string{}, UpdatedAt: now.UTC()}, now)
-		case "seasonal":
-			if at.Sub(now) > 30*24*time.Hour {
-				continue
-			}
-			id := "season-" + pidSafe.ReplaceAllString(strings.ToLower(s.Title), "-")
-			if len(id) > 60 {
-				id = id[:60]
-			}
-			upsert(&js, Job{ID: id, Kind: "seasonal", Title: "Seasonal push: " + s.Title, TitleAR: "دفعة موسمية", Why: s.Why, When: at, Status: "planned",
-				Lang: "ar", Format: "image", CopyDirection: s.Detail, Source: "season", ProductIDs: []string{},
-				Audience: "the prospecting campaign, budget raised one step", UpdatedAt: now.UTC()}, now)
 		}
 	}
 	// a planned, unedited test that this plan no longer has goes away (the planner changed its mind)
@@ -230,6 +224,8 @@ func (ac *Acct) refreshJobs(in model.CycleInput, plan model.Plan, starter []mode
 		keep = append(keep, j)
 	}
 	js.Jobs = keep
+	// occasions: packages prepared at their prep date, waiting for approval (occasions.go)
+	ac.refreshOccasions(ctx, in, &js, now)
 	// the funnel's missing pieces (only once the main campaign exists)
 	f := findFunnel(in.Tree, in.Audiences)
 	if f.prosp != nil {
@@ -473,6 +469,8 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 				Why: fmt.Sprintf("Seasonal ramp: one step up (≤ %.0f%%) before the peak.", step), Confidence: 0.6})
 		}
 		return ps, ""
+	case "occasion":
+		return ac.occasionProposals(in, j, env.Limits.MaxBudgetStepPct, pid)
 	case "funnel_retargeting":
 		if in.Links.CatalogID == "" || in.Links.PixelID == "" {
 			return nil, "link the product catalog and the pixel first"
@@ -573,6 +571,10 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 	for i := range js.Jobs {
 		j := &js.Jobs[i]
 		if j.ID == jobFirstLaunch || (j.Status != "planned" && j.Status != "approved") || j.When.After(now) {
+			continue
+		}
+		if j.Kind == "occasion" && j.Status != "approved" && !in.Playbook.AutoApproveOccasions {
+			j.Waiting = "waits for your approval (Approvals → Occasions)"
 			continue
 		}
 		ps, why := ac.materialise(ctx, in, *j, env)
@@ -726,6 +728,27 @@ func (s *server) jobsAPI(w http.ResponseWriter, r *http.Request, ac *Acct, rest 
 		verb = parts[1]
 	}
 	switch {
+	case (verb == "reject-ad" || verb == "restore-ad") && r.Method == http.MethodPost:
+		var b struct {
+			CreativeID string `json:"creative_id"`
+		}
+		if err := readJSON(r, &b, 4096); err != nil || !contains(j.Creatives, b.CreativeID) {
+			jsonErr(w, 400, "send {creative_id} of one of this job's ads")
+			return
+		}
+		var keep []string
+		for _, x := range j.Rejected {
+			if x != b.CreativeID {
+				keep = append(keep, x)
+			}
+		}
+		if verb == "reject-ad" {
+			keep = append(keep, b.CreativeID)
+			j.logf(now, "you rejected the ad %s", b.CreativeID)
+		} else {
+			j.logf(now, "you put the ad %s back", b.CreativeID)
+		}
+		j.Rejected = keep
 	case verb == "brief" && r.Method == http.MethodGet:
 		writeJSON(w, ac.jobBrief(*j))
 		return

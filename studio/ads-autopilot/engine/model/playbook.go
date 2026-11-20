@@ -98,8 +98,15 @@ type Playbook struct {
 	ExcludeBuyersDays int      `json:"exclude_buyers_days"` // prospecting leaves out people who bought in this many days (0 = no)
 	Split             Split    `json:"split"`               // at or above the small-budget tier
 	SmallSplit        Split    `json:"small_split"`         // under it (agency rule: ~80% prospecting / ~20% retargeting, no separate existing-customer spend)
-	OffersAllowed     bool     `json:"offers_allowed"`      // discount / sale wording may be used
-	Knobs             Knobs    `json:"knobs"`
+	OffersAllowed     bool     `json:"offers_allowed"`      // the offers below may be used in ads (never a % or amount off: the linter blocks it)
+	FreeGift          bool     `json:"free_gift"`           // "Free gift with every order" / «هدية مجانية مع كل طلب»
+	CouponCode        string   `json:"coupon_code"`         // "Use code GLOW at checkout" / «استخدمي الكود GLOW»
+	Gifts             []string `json:"gifts"`               // the gifts we give, by name (filled by the owner; never invented)
+	// Occasions (Strategy → Occasions): nil = the defaults. Nothing seasonal goes live without his approval unless
+	// AutoApproveOccasions (off by default).
+	Occasions            []Occasion `json:"occasions,omitempty"`
+	AutoApproveOccasions bool       `json:"auto_approve_occasions"`
+	Knobs                Knobs      `json:"knobs"`
 	// "Let it tune its own rules": off | bounds (default: it changes a threshold itself, only inside TuneBounds) | ask
 	SelfTune   string     `json:"self_tune"`
 	TuneBounds TuneBounds `json:"tune_bounds"`
@@ -114,7 +121,7 @@ func DefaultPlaybook() Playbook {
 		Instructions: "Focus on the latest arrivals and the products trending now. Do not push old evergreen items (for example snail mucin) unless the shop's own sales show they are winning.\n" +
 			"ركّز على أحدث المنتجات والأكثر رواجاً الآن. لا تروّج للمنتجات القديمة (مثل سنيل ميوسين) إلا إذا أثبتت مبيعات المتجر أنها تربح.",
 		Focus: []PBRule{}, Avoid: []PBRule{}, FreshnessPct: 70, MinStock: 3, AgeMin: 18, AgeMax: 45, Gender: "women",
-		Languages: []string{"ar", "en"}, SelfTune: "bounds", TuneBounds: TuneBounds{2, 4, 2, 3.5}, ExcludeBuyersDays: 180, Split: Split{Prospecting: 70, Retargeting: 20, Existing: 10}, SmallSplit: Split{Prospecting: 80, Retargeting: 20},
+		Languages: []string{"ar", "en"}, SelfTune: "bounds", TuneBounds: TuneBounds{2, 4, 2, 3.5}, OffersAllowed: true, FreeGift: true, CouponCode: "GLOW", Gifts: []string{}, ExcludeBuyersDays: 180, Split: Split{Prospecting: 70, Retargeting: 20, Existing: 10}, SmallSplit: Split{Prospecting: 80, Retargeting: 20},
 	}
 }
 
@@ -235,6 +242,23 @@ func (p Playbook) Normalize() Playbook {
 		k.ConversionsPerWeek = 0
 	}
 	p.Knobs = k
+	p.CouponCode = strings.ToUpper(strings.Map(func(r rune) rune {
+		if r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
+			return r
+		}
+		return -1
+	}, p.CouponCode))
+	if len(p.CouponCode) > 24 {
+		p.CouponCode = p.CouponCode[:24]
+	}
+	gs := []string{}
+	for _, g := range p.Gifts {
+		if g = cleanText(g, 80); g != "" && len(gs) < 20 {
+			gs = append(gs, g)
+		}
+	}
+	p.Gifts = gs
+	p.Occasions = normOccasions(p.Occasions)
 	if p.SelfTune != "off" && p.SelfTune != "ask" {
 		p.SelfTune = "bounds"
 	}
@@ -556,4 +580,22 @@ type Audience struct {
 	DeliveryCode  int    `json:"delivery_code,omitempty"` // 200 = ready to use
 	DeliveryText  string `json:"delivery_text,omitempty"`
 	RetentionDays int    `json:"retention_days,omitempty"`
+}
+
+// OfferFacts: what the copy may say about offers (none when offers are off). Never a % or amount off.
+func (p Playbook) OfferFacts() []string {
+	if !p.OffersAllowed {
+		return nil
+	}
+	var f []string
+	if p.FreeGift {
+		f = append(f, "Free gift with every order / هدية مجانية مع كل طلب")
+		if len(p.Gifts) > 0 {
+			f = append(f, "The gifts we give: "+strings.Join(p.Gifts, ", "))
+		}
+	}
+	if p.CouponCode != "" {
+		f = append(f, "Use code "+p.CouponCode+" at checkout / استخدمي الكود "+p.CouponCode)
+	}
+	return f
 }

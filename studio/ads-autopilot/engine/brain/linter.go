@@ -50,6 +50,7 @@ const (
 
 type LintOptions struct {
 	PromoApproved bool   // an authorised promotion exists (then discount wording only warns)
+	Coupon        string // the owner's coupon code (Playbook → Offers, default GLOW): naming it is allowed
 	Lang          string // ar | en: the version being linted
 	Strictness    string // strict | balanced (default) | relaxed
 }
@@ -72,6 +73,7 @@ var ruleSeverity = map[string][3]string{
 	"before_after":                {"block", "block", "warn"},
 	"whitening":                   {"block", "rewrite", "rewrite"},
 	"discount_unapproved":         {"block", "warn", "warn"},
+	"discount_amount":             {"block", "block", "block"}, // the owner: never a % or amount off, only the coupon code + free gift
 	"exclusivity_claim":           {"rewrite", "warn", "warn"},
 	"fake_review":                 {"block", "block", "block"},
 	"spf_claim":                   {"warn", "warn", "warn"},
@@ -114,6 +116,9 @@ var (
 	enHype        = regexp.MustCompile(`(?i)\b(permanent(ly)?|forever|miracle|magic(al)? (cream|serum|results)|never (again|age))\b`)
 	enBeforeAft   = regexp.MustCompile(`(?i)\b(before\s*(and|&|/|-)\s*after|before-after)\b`)
 	enWhitening   = regexp.MustCompile(`(?i)\b(whiten(ing|s)?|bleach(ing)?|skin lighten(ing|er)?|lighten (your|the) skin|fairer skin|fair skin|fairer you|lighter skin tone)\b`)
+	// any percentage or amount off, in every mode (the owner, 20 Nov 2026); a product name like "Heartleaf 77% Toner"
+	// is not a discount, so a % only counts next to off / discount / save / sale
+	enDiscountAmt = regexp.MustCompile(`(?i)(\d+(\.\d+)?\s?%\s?(off|discount|saving|cheaper|less)|\b(save|discount|off|sale)\s(of\s)?(up to\s)?\d+\s?%|\bhalf[- ]price\b|\bsave\s(up to\s)?(aed|dhs?)\s?\d|\b(aed|dhs?)\s?\d+(\.\d+)?\s?off\b|\d+\s?(aed|dhs?)\s?off\b)`)
 	enDiscount    = regexp.MustCompile(`(?i)(\d+\s?%\s?(off|discount)|\bsale\b|\bdiscount(s|ed)?\b|\bclearance\b|\bwas (aed|dhs?)\s?\d|\bcoupon\b|\bpromo code\b|\bbogo\b|buy one get one)`)
 	enExclusive   = regexp.MustCompile(`(?i)(#\s?1\b|\bnumber one\b|\bno\.? ?1\b|\bthe best (in|skincare|serum|cream)\b|\bbest in (the )?(uae|dubai|gcc|world)\b|\bthe only\b|\bunlike other (brands|shops|stores)\b|\bcheapest\b)`)
 	enFakeRev     = regexp.MustCompile(`(★|⭐){3,}|(?i)\b(rated|rating of) [45](\.\d)? stars?\b|(?i)["“][^"”]{8,}["”]\s*[-–—]\s*[A-Z][a-z]+`)
@@ -124,25 +129,27 @@ var (
 
 // Arabic terms are matched as words (arMatch) on normalized text.
 var (
-	arCondition = []string{"حب الشباب", "حبوب", "البثور", "بثور", "الاكزيما", "اكزيما", "الصدفيه", "الصدفية", "الورديه", "الوردية", "الكلف", "التصبغات", "تصبغات", "البقع الداكنه", "البقع الداكنة", "بقع داكنه", "بقع داكنة", "التجاعيد", "تجاعيد", "الخطوط الدقيقه", "الخطوط الدقيقة", "الشيخوخه", "الشيخوخة", "الترهل", "ترهل", "الهالات السوداء", "هالات", "الندوب", "ندوب", "المسام الواسعه", "المسام الواسعة", "مسام", "الاحمرار", "احمرار", "تهيج", "تساقط الشعر"}
-	arYouWords  = []string{"انت", "انتي", "تعانين", "تعاني", "لديك", "عندك", "مشكلتك", "مشاكلك"}
-	arYouExempt = map[string]bool{"ذلك": true, "لذلك": true, "كذلك": true, "تلك": true, "هنالك": true, "مسك": true, "المسك": true, "سمك": true, "بذلك": true, "مبارك": true, "ملك": true, "شوك": true, "فلك": true, "ديك": true, "اشترك": true, "شارك": true, "بنك": true}
-	arSuffer    = []string{"تعانين من", "تعاني من", "هل تعانين", "هل لديك", "هل عندك", "تعبتي من", "تعبت من", "مللتي من", "مللت من", "محرجه من", "محرجة من", "تخجلين من", "تكرهين"}
-	arAgeYou    = []string{"تبدين اصغر", "عمرك", "سنك"}
-	arAge       = []string{"تبدو اصغر", "اصغر سنا", "في الاربعين", "في الثلاثين", "بعد الاربعين", "بعد الثلاثين"}
-	arInferior  = []string{"قبيحه", "قبيحة", "قبيح", "بشعه", "بشعة", "مقزز", "مقززه", "مقززة"}
-	arNegative  = []string{"محرج", "محرجه", "محرجة", "عيوب بشرتك", "عيوب", "اخفي", "اخفاء", "مشكله بشرتك", "مشكلة بشرتك", "بشره سيئه", "بشرة سيئة"}
-	arMedical   = []string{"يعالج", "تعالج", "علاج", "يشفي", "تشفي", "شفاء", "يقضي على", "تقضي على", "دواء", "علاجي", "بوصفه طبيه", "بوصفة طبية"}
-	arMedWord   = []string{"طبي", "مضاد للالتهاب", "مضاد للبكتيريا", "مثبت سريريا", "موصوف من"}
-	arDisease   = []string{"السكري", "الهربس", "الغده الدرقيه", "الغدة الدرقية", "الصدفيه", "الصدفية", "السرطان", "التوحد", "الزهايمر", "باركنسون", "الايدز"}
-	arOutcome   = []string{"مضمون", "مضمونه", "مضمونة", "نتائج فوريه", "نتائج فورية", "فورا", "بين ليله وضحاها", "بين ليلة وضحاها", "خلال ايام", "خلال اسبوع"}
-	arHype      = []string{"دائم", "دائمه", "دائمة", "نهائيا", "للابد", "معجزه", "معجزة", "سحري", "سحريه", "سحرية"}
-	arBeforeAft = []string{"قبل وبعد", "قبل و بعد", "قبل/بعد"}
-	arWhitening = []string{"تبييض", "مبيض", "تفتيح البشره", "تفتيح البشرة", "بشره افتح", "بشرة افتح", "بشره بيضاء", "بشرة بيضاء"}
-	arDiscount  = []string{"خصم", "تخفيض", "تخفيضات", "تنزيلات", "اوكازيون", "كوبون", "كود خصم", "اشتري واحد"}
-	arExclusive = []string{"رقم 1", "رقم ١", "الافضل في الامارات", "الافضل في دبي", "الافضل في الخليج", "الوحيد", "الوحيده", "الوحيدة", "ارخص", "الارخص"}
-	arTimeframe = regexp.MustCompile(`(خلال|في)\s*([0-9٠-٩]+)\s*(يوم|ايام|ساعه|ساعة|ساعات|اسابيع|اسبوع)`)
-	arPercent   = regexp.MustCompile(`[0-9٠-٩]+\s*[%٪]`)
+	arCondition   = []string{"حب الشباب", "حبوب", "البثور", "بثور", "الاكزيما", "اكزيما", "الصدفيه", "الصدفية", "الورديه", "الوردية", "الكلف", "التصبغات", "تصبغات", "البقع الداكنه", "البقع الداكنة", "بقع داكنه", "بقع داكنة", "التجاعيد", "تجاعيد", "الخطوط الدقيقه", "الخطوط الدقيقة", "الشيخوخه", "الشيخوخة", "الترهل", "ترهل", "الهالات السوداء", "هالات", "الندوب", "ندوب", "المسام الواسعه", "المسام الواسعة", "مسام", "الاحمرار", "احمرار", "تهيج", "تساقط الشعر"}
+	arYouWords    = []string{"انت", "انتي", "تعانين", "تعاني", "لديك", "عندك", "مشكلتك", "مشاكلك"}
+	arYouExempt   = map[string]bool{"ذلك": true, "لذلك": true, "كذلك": true, "تلك": true, "هنالك": true, "مسك": true, "المسك": true, "سمك": true, "بذلك": true, "مبارك": true, "ملك": true, "شوك": true, "فلك": true, "ديك": true, "اشترك": true, "شارك": true, "بنك": true}
+	arSuffer      = []string{"تعانين من", "تعاني من", "هل تعانين", "هل لديك", "هل عندك", "تعبتي من", "تعبت من", "مللتي من", "مللت من", "محرجه من", "محرجة من", "تخجلين من", "تكرهين"}
+	arAgeYou      = []string{"تبدين اصغر", "عمرك", "سنك"}
+	arAge         = []string{"تبدو اصغر", "اصغر سنا", "في الاربعين", "في الثلاثين", "بعد الاربعين", "بعد الثلاثين"}
+	arInferior    = []string{"قبيحه", "قبيحة", "قبيح", "بشعه", "بشعة", "مقزز", "مقززه", "مقززة"}
+	arNegative    = []string{"محرج", "محرجه", "محرجة", "عيوب بشرتك", "عيوب", "اخفي", "اخفاء", "مشكله بشرتك", "مشكلة بشرتك", "بشره سيئه", "بشرة سيئة"}
+	arMedical     = []string{"يعالج", "تعالج", "علاج", "يشفي", "تشفي", "شفاء", "يقضي على", "تقضي على", "دواء", "علاجي", "بوصفه طبيه", "بوصفة طبية"}
+	arMedWord     = []string{"طبي", "مضاد للالتهاب", "مضاد للبكتيريا", "مثبت سريريا", "موصوف من"}
+	arDisease     = []string{"السكري", "الهربس", "الغده الدرقيه", "الغدة الدرقية", "الصدفيه", "الصدفية", "السرطان", "التوحد", "الزهايمر", "باركنسون", "الايدز"}
+	arOutcome     = []string{"مضمون", "مضمونه", "مضمونة", "نتائج فوريه", "نتائج فورية", "فورا", "بين ليله وضحاها", "بين ليلة وضحاها", "خلال ايام", "خلال اسبوع"}
+	arHype        = []string{"دائم", "دائمه", "دائمة", "نهائيا", "للابد", "معجزه", "معجزة", "سحري", "سحريه", "سحرية"}
+	arBeforeAft   = []string{"قبل وبعد", "قبل و بعد", "قبل/بعد"}
+	arWhitening   = []string{"تبييض", "مبيض", "تفتيح البشره", "تفتيح البشرة", "بشره افتح", "بشرة افتح", "بشره بيضاء", "بشرة بيضاء"}
+	arDiscountAmt = []string{"خصم", "تخفيض", "تخفيضات", "نصف السعر", "وفري", "توفير"}
+	arPercentOff  = regexp.MustCompile(`[0-9٠-٩]+\s?[٪%]\s?(خصم|تخفيض|اقل|أقل)`)
+	arDiscount    = []string{"خصم", "تخفيض", "تخفيضات", "تنزيلات", "اوكازيون", "كوبون", "كود خصم", "اشتري واحد"}
+	arExclusive   = []string{"رقم 1", "رقم ١", "الافضل في الامارات", "الافضل في دبي", "الافضل في الخليج", "الوحيد", "الوحيده", "الوحيدة", "ارخص", "الارخص"}
+	arTimeframe   = regexp.MustCompile(`(خلال|في)\s*([0-9٠-٩]+)\s*(يوم|ايام|ساعه|ساعة|ساعات|اسابيع|اسبوع)`)
+	arPercent     = regexp.MustCompile(`[0-9٠-٩]+\s*[%٪]`)
 )
 
 // Fields of one piece of copy, keyed for findings.
@@ -240,7 +247,11 @@ func Lint(c CopyFields, o LintOptions) LintResult {
 		if m := enWhitening.FindString(text); m != "" {
 			add("whitening", field, m, "META-HW: skin whitening/bleaching claims.", "'brightening', 'radiance', 'glow'.")
 		}
-		discount(&out, field, o, mode, enDiscount.FindString(text))
+		if m := enDiscountAmt.FindString(text); m != "" {
+			add("discount_amount", field, m, "The owner: no percentage or amount discounts in ads; only the coupon code and the free gift.", "'Use code "+firstNonEmpty(o.Coupon, "GLOW")+" at checkout' / 'Free gift with every order'.")
+		} else if m := enDiscount.FindString(text); !(couponOK(text, o.Coupon) && (strings.EqualFold(m, "coupon") || strings.EqualFold(m, "promo code"))) {
+			discount(&out, field, o, mode, m)
+		}
 		if m := enExclusive.FindString(text); m != "" {
 			add("exclusivity_claim", field, m, "UAE-MC: exaggerated or exclusivity claims.", "'Loved K-beauty pick', 'Authentic Korean skincare'.")
 		}
@@ -308,11 +319,20 @@ func Lint(c CopyFields, o LintOptions) LintResult {
 		if m := arMatch(n, arWhitening); m != "" {
 			add("whitening", field, m, "META-HW: whitening/bleaching.", "«إشراقة»، «نضارة»، «توهّج».")
 		}
-		m := arMatch(n, arDiscount)
-		if m == "" {
-			m = arPercent.FindString(n)
+		if m := arMatch(n, arDiscountAmt); m != "" || arPercentOff.MatchString(n) {
+			if m == "" {
+				m = arPercentOff.FindString(n)
+			}
+			add("discount_amount", field, m, "The owner: no percentage or amount discounts in ads; only the coupon code and the free gift.", "«استخدمي الكود "+firstNonEmpty(o.Coupon, "GLOW")+"» / «هدية مجانية مع كل طلب».")
+		} else {
+			m := arMatch(n, arDiscount)
+			if m == "" {
+				m = arPercent.FindString(n)
+			}
+			if !(couponOK(n, o.Coupon) && (m == "كوبون" || m == "كود خصم")) {
+				discount(&out, field, o, mode, m)
+			}
 		}
-		discount(&out, field, o, mode, m)
 		if m := arMatch(n, arExclusive); m != "" {
 			add("exclusivity_claim", field, m, "UAE-MC: exclusivity / superlative claim.", "«اختيار محبوب من الجمال الكوري».")
 		}
@@ -597,4 +617,12 @@ func splitSentences(s string) []string {
 		}
 	}
 	return out
+}
+
+// couponOK: the text names the owner's own coupon code (the only promo-code wording allowed).
+func couponOK(text, code string) bool {
+	if code == "" {
+		code = "GLOW"
+	}
+	return strings.Contains(strings.ToUpper(text), strings.ToUpper(code))
 }

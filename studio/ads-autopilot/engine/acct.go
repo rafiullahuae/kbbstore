@@ -56,8 +56,8 @@ type Acct struct {
 	stateJSON []byte
 	linkState map[string]linkCheck
 	backfill  BackfillState
-	pending   PendingSet   // the last cycle's proposals and what became of each (Approvals)
-	starter   StarterState // the first launch (starter.go)
+	pending   PendingSet       // the last cycle's proposals and what became of each (Approvals)
+	starter   StarterState     // the first launch (starter.go)
 	pb        *model.Playbook  // the owner's Playbook (playbook.go); nil = the defaults
 	audiences []model.Audience // custom audiences with Meta's sizes, read every sync
 	jobs      JobSet           // the editable job queue (jobs.go)
@@ -512,7 +512,7 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		out["starter"] = map[string]any{"proposals": len(sp), "why": stWhy, "mode": env.Limits.Autopilot}
 	}
 	// the editable job queue (jobs.go): refreshed from this plan; due jobs become proposals now
-	ac.refreshJobs(in, co.Plan, sp, stWhy, env)
+	ac.refreshJobs(ctx, in, co.Plan, sp, stWhy, env)
 	jobProps, ownerProps := ac.dueJobs(ctx, in, env, env.Limits.Autopilot)
 	co.Proposals = append(co.Proposals, jobProps...)
 	if j := ac.jobByID(jobFirstLaunch); j != nil && j.Status == "approved" && env.Limits.Autopilot == model.AutopilotShadow && len(sp) > 0 {
@@ -725,6 +725,7 @@ func (ac *Acct) stateBytes() []byte {
 		usage = a.claude.Total()
 	}
 	a.mu.RUnlock()
+	rd := ac.readiness() // before the read lock: it takes its own
 	ac.mu.RLock()
 	camps := []campOut{}
 	for _, c := range ac.tree {
@@ -764,6 +765,7 @@ func (ac *Acct) stateBytes() []byte {
 		"research_at":     researchAt,
 		"claude_usage":    usage,
 		"starter":         ac.starter,
+		"readiness":       rd,
 	}
 	nWait := 0
 	for _, it := range ac.pending.Items {

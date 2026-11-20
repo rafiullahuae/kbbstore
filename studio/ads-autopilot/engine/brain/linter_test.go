@@ -103,7 +103,7 @@ func TestLinterPassesGoodArabic(t *testing.T) {
 }
 
 func TestDiscountAllowedWithApprovedPromo(t *testing.T) {
-	r := Lint(CopyFields{PrimaryText: "20% off all COSRX this weekend"}, LintOptions{PromoApproved: true})
+	r := Lint(CopyFields{PrimaryText: "Weekend sale on all COSRX"}, LintOptions{PromoApproved: true})
 	if r.Blocked || !hasRule(r, "discount_disclosure") {
 		t.Fatalf("[%s]", rulesOf(r))
 	}
@@ -186,8 +186,8 @@ func TestBalancedStillBlocksAssertions(t *testing.T) {
 func TestStrictAndRelaxed(t *testing.T) {
 	strict := []struct{ text, rule string }{
 		{"Dermatologist-prescribed formula", "medical_wording"},
-		{"50% off this weekend only", "discount_unapproved"},
-		{"خصم ٥٠٪ على كل المنتجات", "discount_unapproved"},
+		{"Big sale this weekend only", "discount_unapproved"}, // a % or amount off blocks in every mode (TestOffersOnlyCouponAndFreeGift)
+		{"تنزيلات على كل المنتجات", "discount_unapproved"},
 		{"Hide those flaws", "negative_wording"},
 	}
 	for _, c := range strict {
@@ -239,6 +239,33 @@ func TestBenefitFirstCopyStaysBalanced(t *testing.T) {
 		r := Lint(CopyFields{PrimaryText: c.text}, LintOptions{Lang: "en", Strictness: Balanced})
 		if !hasRule(r, c.rule) || r.OK {
 			t.Errorf("%q: want %s, got [%s]", c.text, c.rule, rulesOf(r))
+		}
+	}
+}
+
+// The owner's offer rules (20 Nov 2026): no percentage or amount discount in any wording mode, in English or Arabic;
+// the coupon code (GLOW) and the free gift are the only promo wording, and they pass. A product name with a % in it
+// ("Heartleaf 77% Toner") is not a discount. MUTATION: set discount_amount to "warn" for relaxed → red.
+func TestOffersOnlyCouponAndFreeGift(t *testing.T) {
+	for _, mode := range []string{Strict, Balanced, Relaxed} {
+		for _, c := range []struct{ text, lang string }{
+			{"Get 20% off all COSRX today", "en"}, {"Save AED 30 on your routine", "en"}, {"Half price serums this week", "en"},
+			{"Sale up to 50% on sunscreen", "en"}, {"AED 20 off with every set", "en"},
+			{"خصم ٢٠٪ على كل المنتجات", "ar"}, {"50% خصم على السيروم", "ar"}, {"تخفيض على مجموعة الشتاء", "ar"}, {"نصف السعر لفترة محدودة", "ar"},
+		} {
+			r := Lint(CopyFields{PrimaryText: c.text}, LintOptions{Lang: c.lang, Strictness: mode, PromoApproved: true, Coupon: "GLOW"})
+			if !hasRule(r, "discount_amount") || r.OK {
+				t.Errorf("%s %q: want discount_amount, got [%s]", mode, c.text, rulesOf(r))
+			}
+		}
+	}
+	for _, c := range []struct{ text, lang string }{
+		{"Free gift with every order. Use code GLOW at checkout.", "en"},
+		{"Heartleaf 77% Toner for a calm, dewy look. Use coupon GLOW.", "en"},
+		{"هدية مجانية مع كل طلب. استخدمي الكود GLOW عند الدفع.", "ar"},
+	} {
+		if r := Lint(CopyFields{PrimaryText: c.text, Headline: map[string]string{"en": "Your K-beauty glow", "ar": "توهّج كوري"}[c.lang], CTA: "SHOP_NOW"}, LintOptions{Lang: c.lang, Strictness: Balanced, Coupon: "GLOW"}); !r.OK || hasRule(r, "discount_amount") {
+			t.Errorf("%q flagged: [%s]", c.text, rulesOf(r))
 		}
 	}
 }
