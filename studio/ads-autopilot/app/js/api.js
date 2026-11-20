@@ -36,7 +36,7 @@ export async function api(path, opts = {}) {
 // Server-sent events with automatic reconnect (EventSource does it itself).
 export function events(onEvent) {
   const es = new EventSource(`/api/events?t=${encodeURIComponent(token)}`);
-  for (const t of ['hello', 'heartbeat', 'cycle.start', 'cycle.end', 'alert', 'metrics.updated', 'research.updated', 'accounts.updated', 'action.executed', 'action.proposed', 'sync.progress']) {
+  for (const t of ['hello', 'heartbeat', 'connections', 'cycle.start', 'cycle.end', 'action.execution', 'action.safety', 'action.kill', 'action.alert', 'alert', 'metrics.updated', 'research.updated', 'backfill.progress']) {
     es.addEventListener(t, (ev) => { let d = {}; try { d = JSON.parse(ev.data || '{}'); } catch {} onEvent(t, d); });
   }
   es.onerror = () => onEvent('disconnected', {});
@@ -44,5 +44,16 @@ export function events(onEvent) {
 }
 
 // Same-origin product photos (canvas stays untainted so it can export PNG).
-export const img = (u) => `/api/img?u=${encodeURIComponent(u)}&t=${encodeURIComponent(token)}`;
+export const img = (u) => `/api/brain/x/img?u=${encodeURIComponent(u)}`;
+// The engine wants the token in a header (only the SSE stream takes ?t=), so
+// images behind /api are fetched with it and shown from a blob: URL (cached).
+const blobs = new Map();
+export function blobURL(path) {
+  if (!blobs.has(path)) blobs.set(path, fetch(path, { headers: { 'X-KAA': token, 'X-KAA-Account': account } }).then((r) => (r.ok ? r.blob() : null)).then((b) => (b ? URL.createObjectURL(b) : '')).catch(() => ''));
+  return blobs.get(path);
+}
+// <img data-src="/api/..."> -> real src, after a render
+export function hydrate(root) {
+  for (const im of root.querySelectorAll('img[data-src]')) { const p = im.dataset.src; im.removeAttribute('data-src'); blobURL(p).then((u) => { if (u) im.src = u; }); }
+}
 export const authed = (u) => u + (u.includes('?') ? '&' : '?') + `t=${encodeURIComponent(token)}&account=${encodeURIComponent(account)}`;

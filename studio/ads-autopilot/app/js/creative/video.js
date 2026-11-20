@@ -12,7 +12,8 @@ export function sampleTimes(d) {
   return t.slice(0, 10);
 }
 
-function seek(v, s) { return new Promise((ok) => { const h = () => { v.removeEventListener('seeked', h); ok(); }; v.addEventListener('seeked', h); v.currentTime = s; }); }
+// seek, giving up after 3 s so a damaged file cannot hang the page
+function seek(v, s) { return new Promise((ok) => { const h = () => { v.removeEventListener('seeked', h); clearTimeout(tm); ok(); }; const tm = setTimeout(h, 3000); v.addEventListener('seeked', h); v.currentTime = s; }); }
 
 // measure + frames, all local
 export async function probe(file) {
@@ -20,7 +21,10 @@ export async function probe(file) {
   const v = document.createElement('video');
   v.muted = true; v.preload = 'auto'; v.playsInline = true; v.src = url;
   await new Promise((ok, no) => { v.onloadeddata = ok; v.onerror = () => no(new Error('This video cannot be read here (codec?)')); });
-  const d = v.duration, w = v.videoWidth, h = v.videoHeight;
+  // WebM straight from a recorder has no duration in its header (Infinity):
+  // seek far past the end once and the browser works it out.
+  if (!isFinite(v.duration)) { await seek(v, 1e7); await seek(v, 0); }
+  const d = isFinite(v.duration) ? v.duration : 0, w = v.videoWidth, h = v.videoHeight;
   const cv = document.createElement('canvas');
   cv.width = FRAME_W; cv.height = Math.round(FRAME_W * h / Math.max(1, w));
   const x = cv.getContext('2d');
@@ -41,9 +45,9 @@ export async function probe(file) {
 // upload + analyse one file. status: 'new' | 'past'; results: owner's rough numbers (optional)
 export async function addVideo(file, status, results, notes, onStep) {
   onStep && onStep('upload');
-  const v = await api('/api/videos', { method: 'POST', body: file, headers: { 'X-Filename': encodeURIComponent(file.name), 'X-Status': status, 'content-type': file.type || 'application/octet-stream' } });
+  const v = await api('/api/brain/x/videos', { method: 'POST', body: file, headers: { 'X-Filename': encodeURIComponent(file.name), 'X-Status': status, 'content-type': file.type || 'application/octet-stream' } });
   onStep && onStep('frames');
   const p = await probe(file);
   onStep && onStep('analyse');
-  return api(`/api/videos/${v.id}/analyse`, { method: 'POST', body: Object.assign(p, { results: results || null, notes: notes || '' }) });
+  return api(`/api/brain/x/videos/${v.id}/analyse`, { method: 'POST', body: Object.assign(p, { results: results || null, notes: notes || '' }) });
 }

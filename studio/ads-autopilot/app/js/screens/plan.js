@@ -7,6 +7,10 @@ const AUD = { women_gcc_ar: 'Arabic-speaking women 18-45, GCC', women_uae_en: 'E
 export function render(S, el) {
   const st = S.state;
   const p = st.plan;
+  if (!p && st.engine_plan && (st.engine_plan.steps || []).length) {
+    el.innerHTML = `<div class="page"><div class="card"><header><h2>${esc(tt('Plan', 'الخطة'))}</h2></header><p>${esc(st.engine_plan.summary || '')}</p><div class="list">${st.engine_plan.steps.map((s) => `<div><span class="chip">${esc(s.when)}</span><span><b>${esc(s.title)}</b><br><span class="small ink2">${esc(s.detail || '')}</span></span></div>`).join('')}</div></div></div>`;
+    return;
+  }
   if (!p) { el.innerHTML = `<div class="page"><div class="card">${empty(tt('No plan yet', 'لا توجد خطة بعد'), tt('Run a cycle to build this week\'s plan.', 'شغّلي دورة لبناء خطة هذا الأسبوع.'))}</div></div>`; return; }
   const rep = (st.report && st.report.text) || '';
   const [en, ar] = rep.split(/\n\s*\nAR\n/);

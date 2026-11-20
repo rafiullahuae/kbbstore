@@ -24,7 +24,7 @@ function caption(x, spec, W, H, text, a) {
   const ar = spec.lang === 'ar';
   x.save();
   x.globalAlpha = a;
-  x.font = `${ar ? '700' : '600'} ${Math.round(W * 0.042)}px ${ar ? 'Cairo' : 'Outfit'}`;
+  x.font = `${ar ? '700' : '600'} ${Math.round(W * 0.042)}px ${ar ? 'Cairo' : 'Inter'}`;
   x.direction = ar ? 'rtl' : 'ltr';
   x.textAlign = 'center';
   const w = Math.min(W * 0.86, x.measureText(text).width + W * 0.08), h = W * 0.08;
@@ -48,9 +48,9 @@ function endCard(x, spec, W, H, a) {
   const tall = H / W > 1.6, cy = tall ? H * 0.4 : H * 0.45;
   x.font = `${ar ? '800' : '600'} ${Math.round(W * 0.07)}px ${ar ? 'Cairo' : '"Playfair Display"'}`;
   x.fillText(spec.badge || 'K-Beauty Bliss', W / 2, cy, W * 0.86);
-  x.font = `600 ${Math.round(W * 0.04)}px ${ar ? 'Tajawal' : 'Outfit'}`;
+  x.font = `600 ${Math.round(W * 0.04)}px ${ar ? 'Tajawal' : 'Inter'}`;
   x.fillText(ar ? 'تسوّقي الآن على kbeautybliss.com' : 'Shop now at kbeautybliss.com', W / 2, cy + W * 0.09, W * 0.86);
-  if (spec.price) { x.font = `700 ${Math.round(W * 0.05)}px ${ar ? 'Cairo' : 'Outfit'}`; x.fillText(spec.price, W / 2, cy + W * 0.19); }
+  if (spec.price) { x.font = `700 ${Math.round(W * 0.05)}px ${ar ? 'Cairo' : 'Inter'}`; x.fillText(spec.price, W / 2, cy + W * 0.19); }
   x.restore();
 }
 

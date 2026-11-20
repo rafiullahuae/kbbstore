@@ -8,7 +8,7 @@
 // and a DesignSpec with spec.generator = 'name' is rendered by it instead of a
 // template (its output still gets the safe-zone text layer when
 // spec.overlay_text is true). Nothing else in the pipeline changes.
-import { api, img } from '../api.js';
+import { api, img, blobURL } from '../api.js';
 
 export const FORMATS = { '1:1': [1080, 1080], '4:5': [1080, 1350], '9:16': [1080, 1920] };
 export const TEMPLATES = ['clean', 'glow', 'ingredient', 'offer', 'routine', 'qa'];
@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') window.KAA_GENERATORS = { register: registerG
 let fontsReady = null;
 export function loadFonts() {
   if (!fontsReady) {
-    fontsReady = Promise.all(['800 60px Cairo', '700 60px Cairo', '500 40px Cairo', '400 40px Tajawal', '700 40px Tajawal', '600 60px "Playfair Display"', '700 40px Outfit', '400 40px Outfit', '600 40px Outfit']
+    fontsReady = Promise.all(['800 60px Cairo', '700 60px Cairo', '500 40px Cairo', '400 40px Tajawal', '700 40px Tajawal', '600 60px "Playfair Display"', '700 40px "Plus Jakarta Sans"', '400 40px Inter', '600 40px Inter']
       .map((f) => document.fonts.load(f, 'Aa ابج'))).catch(() => {});
   }
   return fontsReady;
@@ -36,7 +36,8 @@ export function loadImage(u) {
       im.decoding = 'async';
       im.onload = () => ok(cutout(im));
       im.onerror = () => ok(null);
-      im.src = /^(blob:|data:|\/)/.test(u) ? u : img(u);
+      if (/^(blob:|data:)/.test(u)) im.src = u;
+      else blobURL(/^\//.test(u) ? u : img(u)).then((b) => { if (b) im.src = b; else ok(null); });
     }));
   }
   return imgCache.get(u);
@@ -79,7 +80,7 @@ const seg = (t, a, b) => ease((t - a) / (b - a));
 function rr(x, X, Y, W, H, R) { x.beginPath(); x.roundRect ? x.roundRect(X, Y, W, H, R) : x.rect(X, Y, W, H); }
 function face(lang, role) {
   if (lang === 'ar') return role === 'head' ? '800 {s}px Cairo' : role === 'serif' ? '700 {s}px Cairo' : role === 'bold' ? '700 {s}px Tajawal' : '400 {s}px Tajawal';
-  return role === 'head' ? '700 {s}px Outfit' : role === 'serif' ? '600 {s}px "Playfair Display"' : role === 'bold' ? '600 {s}px Outfit' : '400 {s}px Outfit';
+  return role === 'head' ? '800 {s}px "Plus Jakarta Sans"' : role === 'serif' ? '600 {s}px "Playfair Display"' : role === 'bold' ? '600 {s}px Inter' : '400 {s}px Inter';
 }
 function setFont(x, lang, role, size) { x.font = face(lang, role).replace('{s}', Math.round(size)); }
 // wrap text into lines that fit maxW (canvas text metrics, no DOM layout)
@@ -343,19 +344,19 @@ export function toPNG(cv) {
 }
 
 const done = new Set();
-// Render every pending design in all its formats and hand the PNGs to the engine.
+// Render every pending design in all its formats and hand the PNGs to the
+// engine (POST /api/creatives takes exactly the model.Creative fields).
 export async function renderPending(designs, after) {
-  let n = 0;
+  const ids = [];
   for (const d of designs) {
     if (done.has(d.id)) continue;
     done.add(d.id);
     for (const f of d.formats || ['1:1']) {
-      const cv = await renderSpec(d, f);
-      const { b64 } = await toPNG(cv);
-      await api('/api/creatives', { method: 'POST', body: { design_id: d.id, pair_id: d.pair_id, lang: d.lang, format: f, png: b64, headline: d.headline, primary_text: d.primary_text || '', cta: d.cta, product_ids: d.product_ids, angle: d.angle, template: d.template, source: 'brain', design: d } });
-      n++;
+      const { b64 } = await toPNG(await renderSpec(d, f));
+      await api('/api/creatives', { method: 'POST', body: { lang: d.lang, format: f, png: b64, headline: d.headline, primary_text: d.primary_text || d.sub || '', cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source: 'brain' } });
     }
+    ids.push(d.id);
   }
-  if (n && after) await after(n);
-  return n;
+  if (ids.length && after) await after(ids);
+  return ids.length;
 }

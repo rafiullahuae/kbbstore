@@ -17,6 +17,9 @@ package brain
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"net/url"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -74,6 +77,34 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 			e.log("config", fmt.Sprintf("ad wording rules: %s, promotion approved: %v", s.AdWording, s.PromoApproved), s)
 		}
 		js(e.settings(acct))
+	case p == "img":
+		e.serveImg(w, r)
+	case p == "designs":
+		arch := []DesignSpec{}
+		e.load(acct, "designs_archive", &arch)
+		js(arch)
+	case p == "copy" && r.Method == http.MethodPost: // AR+EN copy + design specs (the UI renders them)
+		var req CopyRequest
+		if json.NewDecoder(io.LimitReader(r.Body, 64<<10)).Decode(&req) != nil || len(req.ProductIDs) == 0 {
+			bad(400, "send {product_ids:[...], angle, template}")
+			return
+		}
+		if len(req.ProductIDs) > 3 {
+			req.ProductIDs = req.ProductIDs[:3]
+		}
+		req.Template = oneOf(req.Template, templateIDs, "")
+		req.Wording = e.settings(acct).AdWording
+		res, err := e.B.Copy(ctx, req, shopFromModel(input().Shop), e.richResearch())
+		if err != nil {
+			bad(502, err.Error())
+			return
+		}
+		arch := []DesignSpec{}
+		e.load(acct, "designs_archive", &arch)
+		e.save(acct, "designs_archive", append(arch, res.Designs...))
+		js(res)
+	case p == "insights":
+		js(Insights(e.FromModel(input())))
 	case p == "profile":
 		in := e.FromModel(input())
 		js(BuildProfile(acct, in))
@@ -248,4 +279,93 @@ func urlDecode(s string) string {
 		out.WriteByte(s[i])
 	}
 	return out.String()
+}
+
+// Insights: what the overview charts need that the engine state does not
+// carry: 30 daily points (spend, revenue, purchases, CPC, CPM, CTR as a
+// fraction) and the Arabic/English split over 30 settled days.
+func Insights(in CycleInput) map[string]any {
+	from := in.Now.AddDate(0, 0, -30).Format("2006-01-02")
+	days := map[string]*Agg{}
+	var order []string
+	lang := map[string]string{}
+	for _, c := range in.Tree {
+		for _, s := range c.AdSets {
+			for _, a := range s.Ads {
+				lang[a.ID] = firstNonEmpty(a.Language, s.Language)
+			}
+		}
+	}
+	split := map[string]*Agg{"ar": {}, "en": {}}
+	for _, r := range in.Metrics {
+		if r.Date < from || r.Placement != "" {
+			continue
+		}
+		if r.Level == "campaign" {
+			if days[r.Date] == nil {
+				days[r.Date] = &Agg{}
+				order = append(order, r.Date)
+			}
+			days[r.Date].add(r)
+		}
+		if r.Level == "ad" {
+			if g := split[lang[r.ObjectID]]; g != nil {
+				g.add(r)
+			}
+		}
+	}
+	sortStrings(order)
+	series := []map[string]any{}
+	for _, d := range order {
+		a := days[d]
+		cpc := 0.0
+		if a.Clicks > 0 {
+			cpc = a.Spend / float64(a.Clicks)
+		}
+		series = append(series, map[string]any{"date": d, "spend": round2(a.Spend), "revenue": round2(a.Revenue), "purchases": a.Purch, "cpc": round2(cpc), "cpm": round2(a.CPM()), "ctr": round4(a.CTR())})
+	}
+	sp := map[string]any{}
+	for k, a := range split {
+		sp[k] = map[string]any{"spend": round2(a.Spend), "purchases": a.Purch, "revenue": round2(a.Revenue), "cpa": round2(a.CPA()), "roas": round2(a.ROAS()), "ctr": round4(a.CTR())}
+	}
+	return map[string]any{"series": series, "split": sp}
+}
+
+// serveImg: same-origin copies of the shop's product photos so the canvas that
+// draws ads stays untainted and can export PNG. kbeautybliss.com over https
+// only, images only, <= 8 MB, cached under DataDir/brain/img.
+func (e *Engine) serveImg(w http.ResponseWriter, r *http.Request) {
+	raw := r.URL.Query().Get("u")
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || !(u.Hostname() == "kbeautybliss.com" || strings.HasSuffix(u.Hostname(), ".kbeautybliss.com")) {
+		writeErr(w, 400, errString("only https://kbeautybliss.com images"))
+		return
+	}
+	sum := sha256.Sum256([]byte(raw))
+	dir := filepath.Join(e.dir, "img")
+	_ = os.MkdirAll(dir, 0o700)
+	f := filepath.Join(dir, hex.EncodeToString(sum[:12]))
+	b, err := os.ReadFile(f)
+	ct := ""
+	if err == nil {
+		ct = http.DetectContentType(b)
+	} else {
+		c := &http.Client{Timeout: 20 * time.Second}
+		resp, err := c.Get(u.String())
+		if err != nil {
+			writeErr(w, 502, err)
+			return
+		}
+		defer resp.Body.Close()
+		b, _ = io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+		ct = http.DetectContentType(b)
+		if resp.StatusCode != 200 || !strings.HasPrefix(ct, "image/") {
+			writeErr(w, 502, errString("not an image"))
+			return
+		}
+		_ = os.WriteFile(f, b, 0o600)
+	}
+	w.Header().Set("content-type", ct)
+	w.Header().Set("cache-control", "max-age=86400")
+	_, _ = w.Write(b)
 }

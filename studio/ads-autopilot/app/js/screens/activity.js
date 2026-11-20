@@ -1,7 +1,6 @@
 import { t, tt } from '../i18n.js';
 import { esc, ago, txt, empty } from '../ui.js';
-import { loadList } from '../main.js';
-import { getAccount } from '../api.js';
+import { api, getAccount } from '../api.js';
 
 let kind = 'all', q = '';
 export function render(S, el) {
@@ -20,6 +19,6 @@ export function render(S, el) {
 }
 export async function load(S) {
   if (S.cache.has(`${getAccount()}|log`)) return false;
-  await loadList('log', '/api/log');
+  S.cache.set(`${getAccount()}|log`, ((await api('/api/log?limit=300')).entries || []).map((e) => ({ id: e.seq, time: e.at, kind: e.kind, object: (e.data && (e.data.target || e.data.object)) || '', summary: e.summary, outcome: (e.data && (e.data.outcome || e.data.status)) || '' })).reverse());
   return location.hash.startsWith('#/activity');
 }

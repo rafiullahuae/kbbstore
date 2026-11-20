@@ -121,6 +121,23 @@ func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOut
 		}
 	}
 	e.save(acct, "last_cycle", out)
+	if len(out.Designs) > 0 { // archive: the library shows each creative from its design
+		arch := []DesignSpec{}
+		e.load(acct, "designs_archive", &arch)
+		seen := map[string]bool{}
+		for _, d := range arch {
+			seen[d.ID] = true
+		}
+		for _, d := range out.Designs {
+			if !seen[d.ID] {
+				arch = append(arch, d)
+			}
+		}
+		if len(arch) > 300 {
+			arch = arch[len(arch)-300:]
+		}
+		e.save(acct, "designs_archive", arch)
+	}
 	return ToModel(out), nil
 }
 

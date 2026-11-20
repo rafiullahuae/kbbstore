@@ -2,7 +2,8 @@
 import { t, tt } from '../i18n.js';
 import { esc, toast } from '../ui.js';
 import { api, getAccount } from '../api.js';
-import { limitsForm, readLimits, wireWording } from './settings.js';
+import { limitsForm, readLimits, readWording, wireWording } from './settings.js';
+import { saveBrainSettings } from '../data.js';
 
 let step = 0;
 const goals = new Set(['sales', 'arabic_first', 'low_cpc']);
@@ -21,7 +22,7 @@ export function render(S, el) {
     () => `<h2>${esc(tt('Connect Claude', 'ربط Claude'))}</h2><p class="ink2">${esc(tt('Claude plans, researches the market and writes the Arabic and English ads. The key is stored in your Mac\'s Keychain.', 'يخطط Claude ويبحث في السوق ويكتب الإعلانات بالعربية والإنجليزية. يُحفظ المفتاح في سلسلة مفاتيح جهازك.'))}</p>
       <label class="f"><span>${esc(tt('Anthropic API key', 'مفتاح Anthropic'))}</span><input id="w-in" type="password" autocomplete="off" placeholder="${esc(c.claude?.key?.set ? '•••• ' + c.claude.key.last4 : 'sk-ant-…')}"></label>${ok(c.claude)}`,
     () => `<h2>${esc(tt('Your shop', 'متجرك'))}</h2><p class="ink2">${esc(tt('Products, prices and photos come from the shop\'s catalog feed.', 'المنتجات والأسعار والصور من كتالوج المتجر.'))}</p>
-      <label class="f"><span>${esc(tt('Shop address', 'عنوان المتجر'))}</span><input id="w-in" value="${esc(c.shop?.url || 'https://kbeautybliss.com')}"></label>${ok(c.shop)} <span class="small muted">${esc(String(c.shop?.products || 0))} ${esc(tt('products', 'منتجاً'))}</span>`,
+      <label class="f"><span>${esc(tt('Product feed', 'كتالوج المنتجات'))}</span><input id="w-in" value="${esc(c.shop?.feed_url || 'https://kbeautybliss.com/feeds/meta-catalog.xml')}"></label>${ok(c.shop)} <span class="small muted">${esc(String(c.shop?.products || 0))} ${esc(tt('products', 'منتجاً'))}</span>`,
     () => `<h2>${esc(tt('Which ad accounts should it run?', 'أي الحسابات يديرها؟'))}</h2><p class="ink2">${esc(tt('It learns from all of them; it only acts in the ones you tick. Each gets its own limits, plan and log.', 'يتعلّم منها كلها؛ ولا يعمل إلا في التي تختارينها. لكل حساب حدوده وخطته وسجله.'))}</p>
       <div class="list">${S.accounts.map((a) => `<div><input type="checkbox" data-acc="${esc(a.id)}" ${a.automate ? 'checked' : ''} ${a.status !== 'ACTIVE' ? 'disabled' : ''}><span><b>${esc(a.name)}</b><br><span class="small muted">${esc(a.id)} · ${esc(a.status)} · ${esc(String(a.history_days || 0))} ${esc(tt('days of history', 'يوماً من السجل'))}</span></span></div>`).join('')}</div>`,
     () => `<h2>${esc(tt('Spending limits', 'حدود الإنفاق'))} · ${esc(cur.name || '')}</h2><p class="ink2">${esc(tt('Hard limits it can never cross. Only going above them needs you. Switch account (top left) to set limits for another one.', 'حدود صارمة لا يتجاوزها أبداً. بدّلي الحساب (أعلى اليسار) لتحديد حدود حساب آخر.'))}</p><div id="lim">${limitsForm((S.state || {}).limits || {}, { noAdvanced: true })}</div>`,
@@ -39,21 +40,20 @@ export function render(S, el) {
   if (next) next.onclick = async () => {
     try {
       const v = el.querySelector('#w-in')?.value || '';
-      if (step === 0 && v) S.conn = await api('/api/connections/meta', { method: 'PUT', body: { token: v }, noAccount: true });
-      if (step === 1 && v) S.conn = await api('/api/connections/claude', { method: 'PUT', body: { key: v }, noAccount: true });
-      if (step === 2) S.conn = await api('/api/connections/shop', { method: 'PUT', body: { url: v }, noAccount: true });
-      if (step <= 2 && v && !S.conn[['meta', 'claude', 'shop'][step]].ok) { toast(S.conn[['meta', 'claude', 'shop'][step]].error); return; }
-      if (step === 3) for (const cb of el.querySelectorAll('[data-acc]')) await api(`/api/accounts/${cb.dataset.acc}`, { method: 'PUT', body: { automate: cb.checked }, noAccount: true });
-      if (step === 4) { const L = readLimits(el, (S.state || {}).limits || {}); L.autopilot = 'off'; await api('/api/limits', { method: 'PUT', body: L }); }
-      if (step === 5) { goals.clear(); el.querySelectorAll('[data-goal]:checked').forEach((g) => goals.add(g.dataset.goal)); await api('/api/onboarding', { method: 'POST', body: { goals: [...goals] }, noAccount: true }); }
+      if (step === 0 && v) S.conn.meta = await api('/api/connections/meta', { method: 'PUT', body: { auth: 'system_user', token: v }, noAccount: true });
+      if (step === 1 && v) S.conn.claude = await api('/api/connections/claude', { method: 'PUT', body: { api_key: v }, noAccount: true });
+      if (step === 2) S.conn.shop = await api('/api/connections/shop', { method: 'PUT', body: { feed_url: v }, noAccount: true });
+      if (step <= 2 && v && !(S.conn[['meta', 'claude', 'shop'][step]] || {}).ok) { toast(S.conn[['meta', 'claude', 'shop'][step]].error); return; }
+      if (step === 3) for (const cb of el.querySelectorAll('[data-acc]')) await api(`/api/accounts/${cb.dataset.acc}`, { method: 'PUT', body: { automated: cb.checked }, noAccount: true });
+      if (step === 4) { const L = readLimits(el, (S.state || {}).limits || {}); L.autopilot = 'off'; await api('/api/limits', { method: 'PUT', body: L }); await saveBrainSettings({ ad_wording: readWording(el), promo_approved: false }); }
+      if (step === 5) { goals.clear(); el.querySelectorAll('[data-goal]:checked').forEach((g) => goals.add(g.dataset.goal)); try { localStorage.setItem('kaa.goals', JSON.stringify([...goals])); } catch {} }
       step++; render(S, el);
     } catch (e) { toast(e.message); }
   };
   const start = async (mode) => {
     try {
-      const L = Object.assign({}, (S.state || {}).limits || {});
-      await api('/api/limits', { method: 'PUT', body: Object.assign(L, { autopilot: mode }) });
-      await api('/api/onboarding', { method: 'POST', body: { done: true }, noAccount: true });
+      await api('/api/limits', { method: 'PUT', body: { autopilot: mode } });
+      try { localStorage.setItem('kaa.onboarded', '1'); } catch {}
       S.onboarding = { done: true };
       toast(mode === 'auto' ? tt('Autopilot started.', 'بدأ الطيار الآلي.') : tt('Watching in shadow mode.', 'يراقب في وضع المراقبة.'));
       step = 0; location.hash = '#/dashboard';
@@ -61,5 +61,5 @@ export function render(S, el) {
   };
   el.querySelector('#go-auto')?.addEventListener('click', () => start('auto'));
   el.querySelector('#go-shadow')?.addEventListener('click', () => start('shadow'));
-  el.querySelector('#skip').onclick = async () => { await api('/api/onboarding', { method: 'POST', body: { done: true }, noAccount: true }).catch(() => {}); };
+  el.querySelector('#skip').onclick = () => { try { localStorage.setItem('kaa.onboarded', '1'); } catch {} };
 }

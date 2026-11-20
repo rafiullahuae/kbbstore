@@ -26,14 +26,33 @@ export function render(S, el) {
   <div class="grid g3">
     ${sl(tt('Language', 'اللغة'), p.by_lang)}${sl(tt('Angle', 'الزاوية'), p.by_angle)}${sl(tt('Design', 'التصميم'), p.by_template)}
     ${sl(tt('Format', 'الشكل'), p.by_format)}${sl(tt('Placement', 'مكان الظهور'), p.by_placement, tt('From Meta\'s placement breakdown.', 'من تقسيم ميتا لأماكن الظهور.'))}${sl(tt('Season', 'الموسم'), p.by_season)}
-    ${sl(tt('Weekday', 'يوم الأسبوع'), p.by_weekday)}
+    ${sl(tt('Weekday', 'يوم الأسبوع'), p.by_weekday)}${p.by_country ? sl(tt('Country', 'الدولة'), p.by_country) : ''}${p.by_objective ? sl(tt('Objective', 'الهدف'), p.by_objective) : ''}${p.by_audience ? sl(tt('Audience', 'الجمهور'), p.by_audience) : ''}
   </div></div>`;
   el.querySelectorAll('[data-s]').forEach((x) => { x.onclick = () => { scope = x.dataset.s; render(S, el); load(S).then((c) => c && render(S, el)); }; });
 }
 export async function load() {
   const key = scope === 'account' ? getAccount() : 'portfolio';
   if (data.has(key)) return false;
-  if (scope === 'account') data.set(key, (await api('/api/profile')) || {});
-  else data.set(key, ((await api('/api/portfolio', { noAccount: true })) || {}).profile || {});
+  if (scope === 'account') data.set(key, (await api('/api/brain/x/profile')) || {});
+  else data.set(key, fromLearnings(await api('/api/learnings', { noAccount: true }).catch(() => [])));
   return location.hash.startsWith('#/learned');
+}
+
+// the engine's portfolio learnings (all accounts, long history) as profile cuts
+function fromLearnings(ls) {
+  const by = {};
+  let spend = 0, rev = 0, purch = 0, from = '', to = '';
+  for (const l of ls || []) {
+    by[l.dimension] = by[l.dimension] || {};
+    const x = (by[l.dimension][l.key] = by[l.dimension][l.key] || { key: l.key, spend: 0, purchases: 0, revenue: 0, ads: 0 });
+    x.spend += l.spend; x.purchases += l.purchases; x.revenue += l.revenue; x.ads += l.ads;
+    if (l.dimension === 'objective') { spend += l.spend; rev += l.revenue; purch += l.purchases; }
+    if (!from || l.from < from) from = l.from;
+    if (l.to > to) to = l.to;
+  }
+  const roas = spend ? rev / spend : 0;
+  const cut = (d) => Object.values(by[d] || {}).map((x) => Object.assign(x, { cpa: x.purchases ? x.spend / x.purchases : 0, roas_index: roas && x.spend ? x.revenue / x.spend / roas : 0 })).sort((a, b) => b.spend - a.spend);
+  const days = from && to ? Math.round((Date.parse(to) - Date.parse(from)) / 864e5) : 0;
+  return { days, first_day: from, last_day: to, baselines: { all: { cpa: purch ? spend / purch : 0, roas, ctr: 0 } },
+    by_format: cut('format'), by_angle: cut('angle'), by_country: cut('country'), by_objective: cut('objective'), by_audience: cut('audience'), winners: [], evidence: [] };
 }

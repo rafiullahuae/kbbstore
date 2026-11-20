@@ -4,36 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KBB Ads Autopilot</title>
-<link rel="preload" href="vendor/fonts/outfit-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="vendor/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="vendor/fonts/plus-jakarta-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/app.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23C13E63'/%3E%3Cpath d='M9 22l7-12 7 12' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233f7d5c'/%3E%3Cpath d='M9 22l7-12 7 12' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
 <div class="shell">
-  <aside class="nav" aria-label="Main">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span><b>KBB</b> Ads Autopilot</span></div>
-    <nav id="nav"></nav>
-    <div class="nav-foot">
-      <div class="conn" id="conn"><span class="dot"></span><span>…</span></div>
-      <div class="row">
-        <button class="ghost small" id="lang" type="button" title="English / العربية (L)">العربية</button>
-        <button class="ghost small" id="theme" type="button" title="Light / dark (T)">◐</button>
-      </div>
-    </div>
-  </aside>
-  <div class="main">
-    <header class="top">
-      <div class="top-l"><div class="acct" id="acct"></div><h1 id="title"></h1></div>
-      <div class="top-r">
-        <span class="pill" id="mode"></span>
-        <span class="muted small" id="next"></span>
-        <button class="ghost" id="cycle" type="button"></button>
-        <button class="danger" id="kill" type="button"></button>
-      </div>
-    </header>
-    <main id="view" tabindex="-1"></main>
-  </div>
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><b>Ads Autopilot</b></div>
+    <label class="search" id="search-box"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="search" type="search" autocomplete="off"><kbd>⌘K</kbd></label>
+    <div class="seg" id="range" role="tablist"></div>
+    <span class="spacer"></span>
+    <div class="acct" id="acct"></div>
+    <div class="seg" id="lang" role="tablist"><button type="button" data-l="en">EN</button><button type="button" data-l="ar">عربي</button></div>
+    <div class="seg mode" id="mode" role="tablist"></div>
+    <button class="stop" id="kill" type="button"></button>
+  </header>
+  <aside class="nav" aria-label="Main" id="nav"></aside>
+  <main id="view" tabindex="-1"></main>
 </div>
 <div id="toasts" aria-live="polite"></div>
 <dialog id="dlg"></dialog>
