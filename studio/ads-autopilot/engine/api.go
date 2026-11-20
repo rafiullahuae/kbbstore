@@ -328,6 +328,12 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		s.creativeFile(w, r, strings.TrimSuffix(strings.TrimPrefix(p, "/api/creatives/"), "/file"))
 	case p == "/api/proposals" || strings.HasPrefix(p, "/api/proposals/"):
 		s.proposalsAPI(w, r, p)
+	case p == "/api/launch" && r.Method == http.MethodPost: // Create with Claude → Run it / Launch now (create_wire.go)
+		s.launchAPI(w, r)
+	case (p == "/api/render" || strings.HasPrefix(p, "/api/render/")) && r.Method == http.MethodPost:
+		s.renderAPI(w, r, p)
+	case p == "/api/mcp" || strings.HasPrefix(p, "/api/mcp/"):
+		s.mcpAPI(w, r, p)
 	case (p == "/api/brain/plan" || p == "/api/brain/copy") && r.Method == http.MethodPost:
 		if ac := s.acct(w, r); ac != nil {
 			s.brainAPI(w, r, strings.TrimPrefix(p, "/api/brain/"), ac)

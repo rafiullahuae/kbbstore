@@ -65,7 +65,7 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 		js(map[string]bool{"ok": true})
 	case p == "settings":
 		if r.Method == http.MethodPut {
-			var s AccountSettings
+			s := e.settings(acct) // fields not sent keep their value
 			if json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&s) != nil {
 				bad(400, "bad JSON")
 				return
@@ -73,6 +73,7 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 			if s.AdWording != Strict && s.AdWording != Relaxed {
 				s.AdWording = Balanced
 			}
+			normCreation(&s)
 			e.save(acct, "settings", s)
 			e.log("config", fmt.Sprintf("ad wording rules: %s, promotion approved: %v", s.AdWording, s.PromoApproved), s)
 		}
@@ -83,6 +84,11 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 		e.serveSeg(w, r, p, js, bad)
 	case strings.HasPrefix(p, "gen/"): // AI background generators (generator.go)
 		e.serveGen(w, r, p, js, bad)
+	case p == "create" || strings.HasPrefix(p, "create/"): // Create with Claude (create.go)
+		mi := input()
+		e.serveCreate(w, r, p, acct, func() CycleInput { return e.FromModel(mi) }, Wording(mi.Limits, e.settings(acct)), bad, js)
+	case p == "creation" || strings.HasPrefix(p, "creation/") || p == "brief" || p == "products": // creation.go
+		e.serveCreation(w, r, p, acct, func() CycleInput { return e.FromModel(input()) }, js, bad)
 	case p == "designs":
 		arch := []DesignSpec{}
 		e.load(acct, "designs_archive", &arch)

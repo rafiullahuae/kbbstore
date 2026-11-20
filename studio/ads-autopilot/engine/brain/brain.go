@@ -27,6 +27,9 @@ type Brain struct {
 	CopyModel     string
 	PromoApproved bool // owner-confirmed authorised promotion (Settings); unlocks discount wording
 	MaxCopyPerRun int
+	// DeferCopy: creation mode "with me in Claude (Max)" -- the planner's copy requests are NOT written through the
+	// API; they come back as CycleOutput.CreationNeeded and the adapter turns them into Creation requests.
+	DeferCopy bool
 
 	mu           sync.Mutex
 	lastResearch Usage
@@ -187,6 +190,10 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 				continue
 			}
 		}
+		if b.DeferCopy { // the owner makes these with Claude (Max); nothing is written through the API
+			out.CreationNeeded = append(out.CreationNeeded, cr)
+			continue
+		}
 		sets, designs, usage, err := b.copyFor(ctx, cr, in.Shop, in.Research)
 		addUsageTotals(&out.Usage, usage)
 		if err != nil {
@@ -196,7 +203,19 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 		out.CopySets = append(out.CopySets, sets...)
 		out.Designs = append(out.Designs, designs...)
 	}
-	// "copy:<n>" creative ids resolve to the pair the copy step made.
+	// "copy:<n>" creative ids resolve to the pair the copy step made. Deferred copy has no pair yet: those ads wait
+	// for the owner's creation (it reaches the autopilot through the library as approved creatives).
+	if b.DeferCopy {
+		var keep []Proposal
+		for _, p := range out.Proposals {
+			if id, ok := p.Params["creative_id"].(string); ok && strings.HasPrefix(id, "copy:") {
+				out.Dropped = append(out.Dropped, p.ID+": waits for the owner's creation in Claude")
+				continue
+			}
+			keep = append(keep, p)
+		}
+		out.Proposals = keep
+	}
 	for i := range out.Proposals {
 		if id, ok := out.Proposals[i].Params["creative_id"].(string); ok && strings.HasPrefix(id, "copy:") {
 			var n int
@@ -638,12 +657,12 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 			"daily_budget_aed": c.DailyBudgetAED, "made_by_app": c.MadeByApp, "verdict": v.Verdict, "adsets": sets})
 	}
 	var lib []map[string]any
-	for i, c := range in.Creatives {
+	for i, c := range approvedFirst(in.Creatives) {
 		if i >= 60 {
 			break
 		}
 		lib = append(lib, map[string]any{"id": c.ID, "pair_id": c.PairID, "lang": c.Lang, "format": c.Format, "angle": c.Angle,
-			"template": c.Template, "headline": c.Headline, "product_ids": c.ProductIDs})
+			"template": c.Template, "headline": c.Headline, "product_ids": c.ProductIDs, "owner_approved": c.Approved})
 	}
 	var notes []map[string]any
 	for i, n := range in.Research.Notes {
@@ -911,5 +930,5 @@ func profileBrief(p *LearningProfile) any {
 // clone copies the configuration (not the mutex/usage state) for one call.
 func (b *Brain) clone() *Brain {
 	return &Brain{Claude: b.Claude, Econ: b.Econ, Rules: b.Rules, PlannerModel: b.PlannerModel, SmallModel: b.SmallModel,
-		CopyModel: b.CopyModel, PromoApproved: b.PromoApproved, MaxCopyPerRun: b.MaxCopyPerRun}
+		CopyModel: b.CopyModel, PromoApproved: b.PromoApproved, MaxCopyPerRun: b.MaxCopyPerRun, DeferCopy: b.DeferCopy}
 }

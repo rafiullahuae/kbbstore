@@ -138,6 +138,7 @@ type Creative struct {
 	ImageURL    string    `json:"image_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	LintOK      bool      `json:"lint_ok"`
+	Approved    bool      `json:"approved,omitempty"` // the owner made it with Claude and said Run it
 }
 
 // Research is the brain's market memory: dated notes with sources.
@@ -219,6 +220,8 @@ type CycleOutput struct {
 	Usage     Usage            `json:"usage"`
 	Profile   *LearningProfile `json:"profile,omitempty"` // the profile this cycle planned with
 	Dropped   []string         `json:"dropped"`           // planner proposals the brain refused, with the reason
+	// CreationNeeded: copy requests left for the owner (creation mode "with me in Claude"), see creation.go
+	CreationNeeded []CopyRequest `json:"creation_needed,omitempty"`
 }
 
 type Proposal struct {
@@ -397,6 +400,12 @@ type DesignSpec struct {
 	Numerals   string   `json:"numerals,omitempty"` // ar only: "arab" (٠١٢) | "latn" (012); the price chip follows it
 	Category   string   `json:"category,omitempty"` // product type, for art direction
 	Scene      string   `json:"scene,omitempty"`    // the brain's art-direction prompt for an optional AI background
+	// Create with Claude (create.go)
+	Palette     []string `json:"palette,omitempty"`      // 2-4 hex colours Claude chose (empty = from the product photo)
+	PrimaryText string   `json:"primary_text,omitempty"` // the ad text that runs with the picture
+	Idea        int      `json:"idea,omitempty"`         // 1-based idea (variant) of its session
+	Motion      bool     `json:"motion,omitempty"`       // also render a 9:16 motion version
+	Photo       bool     `json:"photo,omitempty"`        // the owner's own photo replaces the product photo
 }
 
 // CopySet is one product/angle's copy in one language, linted.
