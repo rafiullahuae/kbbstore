@@ -152,7 +152,7 @@ func BuildProfile(account string, in CycleInput) LearningProfile {
 	}
 	// videos with results feed the angle/format cuts too
 	for _, v := range in.Videos {
-		if v.Results == nil || v.Results.SpendAED <= 0 || v.Analysis == nil {
+		if v.Results == nil || v.Results.SpendAED <= 0 || v.Analysis == nil || len(v.MetaAdIDs) > 0 { // matched videos are already in the ad metrics
 			continue
 		}
 		r := MetricRow{SpendAED: v.Results.SpendAED, Impressions: v.Results.Impressions, Clicks: v.Results.Clicks, Purchases: v.Results.Purchases, RevenueAED: v.Results.RevenueAED}

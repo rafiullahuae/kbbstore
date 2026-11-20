@@ -67,6 +67,16 @@ func (b *Brain) Cycle(ctx context.Context, in CycleInput) (CycleOutput, error) {
 		out.Dropped = append(out.Dropped, "planner: "+llmErr.Error()+" -- rules-only cycle")
 	}
 	out.Report = b.report(in, rr, out, nEN, nAR, llmErr)
+	// JSON arrays, never null: the UI and the engine iterate them directly
+	if out.Verdicts == nil {
+		out.Verdicts = []Verdict{}
+	}
+	if out.Proposals == nil {
+		out.Proposals = []Proposal{}
+	}
+	if out.Dropped == nil {
+		out.Dropped = []string{}
+	}
 	return out, nil
 }
 

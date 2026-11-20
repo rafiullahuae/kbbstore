@@ -1,0 +1,53 @@
+/* KBB Ads Autopilot THEME -- the whole look in one file.
+   Applying the owner's pick (A Rose Glass / B Midnight Pro / C Pearl Minimal /
+   D Rose Glass RTL) = edit the tokens below (+ --kaa-layout). Components use
+   only these variables; layouts: sidebar | rail | tabs. */
+@font-face { font-family: "Outfit"; src: url(../vendor/fonts/outfit-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Tajawal"; src: url(../vendor/fonts/tajawal-arabic-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; }
+@font-face { font-family: "Tajawal"; src: url(../vendor/fonts/tajawal-arabic-700-normal.woff2) format("woff2"); font-weight: 700; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; }
+@font-face { font-family: "Cairo"; src: url(../vendor/fonts/cairo-arabic-wght-normal.woff2) format("woff2"); font-weight: 200 1000; font-display: swap; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F; }
+@font-face { font-family: "Cairo"; src: url(../vendor/fonts/cairo-latin-wght-normal.woff2) format("woff2"); font-weight: 200 1000; font-display: swap; unicode-range: U+0000-00FF; }
+@font-face { font-family: "Playfair Display"; src: url(../vendor/fonts/playfair-display-latin-wght-normal.woff2) format("woff2"); font-weight: 400 900; font-display: swap; }
+
+:root {
+  --kaa-layout: sidebar;            /* sidebar | rail | tabs */
+  --font-head: var(--font);          /* headline face, e.g. "Fraunces", serif */
+  --page-bg: var(--bg);              /* may be a gradient */
+  --card-bg: var(--surface);         /* glass: rgba(255,255,255,.62) */
+  --card-blur: none;                 /* glass: blur(14px) saturate(1.2) */
+  --bg: #FBF8F9; --surface: #FFFFFF; --surface2: #F6F2F3; --surface3: #EFE8EB;
+  --ink: #2A2228; --ink2: #5E545A; --muted: #8A7F86; --line: #ECE4E8; --line2: #DED3D8;
+  --accent: #C13E63; --accent-ink: #FFFFFF; --accent-soft: #FFF0F4; --accent-2: #E0567B;
+  --good: #1E7F4F; --good-soft: #E7F5EE; --warn: #9A6200; --warn-soft: #FFF4DE; --bad: #B42335; --bad-soft: #FDECEE; --info: #2a78d6; --info-soft: #EAF2FD;
+  --s-spend: #2a78d6; --s-rev: #D94873;
+  --shadow: 0 1px 2px rgba(42,34,40,.06), 0 4px 16px rgba(42,34,40,.05);
+  --radius: 14px; --radius-s: 9px;
+  --font: "Outfit", "Tajawal", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-ar: "Tajawal", "Cairo", "Geeza Pro", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121014; --surface: #1B171D; --surface2: #231E26; --surface3: #2C2630;
+    --ink: #F3EDF1; --ink2: #C9BFC5; --muted: #9A8F96; --line: #2E2830; --line2: #3B343E;
+    --accent: #F07A9C; --accent-ink: #1B171D; --accent-soft: #3A1F2A; --accent-2: #F28DAA;
+    --good: #5FD39A; --good-soft: #15301F; --warn: #F1B451; --warn-soft: #33270F; --bad: #FF8A97; --bad-soft: #3A1A1E; --info: #79AEF0; --info-soft: #172537;
+    --s-spend: #3987e5; --s-rev: #D9557D;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121014; --surface: #1B171D; --surface2: #231E26; --surface3: #2C2630;
+  --ink: #F3EDF1; --ink2: #C9BFC5; --muted: #9A8F96; --line: #2E2830; --line2: #3B343E;
+  --accent: #F07A9C; --accent-ink: #1B171D; --accent-soft: #3A1F2A; --accent-2: #F28DAA;
+  --good: #5FD39A; --good-soft: #15301F; --warn: #F1B451; --warn-soft: #33270F; --bad: #FF8A97; --bad-soft: #3A1A1E; --info: #79AEF0; --info-soft: #172537;
+  --s-spend: #3987e5; --s-rev: #D9557D;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+
+
+/* RTL: the UI flips with <html dir="rtl"> (Arabic); components use logical
+   properties (inset-inline, margin-inline, border-inline). Arabic UI face: */
+html[lang="ar"] { --font: var(--font-ar); --font-head: var(--font-ar); }

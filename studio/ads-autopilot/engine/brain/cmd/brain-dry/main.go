@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"kaa/brain"
 )
@@ -19,10 +20,47 @@ import (
 func main() {
 	lint := flag.Bool("lint", false, "lint one copy set instead of running a cycle")
 	useClaude := flag.Bool("claude", false, "call Claude (needs ANTHROPIC_API_KEY); default rules-only")
+	video := flag.Bool("video", false, "analyse one video: stdin {video: VideoInput, shop: ShopSnapshot}")
+	portfolio := flag.Bool("portfolio", false, "stdin: [CycleInput...] -> {profiles, portfolio}")
 	flag.Parse()
 	dec := json.NewDecoder(os.Stdin)
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", " ")
+	key := ""
+	if *useClaude {
+		key = os.Getenv("ANTHROPIC_API_KEY")
+	}
+	if *video {
+		var v struct {
+			Video brain.VideoInput   `json:"video"`
+			Shop  brain.ShopSnapshot `json:"shop"`
+		}
+		if err := dec.Decode(&v); err != nil {
+			fail(err)
+		}
+		a, _, err := brain.New(key).AnalyzeVideo(context.Background(), v.Video, v.Shop)
+		if err != nil {
+			a.Model = "local-only (" + err.Error() + ")"
+		}
+		_ = enc.Encode(a)
+		return
+	}
+	if *portfolio {
+		var ins []brain.CycleInput
+		if err := dec.Decode(&ins); err != nil {
+			fail(err)
+		}
+		var ps []brain.LearningProfile
+		for _, in := range ins {
+			ps = append(ps, brain.BuildProfile(in.Account.ID, in))
+		}
+		now := time.Now()
+		if len(ins) > 0 {
+			now = ins[0].Now
+		}
+		_ = enc.Encode(map[string]any{"profiles": ps, "portfolio": brain.MergeProfiles(ps, now)})
+		return
+	}
 	if *lint {
 		var c struct {
 			Lang, PrimaryText, Headline, Description, CTA string
@@ -42,10 +80,6 @@ func main() {
 	var in brain.CycleInput
 	if err := dec.Decode(&in); err != nil {
 		fail(err)
-	}
-	key := ""
-	if *useClaude {
-		key = os.Getenv("ANTHROPIC_API_KEY")
 	}
 	out, err := brain.New(key).Cycle(context.Background(), in)
 	if err != nil {
