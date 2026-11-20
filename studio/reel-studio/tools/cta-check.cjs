@@ -239,6 +239,27 @@ const FPS = 30;
   });
   ok(oldSame.ids === 15 && oldSame.bad.length === 0, `the ${oldSame.ids} old designs draw byte-identical to before (${oldSame.n} frames, English + Arabic, in / hold / out)${oldSame.bad.length ? ' DIFFER ' + oldSame.bad.slice(0, 6).join(' ') : ''}`);
 
+  // ════════ a brand accent near the main colour in brightness but another colour keeps it on the slim cards ════════
+  // The owner, 20 Nov: "I need the CTA also for The planet careers company ... with their color scheme". Planet Careers is
+  // navy #002768 + red #BE0B32: the two are close in BRIGHTNESS, so the old rule swapped the red for white and every slim
+  // card came out navy + white, no red anywhere. Revert hueApart() in cta.js's palette and the first line is red.
+  // The old 15 designs keep the old rule (byte-identical with the same colours: second line).
+  const pc = await ev(() => {
+    const K = window.KIT.kitFor('europe'), PC = { primary: '#002768', secondary: '#BE0B32', accent: '#BE0B32', text: '#FFFFFF' }, KBB = { primary: '#C6395F', secondary: '#2A2228', accent: '#BE8E2E' };
+    const col = (bc, v) => window.CTA.ctaColors({ variant: v, palette: 'brand', brandColors: bc }, K);
+    const slim = window.CTA.CTA_DESIGNS.filter((d) => d.slim).map((d) => d.id);
+    const pcChips = slim.filter((v) => !['shimmer', 'neon'].includes(v)).map((v) => col(PC, v).chip.toLowerCase());
+    const st = { variant: 'phonewa', palette: 'brand', brandColors: PC, lang: 'en', contact: { phone: '+971 50 123 4567' } }, w = 560, hh = w / window.OLD.ctaById('phonewa').ar;
+    const S = { w, h: hh, tl: 2.5, d: 4, t: 2.5, inn: () => 1, out: () => 1, txt: {}, style: st };
+    const a = document.createElement('canvas'), b = document.createElement('canvas'); a.width = b.width = 600; a.height = b.height = Math.ceil(hh) + 40;
+    const ga = a.getContext('2d', { willReadFrequently: true }), gb = b.getContext('2d', { willReadFrequently: true }); ga.translate(20, 20); gb.translate(20, 20);
+    window.OLD.drawCta(ga, K, S); window.CTA.drawCta(gb, K, S);
+    const da = ga.getImageData(0, 0, a.width, a.height).data, db = gb.getImageData(0, 0, b.width, b.height).data; let diff = 0; for (let i = 0; i < da.length; i++) if (da[i] !== db[i]) diff++;
+    return { pcChips, neon: col(PC, 'neon').accent, kbb: col(KBB, 'runner').chip, oldDiff: diff };
+  });
+  ok(pc.pcChips.every((c) => c === '#be0b32') && pc.kbb.toLowerCase() === '#be8e2e', `Planet Careers' colours on the slim cards: icon circles ${[...new Set(pc.pcChips)].join(', ')} (its red #BE0B32, not white) on navy, neon outline ${pc.neon}; KBB unchanged (gold ${pc.kbb})`);
+  ok(pc.oldDiff === 0, `an old design in Planet Careers' colours draws byte-identical to before (${pc.oldDiff} bytes differ)`);
+
   // ════════ words: still text slots ════════
   const wd = await ev(() => {
     const ed = window.ED, it = window.TH.placeElement(window.CTX, 'cta', { theme: 'europe', variant: 'shimmer', t0: 0.3, dur: 5.5 });

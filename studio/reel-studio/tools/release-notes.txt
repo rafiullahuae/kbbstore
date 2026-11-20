@@ -2,6 +2,9 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.1
+- The 10 slim contact cards now wear Planet Careers' own colours in Planet Careers: navy with red icon circles, a red running light and a red neon outline (the red used to turn white). KBB's cards and the old designs are unchanged.
+
 ## 1.4.0
 - 10 new slim contact cards that keep moving the whole time: Glass shimmer, Ticker strip, Running light, Ringing phone, Minimal underline, Gradient flow, Split chip, Typewriter number, Sparkle bar, Soft neon. About half the old height.
 - Contact card controls: show or hide each part (icons, label, number, background, border, glow, sparkles, animation), a colour for each part, speed, intensity and corners.

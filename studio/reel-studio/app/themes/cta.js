@@ -70,13 +70,20 @@ const WORDS = {
 };
 
 /** the card's colours: the company's (default) or the theme's */
-function palette(S, K) {
+function palette(S, K, slim = false) {
   const s = S.style || {}, b = s.palette !== 'theme' && s.brandColors ? s.brandColors : null;
   const primary = (b?.primary || K.colors.primary || '#1d3557');
   let accent = b ? (b.accent || b.secondary || '#ffd166') : (K.colors.accent || '#ffd166');
-  // an accent that disappears on the card (too close in brightness) becomes white
-  if (Math.abs(lum(accent) - lum(primary)) < 0.12) accent = lum(primary) < 0.5 ? '#ffffff' : '#111111';
+  // an accent that disappears on the card (too close in brightness) becomes white -- except, on the slim cards, a
+  // brand accent that is plainly another COLOUR (Planet Careers' red on its navy: near in brightness, far in hue)
+  if (Math.abs(lum(accent) - lum(primary)) < 0.12 && !(slim && b && hueApart(accent, primary))) accent = lum(primary) < 0.5 ? '#ffffff' : '#111111';
   return { bg: primary, bg2: mix(primary, '#000000', 0.28), fg: onColor(primary), acc: accent, accFg: onColor(accent), soft: mix(primary, '#ffffff', 0.85) };
+}
+
+/** two colours far apart as colours, not only in brightness (RGB distance; 0..441) */
+function hueApart(a, b) {
+  const h = (x) => { const v = String(x).replace('#', ''); const f = v.length === 3 ? v.split('').map((c) => c + c).join('') : v; return [0, 2, 4].map((i) => parseInt(f.slice(i, i + 2), 16) || 0); };
+  const [p, q] = [h(a), h(b)]; return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) > 150;
 }
 
 // ── the moves every card shares ──
@@ -279,7 +286,7 @@ D.tap = (c, S, P, cw, ch, U) => {
  */
 export function drawCta(c, K, S) {
   const des0 = ctaById(S.style?.variant);
-  if (des0.slim) { drawCta2(c, S, des0, palette(S, K), { num: num(S), ar: isAr(S), word: (k) => W0(S, k) }); return; }
+  if (des0.slim) { drawCta2(c, S, des0, palette(S, K, true), { num: num(S), ar: isAr(S), word: (k) => W0(S, k) }); return; }
   const des = des0, m = motion(S); if (m.k <= 0.001) return;
   const P = palette(S, K), U = Math.min(S.w, S.h) * 3;
   const cw = Math.min(S.w, S.h * des.ar), ch = cw / des.ar, x = (S.w - cw) / 2, y = (S.h - ch) / 2;
@@ -300,5 +307,5 @@ export function ctaBox(variant, W, H) {
 /** a slim card's colours as drawn now (the inspector's colour pickers start from them) */
 export function ctaColors(style, K) {
   const des = ctaById(style?.variant); if (!des.slim) return null;
-  return lookOf(style, des, palette({ style }, K)).C;
+  return lookOf(style, des, palette({ style }, K, true)).C;
 }
