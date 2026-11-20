@@ -1,6 +1,20 @@
 // Package secrets keeps the owner's keys: the macOS Keychain on a Mac (service "KBB Ads Autopilot", one generic
 // password per name, written through `security -i` on stdin so a key never appears in a process list), a 0600 JSON
-// file in the data folder anywhere else (the Linux test runs). The browser only ever sees {set, last4}.
+// file in the data folder anywhere else (the Linux test runs). The browser only ever sees {set, last4, error}.
+//
+// 20 Nov 2026, the owner: after he replaced the app folder and started the new version, "all the apis vanished" --
+// every key showed as not set. Whatever macOS answered (a Keychain prompt dismissed or not answered within the old
+// 15 s, "user interaction is not allowed", a locked keychain), the engine read ANY failure of `security` that was not
+// "could not be found" as an error, and every caller -- Describe, the connection tests -- turned that error into
+// "not set". Nothing about the keys lives in the app folder (the Keychain item is service + name; the index below is
+// in the DATA folder), so a replaced folder, an update, a roll back or a restart cannot lose them; what they lost was
+// the READ. Now:
+//   - a read that fails is never "not set": Describe carries the reason (KeyError), and macOS refusing access says
+//     what to do ("click Always Allow, then Try again"); only `security`'s own "not found" (exit 44) is "not set"
+//   - a failed read is not cached: Try again asks macOS again; a read waits 60 s (the owner may be answering a prompt)
+//   - keys-index.json in the data folder (names and dates, never values) remembers which keys were saved, so a key
+//     that is gone from the Keychain says so ("saved on …, no longer in the Keychain") instead of looking never set
+//   - CheckFormat refuses a key pasted into the wrong field before it is stored (a Meta token in the Claude field)
 package secrets
 
 import (
@@ -12,6 +26,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -33,12 +48,35 @@ type Store interface {
 type Info struct {
 	Set   bool   `json:"set"`
 	Last4 string `json:"last4,omitempty"`
+	Error string `json:"error,omitempty"` // the key could not be read: why, in plain words (never shown as "not set")
 }
 
-// Describe: what the UI may know about a secret.
+// KeyError: a saved key that could not be read.
+type KeyError struct {
+	Name    string
+	Denied  bool   // macOS did not let the app read it (a prompt dismissed / not answered, interaction not allowed)
+	Missing string // the index says it was saved on this date, the Keychain no longer has it
+	Detail  string
+}
+
+func (e *KeyError) Error() string {
+	switch {
+	case e.Denied:
+		return "macOS didn't let the app read its saved keys. Click “Always Allow” when macOS asks (the password is your Mac login password), then Try again."
+	case e.Missing != "":
+		return fmt.Sprintf("This key was saved on %s but is no longer in the macOS Keychain (it was removed there). Paste it again.", e.Missing)
+	default:
+		return "The macOS Keychain could not be read (" + e.Detail + "). Try again; if it keeps failing, open Keychain Access and unlock the login keychain."
+	}
+}
+
+// Describe: what the UI may know about a secret. A key that could not be read says why; it is never "not set".
 func Describe(s Store, name string) Info {
 	v, err := s.Get(name)
-	if err != nil || v == "" {
+	if err != nil {
+		return Info{Error: err.Error()}
+	}
+	if v == "" {
 		return Info{}
 	}
 	l := v
@@ -71,12 +109,50 @@ func ValidValue(v string) error {
 	return nil
 }
 
+// CheckFormat: the key looks like the key the field is for. A key pasted into the wrong field (the owner put his Meta
+// token into the Claude field) is refused before it is stored, saying what it looks like instead.
+func CheckFormat(name, v string) error {
+	what := func(v string) string {
+		switch {
+		case strings.HasPrefix(v, "EAA"):
+			return "a Meta token (EAA…)"
+		case strings.HasPrefix(v, "sk-ant-"):
+			return "a Claude key (sk-ant-…)"
+		case strings.HasPrefix(v, "kbbap_"):
+			return "a shop connection key (kbbap_…)"
+		case strings.HasPrefix(v, "AIza"):
+			return "a Google key (AIza…)"
+		}
+		return ""
+	}
+	want := map[string][2]string{
+		"meta_token":    {"EAA", "Meta tokens start with EAA"},
+		"anthropic_key": {"sk-ant-", "Claude keys start with sk-ant-"},
+		"shop_token":    {"kbbap_", "Shop connection keys start with kbbap_ (kbeautybliss.com admin → Ads Autopilot → API keys)"},
+	}
+	if w, ok := want[name]; ok {
+		if strings.HasPrefix(v, w[0]) {
+			return nil
+		}
+		if x := what(v); x != "" {
+			return fmt.Errorf("This looks like %s, not the key for this field. %s.", x, w[1])
+		}
+		return fmt.Errorf("This does not look like the right key. %s.", w[1])
+	}
+	if name == "meta_app_secret" {
+		if x := what(v); x != "" {
+			return fmt.Errorf("This looks like %s, not the Meta app secret (32 letters and digits from the Meta app's Basic settings).", x)
+		}
+	}
+	return nil
+}
+
 // New picks the Keychain on macOS, the file elsewhere. onValue is told every value loaded or saved (the audit log
 // registers it for redaction).
 func New(dataDir string, onValue func(string)) Store {
 	if runtime.GOOS == "darwin" && os.Getenv("KAA_SECRETS_FILE") == "" {
 		if _, err := os.Stat("/usr/bin/security"); err == nil {
-			return &keychain{cache: map[string]string{}, on: onValue}
+			return &keychain{cache: map[string]string{}, on: onValue, index: filepath.Join(dataDir, "keys-index.json"), run: run}
 		}
 	}
 	return &fileStore{path: filepath.Join(dataDir, "secrets.json"), on: onValue}
@@ -88,12 +164,46 @@ type keychain struct {
 	mu    sync.Mutex
 	cache map[string]string
 	on    func(string)
+	index string                                             // data folder: which keys were saved, when (never a value)
+	run   func(stdin string, args ...string) (string, error) // /usr/bin/security (tests: a fake)
+}
+
+// keychain failures `security` reports when macOS did not let it read: the owner dismissed or did not answer the
+// prompt, interaction is not allowed (no GUI session), the keychain is locked, or our wait ran out
+var deniedRe = regexp.MustCompile(`(?i)user canceled|interaction is not allowed|not allowed|authori[sz]ation|denied|locked|exit status (25|36|45|51|128)\b|signal: killed|deadline exceeded`)
+
+func (k *keychain) readIndex() map[string]string {
+	m := map[string]string{}
+	if b, err := os.ReadFile(k.index); err == nil {
+		_ = json.Unmarshal(b, &m)
+	}
+	return m
+}
+
+func (k *keychain) writeIndex(name, at string) {
+	if k.index == "" {
+		return
+	}
+	m := k.readIndex()
+	if m[name] == at && at != "" {
+		return
+	}
+	if at == "" {
+		delete(m, name)
+	} else {
+		m[name] = at
+	}
+	b, _ := json.MarshalIndent(m, "", " ")
+	tmp := k.index + ".tmp"
+	if os.WriteFile(tmp, b, 0o600) == nil {
+		_ = os.Rename(tmp, k.index)
+	}
 }
 
 func (k *keychain) Kind() string { return "keychain" }
 
 func run(stdin string, args ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second) // macOS may be asking the owner meanwhile
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "/usr/bin/security", args...)
 	if stdin != "" {
@@ -117,16 +227,23 @@ func (k *keychain) Get(name string) (string, error) {
 	if v, ok := k.cache[name]; ok {
 		return v, nil
 	}
-	out, err := run("", "find-generic-password", "-s", Service, "-a", name, "-w")
+	out, err := k.run("", "find-generic-password", "-s", Service, "-a", name, "-w")
 	if err != nil {
 		if strings.Contains(err.Error(), "could not be found") || strings.Contains(err.Error(), "exit status 44") {
+			if at := k.readIndex()[name]; at != "" { // saved once, gone now: say so (not cached: Try again re-reads)
+				return "", &KeyError{Name: name, Missing: at}
+			}
 			k.cache[name] = ""
 			return "", nil
 		}
-		return "", err
+		// anything else is NOT "not set", and is not cached: the next read asks macOS again
+		return "", &KeyError{Name: name, Denied: deniedRe.MatchString(err.Error()), Detail: clipErr(err.Error())}
 	}
 	v := strings.TrimRight(out, "\r\n")
 	k.cache[name] = v
+	if v != "" && k.readIndex()[name] == "" { // keys saved before the index existed join it on first read
+		k.writeIndex(name, time.Now().Format("2 Jan 2006"))
+	}
 	if k.on != nil && v != "" {
 		k.on(v)
 	}
@@ -142,11 +259,15 @@ func (k *keychain) Set(name, value string) error {
 	}
 	// `security -i` reads commands from stdin: the key goes through a pipe, never argv. -U updates in place.
 	cmd := fmt.Sprintf("add-generic-password -U -s \"%s\" -a \"%s\" -l \"%s\" -w \"%s\"\n", Service, name, Service, value)
-	if _, err := run(cmd, "-i"); err != nil {
-		return fmt.Errorf("Keychain: %v", err)
+	if _, err := k.run(cmd, "-i"); err != nil {
+		if deniedRe.MatchString(err.Error()) {
+			return fmt.Errorf("macOS didn't let the app save the key in the Keychain. Click “Always Allow” when macOS asks, then save again.")
+		}
+		return fmt.Errorf("Keychain: %v", clipErr(err.Error()))
 	}
 	k.mu.Lock()
 	k.cache[name] = value
+	k.writeIndex(name, time.Now().Format("2 Jan 2006"))
 	k.mu.Unlock()
 	if k.on != nil {
 		k.on(value)
@@ -158,12 +279,13 @@ func (k *keychain) Delete(name string) error {
 	if !validName(name) {
 		return fmt.Errorf("unknown secret %q", name)
 	}
-	_, err := run("", "delete-generic-password", "-s", Service, "-a", name)
+	_, err := k.run("", "delete-generic-password", "-s", Service, "-a", name)
 	if err != nil && !strings.Contains(err.Error(), "could not be found") {
 		return err
 	}
 	k.mu.Lock()
 	k.cache[name] = ""
+	k.writeIndex(name, "")
 	k.mu.Unlock()
 	return nil
 }
@@ -254,4 +376,12 @@ func (f *fileStore) Delete(name string) error {
 	}
 	delete(f.m, name)
 	return f.save()
+}
+
+func clipErr(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) > 200 {
+		s = s[:200]
+	}
+	return s
 }
