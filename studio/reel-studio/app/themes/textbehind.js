@@ -14,7 +14,9 @@
 //   style.tb              look: font, track, fill {type, colors, dir, hard}, outline, outlineCol, shadow, animIn, animOut,
 //                         inDur, outDur · the cut-out: key 'person' | 'subject', feather, grow, smooth · the lines:
 //                         top {on, font, size, track, color, gap}, main (false hides it) · mode 'word' | 'carousel',
-//                         car {items:[{id, en, ar, flag, text}], style, per, order, loop, flags, lang}
+//                         car {items:[{id, en, ar, flag, text}], style, per, order, loop, flags, lang} · the colours:
+//                         cc {mode 'white' | 'country' | 'one', style, over} and top.cmode (themes/tb-colors.js; no cc
+//                         = tb.fill as it always drew)
 //
 // The masks come from look/vision.js (analysed once, offline, on a fixed grid; behindFrames() asks for exactly the
 // stretch of each clip an element covers), so the preview samples a cache and the export draws the very same pixels.
@@ -31,6 +33,7 @@ import { placeName } from './country-words.js';
 import { loadFlags, flagCanvas } from './capsules.js';
 import { loadCaptionFonts, fontsReady } from '../captions/fonts.js';
 import * as A from './art.js';
+import { ccOf, countryLook, codeOfEntry, TB_TOPC } from './tb-colors.js';
 
 const { clamp, easeOut, easeIn, back } = A;
 
@@ -61,7 +64,10 @@ export function tbOf(style) {
     font: one(t.font, TB_FONTS, D.font), track: num(t.track, -0.05, 0.5, D.track), fill, outline: num(t.outline, 0, 0.15, 0), outlineCol: HEX.test(t.outlineCol || '') ? t.outlineCol : D.outlineCol,
     shadow: num(t.shadow, 0, 1, D.shadow), animIn: one(t.animIn, TB_IN, D.animIn), animOut: one(t.animOut, TB_OUT, D.animOut), inDur: num(t.inDur, 0.1, 2, D.inDur), outDur: num(t.outDur, 0.1, 2, D.outDur),
     key: style?.key === 'subject' || t.key === 'subject' ? 'subject' : 'person', feather: num(t.feather, 0, 1, D.feather), grow: num(t.grow, -1, 1, D.grow), smooth: num(t.smooth, 0, 1, D.smooth),
-    top: { on: !!top.on, font: one(top.font, TB_FONTS, D.top.font), size: num(top.size, 0.12, 1, D.top.size), track: num(top.track, -0.05, 0.6, D.top.track), color: HEX.test(top.color || '') ? top.color : null, gap: num(top.gap, -0.2, 0.6, D.top.gap) },
+    top: { on: !!top.on, font: one(top.font, TB_FONTS, D.top.font), size: num(top.size, 0.12, 1, D.top.size), track: num(top.track, -0.05, 0.6, D.top.track), color: HEX.test(top.color || '') ? top.color : null, gap: num(top.gap, -0.2, 0.6, D.top.gap),
+      // its colour: as the main line, white, the current country's, or its own (an old element: own when it has one)
+      cmode: one(top.cmode, TB_TOPC, HEX.test(top.color || '') ? 'manual' : 'same') },
+    cc: ccOf(t),
     main: t.main !== false, mode: t.mode === 'carousel' ? 'carousel' : 'word',
     car: { items: Array.isArray(car.items) ? car.items.filter((x) => x && (x.en || x.ar || x.text)).slice(0, 80) : [], style: one(car.style, TB_CAR, D.car.style), per: num(car.per, 0.4, 8, D.car.per), order: car.order === 'shuffle' ? 'shuffle' : 'list', loop: car.loop !== false, flags: !!car.flags, lang: car.lang === 'ar' ? 'ar' : 'en' },
   };
@@ -197,13 +203,50 @@ function placedMask(P, project, t, env, R) {
 
 // ── drawing ──
 /** the fill of a line: a colour, or a gradient across its ink box (soft, or hard stripes like a flag) */
+// made once per colours and ink box, not once per frame: a still word (or a carousel word between its moves) reuses
+// its gradient; a gradient is not tied to the canvas that made it, so the preview and the export share them
+const GRADS = new Map();
 function fillOf(c, f, x0, y0, x1, y1) {
   if (f.type !== 'grad' || f.colors.length < 2) return f.colors[0];
-  const g = f.dir === 'h' ? c.createLinearGradient(x0, 0, x1, 0) : c.createLinearGradient(0, y0, 0, y1), n = f.colors.length;
+  const k = f.dir + (f.hard ? 1 : 0) + f.colors.join('') + (f.dir === 'h' ? x0 + ',' + x1 : y0 + ',' + y1);
+  let g = GRADS.get(k);
+  if (g) return g;
+  g = f.dir === 'h' ? c.createLinearGradient(x0, 0, x1, 0) : c.createLinearGradient(0, y0, 0, y1); const n = f.colors.length;
   f.colors.forEach((col, i) => {
     if (f.hard) { g.addColorStop(i / n, col); g.addColorStop(Math.min(1, (i + 1) / n - 1e-4), col); } else g.addColorStop(i / (n - 1), col);
   });
+  if (GRADS.size >= 256) GRADS.clear();
+  GRADS.set(k, g);
   return g;
+}
+
+// ── the colours of a line: white, the element's one fill, or its country's palette (the looks resolved once per edit) ──
+const WHITE = { type: 'solid', colors: ['#ffffff'] };
+const LOOKS = new WeakMap();
+/** the look of a line naming `code`: { fill, tbx } (tbx carries the shadow, outline width and outline colour it paints with) */
+function lookFor(tb, raw, code, force = false) {
+  const cc = tb.cc;
+  if (!force && cc.mode === 'white') return { fill: WHITE, tbx: tb };
+  if ((!force && cc.mode !== 'country') || !code) return { fill: tb.fill, tbx: tb };
+  let m = raw && LOOKS.get(raw);
+  if (!m) { m = new Map(); if (raw) LOOKS.set(raw, m); }
+  const k = code + '|' + tb.outline + '|' + tb.shadow;
+  let L = m.get(k);
+  if (!L) {
+    const c = countryLook(code, cc, tb.outline);
+    L = c ? { fill: c.fill, tbx: { shadow: tb.shadow, outline: c.outline, outlineCol: c.outlineCol } } : { fill: tb.fill, tbx: tb };
+    if (m.size > 200) m.clear();
+    m.set(k, L);
+  }
+  return L;
+}
+/** the top line's look: as the main line now (cur), white, the current country's colours (code), or its own */
+function topLook(tb, raw, cur, code) {
+  const m = tb.top.cmode;
+  if (m === 'white') return { fill: WHITE, tbx: tb };
+  if (m === 'manual') return { fill: { type: 'solid', colors: [tb.top.color || '#ffffff'] }, tbx: tb };
+  if (m === 'follow') return lookFor(tb, raw, code, true);
+  return cur;
 }
 /** one string at (x, baseline y), left aligned at x (ink box known), with outline, shadow, spacing */
 function paint(c, text, x, y, size, font, track, fill, tb, rtl) {
@@ -320,20 +363,26 @@ function carouselLines(S, tb, rect, itemId) {
 /** the element: draw function for themes/elements.js (S carries the item, the project and the render env) */
 export function drawTextBehind(c, K, S) {
   const style = S.style || {}, tb = tbOf(style), w = S.w, h = S.h, item = S.item, project = S.project, env = S.env || {};
-  const rects = linesOf(tb, w, h), draws = [];
-  // the top line ("JOBS IN") and the main line (one word, or the carousel)
-  if (rects.top) {
-    const t = tx(S, 'top', 'JOBS IN');
-    if (t) { const L = layLine(t, tb.top.font, tb.top.track, ...rects.top); draws.push({ L, fill: tb.top.color ? { type: 'solid', colors: [tb.top.color] } : tb.fill, key: 'top', a: 1, dx: 0, dy: 0, sy: 1, reveal: 1 }); }
-  }
+  const rects = linesOf(tb, w, h), draws = [], raw = style.tb?.cc || null;
+  // the main line (one word, or the carousel), each word in its own colours; the place it names now
+  let code = style.code || 'europe';
   if (rects.main) {
     if (tb.mode === 'carousel' && tb.car.items.length) {
-      const list = carOrder(item?.id || '', tb.car);
-      for (const d of carouselLines(S, tb, rects.main, item?.id || '')) draws.push({ ...d, fill: tb.fill, key: 'tbcar:' + list[d.k].id, clip: rects.main });
+      const list = carOrder(item?.id || '', tb.car), ds = carouselLines(S, tb, rects.main, item?.id || '');
+      for (const d of ds) draws.push({ ...d, look: lookFor(tb, raw, codeOfEntry(list[d.k])), key: 'tbcar:' + list[d.k].id, clip: rects.main });
+      // the word on show: the one most in view (a ticker: the one nearest the middle)
+      let best = null, bs = -Infinity;
+      for (const d of ds) { const sc = tb.car.style === 'ticker' ? -Math.abs((d.L.ink[0] + d.L.ink[2]) / 2 - (rects.main[0] + rects.main[2] / 2)) : d.a + d.k * 1e-9; if (sc > bs) { bs = sc; best = d; } }
+      code = best ? codeOfEntry(list[best.k]) : null;
     } else {
       const t = tx(S, 'word', defaultWord(style));
-      if (t) draws.push({ L: layLine(t, tb.font, tb.track, ...rects.main), fill: tb.fill, key: 'word', a: 1, dx: 0, dy: 0, sy: 1, reveal: 1 });
+      if (t) draws.push({ L: layLine(t, tb.font, tb.track, ...rects.main), look: lookFor(tb, raw, code), key: 'word', a: 1, dx: 0, dy: 0, sy: 1, reveal: 1 });
     }
+  }
+  // the top line ("JOBS IN"): drawn first, coloured after the main line knows its country
+  if (rects.top) {
+    const t = tx(S, 'top', 'JOBS IN');
+    if (t) { const L = layLine(t, tb.top.font, tb.top.track, ...rects.top); draws.unshift({ L, look: topLook(tb, raw, lookFor(tb, raw, code), code), key: 'top', a: 1, dx: 0, dy: 0, sy: 1, reveal: 1 }); }
   }
   if (!draws.length) return;
   const an = animAt(tb, S.tl, S.d, w, h);
@@ -345,7 +394,7 @@ export function drawTextBehind(c, K, S) {
     P = personAt(project, item, S.t, tb);
     if (P.state === 'ok') {
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      for (const d of draws) { if (d.a <= 0.002) continue; const p = d.L.size * (0.3 + tb.outline + tb.shadow * 0.3); x0 = Math.min(x0, d.L.ink[0] + d.dx - p); y0 = Math.min(y0, d.L.ink[1] + d.dy - p); x1 = Math.max(x1, d.L.ink[2] + d.dx + p); y1 = Math.max(y1, d.L.ink[3] + d.dy + p); }
+      for (const d of draws) { if (d.a <= 0.002) continue; const p = d.L.size * (0.3 + d.look.tbx.outline + tb.shadow * 0.3); x0 = Math.min(x0, d.L.ink[0] + d.dx - p); y0 = Math.min(y0, d.L.ink[1] + d.dy - p); x1 = Math.max(x1, d.L.ink[2] + d.dx + p); y1 = Math.max(y1, d.L.ink[3] + d.dy + p); }
       const cx = w / 2, cy = h / 2, M = c.getTransform(), CW = c.canvas.width, CH = c.canvas.height;
       let X0 = Infinity, Y0 = Infinity, X1 = -Infinity, Y1 = -Infinity;
       for (const [px0, py0] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]]) {
@@ -371,7 +420,8 @@ export function drawTextBehind(c, K, S) {
     const L = d.L, my = (L.ink[1] + L.ink[3]) / 2;
     c.translate(d.dx, d.dy);
     if (d.sy !== 1) { c.translate(0, my); c.scale(1, d.sy); c.translate(0, -my); }
-    drawLaid(c, L, fillOf(c, d.fill, L.ink[0], L.ink[1], L.ink[2], L.ink[3]), tb, Math.min(d.reveal, an.reveal));
+    const rv = Math.min(d.reveal, an.reveal);
+    drawLaid(c, L, fillOf(c, d.look.fill, L.ink[0], L.ink[1], L.ink[2], L.ink[3]), d.look.tbx, rv);
     c.restore();
     // where it landed (the preview only): double-click edits it on the video
     noteSlot({ key: d.key, text: L.text, x: L.ink[0] + an.dx, y: L.ink[1] + an.dy, w: L.ink[2] - L.ink[0], h: L.ink[3] - L.ink[1], size: L.size, ar: L.rtl, align: 'center' });
@@ -404,7 +454,11 @@ export function tbStatus(project, item, t) {
 
 /** the starting style of a new element (merged by el2.js into elements.js elementStyle) */
 export function tbStyle({ code = 'europe', lang = 'en', text } = {}) {
-  return { code, lang, key: 'person', tb: JSON.parse(JSON.stringify(TB_DEFAULTS)), ...(text ? { text } : {}) };
+  // a new element wears its countries' colours (the owner asked for them, 20 Nov), JOBS IN white above them; an
+  // element made before keeps drawing white (no cc)
+  const tb = JSON.parse(JSON.stringify(TB_DEFAULTS));
+  tb.cc = { mode: 'country', style: 'stripes' }; tb.top.cmode = 'white';
+  return { code, lang, key: 'person', tb, ...(text ? { text } : {}) };
 }
 /**
  * Where a new element goes when it is added at the playhead: never past the end of the video under it. Three seconds
