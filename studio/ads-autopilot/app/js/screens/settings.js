@@ -5,6 +5,7 @@ import { refreshState, refreshAccounts } from '../main.js';
 import { brainSettings, saveBrainSettings } from '../data.js';
 import { mountGenerators } from '../creative/gen-ui.js';
 import { mountOneKey, mountClaudeApp, mountCreationMode } from '../create/settings-cc.js';
+import { mountUpdates } from './updates.js';
 
 let tab = 'limits';
 let wording = null;
@@ -53,13 +54,15 @@ function connCard(name, title, c, fields) {
   const ok = c && c.ok;
   return `<div class="card" data-conn="${name}"><header><h2>${esc(title)}</h2><span class="row small"><span class="dot ${ok ? 'ok' : 'bad'}"></span>${esc(ok ? tt('Connected', 'متصل') : tt('Not connected', 'غير متصل'))}</span></header>
     ${c && c.error ? `<p class="alert danger small">${esc(c.error)}</p>` : ''}${c && c.warning ? `<p class="alert warn small">${esc(c.warning)}</p>` : ''}
-    <div class="grid" style="gap:10px">${fields.map(([k, label, secret, val, ph]) => `<label class="f"><span>${esc(label)}</span><input name="${k}" ${secret ? 'type="password" autocomplete="off"' : ''} value="${secret ? '' : esc(val || '')}" placeholder="${esc(secret && val && val.set ? '•••• ' + val.last4 + ' ' + tt('(saved — type to replace)', '(محفوظ — اكتبي للاستبدال)') : ph || '')}"></label>`).join('')}</div>
+    <div class="grid" style="gap:10px">${fields.map(([k, label, secret, val, ph]) => `<label class="f"><span>${esc(label)}</span><input name="${k}" ${secret ? 'type="password" autocomplete="off"' : ''} value="${secret ? '' : esc(val || '')}" placeholder="${esc(secret && val && val.set ? '•••• ' + val.last4 + ' ' + tt('(saved — type to replace)', '(محفوظ — اكتبي للاستبدال)') : secret && val && val.error ? tt('saved, but could not be read: see above', 'محفوظ لكن تعذّرت قراءته: انظري أعلاه') : ph || '')}"></label>`).join('')}</div>
     <div class="row" style="margin-top:10px"><button type="button" data-save="${name}">${esc(tt('Save & test', 'حفظ واختبار'))}</button></div></div>`;
 }
 
 export function render(S, el) {
+  const q = /[?&]tab=(\w+)/.exec(location.hash); // #/settings?tab=updates (search, the reload after an update)
+  if (q && ['limits', 'connections', 'accounts', 'advanced', 'updates'].includes(q[1])) { tab = q[1]; history.replaceState(null, '', '#/settings'); }
   const st = S.state, c = S.conn || {};
-  el.innerHTML = `<div class="page"><div class="page-h"><div><h1>${esc(tt('Settings', 'الإعدادات'))}</h1><p>${esc(st.account.name || '')} · ${esc(getAccount())}</p></div></div><div class="tabs">${[['limits', 'Limits', 'الحدود'], ['connections', 'Connections', 'الاتصالات'], ['accounts', 'Accounts', 'الحسابات'], ['advanced', 'Advanced', 'متقدم']].map(([k, en, ar]) => `<button type="button" data-tab="${k}" class="${tab === k ? 'on' : ''}">${esc(tt(en, ar))}</button>`).join('')}</div><div id="tabv"></div></div>`;
+  el.innerHTML = `<div class="page"><div class="page-h"><div><h1>${esc(tt('Settings', 'الإعدادات'))}</h1><p>${esc(st.account.name || '')} · ${esc(getAccount())}</p></div></div><div class="tabs">${[['limits', 'Limits', 'الحدود'], ['connections', 'Connections', 'الاتصالات'], ['accounts', 'Accounts', 'الحسابات'], ['advanced', 'Advanced', 'متقدم'], ['updates', 'Updates', 'التحديثات']].map(([k, en, ar]) => `<button type="button" data-tab="${k}" class="${tab === k ? 'on' : ''}">${esc(tt(en, ar))}</button>`).join('')}</div><div id="tabv"></div></div>`;
   const v = el.querySelector('#tabv');
   if (tab === 'limits') {
     v.innerHTML = `<div class="card"><header><h2>${esc(tt('Limits', 'الحدود'))} · ${esc(st.account.name || '')}</h2><span class="sub">${esc(tt('Only going above these needs you. No limit = nothing launches.', 'فقط تجاوز هذه الحدود يحتاجك. بلا حدود = لا شيء يُطلق.'))}</span></header>${limitsForm(st.limits, { wording: st.limits.wording || (wording && wording.ad_wording) || 'balanced' })}
@@ -79,11 +82,13 @@ export function render(S, el) {
       } catch (e) { toast(e.message); }
     };
   } else if (tab === 'connections') {
-    v.innerHTML = `<p class="small muted">${esc(tt('Keys are stored in the macOS Keychain and never shown again; only the last 4 characters.', 'تُحفظ المفاتيح في سلسلة مفاتيح macOS ولا تظهر مرة أخرى؛ فقط آخر ٤ أحرف.'))}</p><div class="grid g3">
+    const unread = ['meta', 'claude', 'shop'].some((k) => c[k] && /could not be read/.test(c[k].error || ''));
+    v.innerHTML = `<div class="row"><p class="small muted">${esc(tt('Keys are stored in the macOS Keychain and never shown again; only the last 4 characters.', 'تُحفظ المفاتيح في سلسلة مفاتيح macOS ولا تظهر مرة أخرى؛ فقط آخر ٤ أحرف.'))}</p><button type="button" class="${unread ? '' : 'ghost '}small" id="conn-retest" style="margin-inline-start:auto">${esc(tt('Try again: read the keys and test', 'حاولي مرة أخرى: قراءة المفاتيح والاختبار'))}</button></div>${unread ? `<p class="alert warn small" id="conn-unread">${esc(tt('Your keys are still saved, but macOS did not let the app read them. Click “Always Allow” when macOS asks (your Mac login password), then Try again.', 'مفاتيحك ما زالت محفوظة، لكن macOS لم يسمح للتطبيق بقراءتها. اضغطي «السماح دائماً» عندما يسأل macOS (كلمة مرور جهازك)، ثم حاولي مرة أخرى.'))}</p>` : ''}<div class="grid g3">
       ${connCard('meta', 'Meta', c.meta, [['token', tt('System-user token', 'رمز مستخدم النظام'), true, c.meta?.token], ['app_id', tt('App ID', 'معرّف التطبيق'), false, c.meta?.app_id], ['app_secret', tt('App secret', 'سر التطبيق'), true, c.meta?.app_secret]])}
       ${connCard('claude', 'Claude', c.claude, [['api_key', tt('Anthropic API key', 'مفتاح Anthropic'), true, c.claude?.key]])}
       ${connCard('shop', tt('Shop', 'المتجر'), c.shop, [['feed_url', tt('Product feed', 'كتالوج المنتجات'), false, c.shop?.feed_url, 'https://kbeautybliss.com/feeds/meta-catalog.xml'], ['token', tt('Shop connection key', 'مفتاح ربط المتجر'), true, c.shop?.token]])}</div>
       <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div class="grid g2" style="margin-top:16px"><div id="mcp-mount"></div><div id="ok-mount"></div></div>`;
+    v.querySelector('#conn-retest').onclick = async (e) => { e.target.disabled = true; try { S.conn = await api('/api/connections/retest', { method: 'POST', noAccount: true }); render(S, el); } catch (x) { toast(x.message); e.target.disabled = false; } };
     mountClaudeApp(v.querySelector('#mcp-mount')); // Claude desktop connector (create/settings-cc.js)
     mountOneKey(v.querySelector('#ok-mount')); // the ONE optional AI pictures & video key
     v.querySelectorAll('[data-save]').forEach((b) => {
@@ -93,6 +98,8 @@ export function render(S, el) {
         try { S.conn[b.dataset.save] = await api(`/api/connections/${b.dataset.save}`, { method: 'PUT', body, noAccount: true }); const r = S.conn[b.dataset.save]; toast(r.ok ? tt('Saved and connected.', 'تم الحفظ والاتصال.') : r.error || 'not connected'); render(S, el); } catch (e) { toast(e.message); }
       };
     });
+  } else if (tab === 'updates') {
+    mountUpdates(v); // screens/updates.js keeps its own state: a re-render never loses an upload or an install
   } else if (tab === 'accounts') {
     v.innerHTML = `<div class="card"><header><h2>${esc(tt('Ad accounts', 'الحسابات الإعلانية'))}</h2><span class="sub">${esc(tt('Automate = the autopilot may act there (inside that account\'s limits).', 'أتمتة = يعمل الطيار الآلي فيه ضمن حدوده.'))}</span></header><table><thead><tr><th>${esc(tt('Account', 'الحساب'))}</th><th>${esc(tt('Automate', 'أتمتة'))}</th><th>${esc(tt('Links', 'الروابط'))}</th></tr></thead><tbody>${S.accounts.map((a) => `<tr><td><b>${esc(a.name)}</b><br><span class="small muted">${esc(a.id)} · ${esc(a.status)}${a.backfill ? ' · ' + esc(tt('history', 'السجل')) + ' ' + esc(a.backfill.state || '') : ''}</span></td>
       <td><input type="checkbox" data-auto="${esc(a.id)}" ${a.automate ? 'checked' : ''} ${a.status !== 'ACTIVE' ? 'disabled' : ''}></td>

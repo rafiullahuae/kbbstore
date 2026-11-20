@@ -53,31 +53,40 @@ const appName = "KBB Ads Autopilot"
 var version = "dev"
 
 // apiLevel goes up whenever the app needs an endpoint an older engine lacks; the page refuses to run on an older one.
-// 1 (20 Nov 2026): the first engine.
-const apiLevel = 1
+// 1 (20 Nov 2026): the first engine. 2 (20 Nov 2026): Settings → Updates — resumable upload, patches, the install
+// job streamed step by step, the health check and automatic roll back (update_flow.go).
+const apiLevel = 2
+
+// buildTag: an optional label stamped into a test build (-ldflags "-X main.buildTag=…"); empty in a release. The
+// release engine is NOT stamped with the version (build.sh): the version is the app folder's VERSION file, so an
+// engine whose Go code did not change is byte-identical from one version to the next and a patch need not carry it.
+var buildTag = ""
 
 const preferredPort = 41927
 
 type server struct {
-	root      string // the app folder (holds app/, engine/, VERSION)
-	data      string
-	token     string
-	addr      string
-	app       *App
-	mu        sync.Mutex
-	clients   int
-	subs      map[chan []byte]bool
-	idleT     *time.Timer
-	idle      time.Duration
-	shutdown  chan struct{}
-	stopOnce  sync.Once
-	exe       string
-	noBrowser bool
-	noRestart bool
-	updMu     sync.Mutex
-	updPend   *updPending
-	updBusy   bool
-	sched     *scheduler
+	root       string // the app folder (holds app/, engine/, VERSION)
+	data       string
+	token      string
+	addr       string
+	app        *App
+	mu         sync.Mutex
+	clients    int
+	subs       map[chan []byte]bool
+	idleT      *time.Timer
+	idle       time.Duration
+	shutdown   chan struct{}
+	stopOnce   sync.Once
+	exe        string
+	noBrowser  bool
+	noRestart  bool
+	updMu      sync.Mutex
+	updPend    *updPending
+	updBusy    bool
+	upMu       sync.Mutex    // the resumable upload's files
+	health     *updHealth    // after an update: this engine's own health check
+	healthGate chan struct{} // closed once the autopilot may run (at once, or after the health check)
+	sched      *scheduler
 }
 
 func main() {
@@ -93,6 +102,9 @@ func main() {
 	noSched := flag.Bool("no-scheduler", false, "TESTS ONLY: no automatic sync / cycles")
 	mcpMode := flag.Bool("mcp", false, "run as the Claude desktop connector (MCP over stdin/stdout) for the running engine")
 	flag.Parse()
+	if v := appVersionAt(*dir); v != "" && version == "dev" {
+		version = v
+	}
 	if *mcpMode { // Claude desktop starts this; it talks to the engine the owner opened (mcp.go)
 		os.Exit(runMCP(*dataDir, os.Stdin, os.Stdout))
 	}
@@ -114,7 +126,7 @@ func main() {
 	if data == root || strings.HasPrefix(data, root+string(os.PathSeparator)) {
 		log.Fatalf("the data folder %s is inside the app folder, where an update would replace it", data)
 	}
-	s := &server{root: root, data: data, token: randHex(16), subs: map[chan []byte]bool{}, idle: *idle, shutdown: make(chan struct{}), noBrowser: *noBrowser}
+	s := &server{root: root, data: data, token: randHex(16), subs: map[chan []byte]bool{}, idle: *idle, shutdown: make(chan struct{}), noBrowser: *noBrowser, healthGate: make(chan struct{})}
 	if p, err := filepath.EvalSymlinks(exe); err == nil && exe != "" {
 		s.exe = p
 	}
@@ -154,6 +166,7 @@ func main() {
 	}()
 	u := "http://" + s.addr + "/app/"
 	fmt.Printf("%s %s running at %s\n", appName, version, u)
+	s.startHealth() // after an update: the new engine checks itself before its autopilot runs (update_flow.go)
 	fmt.Printf("Your settings, history and creatives are kept in %s (keys in the %s).\n", data, map[string]string{"keychain": "macOS Keychain", "file": "data folder, 0600"}[s.app.sec.Kind()])
 	fmt.Println("Keep this window open while it works. Close the browser tab to stop it; Meta's own rules keep the ads safe while it is closed.")
 	if !*noBrowser && !*afterUpdate {
@@ -167,6 +180,7 @@ func main() {
 		if *mock {
 			mockLink(s.app)
 		}
+		<-s.healthGate
 		if !*noSched {
 			s.sched.start(s.shutdown)
 		}
@@ -309,7 +323,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case p == "/" || p == "/app":
 		http.Redirect(w, r, "/app/", http.StatusFound)
 	case p == "/api/info":
-		writeJSON(w, map[string]any{"app": appName, "version": version, "apiLevel": apiLevel, "token": s.token, "dataDir": s.data})
+		writeJSON(w, map[string]any{"app": appName, "version": version, "folderVersion": appVersionAt(s.root), "apiLevel": apiLevel, "build": buildTag, "token": s.token, "dataDir": s.data})
 	case strings.HasPrefix(p, "/api/"):
 		if !s.authed(r) {
 			jsonErr(w, http.StatusUnauthorized, "missing or wrong token")

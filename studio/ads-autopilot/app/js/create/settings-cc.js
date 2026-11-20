@@ -5,16 +5,17 @@
 //                 the manual steps, live "connected" status, and the prompt to try.
 //   Limits → "Creation": With me in Claude (Max) (default) | Automatic (API, credits); the API fallback is OFF.
 import { tt, getLang } from '../i18n.js';
-import { esc, toast } from '../ui.js';
+import { esc, toast, failCard } from '../ui.js';
 import { api } from '../api.js';
 import { loadCreation } from './banner.js';
 
 export async function mountOneKey(el) {
   if (!el) return;
-  const g = await api('/api/brain/x/gen/settings', { noAccount: true }).catch(() => null);
+  let g = null, err = null;
+  try { g = await api('/api/brain/x/gen/settings', { noAccount: true }); } catch (e) { err = e; }
   if (!el.isConnected) return;
   const one = g && g.one_key;
-  if (!one) { el.innerHTML = ''; return; }
+  if (!one) return failCard(el, tt('AI pictures & video', 'صور وفيديو بالذكاء الاصطناعي'), err || { message: tt('The engine did not describe the AI key.', 'لم يصف المحرك مفتاح الذكاء الاصطناعي.') }, () => mountOneKey(el));
   const on = one.key && one.key.set;
   el.innerHTML = `<div class="card" data-onekey><header><h2>${esc(tt('AI pictures & video', 'صور وفيديو بالذكاء الاصطناعي'))} <span class="chip">${esc(tt('optional', 'اختياري'))}</span></h2>
     <span class="sub">${esc(tt('One Google Gemini API key gives both: AI backgrounds (Gemini image) and moving scenes (Veo). Your real product photo always sits on top. Without it, everything still works: designs and motion are drawn on this Mac, free.', 'مفتاح Google Gemini واحد يعطي الاثنين: خلفيات (Gemini) ومشاهد متحركة (Veo). صورة منتجكِ الحقيقية فوقها دائماً. بدونه يعمل كل شيء: التصاميم والحركة تُرسم على جهازكِ مجاناً.'))}</span></header>
@@ -30,8 +31,10 @@ export async function mountOneKey(el) {
 
 export async function mountClaudeApp(el) {
   if (!el) return;
-  const m = await api('/api/mcp', { noAccount: true }).catch(() => null);
-  if (!el.isConnected || !m) return;
+  let m = null, err = null;
+  try { m = await api('/api/mcp', { noAccount: true }); } catch (e) { err = e; }
+  if (!el.isConnected) return;
+  if (!m) return failCard(el, tt('Claude desktop (your Max plan)', 'تطبيق Claude (باقة Max)'), err, () => mountClaudeApp(el));
   const ar = getLang() === 'ar';
   el.innerHTML = `<div class="card" data-mcp><header><h2>${esc(tt('Claude desktop (your Max plan)', 'تطبيق Claude (باقة Max)'))}</h2>
     <span class="sub">${esc(tt('Create ads by talking to Claude in its own app, on your Max plan: no API credits. Claude reads the brief, makes the ads, and this app draws them, checks the wording and quality, and runs them inside your limits.', 'أنشئي الإعلانات بالحديث مع Claude في تطبيقه على باقة Max: بلا رصيد API. يقرأ Claude الموجز ويصنع الإعلانات، وهذا التطبيق يرسمها ويراجع الصياغة والجودة ويشغّلها ضمن حدودكِ.'))}</span></header>
@@ -54,8 +57,10 @@ export async function mountClaudeApp(el) {
 
 export async function mountCreationMode(el, account) {
   if (!el) return;
-  const s = await api('/api/brain/x/settings').catch(() => null);
-  if (!el.isConnected || !s) return;
+  let s = null, err = null;
+  try { s = await api('/api/brain/x/settings'); } catch (e) { err = e; }
+  if (!el.isConnected) return;
+  if (!s) return failCard(el, tt('Creation', 'الإنشاء'), err, () => mountCreationMode(el, account));
   const withMe = s.creation_mode !== 'api';
   el.innerHTML = `<div class="card" data-creation-mode><header><h2>${esc(tt('Creation', 'الإنشاء'))}</h2><span class="sub">${esc(tt('Who writes the new ads the autopilot needs (fresh creatives for tired ads, test slots, seasons, trending products).', 'من يكتب الإعلانات الجديدة التي يحتاجها الطيار الآلي (بدل المتعبة، خانات الاختبار، المواسم، المنتجات الرائجة).'))}</span></header>
     <label class="row"><input type="radio" name="cm" value="with_me" ${withMe ? 'checked' : ''}> <span><b>${esc(tt('With me in Claude (Max)', 'معي في Claude (Max)'))}</b> <span class="chip acc">${esc(tt('default · no credits', 'افتراضي · بلا رصيد'))}</span><br><span class="small muted">${esc(tt('It tells you (a Mac notification and a banner here) and you make them with Claude on your Max plan.', 'يخبركِ (إشعار على الماك وشريط هنا) وتصنعينها مع Claude على باقة Max.'))}</span></span></label>

@@ -3,7 +3,7 @@
 // model (download once, size + licence + SHA-256 shown). Also the cost-first
 // generation flow the Creatives screen uses.
 import { tt } from '../i18n.js';
-import { esc, toast } from '../ui.js';
+import { esc, toast, failCard } from '../ui.js';
 import { api } from '../api.js';
 import { segStatus, segDownload } from './cutout.js';
 
@@ -12,8 +12,10 @@ const mb = (b) => `${(b / 1e6).toFixed(0)} MB`;
 export async function mountGenerators(el) {
   if (!el) return;
   el.innerHTML = '<div class="sk" style="height:220px"></div>';
-  const [g, st] = await Promise.all([api('/api/brain/x/gen/settings', { noAccount: true }).catch(() => null), segStatus(true)]);
+  let gerr = null;
+  const [g, st] = await Promise.all([api('/api/brain/x/gen/settings', { noAccount: true }).catch((e) => { gerr = e; return null; }), segStatus(true)]);
   if (!el.isConnected) return;
+  if (!g) return failCard(el, tt('Generators and cut-out (advanced)', 'المولّدات والقصّ (متقدم)'), gerr, () => mountGenerators(el));
   paint(el, g, st);
 }
 

@@ -16,12 +16,13 @@ SSE events carry `{"account": "act_…" | "" (app-wide), "data": …}`.
 ## App-wide
 | Method + path | Body → answer |
 |---|---|
-| GET /api/info | `{app, version, apiLevel, token, dataDir}` (same origin only) |
-| GET /api/events?t= | SSE: `hello`, `heartbeat` (15 s), `connections`, `cycle.start`, `cycle.end`, `action.execution`, `action.safety`, `action.kill`, `action.alert`, `alert`, `metrics.updated`, `research.updated`, `backfill.progress`. The engine stops 20 s after the last stream closes. |
+| GET /api/info | `{app, version, folderVersion, apiLevel, build, token, dataDir}` (same origin only). `version` = what the engine started as, `folderVersion` = the app folder's VERSION now: when they differ (the folder was replaced while it ran) or `apiLevel` < the app's `APP_API_LEVEL` (app/js/api.js, 2), the page shows “the old engine is still running” and runs nothing. |
+| GET /api/events?t= | SSE: `hello`, `heartbeat` (15 s), `connections`, `cycle.start`, `cycle.end`, `action.execution`, `action.safety`, `action.kill`, `action.alert`, `alert`, `metrics.updated`, `research.updated`, `backfill.progress`, `update` (the health check after an update). The engine stops 20 s after the last stream closes. |
 | GET /api/connections | `{meta:{ok, error, auth, token:{set,last4}, app_secret:{set,last4}, app_id, api_version, token_type, token_expires_at, token_days_left (-1 none), token_scopes, warning, access_tier, ad_accounts, usage}, claude:{ok,model,error,key,usage}, shop:{ok,products,orders_source,error,feed_url}, secret_store}` |
 | PUT /api/connections/meta | `{auth:"system_user"\|"user_token", token, app_id, app_secret, api_version}` (+ legacy one-account `account_id, page_id, pixel_id`) → the meta block. A user token is exchanged for a 60-day one. |
 | PUT /api/connections/claude | `{api_key, model}` → claude block |
 | PUT /api/connections/shop | `{feed_url, token}` → shop block |
+| POST /api/connections/retest | reads every key again and tests all three (“Try again”) → the connections block. A key that could not be read is `{set:false, error:"…"}` — never just “not set”; keys are refused when they look like another field's (EAA… / sk-ant-… / kbbap_…) |
 | GET /api/accounts | `{selected, accounts:[{id, name, currency, account_status, business_id, relation: owned\|client\|personal, automated, limits_set, autopilot, links:{page_id, instagram_user_id, pixel_id, catalog_id, whatsapp_number}, link_checks:{page:{ok,name,error},…}, backfill:{state, done, total, rows,…}, selected}], businesses:[{id,name,pages[],instagram_accounts[],pixels[],catalogs[],whatsapp_accounts[],ad_accounts[],error}], read_at, global_limits:{daily_aed, monthly_aed}}` |
 | POST /api/accounts/select | `{account}` → `{selected}` (starts its history import if not done) |
 | PUT /api/accounts/{act} | `{automated?: bool, links?: {page_id, instagram_user_id, pixel_id, catalog_id, whatsapp_number}}` → `{account, automated, links, link_checks}` (each link read live) |
@@ -31,7 +32,13 @@ SSE events carry `{"account": "act_…" | "" (app-wide), "data": …}`.
 | GET /api/learnings | portfolio learnings `[{account_id, dimension: format\|objective\|country, key, spend, purchases, revenue, ads, cpa, roas, from, to}]` |
 | POST /api/brain/research | `{focus?}` → Research |
 | POST /api/kill | no account named (or `?account=all`) → EVERY account: `{accounts:[{account, paused[], failed[]}]}`; with an account → that one only |
-| GET /api/update, POST /api/update/upload, /api/update/install, /api/update/rollback | the updater (ported from KBB Studio) |
+| GET /api/update | `{version, engine, apiLevel, canUpdate, dataDir, history[], previous{version,at}, pending, upload{id,name,size,received}, health{state,from,to,kind,reason}, last{kind,from,to,ok,reason,at,seen}, busy, paused}` |
+| POST /api/update/upload/begin | `{name, size, resume}` → `{id, received, chunk}` (same name + size + resume id: the same upload, at the byte it has) |
+| PUT /api/update/upload/chunk?id=&offset= | the bytes, with `X-Chunk-SHA256`; only at exactly `received` (else 409 `{received}`), only whole, only when the sha matches (422) |
+| GET /api/update/upload/status?id= · POST /api/update/upload/finish `{id}` | how much arrived · check + stage → the review (`{id, kind: full\|patch, from, to, notes, added, changed, removed, writes, engine, checks[]}`) or 422 `{error, code}` |
+| POST /api/update/upload | the whole zip in one request (scripts) |
+| POST /api/update/install `{id}` · POST /api/update/rollback | NDJSON, one line per step: `{step: verify\|stage\|swap\|restart, state: run\|done\|fail}`, last `{ok, from, to, kind, restarting}`; then the engine re-executes itself and checks its own health before the autopilot resumes (fails → rolls back by itself) |
+| POST /api/update/cancel `{upload?}` · POST /api/update/ack | drop the checked package / the upload · the last result was seen |
 | POST /api/stop | stops the engine |
 
 ## Per account (X-KAA-Account / ?account=)

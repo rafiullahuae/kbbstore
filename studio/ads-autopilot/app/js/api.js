@@ -1,6 +1,12 @@
 // Engine API: per-launch token from /api/info, sent as X-KAA; the selected ad
 // account goes as X-KAA-Account (SSE: ?t=&account=). 127.0.0.1 only.
 let token = '';
+// APP_API_LEVEL: the engine API this app needs (engine/main.go apiLevel). An older engine still running after the
+// folder was replaced serves THIS app from disk but lacks its endpoints: the page refuses to run on it (staleEngine).
+export const APP_API_LEVEL = 2;
+// staleEngine: why this engine cannot run this app, or '' -- too old an API, or the app folder holds another version
+// than the one the engine started with (the folder was replaced while it ran)
+export const staleEngine = (info) => (!info || !(info.apiLevel >= APP_API_LEVEL) ? 'api' : info.folderVersion && info.version && info.folderVersion !== info.version ? 'version' : '');
 let account = '';
 
 export async function boot() {
@@ -13,6 +19,7 @@ export async function boot() {
 
 export function setAccount(id) { account = id || ''; }
 export function getAccount() { return account; }
+export const getToken = () => token; // this engine start's token (Settings → Updates watches it change)
 
 export async function api(path, opts = {}) {
   const headers = Object.assign({ 'X-KAA': token }, opts.headers || {});
@@ -36,7 +43,7 @@ export async function api(path, opts = {}) {
 // Server-sent events with automatic reconnect (EventSource does it itself).
 export function events(onEvent) {
   const es = new EventSource(`/api/events?t=${encodeURIComponent(token)}`);
-  for (const t of ['hello', 'heartbeat', 'connections', 'cycle.start', 'cycle.end', 'action.execution', 'action.safety', 'action.kill', 'action.alert', 'alert', 'metrics.updated', 'research.updated', 'backfill.progress', 'creation', 'render.request']) {
+  for (const t of ['hello', 'heartbeat', 'connections', 'cycle.start', 'cycle.end', 'action.execution', 'action.safety', 'action.kill', 'action.alert', 'alert', 'metrics.updated', 'research.updated', 'backfill.progress', 'creation', 'render.request', 'update']) {
     es.addEventListener(t, (ev) => { let d = {}; try { d = JSON.parse(ev.data || '{}'); } catch {} onEvent(t, d); });
   }
   es.onerror = () => onEvent('disconnected', {});

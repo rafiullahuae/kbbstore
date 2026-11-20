@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 	_ "time/tzdata" // the account's time zone (Asia/Dubai) on any machine
 
@@ -114,7 +115,8 @@ type App struct {
 	testMetaBase   string
 	testClaudeBase string
 	testFeedURL    string
-	noBackfill     bool // Go tests that do not want the history import running in the background
+	noBackfill     bool        // Go tests that do not want the history import running in the background
+	updating       atomic.Bool // an update is being installed / checked: no sync or cycle starts (update_flow.go)
 }
 
 func newApp(st *store.Store, now func() time.Time, publish func(string, any)) *App {
@@ -330,6 +332,9 @@ func (a *App) testMeta(ctx context.Context) connMeta {
 	}
 	if !c.Token.Set {
 		c.Error = "No Meta token saved (Settings → Connections → Meta; the setup guide shows both ways)."
+		if c.Token.Error != "" {
+			c.Error = "The Meta token could not be read: " + c.Token.Error
+		}
 		return c
 	}
 	_ = a.inspectToken(ctx) // best effort: type, expiry, scopes
@@ -375,6 +380,9 @@ func (a *App) testClaude(ctx context.Context) connClaude {
 	c := connClaude{Model: cc.Model, Key: secrets.Describe(a.sec, "anthropic_key"), Usage: cc.Total()}
 	if !c.Key.Set {
 		c.Error = "No Anthropic API key saved."
+		if c.Key.Error != "" {
+			c.Error = "The Claude key could not be read: " + c.Key.Error
+		}
 		return c
 	}
 	if err := cc.Ping(ctx); err != nil {
@@ -391,6 +399,10 @@ func (a *App) testShop(ctx context.Context) connShop {
 	cfg := a.cfg
 	a.mu.RUnlock()
 	c := connShop{FeedURL: cfg.ShopFeedURL, OrdersSource: src.OrdersSource(), Token: secrets.Describe(a.sec, "shop_token")}
+	if c.Token.Error != "" {
+		c.Error = "The shop connection key could not be read: " + c.Token.Error
+		return c
+	}
 	snap, err := src.Snapshot(ctx)
 	if err != nil {
 		c.Error = err.Error()

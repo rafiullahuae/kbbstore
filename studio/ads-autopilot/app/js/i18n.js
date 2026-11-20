@@ -16,7 +16,8 @@ const AR = {
   'Drop videos here or choose files': 'اسحبي الفيديوهات هنا أو اختاري ملفات', 'New to run': 'جديد للتشغيل', 'Used before': 'استُخدم سابقاً', 'Analyse': 'تحليل',
   'Score': 'التقييم', 'Hook': 'الافتتاحية', 'Suggestions': 'اقتراحات', 'Issues': 'ملاحظات', 'Make motion ad': 'صنع إعلان متحرك', 'Render': 'إنشاء',
   'Search': 'بحث', 'All': 'الكل', 'Proposals': 'المقترحات', 'Winners': 'الرابحون', 'Evidence': 'الأدلة', 'Baselines': 'المعدلات الأساسية',
-  'What it is doing now': 'ما يفعله الآن', 'Not connected': 'غير متصل', 'Connected': 'متصل', 'Test': 'اختبار', 'Keyboard': 'لوحة المفاتيح',
+  'What it is doing now': 'ما يفعله الآن', 'Try again': 'حاولي مرة أخرى', 'It did not load.': 'لم يُحمَّل.',
+  'This engine does not have it: it is older than the app. Close the KBB Ads Autopilot Terminal window and start it again.': 'هذا المحرك لا يملكه: إنه أقدم من التطبيق. أغلقي نافذة Terminal الخاصة بـ KBB Ads Autopilot ثم شغّليه مرة أخرى.', 'Not connected': 'غير متصل', 'Connected': 'متصل', 'Test': 'اختبار', 'Keyboard': 'لوحة المفاتيح',
 };
 let lang = 'en';
 try { lang = localStorage.getItem('kaa.lang') === 'ar' ? 'ar' : 'en'; } catch {}
