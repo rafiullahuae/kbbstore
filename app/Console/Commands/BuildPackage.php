@@ -66,6 +66,10 @@ class BuildPackage extends Command
         // crosses studio commits from building a website package the server must reject. The studio ships as its
         // own zip (studio/reel-studio/tools/package-mac.sh), installed in KBB Studio → Configure → Updates.
         'studio/',
+        // Research reports and their notes (the owner's Claude-run Meta ads research, 20 Nov 2026): documents for
+        // the owner, never server code. Written at the repo root, so UpdateGuard refused the whole package.
+        'reports/',
+        'research_notes/',
         // Repo-only. UpdateGuard rejects it twice over -- no allowed prefix and
         // no extension -- and the server does not read it anyway: the installed
         // version is the newest applied row in update_releases.
