@@ -92,6 +92,9 @@ func TestSelfTuningBounds(t *testing.T) {
 		for w := 0; w < 6; w++ {
 			in.Now = now.AddDate(0, 0, 7*w)
 			L.Tune(in, r, econ, mode, b)
+			if L.Tuned.HardStopMult != 0 && (L.Tuned.HardStopMult < b.HardStopMin || L.Tuned.HardStopMult > b.HardStopMax) {
+				t.Fatalf("%s: tuned %.2f outside the bounds", mode, L.Tuned.HardStopMult)
+			}
 			r2 := L.Apply(r, model.Knobs{}, b)
 			if r2.HardStopMult < b.HardStopMin-1e-9 || r2.HardStopMult > b.HardStopMax+1e-9 {
 				t.Fatalf("%s: multiple %.2f outside the bounds", mode, r2.HardStopMult)
@@ -110,6 +113,13 @@ func TestSelfTuningBounds(t *testing.T) {
 		if v := L.Apply(r, model.Knobs{HardStopMult: 3.5}, b).HardStopMult; v != r.HardStopMult {
 			t.Fatalf("tuning overrode the owner's knob: %.2f", v)
 		}
+	}
+	// bounds the owner tightened BELOW the current value: the first step lands inside them, not half way
+	var tight Ledger
+	tb := model.TuneBounds{HardStopMin: 1.5, HardStopMax: 2}
+	tight.Tune(in, DefaultRules(), econ, "bounds", tb)
+	if v := tight.Tuned.HardStopMult; v < 1.5 || v > 2 {
+		t.Fatalf("tightened bounds: tuned %.2f, want 1.5–2", v)
 	}
 	var off Ledger
 	off.Tuned = Tuned{HardStopMult: 2, Applied: true}

@@ -171,7 +171,7 @@ func TestJobEditAndSkip(t *testing.T) {
 	js := ac.jobSet()
 	js.Jobs = append(js.Jobs,
 		Job{ID: "test-a", Kind: "test", Title: "AR test", When: now.Add(time.Hour), Status: "planned", Lang: "ar", Format: "image", ProductIDs: []string{}, Source: "planner"},
-		Job{ID: "test-b", Kind: "test", Title: "AR test 2", When: now.Add(time.Hour), Status: "planned", Lang: "ar", Format: "image", ProductIDs: []string{}, Source: "planner"})
+		Job{ID: "test-b", Kind: "test", Title: "AR test 2", When: now.Add(-time.Minute), Status: "planned", Lang: "ar", Format: "image", ProductIDs: []string{}, Source: "planner"}) // due now: only the skip holds it
 	ac.saveJobs(js)
 	s := testServer(ac)
 	code, out := call(t, s, "PUT", "/api/jobs/test-a", ac.id, map[string]any{"product_ids": []string{"6120", "7301"}, "format": "carousel", "copy_direction": "hydration for Ramadan nights", "move_hours": -2})

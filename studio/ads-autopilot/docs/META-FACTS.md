@@ -217,3 +217,34 @@ Short link prefix: `MAPI` = `https://developers.facebook.com/documentation/ads-c
   omit them for Advantage+ placements. — `MAPI/audiences/reference/placement-targeting.md`
 - **[verified]** `frequency_control_specs` can be written only on REACH / THRUPLAY ad sets.
   — `MAPI/reference/ad-account/adsets.md`. Engine: refuses a frequency cap on sales ad sets, with that reason.
+
+## §19 The media-buying layer (read 20 Nov 2026 by the media-buying lane)
+- **[verified]** Advantage+ audience never expands "location constraints, minimum age, language, and custom audience
+  exclusions"; `age_range` is a suggestion with it on; from v23 `advantage_audience` must be explicit on create.
+  — `MAPI/audiences/reference/targeting-expansion/advantage-audience.md`. Engine: no language (locale) targeting (it
+  would be a hard limit); buyers are excluded with `excluded_custom_audiences` (honoured).
+- **[verified]** `existing_customer_budget_percentage` is not available for new Advantage+ campaigns. Meta's replacement:
+  two ad sets under the campaign budget, one including the existing customers (`custom_audiences` with
+  `targeting_relaxation_types {custom_audience: 0}`) with an ad-set `daily_spend_cap` (+ optional
+  `daily_min_spend_target`), one excluding them. — `MAPI/advantage-campaigns.md` ("Replicate
+  existing_customer_budget_percentage behavior"). Engine: `create_adset {spend_cap, strict_audiences: 1}` (growth tier).
+- **[verified]** Ad set `attribution_spec`: a list of `{event_type: CLICK_THROUGH | VIEW_THROUGH | ENGAGED_VIDEO_VIEW,
+  window_days}`; `daily_spend_cap` / `daily_min_spend_target` int64 "in your account currency", only under a campaign
+  daily budget. — `MAPI/reference/ad-account/adsets.md`. **[inferred]** the spend-cap unit is the minor unit like every
+  other budget field (fils), which the engine sends.
+- **[verified]** Website custom audience `rule {inclusions, exclusions}`, each `{operator, rules [{event_sources,
+  retention_seconds, filter}]}`; up to 10 rules. The page's table says "if field is event, must use `=`" while its own
+  examples use `"eq"`: the engine keeps `eq` (as before). — `MAPI/audiences/guides/audience-rules.md`
+- **[verified]** Dynamic retargeting without a product-audience object: ad set `targeting.product_audience_specs
+  [{product_set_id, inclusions [{retention_seconds, rule {event {eq}}}], exclusions [...]}]`; each rule one event with
+  `eq`. Cross-sell: the audience on set A, the promoted set B. — `MAPI/advantage-catalog-ads/get-started.md`
+- **[verified]** Product-set filters: `retailer_id {is_any: [...]}`, `availability {eq: "in stock"}`, `and` / `or`
+  composites, max 500 KiB; an empty set never delivers. — `MAPI/reference/product-catalog/product_sets.md`
+- **[verified]** Custom audience `approximate_count_lower_bound` / `_upper_bound` (−1 for inactive lookalikes) and
+  `delivery_status {code, description}` (200 = ready). — `MAPI/reference/custom-audience.md`
+- **[verified]** Learning phase: an ad set leaves it "after about 50 results in the week after the ad set's last
+  significant edit"; a significant edit restarts it. — `facebook.com/business/help/112167992830700`
+- **[verified]** Locale ids come from `GET /search?type=adlocale&q=…` (never hard-coded). — `MAPI/audiences/reference/targeting-search.md`
+- **Practitioner heuristics** (labelled "practice" on Strategy → Our playbook): small-budget split ~80/20, retargeting
+  scaled only under a 7-day frequency of ~3, 3–6 concepts per ad set, tests inside the main campaign, ≤ 20% steps
+  every 3 days, cost cap only from ~50 purchases a week, Reels-first, benefit-first copy, seasonal ramp.

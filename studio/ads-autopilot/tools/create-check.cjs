@@ -245,7 +245,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const full = await api('/api/launch', 'POST', { creative_ids: sv1.saved_creative_ids.filter((x) => /-1x1$/.test(x)), launch: true });
   await api('/api/limits', 'PUT', { max_active_ads: 14 });
   check('a launch above max active ads is refused up front, clearly', full.s === 409 && /no free ad slot/.test(full.j.error), `HTTP ${full.s}: ${full.j && full.j.error}`);
-  check('Products tool', Array.isArray(prods) && prods.length === 1 && prods[0].id === '3195', `cleanser → ${prods.map((p) => p.id).join()}`);
+  check('Products tool', Array.isArray(prods) && prods.length === 2 && prods.map((p) => p.id).sort().join() === '3195,7301', `cleanser → ${prods.map((p) => p.id).join()} (the mock feed has two cleansers since 20 Nov)`);
 
   // 7 ─ reliability: close the tab mid-render, reopen, the same call finishes once
   const args2 = { ideas: [Object.assign(idea(false), { angle: 'a calm low-pH routine', template: 'glow' })] };

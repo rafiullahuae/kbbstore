@@ -552,3 +552,41 @@ func lessonsBrief(ls []Lesson) string {
 	}
 	return b.String()
 }
+
+// RecordLaunches: ads the ENGINE launched (the funnel build, the job queue, occasions) join the outcomes ledger too,
+// each with its prediction, so the learning covers every ad the app runs, not only the planner's.
+func (e *Engine) RecordLaunches(acct string, now time.Time, creatives []model.Creative, shop model.ShopSnapshot, props []model.Proposal, done map[string]bool) {
+	lib := map[string]model.Creative{}
+	for _, c := range creatives {
+		lib[c.ID] = c
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	var L Ledger
+	e.load(acct, "ledger", &L)
+	have := map[string]bool{}
+	for _, p := range L.Preds {
+		have[p.ID] = true
+	}
+	tgt := ComputeEconomics(e.B.Econ, shopFromModel(shop), now).TargetCPA
+	n := 0
+	for _, p := range props {
+		if p.Kind != model.KindCreateAd || !done[p.ID] {
+			continue
+		}
+		cid, _ := p.Params["creative_id"].(string)
+		c, ok := lib[cid]
+		id := acct + "|" + p.ID
+		if !ok || have[id] {
+			continue
+		}
+		angle := strings.TrimPrefix(strings.TrimPrefix(c.Angle, "starter: "), "occasion: ")
+		pr := Pred{ID: id, At: now, Kind: "launch", Object: p.Target, CreativeID: c.ID, ProductIDs: c.ProductIDs, Angle: angle, Format: "single_image", Lang: c.Lang, Due: now.Add(scoreAfter)}
+		pr.ExpCPA = L.Predict(pr.Angle, pr.Format, pr.Lang, pr.ProductIDs, tgt)
+		L.Preds = append(L.Preds, pr)
+		n++
+	}
+	if n > 0 {
+		e.save(acct, "ledger", L)
+	}
+}

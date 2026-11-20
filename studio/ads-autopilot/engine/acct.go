@@ -538,6 +538,19 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		results = append(results, ex.Run(ctx, ac.env(model.AutopilotAuto), ownerProps)...)
 		co.Proposals = append(co.Proposals, ownerProps...)
 	}
+	if rl, ok := br.(interface {
+		RecordLaunches(string, time.Time, []model.Creative, model.ShopSnapshot, []model.Proposal, map[string]bool)
+	}); ok { // every ad the app launched joins the outcomes ledger (brain/learn.go)
+		done := map[string]bool{}
+		for _, r := range results {
+			if r.Status == "done" {
+				done[r.ProposalID] = true
+			}
+		}
+		if len(done) > 0 {
+			rl.RecordLaunches(ac.id, a.now(), ac.creatives.all(), in.Shop, co.Proposals, done)
+		}
+	}
 	ac.keepProposals(t0, env.Limits.Autopilot, co.Proposals, results)
 	ac.noteStarter(co.Proposals, results, env.Limits.Autopilot, stWhy)
 	ac.noteJobs(results, env.Limits.Autopilot)

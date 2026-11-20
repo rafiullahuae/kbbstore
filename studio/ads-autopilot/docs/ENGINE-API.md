@@ -92,3 +92,19 @@ connector. Both feed the same pipeline: catalogue check → policy linter → lo
 engine in `<data>/engine.json`. Tools: get_brief, list_products, get_research, create_ad_set, revise, save_to_library,
 run_it (progress notifications when a progressToken is sent). Tests: `KAA_NOTIFY_CMD`, `KAA_OPEN_CMD`, `KAA_CLAUDE_CONFIG`.
 Check: `NODE_PATH=… node tools/create-check.cjs [--shots]`.
+
+## The media-buying layer (Strategy, Playbook, job queue, funnel, occasions — 20 Nov 2026)
+| Method + path | Body → answer |
+|---|---|
+| GET/PUT /api/playbook | the owner's Playbook (`instructions`, `focus[]`/`avoid[]` {kind: product\|brand\|category\|keyword, value, label}, `freshness_pct`, `min_stock`, `min_margin_pct`, `countries`, `age_min/max`, `gender`, `languages`, `exclude_buyers_days`, `split`/`small_split`, offers `offers_allowed`/`free_gift`/`coupon_code`/`gifts`/`pay_later`, `econ` {vat_pct, bnpl_fee_pct, card_fee_pct, cod_fee_pct, delivery_aed, gift_cost_aed}, `knobs`, `self_tune` off\|bounds\|ask, `tune_bounds`, `occasions[]`, `auto_approve_occasions`); fields not sent keep their value; `{reset:true}` = defaults → `{playbook, defaults, excluded[], products, allowed}`. Enforced in code before the brain sees the shop. Logged. |
+| GET /api/jobs | `{jobs[], replan_note, mode}` — the editable queue (build_funnel, test, refresh, occasion, funnel_retargeting, funnel_existing, funnel_lookalike) |
+| PUT /api/jobs/{id} | `{when?, move_hours?, budget_aed?, product_ids?, lang?, format: image\|carousel, copy_direction?, note?}` (products must be playbook-allowed; budget ≤ daily limit) |
+| POST /api/jobs/{id}/approve \| skip \| unskip \| reject-ad \| restore-ad | approve a due job runs it now through every executor check (both modes); occasions never run without it unless auto-approve |
+| GET /api/jobs/{id}/brief | the exact brief: owner brief, copy system + user turn, planner system |
+| POST /api/jobs/replan | `{note}` → a plan-only (shadow) cycle with the note in the planner input |
+| GET /api/funnel | `{tier, split, target_cpa, pieces[{key, name, status, why, objects[], settings[{key, value, why, meta}], suggestions[]}], audiences[{…, purpose, used_by[], ready}]}` |
+| GET /api/occasions | `{occasions[], upcoming[], packages[] (occasion jobs), ads {job: creatives[]}, auto_approve}` |
+| POST /api/accounts/{act}/autolink | links the account's Page / Instagram / pixel / catalog from its business (best name match) and checks them live |
+| GET /api/state | + `readiness[{key, what, what_ar, fix, label, step}]` — why nothing can run yet, with the fix |
+| GET /api/brain/x/strategy | economics with the math, the funnel split, rules (value, default, source yours\|self-tuned\|default, knob), ranked products with the why, `agency` (Our playbook), seasons |
+| GET /api/brain/x/learning | weekly reports (AR + EN), health (prediction error by week), lessons, tuned thresholds, changes; POST `learning/reset-tuning`, `learning/apply-proposal` |
