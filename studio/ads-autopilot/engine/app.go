@@ -171,7 +171,11 @@ func (a *App) wire() {
 	a.mu.Lock()
 	cfg := a.cfg
 	a.mu.Unlock()
-	mc := meta.New(func() string { v, _ := a.sec.Get("meta_token"); return v })
+	// each client reads its key on every request and, when the Keychain refused the read, says so instead of "no key
+	// saved" (secrets.Key)
+	mk := secrets.NewKey(a.sec, "meta_token")
+	mc := meta.New(mk.Value)
+	mc.TokenErr = mk.Err
 	mc.AppSecret = func() string { v, _ := a.sec.Get("meta_app_secret"); return v }
 	mc.Version = cfg.APIVersion
 	if a.testMetaBase != "" {
@@ -192,7 +196,9 @@ func (a *App) wire() {
 			}
 		}
 	}
-	cc := claude.New(func() string { v, _ := a.sec.Get("anthropic_key"); return v })
+	ck := secrets.NewKey(a.sec, "anthropic_key")
+	cc := claude.New(ck.Value)
+	cc.KeyErr = ck.Err
 	cc.Model = cfg.ClaudeModel
 	if a.testClaudeBase != "" {
 		cc.Base = a.testClaudeBase
@@ -209,7 +215,10 @@ func (a *App) wire() {
 		feed = a.testFeedURL
 	}
 	a.mu.Lock()
-	a.meta, a.claude, a.shopSrc = mc, cc, shop.New(feed, func() string { v, _ := a.sec.Get("shop_token"); return v })
+	sk := secrets.NewKey(a.sec, "shop_token")
+	src := shop.New(feed, sk.Value)
+	src.TokenErr = sk.Err
+	a.meta, a.claude, a.shopSrc = mc, cc, src
 	if a.brain == nil {
 		a.brain = newBrain(model.BrainDeps{LLM: cc, Log: func(k, s string, d any) { a.st.Append(k, s, d) }, DataDir: a.st.Dir, Publish: a.publish})
 	}

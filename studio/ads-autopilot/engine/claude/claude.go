@@ -49,6 +49,7 @@ type Client struct {
 	Base    string
 	Model   string
 	Key     func() string
+	KeyErr  func() error // optional: why Key() was "" although a key may be saved (the Keychain refused the read)
 	HTTP    *http.Client
 	OnUsage func(purpose, model string, u model.LLMUsage, ms int64, err error)
 	Retries int
@@ -85,7 +86,7 @@ func (c *Client) Complete(ctx context.Context, req model.LLMRequest) (model.LLMR
 		key = c.Key()
 	}
 	if key == "" {
-		return model.LLMResponse{}, errors.New("no Anthropic key saved (Settings → Connections → Claude)")
+		return model.LLMResponse{}, c.noKey()
 	}
 	mdl := req.Model
 	if mdl == "" {
@@ -255,7 +256,7 @@ func (c *Client) Ping(ctx context.Context) error {
 		key = c.Key()
 	}
 	if key == "" {
-		return errors.New("no Anthropic key saved (Settings → Connections → Claude)")
+		return c.noKey()
 	}
 	hr, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(c.Base, "/")+"/v1/models/"+c.Model, nil)
 	if err != nil {
@@ -277,4 +278,14 @@ func (c *Client) Ping(ctx context.Context) error {
 		return &APIError{Status: resp.StatusCode, Type: e.Error.Type, Message: e.Error.Message}
 	}
 	return nil
+}
+
+// noKey: the key is "": either never saved, or saved but unreadable (then say so, never "no key saved").
+func (c *Client) noKey() error {
+	if c.KeyErr != nil {
+		if err := c.KeyErr(); err != nil {
+			return fmt.Errorf("the saved Claude key could not be read: %w", err)
+		}
+	}
+	return errors.New("no Anthropic key saved (Settings → Connections → Claude)")
 }
