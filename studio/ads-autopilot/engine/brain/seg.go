@@ -373,7 +373,7 @@ func (e *Engine) serveSeg(w http.ResponseWriter, r *http.Request, p string, js f
 		case http.MethodGet:
 			b, err := os.ReadFile(f)
 			if err != nil {
-				http.NotFound(w, r)
+				w.WriteHeader(http.StatusNoContent) // not computed yet: a miss, not an error
 				return
 			}
 			w.Header().Set("content-type", "image/png")

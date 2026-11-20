@@ -2,13 +2,15 @@ import { tt } from '../i18n.js';
 import { esc, toast, empty, tip, txt } from '../ui.js';
 import { api, getAccount } from '../api.js';
 import { dropList, S as STORE } from '../main.js';
-import { renderSpec, TEMPLATES, toPNG } from '../creative/render.js';
-import { recordMotion } from '../creative/motion.js';
+import { renderSpec, FAMILIES as TEMPLATES, FAMILY_LABELS, toPNG } from '../creative/render.js';
+import { renderVideo } from '../creative/motion.js';
+import { score, shipDesign } from '../creative/quality.js';
+import { generateBackground } from '../creative/gen-ui.js';
 
 let tab = 'images', langF = 'all', busy = '';
 const thumbs = new Map();
 let lastMotion = null;
-const TPL = { clean: ['Clean K-beauty', 'كوري أنيق'], glow: ['Glow / dewy', 'توهّج ونضارة'], ingredient: ['Ingredient spotlight', 'المكوّن البطل'], offer: ['Price badge', 'شارة السعر'], routine: ['Routine steps', 'خطوات الروتين'], qa: ['Product Q&A', 'أسئلة المنتج'] };
+const TPL = Object.assign({ clean: FAMILY_LABELS.hero }, FAMILY_LABELS);
 const still = () => location.hash.startsWith('#/creatives');
 
 export function render(S, el) {
@@ -53,11 +55,12 @@ function images(S, v, designs, lib) {
   };
 }
 
+// Every format is scored first (creative/quality.js); below threshold it is
+// refused, not posted.
 export async function postDesigns(designs, source) {
-  for (const d of designs) for (const f of d.formats || ['1:1']) {
-    const { b64 } = await toPNG(await renderSpec(d, f));
-    await api('/api/creatives', { method: 'POST', body: { lang: d.lang, format: f, png: b64, headline: d.headline, primary_text: d.primary_text || d.sub || '', cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids, angle: d.angle, source } });
-  }
+  let refused = 0;
+  for (const d of designs) refused += (await shipDesign(d, source, renderSpec, toPNG)).refused.length;
+  if (refused) toast(tt(`${refused} format(s) held back by the quality check (see the design).`, `حُجبت ${refused} صيغة لعدم اجتيازها فحص الجودة.`));
 }
 
 async function fill(v, ds) {
@@ -72,53 +75,105 @@ async function fill(v, ds) {
   }
 }
 
-async function preview(d) {
-  if (!d) return;
+async function preview(d0) {
+  if (!d0) return;
+  const d = Object.assign({}, d0);
   const g = document.getElementById('dlg');
-  g.style.maxWidth = '760px';
-  const ar = d.lang === 'ar';
-  g.innerHTML = `<div class="dl"><div class="spread"><h2>${txt(d.headline)}</h2><button class="ghost small" id="x">✕</button></div>
-  <div class="mock"><div><p class="small muted">${esc(tt('Feed', 'الخلاصة'))}</p><div class="phone"><div class="scr"><div class="post"><header><i></i><b>kbeautybliss</b><span class="muted">· ${esc(tt('Sponsored', 'مُموَّل'))}</span></header>
-    <div class="txt" ${ar ? 'dir="rtl" lang="ar"' : ''}>${esc(d.primary_text || d.sub || '')}</div><canvas id="pf"></canvas>
-    <div class="bar" ${ar ? 'dir="rtl"' : ''}><span>kbeautybliss.com<br><b>${esc(d.headline)}</b></span><span class="chip">${esc(ar ? 'تسوّقي الآن' : 'Shop now')}</span></div></div></div></div></div>
-  <div><p class="small muted">${esc(tt('Story / Reels', 'ستوري / ريلز'))}</p><div class="phone"><div class="scr"><div class="story"><canvas id="ps"></canvas><div class="cta">⌃ ${esc(ar ? 'تسوّقي الآن' : 'Shop now')}</div></div></div></div></div></div></div>`;
+  g.style.maxWidth = '980px';
+  const paint = async () => {
+    const ar = d.lang === 'ar';
+    g.innerHTML = `<div class="dl"><div class="spread"><h2>${txt(d.headline)}</h2><button class="ghost small" id="x">✕</button></div>
+    <div class="row" style="margin:6px 0 12px"><label class="f"><span>${esc(tt('Design', 'التصميم'))}</span><select id="p-fam">${TEMPLATES.map((k) => `<option value="${k}" ${(d.template === k || (d.template === 'clean' && k === 'hero')) ? 'selected' : ''}>${esc(tt(...TPL[k]))}</option>`).join('')}</select></label>
+      ${ar ? `<label class="f"><span>${esc(tt('Numerals', 'الأرقام'))}</span><select id="p-num"><option value="arab" ${d.numerals !== 'latn' ? 'selected' : ''}>٠١٢٣</option><option value="latn" ${d.numerals === 'latn' ? 'selected' : ''}>0123</option></select></label>` : ''}
+      <button type="button" class="ghost" id="p-ai" style="align-self:flex-end">${esc(d.bg ? tt('New AI background', 'خلفية جديدة بالذكاء الاصطناعي') : tt('AI background…', 'خلفية بالذكاء الاصطناعي…'))}</button>
+      ${d.bg ? `<button type="button" class="ghost" id="p-noai" style="align-self:flex-end">${esc(tt('Original art', 'التصميم الأصلي'))}</button>` : ''}
+      <button type="button" id="p-ship" style="align-self:flex-end">${esc(tt('Add to library', 'إضافة إلى المكتبة'))}</button></div>
+    <div class="mock"><div><p class="small muted">${esc(tt('Feed 4:5', 'الخلاصة ٤:٥'))}</p><div class="phone"><div class="scr"><div class="post"><header><i></i><b>kbeautybliss</b><span class="muted">· ${esc(tt('Sponsored', 'مُموَّل'))}</span></header>
+      <div class="txt" ${ar ? 'dir="rtl" lang="ar"' : ''}>${esc(d.primary_text || d.sub || '')}</div><canvas id="pf"></canvas>
+      <div class="bar" ${ar ? 'dir="rtl"' : ''}><span>kbeautybliss.com<br><b>${esc(d.headline)}</b></span><span class="chip">${esc(ar ? 'تسوّقي الآن' : 'Shop now')}</span></div></div></div></div></div>
+    <div><p class="small muted">${esc(tt('Story / Reels 9:16', 'ستوري / ريلز ٩:١٦'))}</p><div class="phone"><div class="scr"><div class="story"><canvas id="ps"></canvas><div class="cta">⌃ ${esc(ar ? 'تسوّقي الآن' : 'Shop now')}</div></div></div></div></div>
+    <div style="flex:1;min-width:220px"><p class="small muted">${esc(tt('Quality check', 'فحص الجودة'))}</p><div id="pq"><div class="sk" style="height:160px"></div></div></div></div></div>`;
+    g.querySelector('#x').onclick = () => g.close();
+    g.querySelector('#p-fam').onchange = (e) => { d.template = e.target.value; paint(); };
+    const pn = g.querySelector('#p-num'); if (pn) pn.onchange = (e) => { d.numerals = e.target.value; paint(); };
+    const na = g.querySelector('#p-noai'); if (na) na.onclick = () => { delete d.bg; paint(); };
+    g.querySelector('#p-ai').onclick = async () => {
+      const pf = g.querySelector('#pf');
+      try {
+        const bg = await generateBackground(d, '4:5', 'image', (pf.assets && pf.assets[0] && pf.assets[0].palette) || [], askCost);
+        if (bg) { d.bg = bg; toast(tt(`Background made ($${bg.usd.toFixed(2)}). Your product photo is on top.`, `تم إنشاء الخلفية ($${bg.usd.toFixed(2)}).`)); paint(); }
+      } catch (e) { toast(e.message); }
+    };
+    g.querySelector('#p-ship').onclick = async () => {
+      const r = await shipDesign(d, 'owner', renderSpec, toPNG).catch((e) => { toast(e.message); return null; });
+      if (r) { toast(r.refused.length ? tt(`${r.posted} added, ${r.refused.length} held back by the quality check.`, `أُضيفت ${r.posted}، وحُجبت ${r.refused.length}.`) : tt(`${r.posted} formats added.`, `أُضيفت ${r.posted} صيغ.`)); dropList('creatives'); }
+    };
+    const pf = await renderSpec(d, '4:5', g.querySelector('#pf'));
+    await renderSpec(d, '9:16', g.querySelector('#ps'));
+    const qs = [];
+    for (const f of d.formats || ['1:1', '4:5', '9:16']) qs.push([f, await score(d, f, pf.assets)]);
+    const pq = g.querySelector('#pq');
+    if (pq) pq.innerHTML = `<table class="small"><tbody>${qs.map(([f, q]) => `<tr><td><b>${esc(f)}</b></td><td><span class="chip ${q.ok ? 'acc' : ''}">${q.ok ? '✓' : '✕'} ${q.score}</span></td><td>${esc(tt('product', 'المنتج'))} ${Math.round(q.checks.product_share * 100)}% · ${esc(tt('contrast', 'التباين'))} ${q.checks.min_contrast} · ${esc(tt('text', 'النص'))} ${Math.round(q.checks.text_density * 100)}%${q.fails.length ? `<br><span style="color:var(--danger)">${q.fails.map(esc).join('<br>')}</span>` : ''}</td></tr>`).join('')}</tbody></table>
+      <p class="small muted">${esc(tt('Cut-out', 'القصّ'))}: ${esc((qs[0] || [null, { checks: {} }])[1].checks.cutout || '')}</p>`;
+  };
   g.showModal();
-  g.querySelector('#x').onclick = () => g.close();
-  await renderSpec(d, '4:5', g.querySelector('#pf'));
-  await renderSpec(d, '9:16', g.querySelector('#ps'));
+  await paint();
+}
+
+// The price, the provider and the prompt (editable) BEFORE anything is paid.
+function askCost({ provider, est, prompt }) {
+  return new Promise((ok) => {
+    const box = document.createElement('dialog');
+    box.style.maxWidth = '640px';
+    box.innerHTML = `<div class="dl"><h2>${esc(tt('Generate with AI', 'إنشاء بالذكاء الاصطناعي'))}</h2>
+      <p><b>${esc(provider ? provider.name : est.provider)}</b> · <b>$${est.usd.toFixed(2)}</b> ${est.seconds ? `(${est.seconds} s)` : ''} · ${esc(tt('this month', 'هذا الشهر'))} $${est.spent_usd.toFixed(2)} / $${est.budget_usd.toFixed(2)}</p>
+      <p class="small muted">${esc(est.price_note)}</p>
+      ${est.ok ? '' : `<p class="small" style="color:var(--danger)">${esc(est.why)}</p>`}
+      <label class="f"><span>${esc(tt('Art direction (written by the brain; edit if you like)', 'التوجيه الفني (كتبه الذكاء؛ يمكنكِ تعديله)'))}</span><textarea rows="7" style="width:100%">${esc(prompt)}</textarea></label>
+      <div class="row" style="margin-top:10px;justify-content:flex-end"><button type="button" class="ghost" data-no>${esc(tt('Cancel', 'إلغاء'))}</button><button type="button" data-yes ${est.ok ? '' : 'disabled'}>${esc(tt(`Generate for $${est.usd.toFixed(2)}`, `إنشاء مقابل $${est.usd.toFixed(2)}`))}</button></div></div>`;
+    document.body.appendChild(box);
+    const done = (v) => { box.close(); box.remove(); ok(v); };
+    box.querySelector('[data-no]').onclick = () => done(null);
+    box.querySelector('[data-yes]').onclick = () => done(box.querySelector('textarea').value.trim());
+    box.showModal();
+  });
 }
 
 function motion(S, v, designs) {
   const src = designs.filter((d) => langF === 'all' || d.lang === langF);
-  v.innerHTML = `<div class="grid g21"><div class="card"><header><h2>${esc(tt('Make a motion ad', 'صنع إعلان متحرك'))} ${tip(tt('6–15 s video from a design: the product and text animate in, captions are burned in (Arabic for Arabic ads) inside the Reels safe zone, then a call-to-action end card. Add your own music if you like.', 'فيديو ٦–١٥ ثانية من التصميم مع ترجمة مدمجة داخل المنطقة الآمنة وبطاقة ختامية.'))}</h2></header>
+  v.innerHTML = `<div class="grid g21"><div class="card"><header><h2>${esc(tt('Make a motion ad', 'صنع إعلان متحرك'))} ${tip(tt('6–15 s MP4: the product is revealed with a light sweep and particles, the headline writes in (Arabic right to left), benefits arrive as captions, a Ken Burns moment on the product photo, then an end card with the price and the call to action. Add your music and the cuts follow its beat.', 'فيديو MP4 من ٦ إلى ١٥ ثانية: ظهور المنتج، العنوان يُكتب من اليمين، المزايا، ثم بطاقة السعر والدعوة. أضيفي موسيقاكِ فتتبع القطعات الإيقاع.'))}</h2></header>
     ${src.length ? `<div class="row"><label class="f" style="flex:1"><span>${esc(tt('Design', 'التصميم'))}</span><select id="m-src">${src.map((d) => `<option value="${esc(d.id)}">${esc((d.lang || '').toUpperCase())} · ${esc(d.headline)}</option>`).join('')}</select></label>
-    <label class="f"><span>${esc(tt('Format', 'المقاس'))}</span><select id="m-f"><option>9:16</option><option>4:5</option></select></label>
-    <label class="f"><span>${esc(tt('Seconds', 'الثواني'))}</span><input id="m-d" type="number" min="6" max="15" value="8" style="width:80px"></label>
+    <label class="f"><span>${esc(tt('Format', 'المقاس'))}</span><select id="m-f"><option>9:16</option><option>4:5</option><option>1:1</option></select></label>
+    <label class="f"><span>${esc(tt('Seconds', 'الثواني'))}</span><input id="m-d" type="number" min="6" max="15" value="10" style="width:80px"></label>
     <label class="f"><span>${esc(tt('Music (optional)', 'موسيقى (اختياري)'))}</span><input id="m-a" type="file" accept="audio/*"></label></div>
-    <div class="row" style="margin-top:10px"><button type="button" id="m-go" ${busy ? 'disabled' : ''}>${esc(tt('Render', 'إنشاء'))}</button><span class="small muted" id="m-p"></span></div>` : `<p class="muted">${esc(tt('Make an image pair first; motion ads are built from designs.', 'أنشئي تصميماً أولاً؛ الإعلانات المتحركة تُبنى من التصاميم.'))}</p>`}
-    <div id="m-out" style="margin-top:12px">${lastMotion ? `<video controls playsinline src="${lastMotion.url}" style="max-height:420px;border-radius:16px"></video>` : ''}</div></div>
-    <div class="card"><header><h2>${esc(tt('How it is built', 'كيف يُصنع'))}</h2></header><ul class="small ink2" style="padding-inline-start:18px;margin:0">
-      <li>${esc(tt('Recorded in the browser from the template (no upload of your photos anywhere).', 'يُسجَّل داخل المتصفح من القالب.'))}</li><li>${esc(tt('Captions stay above the bottom 35% and below the top 14% of a 9:16 frame (Reels UI).', 'تبقى الترجمة خارج أعلى ١٤٪ وأسفل ٣٥٪ من الإطار.'))}</li>
-      <li>${esc(tt('MP4 when the browser can record it, otherwise WebM; saved to the library.', 'MP4 إن أمكن وإلا WebM؛ يُحفظ في المكتبة.'))}</li></ul></div></div>`;
+    <div class="row" style="margin-top:10px"><button type="button" id="m-go" ${busy ? 'disabled' : ''}>${esc(tt('Render MP4', 'إنشاء MP4'))}</button><button type="button" class="ghost" id="m-ai">${esc(tt('AI moving background…', 'خلفية متحركة بالذكاء الاصطناعي…'))}</button><span class="small muted" id="m-p"></span></div>` : `<p class="muted">${esc(tt('Make an image pair first; motion ads are built from designs.', 'أنشئي تصميماً أولاً؛ الإعلانات المتحركة تُبنى من التصاميم.'))}</p>`}
+    </div>
+    <div class="card"><header><h2>${esc(tt('Preview', 'معاينة'))}</h2></header><div class="phone" style="margin:auto"><div class="scr"><div class="story" id="m-out">${lastMotion ? `<video controls playsinline loop autoplay muted src="${lastMotion.url}" style="width:100%;height:100%;object-fit:cover"></video>` : ''}<div class="cta">⌃ ${esc(tt('Shop now', 'تسوّقي الآن'))}</div></div></div></div></div></div>`;
   const goB = v.querySelector('#m-go');
   if (!goB) return;
-  goB.onclick = async () => {
+  let aiBg = null;
+  v.querySelector('#m-ai').onclick = async () => {
     const d = src.find((x) => x.id === v.querySelector('#m-src').value);
-    const f = v.querySelector('#m-f').value, dur = Math.max(6, Math.min(15, +v.querySelector('#m-d').value || 8));
+    try { const bg = await generateBackground(Object.assign({}, d), v.querySelector('#m-f').value, 'video', [], askCost); if (bg) { aiBg = bg; toast(tt('Moving background ready; render the MP4.', 'الخلفية المتحركة جاهزة.')); } } catch (e) { toast(e.message); }
+  };
+  goB.onclick = async () => {
+    const d = Object.assign({}, src.find((x) => x.id === v.querySelector('#m-src').value), aiBg ? { bg: aiBg } : {});
+    const f = v.querySelector('#m-f').value, dur = Math.max(6, Math.min(15, +v.querySelector('#m-d').value || 10));
     busy = 'motion'; goB.disabled = true;
     const p = v.querySelector('#m-p');
     try {
-      const r = await recordMotion(d, f, dur, v.querySelector('#m-a').files[0] || null, (x) => { p.textContent = `${Math.round(x * 100)}%`; });
+      const r = await renderVideo(d, f, dur, v.querySelector('#m-a').files[0] || null, (x) => { p.textContent = `${Math.round(x * 100)}%`; });
       if (lastMotion) URL.revokeObjectURL(lastMotion.url);
       lastMotion = { url: URL.createObjectURL(r.blob) };
       const b64 = await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.readAsDataURL(r.blob); });
       await api('/api/creatives', { method: 'POST', body: { lang: d.lang, format: f, video: b64, headline: d.headline, primary_text: d.primary_text || d.sub || '', cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids, angle: d.angle, source: 'brain' } });
-      p.textContent = `${r.mime} · ${Math.round(r.blob.size / 1024)} KB · ${dur} s`;
+      p.textContent = `${r.mime} · ${r.codec} · ${(r.blob.size / 1e6).toFixed(2)} MB · ${dur} s${r.beats ? ' · ' + r.beats + ' ' + tt('beats', 'إيقاع') : ''}`;
       window.__kaaMotion = { mime: r.mime, bytes: r.blob.size, width: r.width, height: r.height, ms: r.ms };
       dropList('creatives');
     } catch (e) { toast(e.message); p.textContent = e.message; }
     busy = '';
-    if (still() && lastMotion) v.querySelector('#m-out').innerHTML = `<video controls playsinline src="${lastMotion.url}" style="max-height:420px;border-radius:16px"></video>`;
+    const out = v.querySelector('#m-out');
+    if (still() && lastMotion && out) out.innerHTML = `<video controls playsinline loop autoplay muted src="${lastMotion.url}" style="width:100%;height:100%;object-fit:cover"></video><div class="cta">⌃ ${esc(tt('Shop now', 'تسوّقي الآن'))}</div>`;
     goB.disabled = false;
   };
 }
