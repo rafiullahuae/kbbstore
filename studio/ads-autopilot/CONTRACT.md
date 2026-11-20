@@ -55,6 +55,27 @@ sees `{set: true, last4}`), never in the repo. The owner never pastes keys in ch
 | POST /api/brain/{plan\|research\|copy} | LANE BRAIN's endpoints, served by the engine calling into `brain` |
 | POST /api/kill | stop everything: pause every campaign the app made, autopilot off |
 
+## Account scoping (the owner, 20 Nov 2026 — added by LANE ENGINE)
+"Read the whole business portfolio including all ad accounts, and train itself … switch from one ad account to
+another, and give multiple ad accounts to automate separately."
+- The engine lists every ad account the Meta token sees (business owned + client, and personal ones) with the
+  business's Pages, Instagram accounts, pixels, catalogs and WhatsApp accounts: `GET /api/accounts`.
+- **Everything is per ad account**: automated on/off, limits + autopilot mode, linked assets (`AccountLinks`), the
+  Meta safety rules + spend_cap, cooldowns / idempotency ledger, audit log, plan, report, creatives, history import —
+  in `~/KBB Ads Autopilot Data/accounts/<act_id>/`. An account with no limits cannot launch anything.
+- Account-scoped endpoints take `X-KAA-Account: act_…` (or `?account=`), else the selected account
+  (`POST /api/accounts/select`). SSE events are `{account, data}`. `POST /api/kill` without an account stops ALL.
+  Full list: `docs/ENGINE-API.md`.
+- An optional all-accounts daily/monthly cap (`/api/limits/global`) is checked by the executor on top of each
+  account's own.
+- **One `CycleInput` = one ad account.** Its proposals act on that account only. Extra inputs (model fields, added,
+  nothing renamed): `Links`, `LongHistory` (campaign-level daily rows up to 37 months), `Creatives37` (every past
+  ad's creative kind), `Learnings` (portfolio-wide aggregates by format / objective / country across all accounts).
+- Proposal kinds added: `create_audience`, `create_lookalike`, `create_product_set`; `upload_creative` takes
+  `format` image | video | carousel | flexible | catalog | collection; ad sets take `destination` website | whatsapp |
+  messenger | instagram_direct, placements and Advantage+ audience suggestions. Params per kind: comment above
+  `model.Proposal`; facts: `docs/META-FACTS.md`; setup without Business Verification: `docs/META-SETUP.md`.
+
 ## The one rule: Claude proposes, the executor decides
 `brain` NEVER calls Meta. It returns **Proposals**; only the engine's executor writes to Meta, after its checks.
 ```go
