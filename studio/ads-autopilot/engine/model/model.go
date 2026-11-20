@@ -41,6 +41,12 @@ type CycleInput struct {
 	Creatives []Creative // library incl. unused
 	Research  Research   // latest notes
 	History   []LogEntry // recent decisions + outcomes, so it learns
+	// added by LANE ENGINE (multi-account, 20 Nov): the account's linked assets, its long history (campaign level, by
+	// day, up to 37 months, from the history import) and the portfolio-wide learnings across all the owner's accounts
+	Links       AccountLinks
+	LongHistory []MetricRow
+	Creatives37 []HistoryCreative
+	Learnings   []Learning
 }
 
 type CycleOutput struct {
@@ -60,10 +66,34 @@ const (
 	KindSetBid         = "set_bid"
 	KindUploadCreative = "upload_creative"
 	KindArchive        = "archive"
+	// added by LANE ENGINE (every ad type, 20 Nov): audiences and catalog product sets (they spend nothing themselves)
+	KindCreateAudience   = "create_audience"    // website (pixel) or engagement (Page / Instagram) custom audience
+	KindCreateLookalike  = "create_lookalike"   // from one of the app's custom audiences
+	KindCreateProductSet = "create_product_set" // a filtered set of the catalog, for Advantage+ catalog ads
 )
 
-var ProposalKinds = []string{KindCreateCampaign, KindCreateAdSet, KindCreateAd, KindPause, KindResume, KindSetBudget, KindSetBid, KindUploadCreative, KindArchive}
+var ProposalKinds = []string{KindCreateCampaign, KindCreateAdSet, KindCreateAd, KindPause, KindResume, KindSetBudget, KindSetBid, KindUploadCreative, KindArchive,
+	KindCreateAudience, KindCreateLookalike, KindCreateProductSet}
 
+// Proposal params by kind (all money AED; the executor validates every one, see engine/executor/formats.go):
+//
+//	create_campaign  name, daily_budget, bid_strategy, type: "sales" (default) | "catalog"
+//	create_adset     name, campaign_id, countries[], destination: website (default) | whatsapp | messenger | instagram_direct,
+//	                 daily_budget (only under a campaign without one), bid_amount, advantage_audience (1 default | 0),
+//	                 age_min (18–25 with Advantage+ audience), age_range [min,max] and genders [1|2] (suggestions),
+//	                 locales [ids], custom_audiences [ids], excluded_custom_audiences [ids], product_set_id (catalog),
+//	                 placements {publisher_platforms[], facebook_positions[], instagram_positions[]} (omit = Advantage+
+//	                 placements), frequency_cap {max, days} (refused: Meta allows it only for REACH/THRUPLAY ad sets)
+//	upload_creative  format: image | video | carousel | flexible | catalog | collection, creative_id (library) or
+//	                 cards [{creative_id, headline, link}] (carousel 2–10) or creative_ids [] + headlines[] + texts[]
+//	                 (flexible), template {headline, primary_text, link} + product_set_id (catalog), canvas_id
+//	                 (collection: an Instant Experience made in Ads Manager), destination (as the ad set),
+//	                 enhancements {feature: OPT_IN|OPT_OUT} (allow-listed), headline, primary_text (for the linter)
+//	create_ad        name, adset_id, creative_id (library id or the tmp: of an upload_creative), activate (default true)
+//	create_audience  name, source: website | page | instagram, event: PageView | ViewContent | AddToCart |
+//	                 InitiateCheckout | Purchase | engaged, retention_days 1–180 (website) / 1–365 (engagement)
+//	create_lookalike name, origin_audience_id, ratio 0.01–0.10
+//	create_product_set name, filter (Meta's product-set filter JSON, e.g. {"brand":{"eq":"COSRX"}})
 type Proposal struct {
 	ID         string         `json:"id"`
 	Kind       string         `json:"kind"`   // create_campaign | create_adset | create_ad | pause | resume | set_budget | set_bid | upload_creative | archive
