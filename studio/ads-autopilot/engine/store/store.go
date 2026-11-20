@@ -241,7 +241,16 @@ func (s *Store) Load(name string, v any) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(b, v)
+	if err := json.Unmarshal(b, v); err != nil {
+		// a file this version cannot read is kept as it was before the next Save replaces it: the owner's settings
+		// are never overwritten by defaults without a copy (the caller says so in Activity)
+		keep := p + ".unreadable"
+		if _, e := os.Stat(keep); os.IsNotExist(e) {
+			_ = WriteAtomic(keep, b, 0o600)
+		}
+		return fmt.Errorf("%s.json could not be read (a copy is kept as %s): %w", name, filepath.Base(keep), err)
+	}
+	return nil
 }
 
 // Save writes <name>.json atomically (temp file + rename), 0600.

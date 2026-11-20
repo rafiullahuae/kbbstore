@@ -115,6 +115,7 @@ type Client struct {
 	Base       string
 	Version    string
 	Token      func() string
+	TokenErr   func() error  // optional: why Token() was "" although a token may be saved (the Keychain refused the read)
 	AppSecret  func() string // optional: adds appsecret_proof
 	HTTP       *http.Client
 	MaxRetries int
@@ -249,6 +250,11 @@ type filePart struct {
 
 func (c *Client) do(ctx context.Context, method, path string, params url.Values, idemKey string, file *filePart, out any) error {
 	if c.Token == nil || c.Token() == "" {
+		if c.TokenErr != nil {
+			if err := c.TokenErr(); err != nil { // saved but unreadable: never "no token saved"
+				return fmt.Errorf("the saved Meta token could not be read: %w", err)
+			}
+		}
 		return &Error{Code: 190, Message: "no Meta token saved (Settings → Connections → Meta)"}
 	}
 	write := method != http.MethodGet

@@ -28,12 +28,13 @@ const DefaultAPI = "https://kbeautybliss.com/autopilot-api/v1"
 const apiPrefix = "https://kbeautybliss.com/"
 
 type APISource struct {
-	Base  string
-	Token func() string // read on every Snapshot, so a key saved in Settings applies at once
-	Feed  *FeedSource
-	HTTP  *http.Client
-	Days  int // how many shop days of orders (default 90)
-	Now   func() time.Time
+	Base     string
+	Token    func() string // read on every Snapshot, so a key saved in Settings applies at once
+	TokenErr func() error  // optional: why Token() was "" although a key may be saved (the Keychain refused the read)
+	Feed     *FeedSource
+	HTTP     *http.Client
+	Days     int // how many shop days of orders (default 90)
+	Now      func() time.Time
 
 	anyBase bool // tests only: lets an httptest server stand in for the shop
 }
@@ -142,7 +143,16 @@ func (s *APISource) get(ctx context.Context, path string, q url.Values, into any
 // show products while saying why orders are missing.
 func (s *APISource) Snapshot(ctx context.Context) (model.ShopSnapshot, error) {
 	snap, err := s.Feed.Snapshot(ctx)
-	if err != nil || s.token() == "" {
+	if err != nil {
+		return snap, err
+	}
+	if s.token() == "" {
+		if s.TokenErr != nil { // saved but unreadable: the products still show, and the error says why orders are missing
+			if kerr := s.TokenErr(); kerr != nil {
+				snap.OrdersSource, snap.Orders = "none", []model.OrderDay{}
+				return snap, fmt.Errorf("the saved shop connection key could not be read: %w", kerr)
+			}
+		}
 		return snap, err
 	}
 	if err := s.addShopData(ctx, &snap); err != nil {

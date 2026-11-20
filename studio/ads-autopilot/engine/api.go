@@ -81,6 +81,23 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
 		defer cancel()
 		writeJSON(w, a.connectAll(ctx))
+	case p == "/api/warmup" && r.Method == http.MethodGet:
+		writeJSON(w, a.WarmState())
+	case p == "/api/warmup" && r.Method == http.MethodPost: // the page came back (visible again / online again)
+		var in struct {
+			Reason string `json:"reason"`
+		}
+		_ = readJSON(r, &in, 1024)
+		reason := map[string]string{"online": "online"}[in.Reason]
+		if reason == "" {
+			reason = "page"
+		}
+		started := false
+		if s.schedOn.Load() && !a.warm.running.Load() { // never with -no-scheduler (the checks drive every step themselves)
+			started = true
+			go func() { a.warmUp(context.Background(), reason) }()
+		}
+		writeJSON(w, map[string]any{"started": started, "state": a.WarmState()})
 	case strings.HasPrefix(p, "/api/connections/") && r.Method == http.MethodPut:
 		s.putConnection(w, r, strings.TrimPrefix(p, "/api/connections/"))
 	case p == "/api/accounts" && r.Method == http.MethodGet:
@@ -751,21 +768,11 @@ func (s *server) brainResearch(w http.ResponseWriter, r *http.Request) {
 		Focus string `json:"focus"`
 	}
 	_ = readJSON(r, &q, maxBody)
-	a.mu.RLock()
-	br, shopSnap, prev := a.brain, a.shopSnap, a.research
-	a.mu.RUnlock()
-	res, err := br.Research(ctx, model.ResearchInput{Now: a.now(), Shop: shopSnap, Previous: prev, Focus: q.Focus})
+	res, err := a.refreshResearch(ctx, q.Focus)
 	if err != nil {
 		jsonErr(w, 502, err.Error())
 		return
 	}
-	a.mu.Lock()
-	a.research = res
-	a.mu.Unlock()
-	a.dirtyAll()
-	_ = a.st.Save("research", res)
-	a.st.Append("research", "research updated", map[string]any{"trends": len(res.Trends), "angles": len(res.Angles), "sources": len(res.Sources)})
-	s.publish("research.updated", map[string]any{"account": "", "data": map[string]any{"at": res.UpdatedAt}})
 	writeJSON(w, res)
 }
 
@@ -825,6 +832,28 @@ func (s *server) testAPI(w http.ResponseWriter, r *http.Request, p string) {
 		target = mockURL + "/__mock/tag"
 	case "/api/test/claude-calls": // the fake Claude's scripted answers, by kind
 		target = mockClaudeURL + "/__mock/claude-calls"
+	case "/api/test/offline": // {"on": bool, "pause_ms": n}: Meta stops answering (no internet) / answers again; pause_ms
+		// slows each warm-up step so the checks can photograph the "Updating…" bar
+		var in struct {
+			On      bool `json:"on"`
+			PauseMs int  `json:"pause_ms"`
+		}
+		if err := readJSON(r, &in, 4096); err != nil || in.PauseMs < 0 || in.PauseMs > 60000 {
+			jsonErr(w, 400, "on, pause_ms 0–60000")
+			return
+		}
+		a := s.app
+		a.mu.Lock()
+		if in.On {
+			a.testMetaBase = "http://127.0.0.1:1"
+		} else {
+			a.testMetaBase = mockURL
+		}
+		a.mu.Unlock()
+		a.wire()
+		warmPause.Store(int64(in.PauseMs) * int64(time.Millisecond))
+		writeJSON(w, map[string]any{"offline": in.On})
+		return
 	case "/api/test/clock": // {"advance_hours": n}: move the engine's and the fake Meta's clock forward
 		var in struct {
 			AdvanceHours float64 `json:"advance_hours"`
