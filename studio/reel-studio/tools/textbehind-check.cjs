@@ -26,10 +26,16 @@
 //             every country I mention; the frame stays fully visible at 1440×900 and 1280×800; changes are live on the
 //             monitor before Apply (a draft); Cancel / Esc = byte-identical project; Apply / ⌘↵ = ONE undo step; a drag
 //             on the video stays live; ▶ Play preview loops the element; it remembers where it was put, never over the frame
+//   colors    country colours (20 Nov): every country in the picker has a palette whose colours are its flag's (the flag-icons
+//             SVG); an element made before draws byte for byte as before (the textbehind.js of 44fa2555f drawn beside it);
+//             solid / flag stripes / two-tone / White reach the letters in the flag's colours for 12 places; a carousel
+//             changes palette with each country; the gradients are made once, not per frame; 🎨 Look → Colours: own
+//             colours per country are live, stick, ↺ restores byte for byte; Cancel byte-identical, Apply ONE step; JOBS IN
+//             white / as main / the current country / its own; shots/textbehind-colors/*.png
 //   hygiene   no console errors, nothing leaves 127.0.0.1
 //   shots     shots/textbehind/*.png at 1440×900 (and the editor's four tabs at 1280×800)
 //
-// usage: NODE_PATH=/home/user/kbbstore/node_modules node tools/textbehind-check.cjs   (TB_ONLY=base,footage,popup: parts)
+// usage: NODE_PATH=/home/user/kbbstore/node_modules node tools/textbehind-check.cjs   (TB_ONLY=base,colors,footage,popup: parts; colors needs base)
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -312,7 +318,7 @@ async function popupChecks(page, e, ev, shot, clip) {
   await settled();
   const before = await J(), sOpen = await steps(), m0 = await monitor();
   await page.dblclick('.tl-item[data-id="' + ID + '"]'); await page.waitForSelector('.tbp');
-  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp [data-tb-fill="black"]'); await settled();
+  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp .tb-cmode [data-v="one"]'); await page.click('.tbp [data-tb-fill="black"]'); await settled();
   const m1 = await monitor(), sLive = await steps(), fillNow = await ev((id) => window.FT.find(id).style.tb.fill.colors[0], ID);
   ok(mdiff(m0, m1) > 1 && sLive === sOpen && fillNow === '#111111', `changes show on the video before Apply: Look → Black changes the monitor by ${mdiff(m0, m1)}/255 (mean), still ${sLive - sOpen} new undo steps (a draft; fill ${fillNow})`);
 
@@ -334,7 +340,7 @@ async function popupChecks(page, e, ev, shot, clip) {
   await shot('inspector-summary-1440x900');
   await page.click('[data-tb-edit]'); await page.waitForSelector('.tbp');
   ok(insp.secs.join('|') === 'Theme element|Text behind the host' && /EUROPE/.test(insp.sum), `the Inspector keeps only Start / Duration and a short summary (“${insp.sum}”) with ✎ Edit text behind…, which opens the editor (${insp.secs.join(', ')})`);
-  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp [data-tb-fill="gold"]');
+  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp .tb-cmode [data-v="one"]'); await page.click('.tbp [data-tb-fill="gold"]');
   await page.selectOption('.tbp [data-tb-font]', 'Bebas Neue');
   await page.evaluate(() => { const r = document.querySelector('.tbp [data-tb-shadow]'); r.value = '0.8'; r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); });
   await page.click('.tbp [data-tbp-tab="words"]'); await page.fill('.tbp [data-tbp-word]', 'GERMANY'); await page.waitForTimeout(100);
@@ -351,10 +357,10 @@ async function popupChecks(page, e, ev, shot, clip) {
   const k0 = await J(), ks0 = await steps();
   await page.dblclick('.tl-item[data-id="' + ID + '"]'); await page.waitForSelector('.tbp');
   const viaTl = await isOpen();
-  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp [data-tb-fill="white"]'); await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp .tb-cmode [data-v="one"]'); await page.click('.tbp [data-tb-fill="white"]'); await page.keyboard.press('Escape'); await page.waitForTimeout(200);
   const esc = { open: await isOpen(), same: (await J()) === k0, steps: (await steps()) - ks0 };
   await page.dblclick('.tl-item[data-id="' + ID + '"]'); await page.waitForSelector('.tbp');
-  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp [data-tb-fill="white"]'); await page.keyboard.press('Control+Enter'); await page.waitForTimeout(200);
+  await page.click('.tbp [data-tbp-tab="look"]'); await page.click('.tbp .tb-cmode [data-v="one"]'); await page.click('.tbp [data-tb-fill="white"]'); await page.keyboard.press('Control+Enter'); await page.waitForTimeout(200);
   const ent = { open: await isOpen(), steps: (await steps()) - ks0, fill: await ev((id) => window.FT.find(id).style.tb.fill.colors[0], ID) };
   ok(viaTl && !esc.open && esc.same && esc.steps === 0 && !ent.open && ent.steps === 1 && ent.fill === '#ffffff', `double-click on the timeline opens it; Esc cancels (byte-identical, no step), ⌘↵ applies (one step, white kept)`);
 
@@ -443,6 +449,294 @@ async function popupChecks(page, e, ev, shot, clip) {
   ok(viaPlace && !mt.open && mt.toast && mt.n.length === 2 && mt2 === mt.n[0], `Place elements ＋ opens it too; “every country I mention” places ${mt.n.length} and does NOT open it, but its toast’s ✎ Edit opens the first one`);
   await page.click('.tbp [data-tbp-cancel]');
   return ID;
+}
+
+// ════════ colours: each country in its own flag's colours (the owner, 20 Nov: "Europe has it's own colors, and each
+// country color itself, and i can change these from white to colored, and manual colors of each country") ════════
+// Mutation notes: drop the per-entry look in drawTextBehind (look: lookFor(...) → tb.fill) and "carousel palette per
+// country" goes red; drop the GRADS lookup in fillOf and "gradients made once" goes red; give tbOf a cc default of
+// 'country' and "old element byte-identical" goes red; skip the override in countryLook and "manual override" goes red.
+const SHOTSC = path.join(ROOT, 'shots', 'textbehind-colors');
+const PRE = '44fa2555f';   // textbehind.js as it drew before country colours (the byte-identical reference)
+const GALLERY = ['europe', 'ae', 'sa', 'gb', 'de', 'ca', 'fr', 'it', 'au', 'us', 'in', 'gulf'];
+const NAMED = { red: '#ff0000', green: '#008000', gold: '#ffd700', gray: '#808080', purple: '#800080' };
+const rgbOf = (h) => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map((x) => x + x).join(''); const v = parseInt(h, 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; };
+const cdist = (a, b) => { const x = rgbOf(a), y = rgbOf(b); return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); };
+
+async function paletteChecks() {
+  // pure data, in Node: every country in the picker has a palette, and every colour of it is in its flag's own drawing
+  const C = await import(path.join(ROOT, 'app', 'themes', 'tb-colors.js'));
+  const { COUNTRIES } = await import(path.join(ROOT, 'app', 'themes', 'capsules', 'countries.js'));
+  const flags = JSON.parse(fs.readFileSync(path.join(ROOT, 'app', 'themes', 'capsules', 'flags-4x3.json'), 'utf8')).flags;
+  const fills = (s) => { const f = new Set([...s.matchAll(/(?:fill|stroke)[=:]"?(#[0-9a-fA-F]{3,6}|[a-z]+)/g)].map((m) => NAMED[m[1]] || m[1].toLowerCase()).filter((x) => x[0] === '#')); if (/<path(?![^>]*fill=)[^>]*d=/.test(s)) f.add('#000'); return [...f]; };
+  // flag-icons draws these two in other shades than the flags' official ones (Eritrea's blue light, the CAR's pure)
+  const SHADE = new Set(['er:#4189DD', 'cf:#003082']);
+  const missing = [], far = [];
+  let n = 0;
+  for (const [code] of COUNTRIES) {
+    const p = C.palOf(code); if (!p) { if (code !== 'aq') missing.push(code); continue; }
+    n++;
+    const svg = flags[code]; if (!svg) continue;
+    const F = fills(svg);
+    for (const c of p.all) { const d = Math.min(...F.map((f) => cdist(c, f))); if (d > 130 && !SHADE.has(code + ':' + c)) far.push(`${code} ${c} (${Math.round(d)})`); }
+  }
+  ok(!missing.length, `every country in the picker has its own palette (${n} of ${COUNTRIES.length}; Antarctica has no flag of its own)${missing.length ? ': missing ' + missing.join(' ') : ''}`);
+  ok(!far.length, `every palette colour is a colour of that country's flag as the carousel draws it (flag-icons SVG, ≤130 RGB)${far.length ? ': ' + far.slice(0, 8).join(', ') : ''}`);
+  // the flags the owner named, checked by hand: colours and their order
+  const P = (c) => C.palOf(c);
+  const named = [
+    ['ae', P('ae').stripes.join() === '#00732F,#FFFFFF,#000000' && P('ae').main === '#FF0000', 'UAE green / white / black, red'],
+    ['sa', P('sa').all.join() === '#006C35,#FFFFFF', 'Saudi green / white'],
+    ['gb', P('gb').all.join() === '#012169,#FFFFFF,#C8102E', 'UK navy / white / red'],
+    ['de', P('de').stripes.join() === '#000000,#DD0000,#FFCE00' && P('de').dir === 'v', 'Germany black / red / gold, top to bottom'],
+    ['europe', P('europe').all.join() === '#003399,#FFCC00', 'Europe EU blue + gold'],
+    ['ca', P('ca').all.join() === '#D52B1E,#FFFFFF' && P('ca').dir === 'h', 'Canada red / white / red, side to side'],
+    ['fr', P('fr').stripes.join() === '#000091,#FFFFFF,#E1000F' && P('fr').dir === 'h', 'France blue / white / red, side to side'],
+  ];
+  ok(named.every((x) => x[1]), `the flags named in the brief: ${named.map((x) => (x[1] ? '' : '✗ ') + x[2]).join(' · ')}`);
+  for (const r of ['gulf', 'middle-east', 'asia', 'africa', 'north-america', 'south-america', 'oceania']) if (!P(r)) ok(false, `region ${r} has a palette`);
+  ok(['gulf', 'middle-east', 'asia', 'africa', 'north-america', 'south-america', 'oceania', 'europe'].every((r) => P(r)), 'every region and continent the picker offers has its palette (Europe, the Gulf, the Middle East, Asia, Africa, North and South America, Oceania)');
+}
+
+async function colorChecks(page, ev, shot, STUDIO) {
+  fs.mkdirSync(SHOTSC, { recursive: true });
+  const shotC = async (name) => { await page.waitForTimeout(400); await page.screenshot({ path: path.join(SHOTSC, name + '.png') }); };
+  const savePng = (name, url) => fs.writeFileSync(path.join(SHOTSC, name + '.png'), Buffer.from(url.split(',')[1], 'base64'));
+  // the reference: textbehind.js before this change, loaded beside it (its registrations stubbed)
+  let pre = null;
+  try { pre = execFileSync('git', ['-C', ROOT, 'show', PRE + ':studio/reel-studio/app/themes/textbehind.js']).toString(); } catch {}
+  if (pre) fs.writeFileSync(path.join(STUDIO, 'app', 'themes', 'textbehind-pre.js'), pre.replace(/\bregisterPrepare\(/g, '((..._) => {})(').replace(/\bregisterTextSlots\(/g, '((..._) => {})('));
+  await ev(async () => {
+    window.TBC = await import('/app/themes/tb-colors.js');
+    /** the opaque letter pixels of an element alone (rows y0..y1 of the render, if given): [[r,g,b]…] */
+    window.INK = async (id, t, scale = 0.5, rows = null) => {
+      const tm = await window.TEXTMASK(id, t, scale), px = [];
+      for (let y = rows ? rows[0] : 0; y < (rows ? rows[1] : tm.H); y++) for (let x = 0; x < tm.W; x++) { const o = (y * tm.W + x) * 4; if (tm.rgba[o + 3] === 255) px.push([tm.rgba[o], tm.rgba[o + 1], tm.rgba[o + 2]]); }
+      return { px, tm };
+    };
+    /** the share of pixels within tol of a colour */
+    window.SHARE = (px, hex, tol = 48) => { const v = parseInt(hex.slice(1), 16), r = (v >> 16) & 255, g = (v >> 8) & 255, b = v & 255; let n = 0; for (const p of px) if (Math.hypot(p[0] - r, p[1] - g, p[2] - b) <= tol) n++; return px.length ? n / px.length : 0; };
+    /** ink row bands (lines) of a transparent render */
+    window.BANDS = (tm) => { const rows = []; for (let y = 0; y < tm.H; y++) { let n = 0; for (let x = 0; x < tm.W; x++) if (tm.rgba[(y * tm.W + x) * 4 + 3] === 255) n++; rows.push(n > 0); } const out = []; let s = -1; rows.forEach((on, y) => { if (on && s < 0) s = y; if (!on && s >= 0) { out.push([s, y]); s = -1; } }); if (s >= 0) out.push([s, tm.H]); return out.filter((b) => b[1] - b[0] > 3); };
+    window.ADD = (o) => window.TC.addTextBehind(window.CTX, { t0: 0.2, dur: 3.4, ...o }).id;
+    window.DEL = async (ids) => { const { ops } = await import('/app/core/history.js'); window.ED.apply(ops.removeItems(ids, 'clean')); window.ED.history.seal(); };
+  });
+
+  // ── 1. old elements draw byte for byte as before (no cc: the look they always had) ──
+  if (!pre) ok(false, `the reference textbehind.js at ${PRE} could not be read (git)`);
+  else {
+    const same = await ev(async () => {
+      const NEW = await import('/app/themes/textbehind.js'), OLD = await import('/app/themes/textbehind-pre.js'), G = await import('/app/themes/globe-badge.js');
+      await window.R.prepareRender(window.ED.project);
+      const flag = G.colorsOf('de');
+      const base = () => JSON.parse(JSON.stringify(OLD.TB_DEFAULTS));
+      const cases = [
+        ['white word', {}, 1.5],
+        ['gold gradient + outline', { fill: { type: 'grad', dir: 'v', colors: ['#fff3b0', '#f5c542', '#b8780a'] }, outline: 0.04, outlineCol: '#202020' }, 1.5],
+        ['flag stripes + JOBS IN own colour', { fill: { type: 'grad', dir: 'v', hard: true, colors: flag }, top: { on: true, color: '#ff0000' } }, 1.5],
+        ['soft blend + JOBS IN same', { fill: { type: 'grad', dir: 'h', colors: flag }, top: { on: true } }, 1.5],
+        ['carousel mid-switch', { top: { on: true }, mode: 'carousel', car: { items: [{ id: 'a', en: 'Europe', cont: 'europe', flag: 'eu' }, { id: 'b', en: 'Canada', flag: 'ca' }, { id: 'c', en: 'Malta', flag: 'mt' }], per: 1, style: 'up' } }, 1.1],
+        ['ticker', { mode: 'carousel', car: { items: [{ id: 'a', en: 'Europe', cont: 'europe' }, { id: 'b', en: 'Canada', flag: 'ca' }], per: 1, style: 'ticker' } }, 1.3],
+      ];
+      const out = [];
+      for (const [name, patch, tl] of cases) {
+        const tb = Object.assign(base(), patch, patch.top ? { top: { ...base().top, ...patch.top } } : {}, patch.car ? { car: { ...base().car, ...patch.car } } : {});
+        const style = { el: 'tbehind', code: 'europe', lang: 'en', key: 'person', tb, text: {} };
+        const img = (draw) => { const c = document.createElement('canvas'); c.width = 520; c.height = 300; const g = c.getContext('2d', { willReadFrequently: true }); g.translate(10, 10); draw(g, {}, { tl, d: 3.4, t: tl + 0.2, w: 500, h: 280, txt: style.text, style, item: { id: 'tbx', style }, project: null, env: {} }); return g.getImageData(0, 0, 520, 300).data; };
+        const a = img(OLD.drawTextBehind), b = img(NEW.drawTextBehind);
+        let diff = 0, ink = 0; for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) diff++; if (i % 4 === 3 && a[i]) ink++; }
+        out.push([name, diff, ink]);
+      }
+      return out;
+    });
+    ok(same.every(([, d, ink]) => d === 0 && ink > 2000), `an element made before (no colour mode) draws byte for byte as before: ${same.map(([n, d, ink]) => `${n} ${d} bytes differ (${ink} px)`).join(' · ')}`);
+  }
+  const legacy = await ev(() => { const s = window.TB.tbOf({}); return [s.cc.mode, s.top.cmode]; });
+  ok(legacy[0] === null && legacy[1] === 'same', `an old style reads as it was: no colour mode, JOBS IN “as main” (${legacy.join(', ')})`);
+  const fresh = await ev(() => { const id = window.ADD({ code: 'de' }), s = window.find(id).style.tb; window.ED.history.undo(); return [s.cc?.mode, s.cc?.style, s.top.cmode]; });
+  ok(fresh[0] === 'country' && fresh[1] === 'stripes' && fresh[2] === 'white', `a NEW element starts in Country colours (flag stripes), JOBS IN white (${fresh.join(', ')})`);
+
+  // ── 2. each style reaches the letters in the flag's colours ──
+  const styles = await ev(async (codes) => {
+    const out = [];
+    for (const code of codes) {
+      const p = window.TBC.palOf(code), row = { code };
+      const id = window.ADD({ code, tb: { cc: { mode: 'country', style: 'solid' } } });
+      let { px } = await window.INK(id, 1.6); row.solid = +window.SHARE(px, p.main).toFixed(2);
+      window.TC.setTb(window.CTX, id, { cc: { mode: 'country', style: 'stripes' } }, 'x', false);
+      ({ px } = await window.INK(id, 1.6));
+      row.stripes = [...new Set(p.stripes)].map((c) => +window.SHARE(px, c).toFixed(3));
+      row.known = +[...new Set([...p.all, ...p.stripes])].reduce((a, c) => a + window.SHARE(px, c, 40), 0).toFixed(2);
+      window.TC.setTb(window.CTX, id, { cc: { mode: 'country', style: 'two' } }, 'x', false);
+      ({ px } = await window.INK(id, 1.6));
+      row.two = [p.two[0], p.two[1], p.two[2]].map((c) => +window.SHARE(px, c).toFixed(3));
+      window.TC.setTb(window.CTX, id, { cc: { mode: 'white' } }, 'x', false);
+      ({ px } = await window.INK(id, 1.6)); row.white = +window.SHARE(px, '#ffffff', 30).toFixed(2);
+      await window.DEL([id]);
+      out.push(row);
+    }
+    return out;
+  }, GALLERY);
+  for (const r of styles) {
+    ok(r.solid > 0.55 && r.stripes.every((s) => s > 0.04) && r.known > 0.75 && r.two.every((s) => s > 0.02) && r.white > 0.8,
+      `${r.code}: solid ${Math.round(r.solid * 100)}% of the letters in its main colour · stripes: every flag colour on the letters (${r.stripes.map((s) => Math.round(s * 100) + '%').join(' / ')}), ${Math.round(r.known * 100)}% of the ink a flag colour · two-tone ${r.two.map((s) => Math.round(s * 100) + '%').join(' / ')} (top, bottom, outline) · White ${Math.round(r.white * 100)}% white`);
+  }
+
+  // ── 3. the carousel changes palette with each country ──
+  const carC = await ev(async () => {
+    const items = [window.CD.continentCap('europe'), window.CD.countryCap('ca'), window.CD.countryCap('de'), window.CD.countryCap('ae')];
+    const id = window.ADD({ code: 'europe', tb: { mode: 'carousel', car: { items, style: 'up', per: 0.8, order: 'list', loop: true } } });
+    const codes = ['europe', 'ca', 'de', 'ae'], out = [];
+    for (let k = 0; k < 4; k++) {
+      const t = 0.2 + k * 0.8 + 0.6, { px } = await window.INK(id, t);
+      const score = codes.map((c) => { const p = window.TBC.palOf(c); return +[...new Set(p.stripes)].reduce((a, x) => a + window.SHARE(px, x, 40), 0).toFixed(2); });
+      // a colour that only the other countries have: Europe's gold, Canada's red, Germany's black-red-gold, the UAE's green
+      out.push({ t: +t.toFixed(2), want: codes[k], best: codes[score.indexOf(Math.max(...score))], score });
+    }
+    window.CARID = id;
+    return out;
+  });
+  ok(carC.every((r) => r.want === r.best), `a carousel Europe → Canada → Germany → UAE wears each country's colours as it comes up: ${carC.map((r) => `${r.t} s ${r.best}${r.want === r.best ? '' : ' (wanted ' + r.want + ')'} [${r.score.join(' ')}]`).join(' · ')}`);
+  // the frame strip, with the host cut out in front (real frames through the export's path)
+  const strip = await ev(async () => {
+    const ed = window.ED, p = ed.project, id = window.CARID;
+    window.TC.placeTb(window.CTX, id, 'head'); ed.history.seal();
+    const skip = window.items().filter((i) => i.type === 'theme.el' && i.id !== id).map((i) => i.id);
+    const ts = [0.75, 1.0, 1.15, 1.6, 1.95, 2.4, 2.75, 3.2], sc = 0.3, W = Math.round(p.canvas.w * sc), Hh = Math.round(p.canvas.h * sc);
+    const big = document.createElement('canvas'); big.width = W * ts.length + 6 * (ts.length - 1); big.height = Hh + 26; const g = big.getContext('2d');
+    g.fillStyle = '#111'; g.fillRect(0, 0, big.width, big.height); g.fillStyle = '#ddd'; g.font = '600 14px system-ui';
+    for (let i = 0; i < ts.length; i++) {
+      const r = await window.RENDER(p, ts[i], sc, skip), c = document.createElement('canvas'); c.width = r.W; c.height = r.H; c.getContext('2d').putImageData(new ImageData(r.d, r.W, r.H), 0, 0);
+      g.drawImage(c, i * (W + 6), 26); g.fillText(ts[i].toFixed(2) + ' s', i * (W + 6) + 6, 18);
+    }
+    return big.toDataURL('image/png');
+  });
+  savePng('carousel-strip-europe-canada-germany-uae', strip);
+
+  // ── 4. gradients are made once, not once per frame ──
+  const gr = await ev(async () => {
+    const ed = window.ED, p = ed.project, sc = 0.5, c = document.createElement('canvas'); c.width = p.canvas.w * sc; c.height = p.canvas.h * sc;
+    const x = c.getContext('2d'), f = await window.E.openFrames(p, ed.media, sc), proto = CanvasRenderingContext2D.prototype, orig = proto.createLinearGradient;
+    let n = 0; proto.createLinearGradient = function (...a) { n++; return orig.apply(this, a); };
+    const skip = new Set(window.items().filter((i) => i.type === 'theme.el' && i.id !== window.CARID).map((i) => i.id));
+    try { for (let i = 0; i < 12; i++) { const t = 0.85 + i * 0.01; await f.load(t); window.R.renderFrame(x, p, t, { scale: sc, source: f.source, skip, preview: true }); } }
+    finally { proto.createLinearGradient = orig; f.close(); }
+    return n;
+  });
+  ok(gr <= 2, `the flag gradients are made once and reused: ${gr} made over 12 frames of a still carousel word (one per frame would be 12)`);
+
+  // ── 5. manual colours per country in the 🎨 Look tab: live, sticks, ↺ puts the flag back; Apply / Cancel ──
+  const id5 = await ev(async () => { const id = window.CARID; window.TC.setTb(window.CTX, id, { top: { on: true } }, 'x', false); window.ED.history.seal(); window.ED.select([id]); window.ED.seek(2.2); window.ED.showSide?.('inspector'); return id; });
+  await page.waitForTimeout(600);
+  await page.click('[data-tb-edit]'); await page.waitForSelector('.tbp'); await page.click('.tbp [data-tbp-tab="look"]'); await page.waitForSelector('.tbp [data-tb-cc-list]');
+  const look = await ev(() => ({ rows: [...document.querySelectorAll('.tbp [data-tb-cc-row]')].map((r) => r.dataset.tbCcRow), mode: document.querySelector('.tbp .tb-cmode .on')?.dataset.v, style: document.querySelector('.tbp .tb-cstyle .on')?.dataset.v, cols: document.querySelectorAll('.tbp [data-tb-cc-row="de"] [data-tb-cc-col]').length }));
+  ok(look.rows.join() === 'europe,ca,de,ae' && look.mode === 'country' && look.style === 'stripes' && look.cols === 3, `🎨 Look → Colours lists this element's countries (${look.rows.join(', ')}), mode ${look.mode}, style ${look.style}, Germany with ${look.cols} colour pickers + outline + ↺`);
+  const proj0 = await ev(() => JSON.stringify({ ...window.ED.project, modified: 0 }));
+  const steps0 = await ev(() => window.steps());
+  const deT = 0.2 + 2 * 0.8 + 0.6;
+  const before = await ev(async (t) => Array.from((await window.INK(window.CARID, t)).tm.rgba), deT);
+  const setCol = (sel, v) => ev(([sel, v]) => { const i = document.querySelector(sel); i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); }, [sel, v]);
+  await setCol('.tbp [data-tb-cc-col="de:0"]', '#00ff00'); await page.waitForTimeout(250);
+  await setCol('.tbp [data-tb-cc-ol="de"]', '#ff00ff'); await page.waitForTimeout(250);
+  const man = await ev(async (t) => { const o = window.find(window.CARID).style.tb.cc.over?.de, { px } = await window.INK(window.CARID, t); return { o, g: +window.SHARE(px, '#00ff00').toFixed(3), blk: +window.SHARE(px, '#000000', 30).toFixed(3), steps: window.steps(), own: !!document.querySelector('.tbp [data-tb-cc-row="de"][data-tb-cc-own]') }; }, deT);
+  ok(man.o?.colors?.[0] === '#00ff00' && man.o?.outline === '#ff00ff' && man.g > 0.12 && man.blk < 0.02 && man.steps === steps0 && man.own, `Germany given its own colours (first stripe green, outline magenta): stored ${JSON.stringify(man.o)}, ${Math.round(man.g * 100)}% of the letters green and its black gone (${man.blk}), live in the draft (no undo step yet), the row marked as own`);
+  await page.selectOption('.tbp [data-tb-cc-style="ca"]', 'solid'); await page.waitForTimeout(250);
+  const caS = await ev(async () => { const { px } = await window.INK(window.CARID, 0.2 + 0.8 + 0.6); return { st: window.find(window.CARID).style.tb.cc.over?.ca?.style, red: +window.SHARE(px, '#D52B1E').toFixed(2) }; });
+  ok(caS.st === 'solid' && caS.red > 0.55, `a style of its own per country: Canada solid (${Math.round(caS.red * 100)}% red) while the others keep flag stripes`);
+  await page.waitForTimeout(300);
+  await shotC('look-tab-countries-1440x900');
+  await page.setViewportSize({ width: 1280, height: 800 }); await page.waitForTimeout(700); await shotC('look-tab-countries-1280x800');
+  await page.setViewportSize({ width: 1440, height: 900 }); await page.waitForTimeout(500);
+  await page.click('.tbp [data-tb-cc-reset="de"]'); await page.waitForTimeout(250);
+  const after = await ev(async (t) => ({ d: Array.from((await window.INK(window.CARID, t)).tm.rgba), o: window.find(window.CARID).style.tb.cc.over?.de || null }), deT);
+  let rd = 0; for (let i = 0; i < before.length; i++) if (before[i] !== after.d[i]) rd++;
+  ok(after.o === null && rd === 0, `↺ Flag colours puts Germany back: its override gone, the letters byte for byte as before the change (${rd} bytes differ)`);
+  await page.click('.tbp [data-tbp-cancel]'); await page.waitForTimeout(300);
+  const proj1 = await ev(() => JSON.stringify({ ...window.ED.project, modified: 0 }));
+  ok(proj1 === proj0 && (await ev(() => window.steps())) === steps0, `Cancel puts every colour change back: the project byte for byte as before the editor opened (${proj1.length} bytes), no undo step`);
+
+  // Apply: White, then Country colours again — ONE undo step
+  await page.click('[data-tb-edit]'); await page.waitForSelector('.tbp'); await page.click('.tbp [data-tbp-tab="look"]');
+  await page.click('.tbp .tb-cmode [data-v="white"]'); await page.waitForTimeout(250);
+  const wh = await ev(async (t) => { const { px } = await window.INK(window.CARID, t); return +window.SHARE(px, '#ffffff', 30).toFixed(2); }, deT);
+  const hid = await ev(() => !document.querySelector('.tbp .tb-cstyle') && !document.querySelector('.tbp [data-tb-cc-list]'));
+  await page.click('.tbp [data-tbp-apply]'); await page.waitForTimeout(300);
+  const ap = await ev(() => ({ s: window.steps(), m: window.find(window.CARID).style.tb.cc.mode }));
+  await ev(() => window.ED.history.undo()); const un = await ev(() => window.find(window.CARID).style.tb.cc.mode);
+  ok(hid && wh > 0.8 && ap.s - steps0 === 1 && ap.m === 'white' && un === 'country', `Colours → White: the words white, the per-country list hidden (${Math.round(wh * 100)}%), Apply = ONE undo step (${ap.s - steps0}); ⌘Z brings Country colours back (${un})`);
+
+  // ── 6. the JOBS IN line: white · as the main line · the current country · its own ──
+  const top = await ev(async () => {
+    const id = window.ADD({ code: 'de', tb: { top: { on: true, cmode: 'white' } } }), out = {};
+    const topPx = async () => { const { tm } = await window.INK(id, 1.6), b = window.BANDS(tm)[0], px = []; for (let y = b[0]; y < b[1]; y++) for (let x = 0; x < tm.W; x++) { const o = (y * tm.W + x) * 4; if (tm.rgba[o + 3] === 255) px.push([tm.rgba[o], tm.rgba[o + 1], tm.rgba[o + 2]]); } return px; };
+    for (const [k, patch] of [['white', { cmode: 'white' }], ['follow', { cmode: 'follow' }], ['manual', { cmode: 'manual', color: '#00c8ff' }], ['same', { cmode: 'same' }]]) {
+      window.TC.setTb(window.CTX, id, { top: patch }, 'x', false);
+      const px = await topPx();
+      out[k] = { white: +window.SHARE(px, '#ffffff', 30).toFixed(2), de: +['#000000', '#DD0000', '#FFCE00'].reduce((a, c) => a + window.SHARE(px, c, 40), 0).toFixed(2), own: +window.SHARE(px, '#00c8ff').toFixed(2) };
+    }
+    // follow, in Germany's colours while the main line is White too (the top line alone in colour)
+    window.TC.setTb(window.CTX, id, { top: { cmode: 'follow' }, cc: { mode: 'white' } }, 'x', false);
+    const px = await topPx(); out.followWhiteMain = +['#000000', '#DD0000', '#FFCE00'].reduce((a, c) => a + window.SHARE(px, c, 40), 0).toFixed(2);
+    await window.DEL([id]);
+    return out;
+  });
+  ok(top.white.white > 0.8 && top.follow.de > 0.6 && top.manual.own > 0.6 && top.same.de > 0.6 && top.followWhiteMain > 0.6,
+    `JOBS IN: White ${Math.round(top.white.white * 100)}% white · Country ${Math.round(top.follow.de * 100)}% Germany's colours (also over a White main line: ${Math.round(top.followWhiteMain * 100)}%) · Own ${Math.round(top.manual.own * 100)}% its own colour · As main ${Math.round(top.same.de * 100)}%`);
+  const topCar = await ev(async () => {
+    const id = window.CARID; window.TC.setTb(window.CTX, id, { top: { on: true, cmode: 'follow' } }, 'x', false);
+    const out = [];
+    for (const [t, c] of [[0.8, 'europe'], [1.6, 'ca'], [2.4, 'de']]) { const { tm } = await window.INK(id, t), b = window.BANDS(tm)[0], px = []; for (let y = b[0]; y < b[1]; y++) for (let x = 0; x < tm.W; x++) { const o = (y * tm.W + x) * 4; if (tm.rgba[o + 3] === 255) px.push([tm.rgba[o], tm.rgba[o + 1], tm.rgba[o + 2]]); } const p = window.TBC.palOf(c); out.push([c, +[...new Set(p.stripes)].reduce((a, x) => a + window.SHARE(px, x, 40), 0).toFixed(2)]); }
+    return out;
+  });
+  ok(topCar.every(([, s]) => s > 0.6), `JOBS IN following the carousel takes each country's colours as it comes up: ${topCar.map(([c, s]) => `${c} ${Math.round(s * 100)}%`).join(' · ')}`);
+  // the UI: the four choices, Own shows its colour picker
+  await page.click('[data-tb-edit]'); await page.waitForSelector('.tbp'); await page.click('.tbp [data-tbp-tab="look"]');
+  await page.click('.tbp .tb-top-cmode [data-v="manual"]'); await page.waitForTimeout(250);
+  const tui = await ev(() => ({ opts: [...document.querySelectorAll('.tbp .tb-top-cmode button')].map((b) => b.dataset.v), pick: !!document.querySelector('.tbp [data-tb-top-color]'), m: window.find(window.CARID).style.tb.top.cmode }));
+  await page.click('.tbp [data-tbp-cancel]'); await page.waitForTimeout(200);
+  ok(tui.opts.join() === 'same,white,follow,manual' && tui.pick && tui.m === 'manual', `Look → Top line → Colour offers ${tui.opts.join(' / ')}; Own shows its colour picker`);
+
+  // ── 7. pictures: a gallery of 12 places behind the host, and White · Country · Two-tone · Manual side by side ──
+  const gal = await ev(async (codes) => {
+    const ed = window.ED, p = ed.project, sc = 0.32;
+    const id = window.ADD({ code: 'europe' }); window.TC.placeTb(window.CTX, id, 'head'); ed.history.seal();
+    const skip = () => window.items().filter((i) => i.type === 'theme.el' && i.id !== id).map((i) => i.id);
+    const W = Math.round(p.canvas.w * sc), Hh = Math.round(p.canvas.h * sc), cols = 6, rows = Math.ceil(codes.length / cols), pad = 8;
+    const big = document.createElement('canvas'); big.width = cols * W + (cols + 1) * pad; big.height = rows * (Hh + 28) + (rows + 1) * pad; const g = big.getContext('2d');
+    g.fillStyle = '#101118'; g.fillRect(0, 0, big.width, big.height); g.font = '600 15px system-ui'; g.fillStyle = '#e8e8f0';
+    for (let i = 0; i < codes.length; i++) {
+      window.TC.setTbStyle(window.CTX, id, (st) => { st.code = codes[i]; }, 'x'); ed.history.seal();
+      const r = await window.RENDER(p, 1.5, sc, skip()), c = document.createElement('canvas'); c.width = r.W; c.height = r.H; c.getContext('2d').putImageData(new ImageData(r.d, r.W, r.H), 0, 0);
+      const x = pad + (i % cols) * (W + pad), y = pad + Math.floor(i / cols) * (Hh + 28 + pad);
+      g.fillText(codes[i] + ' · ' + window.TBC.palOf(codes[i]).all.join(' '), x, y + 18, W); g.drawImage(c, x, y + 26);
+    }
+    // side by side: White · Country (stripes) · Two-tone · Manual
+    window.TC.setTbStyle(window.CTX, id, (st) => { st.code = 'ae'; }, 'x'); ed.history.seal();
+    const modes = [['White', { cc: { mode: 'white' } }], ['Country colours', { cc: { mode: 'country', style: 'stripes' } }], ['Two-tone', { cc: { mode: 'country', style: 'two' } }], ['Manual', { cc: { mode: 'country', style: 'stripes', over: { ae: { colors: ['#ffd166', '#ffffff', '#7b2cbf'], outline: '#2a0a3a' } } } }]];
+    const sbs = document.createElement('canvas'); sbs.width = modes.length * W + (modes.length + 1) * pad; sbs.height = Hh + 28 + 2 * pad; const s = sbs.getContext('2d');
+    s.fillStyle = '#101118'; s.fillRect(0, 0, sbs.width, sbs.height); s.font = '600 15px system-ui'; s.fillStyle = '#e8e8f0';
+    for (let i = 0; i < modes.length; i++) {
+      window.TC.setTb(window.CTX, id, modes[i][1], 'x', false);
+      const r = await window.RENDER(p, 1.5, sc, skip()), c = document.createElement('canvas'); c.width = r.W; c.height = r.H; c.getContext('2d').putImageData(new ImageData(r.d, r.W, r.H), 0, 0);
+      s.fillText(modes[i][0], pad + i * (W + pad), pad + 18); s.drawImage(c, pad + i * (W + pad), pad + 26);
+    }
+    // the monitor itself, UAE in its colours behind the host
+    window.TC.setTb(window.CTX, id, { cc: { mode: 'country', style: 'stripes' } }, 'x', false); ed.history.seal();
+    window.GALID = id;
+    return { gallery: big.toDataURL('image/png'), sbs: sbs.toDataURL('image/png') };
+  }, GALLERY);
+  savePng('gallery-12-places-9x16', gal.gallery);
+  savePng('white-country-twotone-manual', gal.sbs);
+  // the monitor itself: the other test elements out of the way (the carousel element faded to nothing for the picture)
+  await ev(async () => { const ed = window.ED, { ops } = await import('/app/core/history.js'); await window.DEL([window.CARID]); ed.apply(ops.setItems([{ id: window.ID, props: { opacity: 0 } }], 'hide')); ed.history.seal(); ed.select([window.GALID]); ed.seek(1.5); ed.showSide?.('inspector'); });
+  await page.waitForTimeout(500);
+  await page.click('[data-tb-edit]'); await page.waitForSelector('.tbp'); await page.click('.tbp [data-tbp-tab="look"]'); await page.waitForTimeout(400);
+  await shotC('monitor-uae-colours-look-tab-1440x900');
+  await page.click('.tbp [data-tbp-cancel]'); await page.waitForTimeout(200);
+  // tidy: the test elements go, the carousel element (ID) as it was
+  await ev(async () => { window.ED.history.undo(); await window.DEL([window.GALID]); });
+  const back = await ev(() => window.find(window.ID).opacity ?? 1);
+  ok(back === 1, 'the test elements removed, the reel as it was');
 }
 
 (async () => {
@@ -604,11 +898,12 @@ async function popupChecks(page, e, ev, shot, clip) {
     window.TC.setTb(window.CTX, id, { mode: 'carousel', car: { items, style: 'up', per: 1.0, order: 'list', loop: true } }, 'Carousel', false);
     window.ED.history.seal();
     // single-word references at the same box: EUROPE and AUSTRALIA
-    const ref = async (word) => {
-      const r = window.TC.addTextBehind(window.CTX, { t0: it0.t0, dur: it0.out - it0.in, text: { word, top: 'JOBS IN' }, box: { x: it0.x, y: it0.y, w: it0.w, h: it0.h }, tb: JSON.parse(JSON.stringify({ ...window.find(id).style.tb, mode: 'word' })) });
+    // (each in its own place's colours, as the carousel draws it: a light flag colour carries a thin outline)
+    const ref = async (word, code) => {
+      const r = window.TC.addTextBehind(window.CTX, { t0: it0.t0, dur: it0.out - it0.in, code, text: { word, top: 'JOBS IN' }, box: { x: it0.x, y: it0.y, w: it0.w, h: it0.h }, tb: JSON.parse(JSON.stringify({ ...window.find(id).style.tb, mode: 'word' })) });
       return r.id;
     };
-    const rE = await ref('EUROPE'), rA = await ref('AUSTRALIA');
+    const rE = await ref('EUROPE', 'europe'), rA = await ref('AUSTRALIA', 'au');
     const diff = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] !== b[i] ? 1 : 0; return s; };
     const out = [];
     for (const t of [it0.t0 + 0.75, it0.t0 + 1.75, it0.t0 + 2.75]) {
@@ -669,15 +964,22 @@ async function popupChecks(page, e, ev, shot, clip) {
     const ed = window.ED, p = ed.project, scale = 0.5, c = document.createElement('canvas'); c.width = p.canvas.w * scale; c.height = p.canvas.h * scale;
     const x = c.getContext('2d'), f = await window.E.openFrames(p, ed.media, scale), out = {};
     try {
-      for (const [k, skip] of [['on', null], ['off', new Set([window.ID])], ['on2', null]]) {
+      // the same element as it drew before country colours (White, no colour mode): the speed line before this change
+      const pw = JSON.parse(JSON.stringify(p)); for (const tr of pw.tracks) for (const it of tr.items) if (it.id === window.ID) { delete it.style.tb.cc; delete it.style.tb.top.cmode; }
+      const ps = JSON.parse(JSON.stringify(p)); for (const tr of ps.tracks) for (const it of tr.items) if (it.id === window.ID) it.style.tb.cc = { mode: 'country', style: 'solid' };
+      // three rounds, the variants interleaved, the best median of each (other work on the machine lands in one round)
+      for (let round = 0; round < 3; round++) for (const [k, skip, pp] of [['on', null, p], ['white', null, pw], ['solid', null, ps], ['off', new Set([window.ID]), p]]) {
         const ms = [];
-        for (let i = 0; i < 24; i++) { const t = 0.5 + i * 0.05; await f.load(t); const t0 = performance.now(); window.R.renderFrame(x, p, t, { scale, source: f.source, skip, preview: true }); x.getImageData(0, 0, 1, 1); ms.push(performance.now() - t0); }
-        ms.sort((a, b) => a - b); out[k] = +ms[12].toFixed(2);
+        for (let i = 0; i < 24; i++) { const t = 0.5 + i * 0.05; await f.load(t); const t0 = performance.now(); window.R.renderFrame(x, pp, t, { scale, source: f.source, skip, preview: true }); x.getImageData(0, 0, 1, 1); ms.push(performance.now() - t0); }
+        ms.sort((a, b) => a - b); out[k] = Math.min(out[k] ?? Infinity, +ms[12].toFixed(2));
       }
     } finally { f.close(); }
-    return { on: Math.min(out.on, out.on2), off: out.off, w: c.width, h: c.height };
+    return { on: out.on, white: out.white, solid: out.solid, off: out.off, w: c.width, h: c.height, cc: JSON.stringify(window.find(window.ID).style.tb.cc) };
   });
-  ok(perf.on - perf.off < 12, `speed: a ${perf.w}×${perf.h} frame takes ${perf.on} ms (median) with two lines + carousel behind the host, ${perf.off} ms without: +${(perf.on - perf.off).toFixed(2)} ms (each frame flushed; masks from the cache; budget +12 ms on SwiftShader's software GPU)`);
+  ok(perf.on - perf.off < 12 && perf.white - perf.off < 12, `speed: a ${perf.w}×${perf.h} frame takes ${perf.on} ms (median) with two lines + carousel behind the host in country colours (${perf.cc}), ${perf.white} ms in White as before, ${perf.solid} ms country solid, ${perf.off} ms without: +${(perf.on - perf.off).toFixed(2)} ms country, +${(perf.white - perf.off).toFixed(2)} ms White (each frame flushed; masks from the cache; budget +12 ms on SwiftShader's software GPU)`);
+
+  // ════════ colours ════════
+  if (want('colors')) { await paletteChecks(); await colorChecks(page, ev, shot, STUDIO); }
 
   // ════════ auto: every country I mention ════════
   const auto = await ev(async () => {

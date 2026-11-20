@@ -15,6 +15,7 @@ import { REGIONS, placeName } from './country-words.js';
 import { COUNTRIES, COUNTRY_GROUPS, CONTINENTS, arabicName, countryCap, continentCap, capId } from './capsules-data.js';
 import { flagSvgs } from './capsules.js';
 import { colorsOf, loadBadgeAssets } from './globe-badge.js';
+import { TB_CMODES, TB_CSTYLES, TB_TOPC, palOf, ccOf, countryLook, codeOfEntry, fillCss } from './tb-colors.js';
 
 let cssDone = false;
 function css() {
@@ -47,7 +48,18 @@ function css() {
 .tb-sum { margin: 0; font-size: 12.5px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
 .tb-status { display: flex; flex-direction: column; gap: 6px; }
 .tb-prog { width: 100%; height: 6px; }
-.tb-edit { width: 100%; }`));
+.tb-edit { width: 100%; }
+.tb-cc { display: flex; flex-direction: column; gap: 6px; }
+.tb-cc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; padding: 6px 8px; border: 1px solid var(--line, #242634); border-radius: 9px; }
+.tb-cc-name { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12.5px; font-weight: 650; }
+.tb-cc-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-cc-sw { flex: none; width: 44px; height: 18px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.tb-cc-row select { min-height: 26px; font-size: 11.5px; }
+.tb-cc-cols { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.tb-cc-cols input[type=color] { width: 28px; height: 24px; padding: 0; border: 1px solid var(--line2, rgba(255,255,255,.16)); border-radius: 5px; background: none; cursor: pointer; }
+.tb-cc-cols small { color: var(--muted, #a9aec0); font-size: 11px; margin: 0 2px 0 6px; }
+.tb-cc-cols button { margin-left: auto; height: 24px; min-height: 24px; padding: 0 8px; font-size: 11.5px; }
+.tb-cc-row[data-tb-cc-own] { border-color: var(--accent, #e8508b); }`));
 }
 
 const cur = (ed, id) => ed.project.tracks.flatMap((t) => t.items).find((i) => i.id === id) || null;
@@ -205,13 +217,14 @@ export function tbGroups(host, item) {
     set({ fill: F }, `${l} colour`);
   } } }, h('i', { style: { background: css3(f) } }), l)));
   const custom = h('input', { type: 'color', value: tb.fill.type === 'solid' ? tb.fill.colors[0] : '#ffffff', 'aria-label': 'Own colour', title: 'Any colour of your own', dataset: { tbColor: '1' }, on: { input: (e) => set({ fill: { type: 'solid', colors: [e.target.value] } }, 'Text behind colour', true), change: () => { done(); host.render(); } } });
-  const outCol = h('input', { type: 'color', value: tb.outlineCol, 'aria-label': 'Outline colour', dataset: { tbOutlineCol: '1' }, on: { input: (e) => set({ outlineCol: e.target.value }, 'Outline colour', true), change: done } });
+  const outCol = h('input', { type: 'color', value: tb.outlineCol, 'aria-label': 'Outline colour', title: tb.cc.mode === 'country' ? 'Outline colour of White / One colour (each country has its own below)' : 'Outline colour', dataset: { tbOutlineCol: '1' }, on: { input: (e) => set({ outlineCol: e.target.value }, 'Outline colour', true), change: done } });
+  const shownMode = tb.cc.mode || (tb.fill.type === 'solid' && /^#f{6}$/i.test(tb.fill.colors[0]) ? 'white' : 'one');
+  G.look.push(host.section('Colours', ...colourRows(host, item, tb, shownMode, set, done, fills, custom)));
   G.look.push(host.section('Main line',
     field('Font', fontSel),
     tag(slider({ label: 'Size', min: 0.2, max: 1.6, step: 0.01, value: +(item.w / W).toFixed(2), fmt: pct, onInput: (v) => sizeTb(ctx, id, v), onDone: done }), 'tbSize'),
     tag(slider({ label: 'Spacing', min: -0.05, max: 0.5, step: 0.01, value: tb.track, fmt: pct, onInput: (v) => set({ track: v }, 'Letter spacing', true), onDone: done }), 'tbTrack'),
-    fills, h('div.tb-row', h('span.lbl', 'Own colour'), custom),
-    h('div.tb-row', tag(slider({ label: 'Outline', min: 0, max: 0.15, step: 0.005, value: tb.outline, fmt: pct, onInput: (v) => set({ outline: v }, 'Outline', true), onDone: done }), 'tbOutline'), outCol),
+    h('div.tb-row', tag(slider({ label: 'Outline', min: 0, max: 0.15, step: 0.005, value: tb.outline, fmt: pct, onInput: (v) => set({ outline: v }, 'Outline', true), onDone: done }), 'tbOutline'), shownMode === 'country' ? null : outCol),
     tag(slider({ label: 'Shadow', min: 0, max: 1, step: 0.01, value: tb.shadow, fmt: pct, onInput: (v) => set({ shadow: v }, 'Shadow', true), onDone: done }), 'tbShadow'),
     tag(slider({ label: 'Opacity', min: 0.05, max: 1, step: 0.01, value: item.opacity ?? 1, fmt: pct, onInput: (v) => host.set(item, { opacity: v }, 'Text behind opacity'), onDone: done }), 'tbOpacity')));
   if (tb.top.on) {
@@ -222,7 +235,8 @@ export function tbGroups(host, item) {
       tag(slider({ label: 'Size', min: 0.12, max: 1, step: 0.01, value: tb.top.size, fmt: pct, onInput: (v) => set({ top: { size: v } }, 'Top line size', true), onDone: done }), 'tbTopSize'),
       tag(slider({ label: 'Spacing', min: -0.05, max: 0.6, step: 0.01, value: tb.top.track, fmt: pct, onInput: (v) => set({ top: { track: v } }, 'Top line spacing', true), onDone: done }), 'tbTopTrack'),
       tag(slider({ label: 'Gap', min: -0.2, max: 0.6, step: 0.01, value: tb.top.gap, fmt: pct, onInput: (v) => set({ top: { gap: v } }, 'Gap between lines', true), onDone: done }), 'tbGap'),
-      h('div.tb-row', h('span.lbl', 'Colour'), h('label', { title: 'The same colour or gradient as the main line' }, h('input', { type: 'checkbox', checked: !tb.top.color, dataset: { tbTopSame: '1' }, on: { change: (e) => set({ top: { color: e.target.checked ? null : '#ffffff' } }, 'Top line colour') } }), 'Same as main'), tb.top.color ? topCol : null)));
+      field('Colour', seg(TB_TOPC.map(([v, l]) => [v, l, { same: 'The same colours as the main line', white: 'White', follow: 'The colours of the country on show (follows the carousel)', manual: 'A colour of your own' }[v]]), tb.top.cmode, (v) => set({ top: { cmode: v, ...(v === 'manual' && !tb.top.color ? { color: '#ffffff' } : {}) } }, 'Top line colour'), '.tb-top-cmode')),
+      tb.top.cmode === 'manual' ? h('div.tb-row', h('span.lbl', 'Own colour'), topCol) : null));
   }
 
   // ── position and motion ──
@@ -248,6 +262,44 @@ export function tbGroups(host, item) {
     tag(slider({ label: 'Smoothness', min: 0, max: 1, step: 0.01, value: tb.smooth, fmt: pct, onInput: (v) => set({ smooth: v }, 'Edge smoothness', true), onDone: done }), 'tbSmooth'),
     h('p.tb-note', 'Feather softens the edge, Grow pushes it out (or in), Smoothness steadies it from frame to frame.')));
   return G;
+}
+
+// ── the colours: White · Country colours · One colour, and each country's own (themes/tb-colors.js) ──
+const nameOf = (code) => REGIONS[code]?.en || CONTINENTS.find((c) => c.id === code)?.en || COUNTRIES.find((c) => c[0] === code)?.[1] || code.toUpperCase();
+/** the places this element names: the word's, or each carousel entry's (in order, once each) */
+export function tbCodes(item) {
+  const s = item.style || {}, tb = tbOf(s);
+  if (tb.mode !== 'carousel' || !tb.car.items.length) return [s.code || 'europe'];
+  return [...new Set(tb.car.items.map(codeOfEntry).filter(Boolean))];
+}
+function colourRows(host, item, tb, shown, set, done, fills, custom) {
+  const ed = host.ed, ctx = host.ctx, id = item.id, raw = () => ccOf(cur(ed, id)?.style?.tb || {});
+  // a change to the colours: the element's cc, written whole (one step per change; colour drags coalesce)
+  const writeCc = (fn, label, live = false) => { const c = raw(); const n = { mode: c.mode || shown, style: c.style, over: JSON.parse(JSON.stringify(c.over)) }; fn(n); if (!Object.keys(n.over).length) delete n.over; set({ cc: n }, label, live); };
+  const rows = [field('Colours', seg(TB_CMODES.map(([v, l]) => [v, l, { white: 'White words (the look it always had)', country: 'Each word in its own country’s flag colours: a carousel changes colours with every country', one: 'One colour or gradient for every word (choose it below)' }[v]]), shown, (v) => writeCc((n) => { n.mode = v; }, v === 'country' ? 'Country colours' : v === 'white' ? 'White words' : 'One colour'), '.tb-cmode'))];
+  if (shown === 'one') rows.push(fills, h('div.tb-row', h('span.lbl', 'Own colour'), custom));
+  if (shown !== 'country') return rows;
+  rows.push(field('Style', seg(TB_CSTYLES.map(([v, l]) => [v, l, { stripes: 'The flag’s stripes across the letters', solid: 'The flag’s main colour', two: 'Two of its colours, a third as the outline' }[v]]), tb.cc.style, (v) => writeCc((n) => { n.style = v; for (const [k, x] of Object.entries(n.over)) if (!x.style) { delete x.colors; if (!Object.keys(x).length) delete n.over[k]; } }, 'Colour style'), '.tb-cstyle')));
+  const codes = tbCodes(item), list = h('div.tb-cc', { dataset: { tbCcList: '1' } });
+  for (const code of codes) {
+    const o = tb.cc.over[code] || null, L = countryLook(code, tb.cc, tb.outline), p = palOf(code);
+    if (!L) continue;
+    const cols = L.fill.colors;
+    const own = (fn, label, live) => writeCc((n) => { const x = (n.over[code] ||= {}); fn(x); if (!Object.keys(x).length) delete n.over[code]; }, label, live);
+    const pick = (val, label, data, on) => h('input', { type: 'color', value: val.toLowerCase(), 'aria-label': `${nameOf(code)} · ${label}`, title: `${nameOf(code)}: ${label}`, dataset: data, on: { input: (e) => on(e.target.value, true), change: () => { done(); host.render(); } } });
+    const colPicks = cols.map((c, i) => pick(c, cols.length > 1 ? `colour ${i + 1}` : 'colour', { tbCcCol: code + ':' + i }, (v, live) => own((x) => { const base = x.colors && x.colors.length >= cols.length ? x.colors.slice() : cols.slice(); base[i] = v; x.colors = base; }, `${nameOf(code)} colour`, live)));
+    const olPick = pick(L.outlineCol, 'outline', { tbCcOl: code }, (v, live) => own((x) => { x.outline = v; }, `${nameOf(code)} outline`, live));
+    const sel = h('select', { 'aria-label': `${nameOf(code)} style`, title: 'This country’s style (or the one above for all)', dataset: { tbCcStyle: code }, on: { change: (e) => own((x) => { if (e.target.value) x.style = e.target.value; else delete x.style; delete x.colors; }, `${nameOf(code)} style`) } },
+      h('option', { value: '', selected: !o?.style }, 'As above'), TB_CSTYLES.map(([v, l]) => h('option', { value: v, selected: o?.style === v }, l)));
+    const reset = h('button.btn.small', { type: 'button', title: p ? `Put ${nameOf(code)} back to its flag’s colours` : 'Remove your own colours', disabled: !o, dataset: { tbCcReset: code }, on: { click: () => { own((x) => { for (const k of Object.keys(x)) delete x[k]; }, `${nameOf(code)} back to its flag`); } } }, '↺ Flag colours');
+    list.append(h('div.tb-cc-row', { dataset: { tbCcRow: code, ...(o ? { tbCcOwn: '1' } : {}) } },
+      h('div.tb-cc-name', h('i.tb-cc-sw', { style: { background: fillCss(L.fill) } }), h('span', nameOf(code))), sel,
+      h('div.tb-cc-cols', ...colPicks, h('small', 'outline'), olPick, reset)));
+  }
+  rows.push(list, h('p.tb-note', codes.length
+    ? 'Each place in its own flag’s colours. Change any colour here; ↺ puts that country back to its flag. Words you typed yourself (no country) use the One colour (white unless you chose one).'
+    : 'Add countries to the carousel: each one comes up in its own colours.'));
+  return rows;
 }
 
 const countryCapOf = (code) => (REGIONS[code] ? (CONTINENTS.find((c) => c.id === code) ? continentCap(code) : { id: capId(), en: REGIONS[code].en, ar: REGIONS[code].ar }) : countryCap(code));
