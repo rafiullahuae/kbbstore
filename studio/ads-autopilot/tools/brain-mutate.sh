@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# LANE BRAIN mutation check: each line flips one decision rule in engine/brain
+# and expects `go test` to go RED. Restores the file after each mutation.
+# Usage: tools/brain-mutate.sh   (from studio/ads-autopilot)
+set -u
+cd "$(dirname "$0")/../engine/brain" || exit 1
+pass=0; fail=0
+mut() { # file, from, to, label
+  local f=$1 from=$2 to=$3 label=$4
+  cp "$f" "$f.mutbak"
+  python3 -I -c 'import sys;p,a,b=sys.argv[1:4];s=open(p).read();assert a in s,("missing",a);open(p,"w").write(s.replace(a,b,1))' "$f" "$from" "$to" || { echo "SKIP $label (pattern missing)"; mv "$f.mutbak" "$f"; return; }
+  if go test ./... >/dev/null 2>&1; then echo "SURVIVED  $label"; fail=$((fail+1)); else echo "killed    $label"; pass=$((pass+1)); fi
+  mv "$f.mutbak" "$f"
+}
+mut stats.go 'const PriorWeight = 2.0' 'const PriorWeight = 1.0' 'prior weight 2 -> 1'
+mut rules.go 'KillP: 0.2,' 'KillP: 0.05,' 'kill threshold 0.2 -> 0.05'
+mut rules.go 'settled := func(r MetricRow) bool { return !r.Settling && r.Date <= winEnd && r.Date < today }' 'settled := func(r MetricRow) bool { return true }' 'judge settling days'
+mut rules.go 'nb := round2(cur * (1 + step/100))' 'nb := round2(cur * (1 + 1.5*step/100))' 'scale step x1.5'
+mut rules.go 'return last.IsZero() || now.Sub(last) >= cool' 'return true' 'ignore cooldown'
+mut rules.go 'if inLearning && v.Verdict != "cut" {' 'if false {' 'ignore learning'
+mut rules.go 'FatigueMinSignal: 2,' 'FatigueMinSignal: 3,' 'fatigue needs 3 signals'
+mut rules.go 'if nb-cur > *headroom {' 'if false {' 'ignore daily-limit headroom'
+mut rules.go 'if !res.LimitsSet {' 'if false {' 'launch without limits'
+mut rules.go 'share = cfg.ArabicMin' 'share = cfg.ArabicShare' 'Arabic floor'
+mut linter.go 'if enCondition.MatchString(sent) && enYou.MatchString(sent) {' 'if false {' 'EN personal attribute'
+mut linter.go 'if cond != "" && arSecondPerson(sent) {' 'if false {' 'AR personal attribute'
+mut linter.go 'if strings.HasSuffix(w, x) && len([]rune(w))-len([]rune(x)) >= 3 {' 'if false {' 'AR pronoun suffix stripping'
+mut linter.go 'func discount(out *[]LintIssue, field, text string, o LintOptions, m, lang string) {
+	if m == "" {' 'func discount(out *[]LintIssue, field, text string, o LintOptions, m, lang string) {
+	if true {' 'discount wording'
+mut brain.go 'if v.Verdict == "keep" && contains(v.Signals, "winner") {' 'if false {' 'planner may pause a winner'
+mut brain.go 'if !rr.BatchDay {' 'if false {' 'new ads off batch day'
+mut research.go 'if len(srcs) == 0 || strings.TrimSpace(n.Title) == "" {' 'if strings.TrimSpace(n.Title) == "" {' 'unsourced research note'
+echo "mutations killed: $pass, survived: $fail"
+[ "$fail" -eq 0 ]
