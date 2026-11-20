@@ -225,6 +225,9 @@ export async function autoCaptions(ctx, opts = {}) {
   try {
     return await runCaptions(ctx, opts, { project, model, lang, sc, targets, partial, diag, report });
   } catch (e) {
+    // a model whose files cannot be read throws transformers.js internals ("Cannot read properties of undefined
+    // (reading 'type')" for a damaged tokenizer.json): say what it means and where it is fixed
+    if (e.op === 'load' && !e.stalled) e.message = `the speech model could not be loaded — its files may be incomplete; ⚙ Configure → 🧠 Models can install it again (${e.message})`;
     if (e.name !== 'AbortError') diag.error = e.message + (e.op ? ` (${e.op})` : '');
     else diag.stage += ' · cancelled';
     throw e;
@@ -308,7 +311,7 @@ async function runCaptions(ctx, opts, { project, model, lang, targets, partial, 
     r.speakers > 1 ? `${r.speakers} speakers` : ''].filter(Boolean).join(', ');
   diag.stage = 'done';
   if (words.length) ctx.toast?.(`${head}: ${words.length} words (${r.lang})${extra ? ' · ' + extra : ''}.`, 'ok', 4500);
-  if (skipped.length || quiet.length) ctx.toast?.(`No captions for ${why([...skipped, ...quiet])}.`, words.length ? 'warn' : 'error', 12000);
+  if (skipped.length || quiet.length) ctx.toast?.(`No captions for ${why([...skipped, ...quiet])}.`, 'warn', 12000);
   // nothing at all: the panel shows this in place (with Try again and Copy diagnostics), not only a toast
   if (!words.length) { diag.empty = `No words came back — ${why([...skipped, ...quiet]) || 'no speech heard'}.`; return diag.empty; }
   return `${words.length} words`;
