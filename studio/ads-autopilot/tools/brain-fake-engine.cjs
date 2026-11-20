@@ -313,9 +313,10 @@ const server = http.createServer(async (req, res) => {
       'content-security-policy': "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
     return fs.createReadStream(f).pipe(res);
   }
-  if (p === '/api/info') return json(res, 200, { app: 'KBB Ads Autopilot', version: '0.3.0-fake', apiLevel: 1, token: TOKEN, dataDir: '~/KBB Ads Autopilot Data' });
+  if (p === '/api/info') return json(res, 200, { app: 'KBB Ads Autopilot', version: '0.3.0-fake', apiLevel: 2, token: TOKEN, dataDir: '~/KBB Ads Autopilot Data' });
   const tok = req.headers['x-kaa'] || (p === '/api/events' ? url.searchParams.get('t') : '');
   if (tok !== TOKEN) return json(res, 401, { error: 'missing X-KAA token' });
+  if (p === '/api/update') return json(res, 200, { version: '0.3.0', engine: '0.3.0-fake', apiLevel: 2, canUpdate: false, why: 'fake engine', history: [], busy: false, paused: false });
   const A = acc(req.headers['x-kaa-account'] || url.searchParams.get('account') || selected);
   if (p === '/api/events') {
     res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
@@ -430,6 +431,8 @@ const server = http.createServer(async (req, res) => {
     if (x === 'seg/status') return json(res, 200, { have: {}, models: [], assets: [], jobs: {} });
     if (x.startsWith('seg/mask')) { res.writeHead(204); return res.end(); }
     if (x === 'gen/settings') return json(res, 200, { providers: [], budget_usd: 0, spent_usd: 0, image: '', video: '', month: '' });
+    // Create with Claude: creation requests, empty here (the real shape of engine/brain/creation.go creationView)
+    if (x === 'creation') return json(res, 200, { mode: 'with_me', fallback_hours: 0, requests: [], notifications: [] });
     if (x === 'insights') return json(res, 200, insights(A));
     if (x === 'profile') return json(res, 200, A.profile);
     if (x === 'research') return json(res, 200, research);

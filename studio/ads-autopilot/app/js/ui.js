@@ -98,3 +98,14 @@ export function spark(vals, color = 'var(--accent)') {
   const pts = vals.map((v, i) => `${(i * W / Math.max(1, vals.length - 1)).toFixed(1)},${(H - 3 - (v - min) / r * (H - 6)).toFixed(1)}`).join(' ');
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="${color}" stroke-width="1.6" points="${pts}"/></svg>`;
 }
+
+// failCard: a settings card whose data did not load is drawn anyway, with the reason and Try again -- never left out
+// silently (20 Nov 2026: the Claude desktop and AI-key cards vanished while an old engine served a newer app).
+export function failCard(el, title, err, retry) {
+  if (!el || !el.isConnected) return;
+  const why = (err && err.status === 404) || /no such endpoint/i.test((err && err.message) || '')
+    ? t('This engine does not have it: it is older than the app. Close the KBB Ads Autopilot Terminal window and start it again.')
+    : (err && err.message) || t('It did not load.');
+  el.innerHTML = `<div class="card" data-failed><header><h2>${esc(title)}</h2></header><p class="alert warn small">${esc(why)}</p><div class="row"><button type="button" class="ghost small" data-retry>${esc(t('Try again'))}</button></div></div>`;
+  el.querySelector('[data-retry]').onclick = () => { el.innerHTML = '<div class="sk" style="height:120px"></div>'; retry(); };
+}

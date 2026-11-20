@@ -1,6 +1,6 @@
 // App shell: one page, hash routes, one store, SSE pushes. No framework.
 // Layout: H · Sage Calm (full) -- top bar + grouped sidebar; look in css/theme.css.
-import { boot, api, events, setAccount, getAccount } from './api.js';
+import { boot, api, events, setAccount, getAccount, staleEngine } from './api.js';
 import { tt, getLang, setLang } from './i18n.js';
 import { esc, toast, confirmBox, skeleton } from './ui.js';
 import { normAccounts, loadState, markDesignDone } from './data.js';
@@ -21,6 +21,7 @@ import { renderPending } from './creative/render.js';
 import { openCreate } from './create/create.js';
 import { onRenderRequest } from './create/remote.js';
 import { creationBanner, wireBanner, loadCreation, setCreation, CS } from './create/banner.js';
+import { startupNote } from './screens/updates.js';
 
 const I = {
   overview: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>', portfolio: '<path d="M3 7h18v13H3zM8 7V4h8v3"/>',
@@ -207,10 +208,14 @@ document.getElementById('kill').onclick = async () => {
   try { await api('/api/kill?account=all', { method: 'POST', noAccount: true }); toast(tt('Everything the app made is paused; autopilot is off.', 'تم إيقاف كل ما أنشأه التطبيق؛ الطيار الآلي متوقف.')); S.states.clear(); await refreshAccounts(); await refreshState(); } catch (x) { toast(x.message); }
 };
 const search = document.getElementById('search');
+// places inside a screen the search finds by name (EN / AR words, at least 3 letters typed)
+const SEARCH_MORE = [[['update', 'updates', 'upgrade', 'patch', 'roll back', 'rollback', 'version', 'تحديث', 'التحديثات', 'إصدار', 'نسخة', 'رجوع'], '#/settings?tab=updates']];
 search.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
   const q = search.value.trim().toLowerCase();
   if (!q) return;
+  const more = q.length >= 3 && SEARCH_MORE.find(([words]) => words.some((w) => w.startsWith(q) || q.includes(w)));
+  if (more) { location.hash = more[1]; search.blur(); return; }
   const r = ROUTES.find((x) => x[1].toLowerCase().includes(q) || x[2].includes(q));
   if (r) location.hash = '#/' + r[0]; else { S.query = q; location.hash = '#/campaigns'; rerender(); }
   search.blur();
@@ -248,6 +253,13 @@ window.addEventListener('hashchange', go);
     setTimeout(start, 3000);
     return;
   }
+  const stale = staleEngine(S.info);
+  if (stale) { // the app was updated but the old engine is still running: say so, run nothing on it
+    const v = S.info || {};
+    S.connHTML = `<span class="dot bad"></span><span>${esc(tt('Old engine running', 'محرك قديم يعمل'))}</span>`; paintNav();
+    view.innerHTML = `<div class="page"><div class="alert danger stale-engine" id="stale-engine" role="alert"><div><b>${esc(tt('The app was updated, but the old engine is still running.', 'تم تحديث التطبيق، لكن المحرك القديم ما زال يعمل.'))}</b><br>${esc(tt('Close the KBB Ads Autopilot Terminal window, then double-click “Start KBB Ads Autopilot” again. Nothing is lost: your accounts, keys and history stay as they are.', 'أغلقي نافذة Terminal الخاصة بـ KBB Ads Autopilot، ثم انقري مرتين على «Start KBB Ads Autopilot» مرة أخرى. لا يضيع شيء: حساباتك ومفاتيحك وسجلك تبقى كما هي.'))}<br><span class="small muted" dir="ltr">${esc(stale === 'api' ? `engine ${v.version || '?'} (API level ${v.apiLevel ?? '?'}) is older than this app (needs API level 2)` : `engine started as ${v.version}, the app folder is now ${v.folderVersion}`)}</span></div></div></div>`;
+    return;
+  }
   const [acc, connections] = await Promise.all([api('/api/accounts', { noAccount: true }).catch(() => ({ accounts: [] })), api('/api/connections', { noAccount: true })]);
   const r = normAccounts(acc);
   S.accounts = r.rows; S.conn = connections;
@@ -260,6 +272,7 @@ window.addEventListener('hashchange', go);
   if ((!onboarded && !okAll) || !S.accounts.length) { if (!location.hash.startsWith('#/welcome')) location.hash = '#/welcome'; }
   if (getAccount()) await Promise.all([refreshState().catch((e) => toast(e.message)), loadCreation(getAccount())]);
   go();
+  if (!location.hash.includes('tab=updates')) startupNote(); // an automatic roll back he has not seen yet
   for (const a of S.accounts) if (a.id !== getAccount()) refreshState(a.id).catch(() => {});
   events((type, d) => {
     if (type === 'disconnected') { S.connHTML = `<span class="dot bad"></span><span>${esc(tt('Reconnecting…', 'إعادة الاتصال…'))}</span>`; paintNav(); return; }

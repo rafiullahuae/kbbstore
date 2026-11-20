@@ -272,3 +272,52 @@ dialog.cc { max-width: 1180px; width: 94vw; max-height: 92vh; }
 .cc-guide { margin: 0; padding-inline-start: 18px; color: var(--ink2); }
 .page-h.cc-ov { margin-bottom: 4px; }
 [data-mcp] > header, [data-onekey] > header, [data-creation-mode] > header { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+/* Settings → Updates (screens/updates.js) */
+.alert.good { background: var(--good-soft); }
+.bad-t { color: var(--bad); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.upd-banner { align-items: center; justify-content: space-between; margin-bottom: 16px; line-height: 1.5; }
+.upd-banner button { flex: none; }
+#upd-root > .card + .card { margin-top: 16px; }
+.upd-ver-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.upd-ver { font-family: var(--font-head); font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+.upd-meta { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); }
+.upd-meta b { color: var(--ink); }
+.upd-drop { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 18px; }
+.upd-drop .upd-ic { font-size: 22px; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.upd-drop .small { max-width: 560px; color: var(--muted); }
+.upd-pick { margin-top: 6px; justify-content: center; }
+.btn-like { display: inline-block; border-radius: 12px; padding: 7px 14px; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn-like.off { opacity: .45; }
+.upd-meter { height: 10px; margin: 4px 0 8px; }
+.upd-meter > i { transition: width .2s; }
+.upd-arrow { font-family: var(--font-head); font-size: 24px; font-weight: 700; display: flex; gap: 12px; align-items: center; }
+.upd-arrow .to { color: var(--accent); }
+.upd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.upd-stat { background: var(--surface2); border-radius: var(--radius-s); padding: 10px 12px; display: flex; flex-direction: column; }
+.upd-stat b { font-family: var(--font-head); font-size: 20px; }
+.upd-stat span { font-size: 12px; color: var(--muted); }
+.upd-cols { margin: 12px 0; }
+.upd-cols h3 { font-size: 13px; margin: 0 0 8px; }
+.upd-notes { margin: 0; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 6px; line-height: 1.5; font-size: 13px; }
+.upd-checks, .upd-steps, .upd-hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.upd-checks li, .upd-steps li { display: flex; gap: 8px; align-items: baseline; }
+.upd-checks li > span { color: var(--good); font-weight: 700; flex: none; }
+.upd-checks li.info > span { color: var(--info); }
+.upd-steps { gap: 8px; }
+.upd-steps li { padding: 9px 12px; border-radius: var(--radius-s); background: var(--surface2); color: var(--muted); }
+.upd-steps li .si { width: 18px; text-align: center; font-weight: 700; flex: none; }
+.upd-steps li.run { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+.upd-steps li.run .si { color: var(--accent); }
+.upd-steps li.done { color: var(--ink2); }
+.upd-steps li.done .si { color: var(--good); }
+.upd-steps li.fail { background: var(--bad-soft); color: var(--bad); }
+.upd-hist li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--line); }
+.upd-hist li:first-child { border-top: 0; }
+.upd-refused { border-color: var(--bad-soft); }
+.upd-foot { margin-top: 14px; }
+@media (max-width: 900px) { .upd-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* the app is newer than the engine running it (main.js staleEngine) */
+.stale-engine { padding: 18px 20px; font-size: 15px; line-height: 1.6; border: 1px solid var(--bad); }

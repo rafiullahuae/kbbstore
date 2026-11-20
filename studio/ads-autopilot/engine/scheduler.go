@@ -85,7 +85,7 @@ func (s *scheduler) step() {
 			}
 		}()
 	}
-	if !a.metaOK() {
+	if !a.metaOK() || a.updating.Load() { // paused while an update installs
 		return
 	}
 	syncEvery, cycleEvery := s.intervals()

@@ -412,6 +412,9 @@ func (ac *Acct) ensureSafety(ctx context.Context) (safety.Report, error) {
 
 var errBusy = errors.New("a cycle is already running on this account")
 
+// errUpdating: the autopilot is paused while an update installs (update_flow.go); it resumes by itself after
+var errUpdating = errors.New("an update is being installed; the autopilot resumes by itself in a moment")
+
 // others: the global-cap inputs: what the OTHER automated accounts commit.
 func (ac *Acct) others() (committed, monthProjected float64) {
 	for _, o := range ac.app.Accounts() {
@@ -430,6 +433,9 @@ func (ac *Acct) others() (committed, monthProjected float64) {
 // Cycle: sync → brain → executor → safety net → daily summary, for this account only. mode "shadow" never writes;
 // "auto" writes only when this account's own setting is auto too and the account is automated.
 func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, error) {
+	if ac.app.updating.Load() {
+		return nil, errUpdating
+	}
 	if !ac.work.TryLock() {
 		return nil, errBusy
 	}

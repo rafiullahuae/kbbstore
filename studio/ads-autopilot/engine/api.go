@@ -77,6 +77,10 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		c := a.conns
 		a.mu.RUnlock()
 		writeJSON(w, c)
+	case p == "/api/connections/retest" && r.Method == http.MethodPost: // "Try again": read the keys and test again
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
+		defer cancel()
+		writeJSON(w, a.connectAll(ctx))
 	case strings.HasPrefix(p, "/api/connections/") && r.Method == http.MethodPut:
 		s.putConnection(w, r, strings.TrimPrefix(p, "/api/connections/"))
 	case p == "/api/accounts" && r.Method == http.MethodGet:
@@ -236,7 +240,7 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			in.Mode = model.AutopilotShadow
 		}
 		out, err := ac.Cycle(context.Background(), in.Mode)
-		if errors.Is(err, errBusy) {
+		if errors.Is(err, errBusy) || errors.Is(err, errUpdating) {
 			jsonErr(w, 409, err.Error())
 			return
 		}
@@ -487,6 +491,14 @@ func (s *server) putConnection(w http.ResponseWriter, r *http.Request, which str
 			jsonErr(w, 400, `auth must be "system_user" or "user_token"`)
 			return
 		}
+		for _, k := range [][2]string{{"meta_token", in.Token}, {"meta_app_secret", in.AppSecret}} {
+			if k[1] != "" {
+				if err := secrets.CheckFormat(k[0], strings.TrimSpace(k[1])); err != nil {
+					jsonErr(w, 400, err.Error())
+					return
+				}
+			}
+		}
 		if in.AppSecret != "" {
 			if err := a.sec.Set("meta_app_secret", strings.TrimSpace(in.AppSecret)); err != nil {
 				jsonErr(w, 400, err.Error())
@@ -567,6 +579,10 @@ func (s *server) putConnection(w http.ResponseWriter, r *http.Request, which str
 			return
 		}
 		if in.APIKey != "" {
+			if err := secrets.CheckFormat("anthropic_key", strings.TrimSpace(in.APIKey)); err != nil {
+				jsonErr(w, 400, err.Error())
+				return
+			}
 			if err := a.sec.Set("anthropic_key", strings.TrimSpace(in.APIKey)); err != nil {
 				jsonErr(w, 400, err.Error())
 				return
@@ -601,6 +617,10 @@ func (s *server) putConnection(w http.ResponseWriter, r *http.Request, which str
 			return
 		}
 		if in.Token != "" {
+			if err := secrets.CheckFormat("shop_token", strings.TrimSpace(in.Token)); err != nil {
+				jsonErr(w, 400, err.Error())
+				return
+			}
 			if err := a.sec.Set("shop_token", strings.TrimSpace(in.Token)); err != nil {
 				jsonErr(w, 400, err.Error())
 				return

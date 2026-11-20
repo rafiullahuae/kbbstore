@@ -13,7 +13,7 @@ VER="$(tr -d '[:space:]' < VERSION)"
 [ -s app/index.html ] || { echo "app/index.html is missing (LANE BRAIN's app/)" >&2; exit 1; }
 ZIP="$NAME v$VER.zip"   # the folder inside stays "$NAME", so an update is still: replace the folder
 ./engine/build.sh >/dev/null
-rm -rf "dist/$NAME" "dist/$NAME v"*.zip
+rm -rf "dist/$NAME" "dist/$NAME v"*.zip "dist/$NAME patch "*.zip
 mkdir -p "dist/$NAME/engine" "dist/$NAME/docs"
 cp "Start $NAME.command" VERSION "dist/$NAME/"
 [ -f README.md ] && cp README.md "dist/$NAME/"
@@ -32,4 +32,6 @@ if grep -rIl -E 'EAA[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9_-]{8,}' "dist/$NAME" >/de
 # from tools/release-notes.txt ("## $VER" block) and every file's size and sha256.
 python3 -I tools/engine-make-update-manifest.py "dist/$NAME" "$VER" tools/release-notes.txt
 (cd dist && zip -qry -X "$ZIP" "$NAME")
+# every full zip built is kept: tools/package-patch.sh <version> makes a patch from the one the owner has
+mkdir -p dist/releases && cp "dist/$ZIP" "dist/releases/$ZIP"
 du -sh "dist/$NAME" "dist/$ZIP"
