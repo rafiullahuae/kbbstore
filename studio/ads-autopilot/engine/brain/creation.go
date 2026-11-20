@@ -177,13 +177,19 @@ func (e *Engine) creationAfterCycle(ctx context.Context, acct string, b *Brain, 
 	for _, r := range fresh {
 		e.notify(acct, Notice{Kind: "needed", Title: "New ads needed", Req: r.ID, Body: r.Title + ". Start creating.", BodyAR: r.TitleAR + ". ابدئي الإنشاء."})
 	}
-	// one step ahead: the weekly batch opens soon
-	if st.CreationMode == CreationWithMe {
-		cfg := b.Rules
+	e.creationAhead(acct, b.Rules, in.Now, st)
+}
+
+// creationAhead: one step ahead — "creation due in ~N h" when the weekly batch opens soon (With me mode). Run by the
+// cycle and by Refresh (the warm-up, when no cycle is due).
+func (e *Engine) creationAhead(acct string, cfg RulesConfig, now time.Time, st AccountSettings) {
+	{
+		if st.CreationMode != CreationWithMe {
+			return
+		}
 		if cfg.BatchWeekday == 0 && cfg.MaxNewAdsBatch == 0 {
 			cfg = DefaultRules()
 		}
-		now := in.Now
 		next := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 		for next.Weekday() != cfg.BatchWeekday || !next.After(now) {
 			next = next.AddDate(0, 0, 1)
@@ -483,4 +489,11 @@ func (e *Engine) brief(acct string, in CycleInput) map[string]any {
 		},
 		"how": "create_ad_set renders previews in the app; revise changes only the fields you send; save_to_library runs the quality gate; run_it hands the saved creatives to the autopilot (limits and Practice/Auto apply).",
 	}
+}
+
+// Refresh: re-evaluates what does not need a plan — the "creation due soon" notice — so a Mac that wakes with no cycle
+// due still tells the owner in time (the warm-up calls it; occasions are re-evaluated by the engine's own Refresh).
+func (e *Engine) Refresh(ctx context.Context, acct string, now time.Time) {
+	_ = ctx
+	e.creationAhead(acct, e.B.Rules, now, e.settings(acct))
 }

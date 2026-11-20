@@ -414,7 +414,10 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 				if err != nil {
 					return nil, err.Error()
 				}
-				c, _, _ := ac.creatives.Get(crID)
+				c, _, err := ac.creatives.Get(crID)
+				if err != nil || strings.TrimSpace(c.Headline+c.PrimaryText) == "" {
+					return nil, fmt.Sprintf("creative %s could not be read back: %v", crID, err)
+				}
 				if i == 0 {
 					first = c
 				}
@@ -431,7 +434,10 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 			if err != nil {
 				return nil, err.Error()
 			}
-			c, _, _ := ac.creatives.Get(crID)
+			c, _, err := ac.creatives.Get(crID)
+			if err != nil || strings.TrimSpace(c.Headline+c.PrimaryText) == "" {
+				return nil, fmt.Sprintf("creative %s could not be read back: %v", crID, err)
+			}
 			ps = append(ps, model.Proposal{ID: pid(fmt.Sprintf("cr%d", i)), Kind: model.KindUploadCreative, Target: crID,
 				Params: map[string]any{"creative_id": crID, "format": "image", "headline": c.Headline, "primary_text": c.PrimaryText}, Why: j.Why, Confidence: 0.6},
 				model.Proposal{ID: pid(fmt.Sprintf("ad%d", i)), Kind: model.KindCreateAd, Target: fmt.Sprintf("tmp:%s-ad%d", tag, i),

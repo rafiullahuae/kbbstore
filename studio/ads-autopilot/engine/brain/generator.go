@@ -186,7 +186,7 @@ func (e *Engine) genSecrets() secrets.Store {
 	genS.mu.Lock()
 	defer genS.mu.Unlock()
 	if genS.sec == nil {
-		genS.sec = secrets.New(e.dir, nil)
+		genS.sec = secrets.New(e.dir, e.deps.Redact) // every key loaded or saved is redacted from the audit logs (QA)
 	}
 	return genS.sec
 }

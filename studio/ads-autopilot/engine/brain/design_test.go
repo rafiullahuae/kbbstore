@@ -243,7 +243,7 @@ func TestGeneratorsCostFirstBudgetAndKeys(t *testing.T) {
 	// video (Veo, long-running) from the generated still
 	do(t, e, "PUT", "gen/keys", map[string]any{"provider": "veo", "key": "AIza-test-5678"})
 	c, j := do(t, e, "POST", "gen/video", map[string]any{"provider": "veo", "prompt": "slow push-in", "format": "9:16", "seconds": 8, "image_id": f["id"], "confirm_usd": 1.2})
-	if c != 200 || j["state"] != "running" {
+	if c != 200 || (j["state"] != "running" && j["state"] != "done") { // the fake Veo may finish before the answer is sent
 		t.Fatalf("video start %d %v", c, j)
 	}
 	var job map[string]any

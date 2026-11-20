@@ -280,6 +280,27 @@ func TestSoldOutAlertsNeverPauses(t *testing.T) {
 	}
 }
 
+// The warm-up's Refresh (no cycle due) still prepares an occasion whose prep date came while the Mac was closed (QA).
+// MUTATION: drop the refreshOccasions call in Acct.Refresh → red.
+func TestRefreshPreparesOccasionsWithoutACycle(t *testing.T) {
+	ac, m := testApp(t)
+	ac.app.brain = quietBrain{}
+	nd := time.Date(ac.app.now().Year(), 12, 2, 10, 0, 0, 0, time.UTC)
+	if nd.Before(ac.app.now()) {
+		nd = nd.AddDate(1, 0, 0)
+	}
+	ac.app.now = func() time.Time { return nd.AddDate(0, 0, -10) }
+	n0 := len(m.Writes())
+	ac.Refresh(context.Background())
+	found := false
+	for _, j := range ac.jobSet().Jobs {
+		found = found || j.Kind == "occasion" && j.Occasion != nil && j.Occasion.Occasion == "national-day"
+	}
+	if !found || len(m.Writes()) != n0 {
+		t.Fatalf("refresh: National Day package %v, Meta writes %d", found, len(m.Writes())-n0)
+	}
+}
+
 // A fresh account with nothing linked says why Approvals is empty, with the fix; Auto-link fills the links from the
 // portfolio. MUTATION: drop the links blocker → red.
 func TestReadinessSaysWhy(t *testing.T) {

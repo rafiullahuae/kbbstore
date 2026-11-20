@@ -294,3 +294,25 @@ func (s *server) occasionsAPI(w http.ResponseWriter, r *http.Request, ac *Acct) 
 	writeJSON(w, map[string]any{"account": ac.id, "occasions": all.Occasions, "upcoming": upcoming, "packages": pkgs, "ads": ads,
 		"auto_approve": pb.AutoApproveOccasions, "countries": st.Limits.Countries, "defaults": model.DefaultOccasions()})
 }
+
+// Refresh: what the warm-up re-evaluates when no cycle is due (QA, 20 Nov 2026): the occasion packages whose prep
+// date came while the Mac was closed, their reminders, and the brain's "creation due soon". Nothing is planned or
+// written to Meta.
+func (ac *Acct) Refresh(ctx context.Context) {
+	if !ac.work.TryLock() { // a cycle is running: it re-evaluates all of this itself
+		return
+	}
+	defer ac.work.Unlock()
+	in := ac.input()
+	js := ac.jobSet()
+	ac.refreshOccasions(ctx, in, &js, ac.app.now())
+	ac.saveJobs(js)
+	ac.app.mu.RLock()
+	br := ac.app.brain
+	ac.app.mu.RUnlock()
+	if r, ok := br.(interface {
+		Refresh(context.Context, string, time.Time)
+	}); ok {
+		r.Refresh(ctx, ac.id, ac.app.now())
+	}
+}

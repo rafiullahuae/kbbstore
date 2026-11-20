@@ -59,18 +59,63 @@ var unsafe = regexp.MustCompile(`[^A-Za-z0-9_-]`)
 
 func safeName(s string) string { return unsafe.ReplaceAllString(s, "_") }
 
+// load: false when the file does not exist (never set). A file that exists but cannot be read or parsed is NOT
+// "never set": it is kept aside as <name>.json.unreadable-<time> (so the next save cannot destroy the owner's
+// choices without a copy) and said in Activity (QA, 20 Nov 2026).
 func (e *Engine) load(acct, name string, v any) bool {
-	b, err := os.ReadFile(e.path(acct, name))
-	return err == nil && json.Unmarshal(b, v) == nil
+	p := e.path(acct, name)
+	b, err := os.ReadFile(p)
+	if os.IsNotExist(err) {
+		return false
+	}
+	if err == nil {
+		if err = json.Unmarshal(b, v); err == nil {
+			return true
+		}
+	}
+	keep := p + ".unreadable-" + time.Now().UTC().Format("20060102T150405")
+	if rerr := os.Rename(p, keep); rerr == nil {
+		e.log("alert", fmt.Sprintf("brain: %s could not be read (%v); kept aside as %s, defaults in use", filepath.Base(p), err, filepath.Base(keep)), nil)
+	} else {
+		e.log("alert", fmt.Sprintf("brain: %s could not be read (%v)", filepath.Base(p), err), nil)
+	}
+	return false
 }
 
+// save: atomic (temp + fsync + rename); any failure is said in Activity, never swallowed (a full disk).
 func (e *Engine) save(acct, name string, v any) {
 	p := e.path(acct, name)
-	_ = os.MkdirAll(filepath.Dir(p), 0o700)
-	b, _ := json.Marshal(v)
+	fail := func(step string, err error) {
+		e.log("alert", fmt.Sprintf("brain: %s was NOT saved (%s: %v)", filepath.Base(p), step, err), nil)
+	}
+	if err := os.MkdirAll(filepath.Dir(p), 0o700); err != nil {
+		fail("folder", err)
+		return
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		fail("encode", err)
+		return
+	}
 	tmp := p + ".tmp"
-	if os.WriteFile(tmp, b, 0o600) == nil {
-		_ = os.Rename(tmp, p)
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	if err != nil {
+		fail("open", err)
+		return
+	}
+	if _, err = f.Write(b); err == nil {
+		err = f.Sync()
+	}
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		_ = os.Remove(tmp)
+		fail("write", err)
+		return
+	}
+	if err := os.Rename(tmp, p); err != nil {
+		fail("rename", err)
 	}
 }
 
@@ -125,7 +170,9 @@ func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOut
 	b.DeferCopy = st.CreationMode == CreationWithMe
 	// daily trending refresh rides on the cycle when it is stale (never blocks a cycle on failure)
 	if b.hasClaude() && TrendingDue(e.trending(), bin.Now) {
-		if tr, err := b.Trending(ctx, bin.Shop, bin.Now); err == nil {
+		if tr, err := b.Trending(ctx, bin.Shop, bin.Now); err != nil {
+			e.log("research", "trending refresh failed (the cycle goes on with the last list): "+err.Error(), nil)
+		} else {
 			e.save("", "trending", tr)
 			bin.Trending = &tr
 			e.log("research", fmt.Sprintf("trending products: %d items, %d in the shop, %d to consider stocking", len(tr.Items), len(tr.Selling), len(tr.ConsiderStocking)), nil)

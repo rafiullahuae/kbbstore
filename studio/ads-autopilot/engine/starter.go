@@ -562,7 +562,10 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 		if err != nil {
 			return err
 		}
-		cr, _, _ := ac.creatives.Get(crID)
+		cr, _, err := ac.creatives.Get(crID)
+		if err != nil || strings.TrimSpace(cr.Headline+cr.PrimaryText) == "" { // never an ad with empty copy (QA)
+			return fmt.Errorf("creative %s could not be read back: %v", crID, err)
+		}
 		ps = append(ps, model.Proposal{ID: id(fmt.Sprintf("cr-%d", n)), Kind: model.KindUploadCreative, Target: crID,
 			Params: map[string]any{"creative_id": crID, "format": "image", "headline": cr.Headline, "primary_text": cr.PrimaryText},
 			Why:    fmt.Sprintf("%s ad for %s (ranked #%d: %s).", strings.ToUpper(lang), shortTitle(p), indexOf(ranked, p.ID)+1, map[bool]string{true: "trending, in stock", false: "in stock"}[contains(trending, p.ID)]), Confidence: 0.65},

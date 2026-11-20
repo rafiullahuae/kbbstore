@@ -240,7 +240,12 @@ func (a *App) warmUp(ctx context.Context, reason string) bool {
 	if !conns.Meta.OK {
 		a.warmSet("cycle", "skipped", "Meta is not connected")
 	} else if len(cycleDue) == 0 {
-		a.warmSet("cycle", "ok", "none due")
+		for _, ac := range a.Accounts() { // no cycle due: occasions and creation still re-evaluated (occasions.go Refresh)
+			if ac.Automated() {
+				ac.Refresh(ctx)
+			}
+		}
+		a.warmSet("cycle", "ok", "none due; occasions and creation requests re-checked")
 	} else {
 		a.warmSet("cycle", "running", "")
 		failed := []string{}

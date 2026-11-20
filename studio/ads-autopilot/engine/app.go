@@ -226,7 +226,7 @@ func (a *App) wire() {
 	src.TokenErr = sk.Err
 	a.meta, a.claude, a.shopSrc = mc, cc, src
 	if a.brain == nil {
-		a.brain = newBrain(model.BrainDeps{LLM: cc, Log: func(k, s string, d any) { a.st.Append(k, s, d) }, DataDir: a.st.Dir, Publish: a.publish})
+		a.brain = newBrain(model.BrainDeps{LLM: cc, Log: func(k, s string, d any) { a.st.Append(k, s, d) }, DataDir: a.st.Dir, Publish: a.publish, Redact: a.redact})
 	}
 	accs := a.accountList()
 	a.mu.Unlock()
@@ -483,4 +483,15 @@ func (a *App) metaOK() bool {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.conns.Meta.OK
+}
+
+// redact: a secret the brain holds (generator keys) joins the redaction list of the app log and of every account log.
+func (a *App) redact(v string) {
+	if len(v) < 6 {
+		return
+	}
+	a.st.AddSecret(v)
+	for _, ac := range a.Accounts() {
+		ac.st.AddSecret(v)
+	}
 }

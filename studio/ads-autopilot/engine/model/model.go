@@ -31,6 +31,8 @@ type BrainDeps struct {
 	DataDir string // the brain may keep its own notes under DataDir/brain/
 	// Publish: push an SSE event to every open tab ({account, data}); nil in tests.
 	Publish func(name string, v any)
+	// Redact: a secret the brain holds (the generator keys) is never written to any audit log in clear.
+	Redact func(value string)
 }
 
 type CycleInput struct {
