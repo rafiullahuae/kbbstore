@@ -2,6 +2,14 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.2.0
+- Your first ads go out right away: on the first run in Auto (with limits set) it launches a starter campaign, Arabic first, using about 70% of your limits; Practice shows exactly what it would launch.
+- Approve or turn down one suggestion at a time (Approvals → Approve / Not now).
+- Much better ad designs: a proper AI cut-out of each product (downloaded once), 10 elegant designs in Arabic and English for every size, bigger products, better motion videos.
+- AI backgrounds and short AI videos (OpenAI, Gemini, FLUX, Ideogram, Veo, Runway, Kling, Luma): add a key in Settings → Connections → Generators; the cost is shown before every run and a monthly budget (default $25) is never passed. Your real product photo always stays on top.
+- Your own videos can be uploaded to Meta from the Videos screen; the library shows your real ad pictures.
+- Choose the ad wording rules in Settings → Limits (Strict / Balanced / Relaxed).
+
 ## 0.1.0
 - First version: connects to Meta (with or without a verified business), Claude and the shop on open, reads every ad account you can see, and catches up on what happened while the Mac was closed.
 - Runs each ad account on its own, inside the limits you set for it (and an optional limit for all accounts together). No limit set = nothing launches.
