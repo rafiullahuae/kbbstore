@@ -1,0 +1,11 @@
+# What's new, per version. tools/package-mac.sh puts the lines under "## <VERSION>" into the package (update.json
+# "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
+# A package is not built without a block for its version. Newest first.
+
+## 0.1.0
+- First version: connects to Meta (with or without a verified business), Claude and the shop on open, reads every ad account you can see, and catches up on what happened while the Mac was closed.
+- Runs each ad account on its own, inside the limits you set for it (and an optional limit for all accounts together). No limit set = nothing launches.
+- Every ad type: pictures, videos, carousels, flexible ads, catalog ads, click-to-WhatsApp / Messenger / Instagram, retargeting and lookalike audiences.
+- While the Mac is closed, Meta itself keeps the ads safe: the account spending limit and Meta's automated rules pause anything that spends without selling or goes over your daily limit.
+- Learns from your whole history: up to 3 years of every account's results.
+- A kill switch that stops everything the app made, in every account, at once.

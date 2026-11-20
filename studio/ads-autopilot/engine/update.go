@@ -207,7 +207,7 @@ func updUnit(rel string) string {
 		return ""
 	}
 	switch segs[0] {
-	case "app":
+	case "app", "docs":
 		return segs[0]
 	case "engine":
 		for _, e := range updEngines {

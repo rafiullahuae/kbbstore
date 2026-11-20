@@ -162,6 +162,19 @@ func TestCheckPackageRefuses(t *testing.T) {
 	}
 }
 
+// TestRealPackage: KAA_PKG=<the zip tools/package-mac.sh made> go test -run RealPackage — the updater accepts it.
+func TestRealPackage(t *testing.T) {
+	z := os.Getenv("KAA_PKG")
+	if z == "" {
+		t.Skip("set KAA_PKG to a built zip")
+	}
+	man, units, total, err := checkPackage(z, filepath.Join(t.TempDir(), "staging"), "0.0.1", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("accepted %s: %d units %v, %d bytes", man.Version, len(units), units, total)
+}
+
 func TestVersionFromFile(t *testing.T) {
 	d := t.TempDir()
 	_ = os.WriteFile(filepath.Join(d, "VERSION"), []byte("1.2.3\n"), 0o644)
