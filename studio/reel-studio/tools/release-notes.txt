@@ -2,6 +2,14 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.0
+- 10 new slim contact cards that keep moving the whole time: Glass shimmer, Ticker strip, Running light, Ringing phone, Minimal underline, Gradient flow, Split chip, Typewriter number, Sparkle bar, Soft neon. About half the old height.
+- Contact card controls: show or hide each part (icons, label, number, background, border, glow, sparkles, animation), a colour for each part, speed, intensity and corners.
+- Text behind the host in country colours: every country and region in its own flag colours (stripes, solid or two-tone), changing with the carousel. Switch between White, Country colours and One colour, and change any country's colours by hand.
+- Background music controls: volume up to 200%, mute, fade in and out, start the song at a set time, loop, and lower the music while someone speaks. Fixed: the volume slider did nothing on music added with "Add music".
+- Double-click the music for the new Music Library: moods, search, click a song to hear it, "Preview with my video", then ✓ Use this song.
+- 33 new original songs in viral-reel styles (bouncy trap, pop house, afro house, Amapiano, Arabic pop with darbuka, glossy R&B, luxury deep house, sale hype and more), yours to use in any ad.
+
 ## 1.3.3
 - Text behind the host now has its own editor window beside the video, so the frame is never covered: tabs for Words, Look, Position and Cut-out.
 - Every change shows on the video straight away; ✓ Apply keeps it (one undo step), Cancel puts it back exactly as it was.
