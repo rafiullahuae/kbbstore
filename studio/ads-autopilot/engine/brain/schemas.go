@@ -21,7 +21,9 @@ func null(t map[string]any) map[string]any {
 	return map[string]any{"anyOf": []any{t, map[string]any{"type": "null"}}}
 }
 
-var templateIDs = []string{"clean", "glow", "ingredient", "offer", "routine", "qa"}
+// Design families the app renders (app/js/creative/render.js). "clean" is the
+// old name of "hero" and still renders.
+var templateIDs = []string{"hero", "glow", "ingredient", "offer", "routine", "editorial", "petals", "texture", "qa", "collection", "clean"}
 
 var proposalKinds = []string{"create_campaign", "create_adset", "create_ad", "upload_creative", "pause", "resume", "set_budget", "set_bid", "archive"}
 

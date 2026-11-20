@@ -190,21 +190,7 @@ func productsByID(shop ShopSnapshot, ids []string) []Product {
 // else one that suits the angle.
 func designFor(s CopySet, x copyExtra, prods []Product, tmpl string) DesignSpec {
 	if oneOf(tmpl, templateIDs, "") == "" {
-		a := strings.ToLower(s.Angle)
-		switch {
-		case strings.Contains(a, "routine") || strings.Contains(a, "step") || len(prods) >= 2:
-			tmpl = "routine"
-		case strings.Contains(a, "ingredient") || strings.Contains(a, "centella") || strings.Contains(a, "niacinamide") || strings.Contains(a, "rice") || strings.Contains(a, "snail"):
-			tmpl = "ingredient"
-		case strings.Contains(a, "glow") || strings.Contains(a, "dew") || strings.Contains(a, "glass"):
-			tmpl = "glow"
-		case strings.Contains(a, "gift") || strings.Contains(a, "value") || strings.Contains(a, "price"):
-			tmpl = "offer"
-		case strings.Contains(a, "question") || strings.Contains(a, "texture") || strings.Contains(a, "faq"):
-			tmpl = "qa"
-		default:
-			tmpl = "clean"
-		}
+		tmpl = familyFor(s.Angle, len(prods), hash32(s.PairID+strings.Join(s.ProductIDs, ",")))
 	}
 	var imgs []string
 	for _, p := range prods {
@@ -222,9 +208,58 @@ func designFor(s CopySet, x copyExtra, prods []Product, tmpl string) DesignSpec 
 	if badge == "" && len(prods) > 0 {
 		badge = prods[0].Brand
 	}
-	return DesignSpec{ID: "d-" + s.ID, PairID: s.PairID, Lang: s.Lang, Template: tmpl, Formats: []string{"1:1", "4:5", "9:16"},
+	cat := ""
+	if len(prods) > 0 {
+		cat = prods[0].Type
+	}
+	d := DesignSpec{ID: "d-" + s.ID, PairID: s.PairID, Lang: s.Lang, Template: tmpl, Formats: []string{"1:1", "4:5", "9:16"},
 		ProductIDs: s.ProductIDs, Images: imgs, Headline: s.Headline, Sub: x.sub, Bullets: x.bullets, Badge: badge,
-		CTA: s.CTA, Price: price, Angle: s.Angle, CopyID: s.ID}
+		CTA: s.CTA, Price: price, Angle: s.Angle, CopyID: s.ID, Category: cat}
+	if s.Lang == "ar" {
+		d.Numerals = "arab" // Gulf ads read naturally with Arabic-Indic digits; the owner can switch per design
+	}
+	title := ""
+	if len(prods) > 0 {
+		title = prods[0].Title
+	}
+	d.Scene = ScenePrompt(SceneRequest{Family: tmpl, Angle: s.Angle, Product: title, Category: cat, Bullets: x.bullets, Format: "4:5", People: "none"})
+	return d
+}
+
+// familyFor picks a design family from the angle; two products or more make a
+// routine/collection; otherwise a stable per-pair choice among the hero
+// families so a batch does not all look alike.
+func familyFor(angle string, nProducts int, h uint32) string {
+	a := strings.ToLower(angle)
+	has := func(w ...string) bool {
+		for _, x := range w {
+			if strings.Contains(a, x) {
+				return true
+			}
+		}
+		return false
+	}
+	switch {
+	case has("routine", "step") || nProducts >= 3:
+		return "routine"
+	case nProducts == 2 || has("bundle", "set", "collection", "carousel"):
+		return "collection"
+	case has("ingredient", "centella", "niacinamide", "rice", "snail", "heartleaf", "propolis", "hyaluronic", "ceramide"):
+		return "ingredient"
+	case has("glow", "dew", "glass"):
+		return "glow"
+	case has("gift", "value", "price", "offer", "eid"):
+		return "offer"
+	case has("texture", "feel", "gel", "cream"):
+		return "texture"
+	case has("question", "faq", "why", "how"):
+		return "qa"
+	case has("romantic", "rose", "petal", "valentine", "mother"):
+		return "petals"
+	case has("luxury", "editorial", "premium", "bestseller", "best seller"):
+		return "editorial"
+	}
+	return []string{"hero", "editorial", "glow", "petals"}[h%4]
 }
 
 func hash32(s string) uint32 {
