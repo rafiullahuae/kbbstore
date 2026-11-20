@@ -310,7 +310,7 @@ const server = http.createServer(async (req, res) => {
     const f = path.normalize(path.join(APP, rel === '/' ? 'index.html' : rel));
     if (!p.startsWith('/app') || !f.startsWith(APP) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-cache',
-      'content-security-policy': "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
+      'content-security-policy': "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" });
     return fs.createReadStream(f).pipe(res);
   }
   if (p === '/api/info') return json(res, 200, { app: 'KBB Ads Autopilot', version: '0.3.0-fake', apiLevel: 1, token: TOKEN, dataDir: '~/KBB Ads Autopilot Data' });
@@ -426,6 +426,10 @@ const server = http.createServer(async (req, res) => {
     if (x === 'cycle') return json(res, 200, Object.assign({}, A.brain || {}, { designs: A.pending.filter((d) => !A.done.has(d.id)), profile: A.profile }));
     if (x === 'design-done' && req.method === 'POST') { const b = (await body(req)) || {}; A.done.add(b.id); A.pending = A.pending.filter((d) => d.id !== b.id); return json(res, 200, { ok: true }); }
     if (x === 'designs') return json(res, 200, A.archive);
+    // design lane: no models / no generator keys in the fake engine (the real engine's shapes, empty)
+    if (x === 'seg/status') return json(res, 200, { have: {}, models: [], assets: [], jobs: {} });
+    if (x.startsWith('seg/mask')) { res.writeHead(204); return res.end(); }
+    if (x === 'gen/settings') return json(res, 200, { providers: [], budget_usd: 0, spent_usd: 0, image: '', video: '', month: '' });
     if (x === 'insights') return json(res, 200, insights(A));
     if (x === 'profile') return json(res, 200, A.profile);
     if (x === 'research') return json(res, 200, research);

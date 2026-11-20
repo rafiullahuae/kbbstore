@@ -344,8 +344,10 @@ const placeholder = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <body><main><h1>KBB Ads Autopilot</h1><p>The engine is running. The app's screens (app/index.html) are not in this folder yet.</p></main></body></html>`
 
 // static serves app/ (no listing, no dotfiles, no traversal) with a strict Content-Security-Policy.
+// 'wasm-unsafe-eval' lets the page compile WebAssembly (the local product cut-out model, app/js/creative/cutout.js);
+// it does NOT allow eval() or inline scripts.
 func (s *server) static(w http.ResponseWriter, r *http.Request, rel string) {
-	w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+	w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 	clean := path.Clean("/" + rel)
 	if !strings.HasPrefix(clean, "/app") {
 		jsonErr(w, 404, "not found")

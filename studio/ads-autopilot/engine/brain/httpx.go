@@ -79,6 +79,10 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 		js(e.settings(acct))
 	case p == "img":
 		e.serveImg(w, r)
+	case strings.HasPrefix(p, "seg/"): // local cut-out models (seg.go)
+		e.serveSeg(w, r, p, js, bad)
+	case strings.HasPrefix(p, "gen/"): // AI background generators (generator.go)
+		e.serveGen(w, r, p, js, bad)
 	case p == "designs":
 		arch := []DesignSpec{}
 		e.load(acct, "designs_archive", &arch)

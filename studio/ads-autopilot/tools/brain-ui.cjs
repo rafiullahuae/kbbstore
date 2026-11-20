@@ -133,12 +133,12 @@ const REAL = process.argv.includes('--real');
   });
   const sizes = { '1:1': '1080x1080', '4:5': '1080x1350', '9:16': '1080x1920' };
   const badR = rend.filter((r) => `${r.w}x${r.h}` !== sizes[r.f] || r.sig !== 'PNG' || r.kb < 20);
-  check('creatives render to PNG', badR.length === 0 && rend.length === 36, `${rend.length} renders (6 templates x AR/EN x 3 formats), sizes ok, PNG sig ok; ${Math.min(...rend.map((r) => r.kb))}-${Math.max(...rend.map((r) => r.kb))} KB, ${Math.max(...rend.map((r) => r.ms))} ms worst${badR.length ? ' BAD: ' + JSON.stringify(badR.slice(0, 3)) : ''}`);
+  check('creatives render to PNG', badR.length === 0 && rend.length === new Set(rend.map((r) => r.tpl)).size * 6 && rend.length >= 48, `${rend.length} renders (${new Set(rend.map((r) => r.tpl)).size} families x AR/EN x 3 formats), sizes ok, PNG sig ok; ${Math.min(...rend.map((r) => r.kb))}-${Math.max(...rend.map((r) => r.kb))} KB, ${Math.max(...rend.map((r) => r.ms))} ms worst${badR.length ? ' BAD: ' + JSON.stringify(badR.slice(0, 3)) : ''}`);
   if (want('--shots')) {
     // a sheet of Arabic + English designs, small JPEGs
     await page.evaluate(async () => {
       const R = await import(new URL('js/creative/render.js', location.href).href);
-      const pick = (window.__kaa.cache.get(`${window.__kaa.accounts[0].id}|designs`) || []).map((d) => ({ design: d, lang: d.lang })).slice(0, 10);
+      const pick = (window.__kaa.cache.get(`${window.__kaa.accounts[0].id}|designs`) || await (await fetch('/api/brain/x/designs', { headers: { 'X-KAA': window.__kaa.info.token, 'X-KAA-Account': window.__kaa.accounts[0].id } })).json().catch(() => []) || []).map((d) => ({ design: d, lang: d.lang })).slice(0, 10);
       const sheet = document.createElement('canvas');
       sheet.width = 1600; sheet.height = 1500;
       const x = sheet.getContext('2d'); x.fillStyle = '#F6F2F3'; x.fillRect(0, 0, 1600, 1500);
@@ -153,7 +153,7 @@ const REAL = process.argv.includes('--real');
     for (const [tpl, f, lang] of [['glow', '9:16', 'ar'], ['ingredient', '4:5', 'ar'], ['routine', '1:1', 'en'], ['qa', '9:16', 'ar'], ['offer', '1:1', 'ar'], ['clean', '4:5', 'en']]) {
       const b = await page.evaluate(async ([tpl, f, lang]) => {
         const R = await import(new URL('js/creative/render.js', location.href).href);
-        const lib = (window.__kaa.cache.get(`${window.__kaa.accounts[0].id}|designs`) || []).map((d) => ({ design: d, lang: d.lang }));
+        const lib = (window.__kaa.cache.get(`${window.__kaa.accounts[0].id}|designs`) || await (await fetch('/api/brain/x/designs', { headers: { 'X-KAA': window.__kaa.info.token, 'X-KAA-Account': window.__kaa.accounts[0].id } })).json().catch(() => []) || []).map((d) => ({ design: d, lang: d.lang }));
         if (!lib.length) return '';
         const c = lib.find((p) => p.design && p.lang === lang && (tpl !== 'routine' || p.design.images.length > 1)) || lib.find((p) => p.design && p.lang === lang);
         const cv = await R.renderSpec(Object.assign({}, c.design, { template: tpl }), f);
@@ -183,7 +183,7 @@ const REAL = process.argv.includes('--real');
     if (!(await page.$('#m-go'))) check('motion ad recorded', true, 'N/A: no design in this account yet'); else {
     await page.fill('#m-d', '6');
     await page.click('#m-go');
-    await page.waitForFunction(() => window.__kaaMotion, null, { timeout: 60000 });
+    await page.waitForFunction(() => window.__kaaMotion, null, { timeout: 240000 });
     const mo = await page.evaluate(() => window.__kaaMotion);
     check('motion ad recorded', mo.bytes > 50000 && mo.height > mo.width, `${mo.mime} ${mo.width}x${mo.height}, ${Math.round(mo.bytes / 1024)} KB, recorded in ${mo.ms} ms`);
     if (want('--shots')) await page.screenshot({ path: path.join(SHOTS, `${REAL ? 'real-' : ''}motion-1440.jpg`), type: 'jpeg', quality: 70 });

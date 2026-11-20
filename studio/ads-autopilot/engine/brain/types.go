@@ -382,7 +382,7 @@ type DesignSpec struct {
 	ID         string   `json:"id"`
 	PairID     string   `json:"pair_id"`
 	Lang       string   `json:"lang"`     // ar | en (ar renders RTL)
-	Template   string   `json:"template"` // clean | glow | ingredient | offer | routine | qa
+	Template   string   `json:"template"` // hero | glow | ingredient | offer | routine | editorial | petals | texture | qa | collection
 	Formats    []string `json:"formats"`  // 1:1 | 4:5 | 9:16
 	ProductIDs []string `json:"product_ids"`
 	Images     []string `json:"images"` // product photo URLs (the engine proxies them same-origin)
@@ -394,6 +394,9 @@ type DesignSpec struct {
 	Price      string   `json:"price"`
 	Angle      string   `json:"angle"`
 	CopyID     string   `json:"copy_id"`
+	Numerals   string   `json:"numerals,omitempty"` // ar only: "arab" (٠١٢) | "latn" (012); the price chip follows it
+	Category   string   `json:"category,omitempty"` // product type, for art direction
+	Scene      string   `json:"scene,omitempty"`    // the brain's art-direction prompt for an optional AI background
 }
 
 // CopySet is one product/angle's copy in one language, linted.
