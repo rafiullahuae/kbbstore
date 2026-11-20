@@ -22,12 +22,12 @@ mut rules.go 'FatigueMinSignal: 2,' 'FatigueMinSignal: 3,' 'fatigue needs 3 sign
 mut rules.go 'if nb-cur > *headroom {' 'if false {' 'ignore daily-limit headroom'
 mut rules.go 'if !res.LimitsSet {' 'if false {' 'launch without limits'
 mut rules.go 'share = cfg.ArabicMin' 'share = cfg.ArabicShare' 'Arabic floor'
-mut linter.go 'if enCondition.MatchString(sent) && enYou.MatchString(sent) {' 'if false {' 'EN personal attribute'
-mut linter.go 'if cond != "" && arSecondPerson(sent) {' 'if false {' 'AR personal attribute'
+mut linter.go 'if !enProne.MatchString(sent[loc[1]:]) {' 'if false {' 'EN attribute assertion'
+mut linter.go 'if m := arAsserted(sent); m != "" {' 'if m := ""; m != "" {' 'AR attribute assertion'
+mut linter.go '"personal_attribute_context":  {"block", "warn", "warn"},' '"personal_attribute_context":  {"block", "block", "warn"},' 'balanced blocks acne topics'
+mut linter.go 'strings.HasSuffix(base, "بشرت")' 'strings.HasSuffix(base, "zz")' 'AR skin-possessive near condition'
 mut linter.go 'if strings.HasSuffix(w, x) && len([]rune(w))-len([]rune(x)) >= 3 {' 'if false {' 'AR pronoun suffix stripping'
-mut linter.go 'func discount(out *[]LintIssue, field, text string, o LintOptions, m, lang string) {
-	if m == "" {' 'func discount(out *[]LintIssue, field, text string, o LintOptions, m, lang string) {
-	if true {' 'discount wording'
+mut linter.go '"discount_unapproved":         {"block", "warn", "warn"},' '"discount_unapproved":         {"warn", "warn", "warn"},' 'strict discount'
 mut brain.go 'if v.Verdict == "keep" && contains(v.Signals, "winner") {' 'if false {' 'planner may pause a winner'
 mut brain.go 'if !rr.BatchDay {' 'if false {' 'new ads off batch day'
 mut research.go 'if len(srcs) == 0 || strings.TrimSpace(n.Title) == "" {' 'if strings.TrimSpace(n.Title) == "" {' 'unsourced research note'

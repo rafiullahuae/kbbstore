@@ -32,12 +32,10 @@ func TestLinterBlocksEnglish(t *testing.T) {
 		{"Ready to upgrade your skin to look younger?", "personal_attribute_age"}, // META example
 		{"Hide those ugly pores today", "inferiority"},
 		{"Cures acne in days", "medical_claim"},
-		{"Dermatologist-prescribed formula", "medical_claim"},
 		{"Guaranteed glass skin", "unrealistic_outcome"},
 		{"Results in 7 days", "unrealistic_outcome"},
 		{"See the before and after", "before_after"},
 		{"Whitening cream for a fairer you", "whitening"},
-		{"50% off this weekend only", "discount_unapproved"},
 		{"★★★★★ loved by 10,000 customers", "fake_review"},
 		{"\"It changed my skin forever\" - Sarah", "fake_review"},
 		{"Helps with psoriasis flare-ups", "disease_claim"},
@@ -75,8 +73,7 @@ func TestLinterBlocksArabic(t *testing.T) {
 		{"بشرة صافية خلال ٧ أيام", "unrealistic_outcome"},
 		{"شاهدي الفرق قبل وبعد", "before_after"},
 		{"كريم تبييض للوجه", "whitening"},
-		{"خصم ٥٠٪ على كل المنتجات", "discount_unapproved"},
-		{"الأفضل في الإمارات", "exclusivity_claim"},
+		{"سيروم لتبييضها بسرعة", "whitening"}, // prefix + pronoun suffix
 		{"تبدين أصغر بعشر سنوات", "personal_attribute_age"},
 	}
 	for _, c := range cases {
@@ -132,5 +129,80 @@ func TestFix(t *testing.T) {
 	f, r, _ = Fix(CopyFields{PrimaryText: "ودّعي حبوب بشرتك مع كريم تبييض"}, LintOptions{Lang: "ar"})
 	if r.Blocked {
 		t.Fatalf("%q [%s]", f.PrimaryText, rulesOf(r))
+	}
+}
+
+// BALANCED (the default, owner 20 Nov 2026: "acne etc ad we run, but make the
+// rules half way"): acne/blemish/pore/dark-spot products are advertised with
+// product- and skin-type framing. These must pass in balanced mode.
+// Mutation: map personal_attribute_context to block in balanced -> red.
+func TestBalancedAllowsAcneTopics(t *testing.T) {
+	good := []string{
+		"BHA cleanser for oily, blemish-prone skin.",
+		"Helps calm the look of blemishes, every day.",
+		"For acne-prone skin: a gentle low-pH gel cleanser.",
+		"Your new favourite cleanser for acne-prone skin.",
+		"Pore-refining pads that help skin look smoother.",
+		"Niacinamide serum for the look of dark spots.",
+		"Made for your acne-prone skin type.",
+	}
+	for _, g := range good {
+		if r := Lint(CopyFields{PrimaryText: g}, LintOptions{Lang: "en"}); r.Blocked || !r.OK {
+			t.Errorf("balanced flagged %q: [%s]", g, rulesOf(r))
+		}
+	}
+	goodAR := []string{
+		"غسول لطيف للبشرة المعرّضة لحب الشباب.",
+		"سيروم يساعد على تهدئة مظهر البثور.",
+		"روتينك اليومي للبشرة المعرّضة للحبوب.", // second person + condition, not asserted: a warning only
+		"مناسب للبشرة الدهنية والمسام الواضحة.",
+	}
+	for _, g := range goodAR {
+		if r := Lint(CopyFields{PrimaryText: g}, LintOptions{Lang: "ar"}); r.Blocked || !r.OK {
+			t.Errorf("balanced flagged %q: [%s]", g, rulesOf(r))
+		}
+	}
+	// ...and the same lines that only carry a context warning are blocked in STRICT
+	if r := Lint(CopyFields{PrimaryText: "Your new favourite cleanser for acne-prone skin."}, LintOptions{Strictness: Strict}); !r.Blocked {
+		t.Fatalf("strict should block you+condition: [%s]", rulesOf(r))
+	}
+}
+
+// Balanced still blocks what Meta rejects most reliably.
+func TestBalancedStillBlocksAssertions(t *testing.T) {
+	for _, b := range []string{"Do you have acne?", "Say goodbye to your acne.", "You've got breakouts? Not anymore.", "Cures acne", "Clear skin in 3 days", "Treats eczema fast"} {
+		if r := Lint(CopyFields{PrimaryText: b}, LintOptions{}); !r.Blocked {
+			t.Errorf("balanced passed %q: [%s]", b, rulesOf(r))
+		}
+	}
+	for _, b := range []string{"هل تعانين من حب الشباب؟", "بشرتك المليئة بالحبوب تستحق الأفضل", "كريم يعالج حب الشباب"} {
+		if r := Lint(CopyFields{PrimaryText: b}, LintOptions{Lang: "ar"}); !r.Blocked {
+			t.Errorf("balanced passed %q: [%s]", b, rulesOf(r))
+		}
+	}
+}
+
+// STRICT blocks the softer patterns too; RELAXED still blocks cure claims.
+func TestStrictAndRelaxed(t *testing.T) {
+	strict := []struct{ text, rule string }{
+		{"Dermatologist-prescribed formula", "medical_wording"},
+		{"50% off this weekend only", "discount_unapproved"},
+		{"خصم ٥٠٪ على كل المنتجات", "discount_unapproved"},
+		{"Hide those flaws", "negative_wording"},
+	}
+	for _, c := range strict {
+		r := Lint(CopyFields{PrimaryText: c.text}, LintOptions{Strictness: Strict})
+		if !hasRule(r, c.rule) || !r.Blocked {
+			t.Errorf("strict %q: want %s blocked, got [%s]", c.text, c.rule, rulesOf(r))
+		}
+		if r := Lint(CopyFields{PrimaryText: c.text}, LintOptions{}); r.Blocked {
+			t.Errorf("balanced should only warn on %q: [%s]", c.text, rulesOf(r))
+		}
+	}
+	if r := Lint(CopyFields{PrimaryText: "See the before and after"}, LintOptions{Strictness: Relaxed}); r.Blocked {
+		t.Fatalf("relaxed: before/after is a warning [%s]", rulesOf(r))
+	}
+	if r := Lint(CopyFields{PrimaryText: "Cures acne"}, LintOptions{Strictness: Relaxed}); !r.Blocked {
+		t.Fatal("cure claims block in every mode")
 	}
 }

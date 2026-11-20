@@ -29,7 +29,8 @@ type Limits struct {
 	CooldownHours    float64  `json:"cooldown_hours"`      // default 72
 	MaxActiveAds     int      `json:"max_active_ads"`
 	Countries        []string `json:"countries"`
-	Autopilot        string   `json:"autopilot"` // off | shadow | auto
+	Autopilot        string   `json:"autopilot"`  // off | shadow | auto
+	AdWording        string   `json:"ad_wording"` // BRAIN addition: strict | balanced (default) | relaxed -- Settings > Limits > Ad wording rules
 }
 
 // Account is the Meta ad account as the engine read it.

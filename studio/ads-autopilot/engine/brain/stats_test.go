@@ -46,6 +46,7 @@ func TestBetaI(t *testing.T) {
 //   - 0 purchases after 1x T: P(CPA<T) = e^-3*4 = 0.199 -- exactly the kill line
 //   - 0 purchases after 2x T: 5e^-4 = 0.092 -- kill
 //   - 1 purchase after 2x T: 0.238 -- not yet
+//
 // Mutation: change PriorWeight to 1 -> 0 at 1x becomes e^-2=0.135 and the
 // first assertion is red (the rule would kill after spending one CPA).
 func TestCPAPosteriorThresholds(t *testing.T) {

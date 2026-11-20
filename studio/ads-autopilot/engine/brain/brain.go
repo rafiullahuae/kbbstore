@@ -157,6 +157,7 @@ func (b *Brain) plan(ctx context.Context, in CycleInput, rr RulesResult, out *Cy
 	}
 	for i, cr := range reqs {
 		cr.PairID = fmt.Sprintf("p%s-%d", in.Now.Format("060102"), i)
+		cr.Wording = in.Limits.AdWording
 		sets, designs, usage, err := b.copyFor(ctx, cr, in.Shop, in.Research)
 		addUsageTotals(&out.Usage, usage)
 		if err != nil {
@@ -602,7 +603,7 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 	return map[string]any{
 		"date": in.Now.Format("2006-01-02 Mon"), "season_now": sname, "payday_window": IsPayday(in.Now),
 		"upcoming_seasons": Upcoming(in.Now, 60), "economics": rr.Econ,
-		"limits": in.Limits, "limits_set": rr.LimitsSet, "promotion_approved": promo,
+		"limits": in.Limits, "limits_set": rr.LimitsSet, "ad_wording_rules": firstNonEmpty(in.Limits.AdWording, Balanced), "promotion_approved": promo,
 		"evaluation_window": rr.Window, "account_ctr": rr.AccountCTR, "account_cpa": rr.AccountCPA,
 		"arabic_share": rr.ArabicShare, "batch_day": rr.BatchDay, "new_ad_slots": rr.NewAdSlots,
 		"language_30d": langSummary(rr.Lang), "alerts": rr.Alerts,

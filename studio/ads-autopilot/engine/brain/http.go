@@ -56,6 +56,9 @@ func Handler(b *Brain, d Deps) http.Handler {
 				req.ProductIDs = req.ProductIDs[:3]
 			}
 			req.Template = oneOf(req.Template, templateIDs, "")
+			if req.Wording == "" {
+				req.Wording = in.Limits.AdWording
+			}
 			out, err = b.Copy(ctx, req, in.Shop, in.Research)
 		default:
 			http.NotFound(w, r)

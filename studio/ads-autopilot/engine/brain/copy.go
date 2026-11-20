@@ -15,6 +15,7 @@ type CopyRequest struct {
 	Template   string   `json:"template"`
 	Brief      string   `json:"brief"`
 	PairID     string   `json:"pair_id,omitempty"`
+	Wording    string   `json:"ad_wording,omitempty"` // linter strictness; the engine passes limits.ad_wording
 }
 
 // CopyResult is what POST /api/brain/copy returns.
@@ -74,11 +75,13 @@ func (b *Brain) copyFor(ctx context.Context, cr CopyRequest, shop ShopSnapshot, 
 		}
 	}
 	ask, _ := json.Marshal(map[string]any{"products": pinfo, "angle": cr.Angle, "brief": cr.Brief, "template": cr.Template,
-		"promotion_approved": b.PromoApproved, "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea"})
+		"promotion_approved": b.PromoApproved, "wording_rules": firstNonEmpty(cr.Wording, Balanced), "recent_research": angles, "want": "two sets: lang ar first, then lang en; same idea"})
 	req := Request{Model: b.CopyModel, MaxTokens: 8000, System: CachedSystem(copySystem),
 		Messages: []Message{{Role: "user", Content: "Write the ad copy.\n" + string(ask)}},
 		Output:   JSONOutput(copySchema(), "medium")}
-	opts := func(lang string) LintOptions { return LintOptions{PromoApproved: b.PromoApproved, Lang: lang} }
+	opts := func(lang string) LintOptions {
+		return LintOptions{PromoApproved: b.PromoApproved, Lang: lang, Strictness: cr.Wording}
+	}
 
 	var final []CopySet
 	var extra = map[string]copyExtra{}
