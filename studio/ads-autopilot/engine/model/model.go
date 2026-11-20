@@ -285,6 +285,10 @@ type ShopSnapshot struct {
 	Products     []Product  `json:"products"`
 	Orders       []OrderDay `json:"orders"`
 	OrdersSource string     `json:"orders_source"` // "none" until the shop has an authenticated orders endpoint
+	// added by the media-buying lane: share of sale orders by payment family (bnpl | card | cod | other) over the last
+	// 28 shop days, and how many sale orders that was (the shop API's payment_family per order)
+	PaymentMix map[string]float64 `json:"payment_mix,omitempty"`
+	Orders28   int                `json:"orders_28d,omitempty"`
 }
 
 type Product struct {

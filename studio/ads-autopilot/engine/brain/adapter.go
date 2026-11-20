@@ -117,7 +117,7 @@ func (e *Engine) Cycle(ctx context.Context, in model.CycleInput) (model.CycleOut
 	st := e.settings(acct)
 	b.PromoApproved = st.PromoApproved
 	if in.Playbook != nil {
-		b.Rules, b.Econ = withKnobs(b.Rules, b.Econ, in.Playbook.Knobs)
+		b.Rules, b.Econ = withKnobs(b.Rules, b.Econ.WithInputs(in.Playbook.Econ), in.Playbook.Knobs)
 		if !in.Playbook.OffersAllowed { // the owner's "Offers: not allowed" beats the promotion switch
 			b.PromoApproved = false
 		}
@@ -250,7 +250,7 @@ func langOf(name string) string {
 }
 
 func shopFromModel(s model.ShopSnapshot) ShopSnapshot {
-	out := ShopSnapshot{OrdersSource: s.OrdersSource, FetchedAt: s.FetchedAt}
+	out := ShopSnapshot{OrdersSource: s.OrdersSource, FetchedAt: s.FetchedAt, PaymentMix: s.PaymentMix, Orders28: s.Orders28}
 	for _, p := range s.Products {
 		m := 0.0
 		if p.MarginPct != nil {
@@ -535,6 +535,11 @@ func ToModel(o CycleOutput) model.CycleOutput {
 // ad sets with it).
 func (e *Engine) TargetCPA(s model.ShopSnapshot) float64 {
 	return ComputeEconomics(e.B.Econ, shopFromModel(s), time.Now()).TargetCPA
+}
+
+// TargetCPAWith: the same with the owner's economics inputs.
+func (e *Engine) TargetCPAWith(s model.ShopSnapshot, in model.EconInputs) float64 {
+	return ComputeEconomics(e.B.Econ.WithInputs(in), shopFromModel(s), time.Now()).TargetCPA
 }
 
 // CopyPrompt: the system prompt and the user turn a copy request sends Claude (read-only "Show the brief").

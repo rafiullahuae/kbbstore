@@ -376,8 +376,13 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 	br, claudeOK := ac.app.brain, ac.app.conns.Claude.OK
 	ac.app.mu.RUnlock()
 	brief := ownerCopyBrief(pb, strings.TrimSpace(strings.TrimSpace("Copy direction for this job: "+j.CopyDirection)+"\n"+j.Note))
+	copyCache := map[string]map[string][2]string{}
 	copyOf := func(p model.Product) map[string][2]string {
+		if m, ok := copyCache[p.ID]; ok {
+			return m
+		}
 		m := map[string][2]string{}
+		copyCache[p.ID] = m
 		cw, ok := br.(model.Copywriter)
 		if !ok || !claudeOK {
 			return m
@@ -578,6 +583,11 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 			continue
 		}
 		ps, why := ac.materialise(ctx, in, *j, env)
+		if why == "" {
+			if n := countKind(ps, model.KindCreateAd); n > 0 && env.Limits.MaxActiveAds > 0 && executor.ActiveAds(env.Tree)+n > env.Limits.MaxActiveAds {
+				why = fmt.Sprintf("no free ad slot: %d ads active, your maximum is %d (Settings → Limits)", executor.ActiveAds(env.Tree), env.Limits.MaxActiveAds)
+			}
+		}
 		if why != "" {
 			if j.Waiting != why {
 				j.logf(now, "waiting: %s", why)
@@ -1040,4 +1050,14 @@ func holdRetargeting(ps []model.Proposal, in model.CycleInput, loc *time.Locatio
 		out = append(out, p)
 	}
 	return out
+}
+
+func countKind(ps []model.Proposal, kind string) int {
+	n := 0
+	for _, p := range ps {
+		if p.Kind == kind {
+			n++
+		}
+	}
+	return n
 }

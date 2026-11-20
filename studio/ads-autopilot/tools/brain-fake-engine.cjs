@@ -353,6 +353,13 @@ const server = http.createServer(async (req, res) => {
     emit('action.kill', {}); return json(res, 200, { accounts: out });
   }
   // ---- per account ----
+  // the media-buying lane's screens (Strategy, Plan jobs, funnel, occasions, learning): small fixed answers
+  if (p === '/api/playbook') return json(res, 200, { account: A.cfg.id, playbook: { version: 0, instructions: 'Focus on the latest arrivals and the products trending now.', focus: [], avoid: [], freshness_pct: 70, min_stock: 3, min_margin_pct: 0, countries: [], age_min: 18, age_max: 45, gender: 'women', languages: ['ar', 'en'], exclude_buyers_days: 180, split: { prospecting: 70, retargeting: 20, existing: 10 }, small_split: { prospecting: 80, retargeting: 20, existing: 0 }, offers_allowed: true, free_gift: true, coupon_code: 'GLOW', gifts: [], pay_later: true, econ: { vat_pct: 5, bnpl_fee_pct: 7, card_fee_pct: 2.5, cod_fee_pct: 1.5, delivery_aed: 15, gift_cost_aed: 0 }, knobs: {}, self_tune: 'bounds', tune_bounds: { hard_stop_min: 2, hard_stop_max: 4, fatigue_freq_min: 2, fatigue_freq_max: 3.5 } }, excluded: [], products: 3, allowed: 3 });
+  if (p === '/api/funnel') return json(res, 200, { account: A.cfg.id, tier: 'growth', target_cpa: 60, pieces: [], audiences: [] });
+  if (p === '/api/occasions') return json(res, 200, { account: A.cfg.id, occasions: [], upcoming: [], packages: [], ads: {}, auto_approve: false });
+  if (p === '/api/jobs') return json(res, 200, { account: A.cfg.id, jobs: [], mode: 'shadow' });
+  if (p === '/api/brain/x/strategy') return json(res, 200, { economics: {}, funnel: [], rules: [], ranked: [], agency: [], seasons: [], split: {}, tier: 'growth' });
+  if (p === '/api/brain/x/learning') return json(res, 200, { weekly: [], health: [], lessons: [], tuned: {}, changes: [], open: 0, scored: 0, cells: 0, self_tune: 'bounds' });
   if (p === '/api/state' && req.method === 'GET') return json(res, 200, engineState(A));
   if (p === '/api/limits') {
     if (req.method === 'GET') return json(res, 200, engineLimits(A));

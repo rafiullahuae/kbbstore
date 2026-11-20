@@ -109,8 +109,13 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 		if o.Offer != "" {
 			brief += " The owner's offer for it: " + o.Offer + "."
 		}
+		copyCache := map[string]map[string][2]string{}
 		copyOf := func(p model.Product) map[string][2]string {
+			if m, ok := copyCache[p.ID]; ok {
+				return m
+			}
 			m := map[string][2]string{}
+			copyCache[p.ID] = m
 			cw, ok := br.(model.Copywriter)
 			if !ok || !claudeOK {
 				return m

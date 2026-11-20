@@ -94,10 +94,12 @@ type MetricRow struct {
 
 // ShopSnapshot is what the shop told the engine (v0: the public feed only).
 type ShopSnapshot struct {
-	Products     []Product  `json:"products"`
-	Orders       []OrderDay `json:"orders"`        // empty until the website ships the read-only orders endpoint
-	OrdersSource string     `json:"orders_source"` // "none" until then
-	FetchedAt    time.Time  `json:"fetched_at"`
+	Products     []Product          `json:"products"`
+	Orders       []OrderDay         `json:"orders"`        // empty until the website ships the read-only orders endpoint
+	OrdersSource string             `json:"orders_source"` // "none" until then
+	FetchedAt    time.Time          `json:"fetched_at"`
+	PaymentMix   map[string]float64 `json:"payment_mix,omitempty"`
+	Orders28     int                `json:"orders_28d,omitempty"`
 }
 
 type Product struct {
@@ -449,6 +451,18 @@ type Economics struct {
 	TargetROAS      float64 `json:"target_roas"`
 	SeasonTolerance float64 `json:"season_tolerance"`
 	Season          string  `json:"season"`
+	// the math, per average order (AED), shown on Strategy → How it decides
+	ExVAT         float64            `json:"ex_vat"`
+	GrossProfit   float64            `json:"gross_profit"`
+	FeePct        float64            `json:"fee_pct"`
+	Fees          float64            `json:"fees"`
+	Delivery      float64            `json:"delivery"`
+	GiftCost      float64            `json:"gift_cost"`
+	Refunds       float64            `json:"refunds"`
+	PaymentMix    map[string]float64 `json:"payment_mix"`
+	MixSource     string             `json:"mix_source"` // orders | assumed
+	OrdersPerWeek float64            `json:"orders_per_week,omitempty"`
+	Math          []string           `json:"math"`
 }
 
 // LintResult is the policy linter's verdict on one piece of copy.

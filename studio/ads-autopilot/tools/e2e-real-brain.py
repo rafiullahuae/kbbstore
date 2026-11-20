@@ -127,6 +127,10 @@ def run(base):
     # limits: Practice, with the wording rule on /api/limits
     s, lim = call(base, "PUT", "/api/limits", {"daily_aed": 300, "monthly_aed": 9000, "target_cpa_aed": 60, "autopilot": "shadow", "countries": ["AE", "SA"], "wording": "strict"})
     check(s == 200 and lim.get("wording") == "strict", "limits: 300/day, 9000/month, Practice, wording %s" % lim.get("wording"))
+    # self-tuning "ask me": it may propose a threshold change but never applies one by itself (checked at the end)
+    s, pbk = call(base, "PUT", "/api/playbook", {"self_tune": "ask"})
+    check(s == 200 and pbk["playbook"]["self_tune"] == "ask" and pbk["playbook"]["coupon_code"] == "GLOW" and pbk["playbook"]["free_gift"],
+          "playbook: self-tuning ask-me; offers free gift + code %s; %d of %d products allowed" % (pbk["playbook"]["coupon_code"], pbk["allowed"], pbk["products"]))
     s, bad = call(base, "PUT", "/api/limits", {"wording": "loose"})
     check(s == 400, "an unknown wording rule is refused (%s)" % (bad or {}).get("error"))
 
@@ -197,18 +201,59 @@ def run(base):
     check(len(camps) == 3 and len(app_camps) == 2 and camps[0]["idem"] == camps[1]["idem"], "lost answer on the first campaign create: %d POSTs, replayed with the same key → %d campaigns, no duplicate" % (len(camps), len(app_camps)))
     fils = [x["form"]["daily_budget"] for x in camps if x["status"] == 200]
     check(sales and fils and str(int(round(sales[0]["daily_budget"] * 100))) in fils, "budgets on the wire: %s fils (sales AED %.2f/day)" % (fils, sales[0]["daily_budget"] if sales else 0))
+    call(base, "PUT", "/api/limits", {"max_active_ads": 10})  # room for the funnel's next pieces
     s, cy2 = call(base, "POST", "/api/cycle", {"mode": "auto"})
     w2 = writes(base)[n0 + len(w):]
-    again = [x for x in w2 if x["path"].endswith(("/campaigns", "/adsets", "/ads", "/adcreatives"))]
-    check(not cy2.get("starter") and not again, "the next cycle launches nothing again (%d creates; starter %s)" % (len(again), st["starter"]["state"]))
+    again = [x for x in w2 if x["path"].endswith("/campaigns") and x["status"] == 200]
+    grown = [x["form"].get("name", "") for x in w2 if x["path"].endswith(("/adsets", "/customaudiences")) and x["status"] == 200]
+    check(not cy2.get("starter") and not again, "the next cycle launches no second funnel (%d campaign creates; starter %s); the funnel grows by its jobs: %s" % (len(again), st["starter"]["state"], grown))
     s, dup = call(base, "POST", "/api/proposals/%s/approve" % [p for p in starter if p["kind"] == "create_campaign"][0]["id"], {})
     check(s in (404, 409), "approving an already-launched proposal is refused (%d %s)" % (s, (dup or {}).get("error", "")[:60]))
     s, lib = call(base, "GET", "/api/creatives")
-    stc = [c for c in lib if c.get("starter")]
-    n_ads = len([p for p in starter if p["kind"] == "upload_creative" and p["params"].get("format") == "image"])
+    st_ids = {p["target"] for p in starter if p["kind"] == "upload_creative" and p["params"].get("format") == "image"}
+    stc = [c for c in lib if c.get("starter") and c["id"] in st_ids]
+    n_ads = len(st_ids)
     check(len(stc) == n_ads >= 3 and all(c.get("meta_creative_id") for c in stc), "starter creatives in the library: %d, each uploaded (%s)" % (len(stc), ", ".join("%s %s" % (c["lang"], c["headline"][:24]) for c in stc)))
 
-    # 8 days later: seeded insights make one ad a loser and the sales campaign a winner
+    # the professional funnel for this seeded account (GET /api/funnel), as Meta received it
+    s, fn = call(base, "GET", "/api/funnel")
+    pieces = {p["key"]: p for p in fn["pieces"]}
+    check(all(pieces[k]["status"] == "live" for k in ("prospecting", "existing", "retargeting", "lookalike")),
+          "funnel (%s tier): %s" % (fn["tier"], ", ".join("%s %s (%d objects, %d settings)" % (k, p["status"], len(p["objects"]), len(p["settings"])) for k, p in pieces.items())))
+    allw = writes(base)
+    sets = {x["form"]["name"]: x["form"] for x in allw if x["path"].endswith("/adsets") and x["status"] == 200}
+    newc = [f for n, f in sets.items() if "new customers" in n]
+    exist = [f for n, f in sets.items() if "existing customers" in n]
+    lal = [f for n, f in sets.items() if "lookalike" in n]
+    cat = [f for n, f in sets.items() if "Retargeting" in n]
+    auds = [x["form"] for x in allw if x["path"].endswith("/customaudiences") and x["status"] == 200]
+    check(newc and '"excluded_custom_audiences"' in newc[0]["targeting"] and '"CLICK_THROUGH"' in newc[0]["attribution_spec"]
+          and exist and exist[0].get("daily_spend_cap") and '"targeting_relaxation_types"' in exist[0]["targeting"]
+          and cat and '"product_audience_specs"' in cat[0]["targeting"] and lal and '"custom_audiences"' in lal[0]["targeting"] and '"advantage_audience":1' in lal[0]["targeting"]
+          and any('"exclusions"' in a.get("rule", "") for a in auds) and sum(1 for a in auds if a.get("subtype") == "LOOKALIKE") == 2,
+          "on the wire: new customers exclude buyers + 7d-click/1d-view; existing customers capped at %s fils (strict audience); catalog retargeting product_audience_specs; 2 lookalikes as suggestions; past-buyers audience with an exclusion rule"
+          % (exist[0].get("daily_spend_cap") if exist else None))
+    # 3 simulated days: no duplicate funnel, predictions recorded, occasions still waiting
+    n_c0 = len([x for x in writes(base) if x["path"].endswith("/campaigns") and x["status"] == 200])
+    for d in range(3):
+        call(base, "POST", "/api/test/clock", {"advance_hours": 24})
+        s, cyd = call(base, "POST", "/api/cycle", {"mode": "auto"})
+        if s != 200:
+            print("       day %d cycle: %d %s" % (d + 1, s, str(cyd)[:200]))
+    n_c1 = len([x for x in writes(base) if x["path"].endswith("/campaigns") and x["status"] == 200])
+    s, lj = call(base, "GET", "/api/brain/x/learning")
+    s, occ = call(base, "GET", "/api/occasions")
+    waiting = [j for j in occ["packages"] if j["status"] == "planned"]
+    s, st3 = call(base, "GET", "/api/state")
+    live_occ = [a["name"] for c in st3["campaigns"] for s_ in c["adsets"] for a in s_["ads"] if "Occasion" in a["name"]]
+    check(n_c1 == n_c0 and (lj.get("open", 0) + lj.get("scored", 0)) >= 1 and waiting and not live_occ,
+          "3 days later: %d new campaigns; learning ledger %d open / %d scored predictions; %d occasion package(s) waiting, %d live without approval"
+          % (n_c1 - n_c0, lj.get("open", 0), lj.get("scored", 0), len(waiting), len(live_occ)))
+
+    # 8 days later: seeded insights make one ad a loser and the sales campaign a winner (picked from the account as
+    # it is now: the 3 days above already stopped non-buyers on the rules)
+    s, st = call(base, "GET", "/api/state")
+    sales = [c for c in st["campaigns"] if c["managed"] and "Advantage+ sales" in c["name"]]
     loser = None
     for c in sales:
         for a_ in c["adsets"]:
@@ -229,6 +274,27 @@ def run(base):
     want = str(int(round(sales[0]["daily_budget"] * 1.2 * 100)))
     check(scaled and newb == [want], "winner campaign scaled AED %.0f → %.0f/day (+20%%): %s fils on the wire" % (sales[0]["daily_budget"], sales[0]["daily_budget"] * 1.2, newb))
     print("       day-8 cycle: %s" % sorted("%s %s %s" % (r["kind"], r["target"], r["status"]) for r in res))
+    if not paused:
+        s, cyc8 = call(base, "GET", "/api/brain/x/cycle")
+        print("       loser verdict: %s; dropped %s" % ([v for v in cyc8.get("verdicts", []) if v["object"] == loser["id"]], cyc8.get("dropped")))
+        s, st8 = call(base, "GET", "/api/state")
+        print("       loser now: %s" % [(a["id"], a["status"], a.get("effective_status"), s_["name"]) for c in st8["campaigns"] for s_ in c["adsets"] for a in s_["ads"] if a["id"] == loser["id"]])
+        s, lg = call(base, "GET", "/api/log?limit=3000")
+        print("       log: %s" % [e["summary"][:120] for e in lg["entries"] if loser["id"] in json.dumps(e.get("data"))][-6:])
+
+    # the owner approves the UAE National Day package: its ads (AR + EN, one rejected) go live through every check
+    call(base, "PUT", "/api/limits", {"max_active_ads": 30})
+    s, occ = call(base, "GET", "/api/occasions")
+    nd = [j for j in occ["packages"] if j["status"] == "planned" and j.get("occasion", {}).get("occasion") == "national-day"]
+    if nd:
+        j = nd[0]
+        call(base, "POST", "/api/jobs/%s/reject-ad" % j["id"], {"creative_id": j["creatives"][0]})
+        s, ap = call(base, "POST", "/api/jobs/%s/approve" % j["id"], {})
+        s, st4 = call(base, "GET", "/api/state")
+        live_occ = [a["name"] for c in st4["campaigns"] for s_ in c["adsets"] for a in s_["ads"] if "Occasion" in a["name"]]
+        check(s == 200 and len(live_occ) == len(j["creatives"]) - 1, "National Day approved (one ad rejected): %d occasion ads live, %s" % (len(live_occ), (ap.get("run") or {}).get("counts") or ap.get("run_error") or ap.get("job", {}).get("status")))
+    else:
+        check(False, "no National Day package to approve: %s" % [j.get("id") for j in occ["packages"]])
 
     # the account switch: each account its own data and limits
     s, sel = call(base, "POST", "/api/accounts/select", {"account": "act_1000000002"})
@@ -258,6 +324,9 @@ def run(base):
     new = [x for x in writes(base)[n3:] if not x["path"].endswith("adrules_library") and "spend_cap" not in x["form"] and "evaluation_spec" not in x["form"]]  # the safety net may refresh its rules
     check(paused_n == 2 and not new, "kill: %d app campaigns paused; a cycle after it wrote %d" % (paused_n, len(new)) + (" %s" % [(x["path"], x["form"]) for x in new] if new else ""))
 
+    s, lj = call(base, "GET", "/api/brain/x/learning")
+    check(not (lj.get("tuned") or {}).get("applied") and lj.get("self_tune") == "ask",
+          "ask-me self-tuning never applied by itself (tuned %s, changes %s)" % (lj.get("tuned"), (lj.get("changes") or [])[-1:]))
     s, cc = call(base, "GET", "/api/test/claude-calls")
     k_ = cc.get("kinds") or {}
     check(all(k_.get(x, 0) >= 1 for x in ("plan", "copy", "research-search", "research-notes", "trending-search", "trending-items", "video")),

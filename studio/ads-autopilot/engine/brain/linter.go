@@ -73,7 +73,8 @@ var ruleSeverity = map[string][3]string{
 	"before_after":                {"block", "block", "warn"},
 	"whitening":                   {"block", "rewrite", "rewrite"},
 	"discount_unapproved":         {"block", "warn", "warn"},
-	"discount_amount":             {"block", "block", "block"}, // the owner: never a % or amount off, only the coupon code + free gift
+	"discount_amount":             {"block", "block", "block"},
+	"gift_tier":                   {"block", "block", "block"}, // the owner: no gift tiers, just a free gift with every order // the owner: never a % or amount off, only the coupon code + free gift
 	"exclusivity_claim":           {"rewrite", "warn", "warn"},
 	"fake_review":                 {"block", "block", "block"},
 	"spf_claim":                   {"warn", "warn", "warn"},
@@ -119,6 +120,7 @@ var (
 	// any percentage or amount off, in every mode (the owner, 20 Nov 2026); a product name like "Heartleaf 77% Toner"
 	// is not a discount, so a % only counts next to off / discount / save / sale
 	enDiscountAmt = regexp.MustCompile(`(?i)(\d+(\.\d+)?\s?%\s?(off|discount|saving|cheaper|less)|\b(save|discount|off|sale)\s(of\s)?(up to\s)?\d+\s?%|\bhalf[- ]price\b|\bsave\s(up to\s)?(aed|dhs?)\s?\d|\b(aed|dhs?)\s?\d+(\.\d+)?\s?off\b|\d+\s?(aed|dhs?)\s?off\b)`)
+	enGiftTier    = regexp.MustCompile(`(?i)\b(better|bigger|larger|premium|extra|second|2nd|upgraded?)\s+(free\s+)?gifts?\b|\bgifts?\s+(worth\s+more\s+)?(above|over|when you spend|for orders (above|over))\b|\bspend\s+(aed|dhs?)?\s?\d+.{0,20}\bgift`)
 	enDiscount    = regexp.MustCompile(`(?i)(\d+\s?%\s?(off|discount)|\bsale\b|\bdiscount(s|ed)?\b|\bclearance\b|\bwas (aed|dhs?)\s?\d|\bcoupon\b|\bpromo code\b|\bbogo\b|buy one get one)`)
 	enExclusive   = regexp.MustCompile(`(?i)(#\s?1\b|\bnumber one\b|\bno\.? ?1\b|\bthe best (in|skincare|serum|cream)\b|\bbest in (the )?(uae|dubai|gcc|world)\b|\bthe only\b|\bunlike other (brands|shops|stores)\b|\bcheapest\b)`)
 	enFakeRev     = regexp.MustCompile(`(★|⭐){3,}|(?i)\b(rated|rating of) [45](\.\d)? stars?\b|(?i)["“][^"”]{8,}["”]\s*[-–—]\s*[A-Z][a-z]+`)
@@ -144,6 +146,7 @@ var (
 	arHype        = []string{"دائم", "دائمه", "دائمة", "نهائيا", "للابد", "معجزه", "معجزة", "سحري", "سحريه", "سحرية"}
 	arBeforeAft   = []string{"قبل وبعد", "قبل و بعد", "قبل/بعد"}
 	arWhitening   = []string{"تبييض", "مبيض", "تفتيح البشره", "تفتيح البشرة", "بشره افتح", "بشرة افتح", "بشره بيضاء", "بشرة بيضاء"}
+	arGiftTier    = []string{"هدية أكبر", "هدية أفضل", "هدية إضافية", "هدية اكبر", "هدية افضل", "هدية اضافية"}
 	arDiscountAmt = []string{"خصم", "تخفيض", "تخفيضات", "نصف السعر", "وفري", "توفير"}
 	arPercentOff  = regexp.MustCompile(`[0-9٠-٩]+\s?[٪%]\s?(خصم|تخفيض|اقل|أقل)`)
 	arDiscount    = []string{"خصم", "تخفيض", "تخفيضات", "تنزيلات", "اوكازيون", "كوبون", "كود خصم", "اشتري واحد"}
@@ -247,6 +250,9 @@ func Lint(c CopyFields, o LintOptions) LintResult {
 		if m := enWhitening.FindString(text); m != "" {
 			add("whitening", field, m, "META-HW: skin whitening/bleaching claims.", "'brightening', 'radiance', 'glow'.")
 		}
+		if m := enGiftTier.FindString(text); m != "" {
+			add("gift_tier", field, m, "The owner: just \"free gift with every order\" — never a better / bigger gift above an amount.", "'Free gift with every order'.")
+		}
 		if m := enDiscountAmt.FindString(text); m != "" {
 			add("discount_amount", field, m, "The owner: no percentage or amount discounts in ads; only the coupon code and the free gift.", "'Use code "+firstNonEmpty(o.Coupon, "GLOW")+" at checkout' / 'Free gift with every order'.")
 		} else if m := enDiscount.FindString(text); !(couponOK(text, o.Coupon) && (strings.EqualFold(m, "coupon") || strings.EqualFold(m, "promo code"))) {
@@ -318,6 +324,9 @@ func Lint(c CopyFields, o LintOptions) LintResult {
 		}
 		if m := arMatch(n, arWhitening); m != "" {
 			add("whitening", field, m, "META-HW: whitening/bleaching.", "«إشراقة»، «نضارة»، «توهّج».")
+		}
+		if m := arMatch(n, arGiftTier); m != "" {
+			add("gift_tier", field, m, "The owner: just a free gift with every order — no gift tiers.", "«هدية مجانية مع كل طلب».")
 		}
 		if m := arMatch(n, arDiscountAmt); m != "" || arPercentOff.MatchString(n) {
 			if m == "" {

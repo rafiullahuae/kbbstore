@@ -161,3 +161,61 @@ func (s *server) autolink(w http.ResponseWriter, r *http.Request, id string) {
 	}
 	writeJSON(w, map[string]any{"account": id, "links": links, "picked": picked, "link_checks": checks, "readiness": ac.readiness()})
 }
+
+// stockAlerts: a product that sold out while an app ad shows it is an ALERT (Overview, Mac notification, Activity) —
+// never an automatic pause (the owner: "if it's generating good results it should continue"; the performance rules
+// still decide). Once per product per day.
+func (ac *Acct) stockAlerts(shop model.ShopSnapshot) []string {
+	out := map[string]bool{}
+	for _, p := range shop.Products {
+		if !p.InStock {
+			out[p.ID] = true
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	lib := map[string]model.Creative{}
+	for _, c := range ac.creatives.all() {
+		lib[c.ID] = c
+		if c.MetaID != "" {
+			lib[c.MetaID] = c
+		}
+	}
+	title := map[string]string{}
+	for _, p := range shop.Products {
+		title[p.ID] = p.Title
+	}
+	ac.mu.RLock()
+	tree := cloneTree(ac.tree)
+	ac.mu.RUnlock()
+	day := ac.app.now().In(ac.loc()).Format("2006-01-02")
+	sent := map[string]string{}
+	_ = ac.st.Load("stock_alerts", &sent)
+	var said []string
+	for _, c := range tree {
+		if !c.Managed {
+			continue
+		}
+		for _, s := range c.AdSets {
+			for _, a := range s.Ads {
+				if a.Status != "ACTIVE" {
+					continue
+				}
+				for _, id := range lib[a.CreativeID].ProductIDs {
+					if out[id] && sent[id] != day {
+						sent[id] = day
+						msg := fmt.Sprintf("%s is sold out but the ad \"%s\" still shows it. It keeps running (your rule: results decide); restock or pause it yourself if you prefer.", title[id], a.Name)
+						ac.notifyOwner("Sold out in a live ad", msg, title[id]+" نفد من المخزون ولا يزال في إعلان نشط.")
+						ac.st.Append("alert", msg, map[string]any{"product": id, "ad": a.ID})
+						said = append(said, msg)
+					}
+				}
+			}
+		}
+	}
+	if len(said) > 0 {
+		_ = ac.st.Save("stock_alerts", sent)
+	}
+	return said
+}

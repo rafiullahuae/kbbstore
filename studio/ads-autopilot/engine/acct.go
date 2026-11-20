@@ -481,6 +481,9 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		Audiences: append([]model.Audience(nil), ac.audiences...)}
 	ex := ac.exec
 	ac.mu.RUnlock()
+	if said := ac.stockAlerts(shopSnap); len(said) > 0 { // alerts only, never a pause (readiness.go)
+		out["stock_alerts"] = len(said)
+	}
 	// the owner's Playbook, in code, before the brain or the funnel builder sees one product (playbook.go)
 	fshop, pb, excluded := ac.filteredShop(shopSnap)
 	in.Shop, in.Playbook, in.JobNotes = fshop, &pb, ac.jobNotes()

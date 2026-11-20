@@ -413,7 +413,7 @@ func (L *Ledger) Tune(in CycleInput, cur RulesConfig, econ Economics, mode strin
 		return nil
 	}
 	base := cur.HardStopMult
-	if L.Tuned.HardStopMult > 0 {
+	if L.Tuned.HardStopMult > 0 && L.Tuned.Applied { // a proposal nobody applied is not the new base
 		base = L.Tuned.HardStopMult
 	}
 	next := base + math.Max(-0.5, math.Min(0.5, m-base))

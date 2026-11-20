@@ -33,7 +33,11 @@ function how(s, o) {
     <tr><td>${L('Gross margin', 'الهامش')}</td><td class="n">${num((e.margin_pct || 0) * 100)}% <span class="muted small">${esc(e.margin_source || '')}</span></td></tr>
     <tr><td><b>${L('Break-even cost per order', 'تكلفة الطلب عند التعادل')}</b></td><td class="n"><b>${aed(e.breakeven_cpa)}</b> · ROAS ${num(e.breakeven_roas, 2)}</td></tr>
     <tr><td><b>${L('Target cost per order', 'تكلفة الطلب المستهدفة')}</b></td><td class="n"><b>${aed(e.target_cpa)}</b> · ROAS ${num(e.target_roas, 2)}</td></tr>
-    <tr><td>${L('Season now', 'الموسم الحالي')}</td><td class="n">${esc(e.season || '—')}</td></tr></tbody></table></div>
+    <tr><td>${L('Season now', 'الموسم الحالي')}</td><td class="n">${esc(e.season || '—')}</td></tr>
+    <tr><td>${L('Shop orders a week', 'طلبات المتجر أسبوعياً')}</td><td class="n">${e.orders_per_week ? num(e.orders_per_week) : '—'}</td></tr></tbody></table>
+    <details open><summary class="small"><b>${L('The math, per average order', 'الحساب لكل طلب متوسط')}</b></summary><ol class="small ink2" style="margin:6px 0;padding-inline-start:18px">${(e.math || []).map((m) => `<li>${esc(m)}</li>`).join('')}</ol></details>
+    <div class="row small" data-econ>${[['vat_pct', 'VAT %', 'الضريبة ٪'], ['bnpl_fee_pct', 'Tabby/Tamara %', 'تابي/تمارا ٪'], ['card_fee_pct', 'Cards %', 'البطاقات ٪'], ['cod_fee_pct', 'Cash (Quiqup) %', 'الدفع عند الاستلام ٪'], ['delivery_aed', 'Delivery AED', 'التوصيل درهم'], ['gift_cost_aed', 'Free gift cost AED', 'تكلفة الهدية درهم']].map(([k, en, ar]) => `<label>${esc(tt(en, ar))} <input type="number" step="0.1" min="0" data-econf="${k}" value="${((draft.econ || {})[k]) ?? ''}" style="width:70px"></label>`).join('')}</div>
+    ${!((draft.econ || {}).gift_cost_aed) ? `<p class="small" style="color:var(--warn)">${L('Add your free-gift cost per order: until then the targets assume AED 0.', 'أضيفي تكلفة الهدية لكل طلب: حتى ذلك الحين تفترض الأهداف ٠ درهم.')}</p>` : ''}</div>
   <div class="card"><header><h2>${L('The funnel it runs', 'مسار المبيعات')}</h2><span class="sub">${esc(s.tier === 'small' ? tt('small-budget tier', 'شريحة الميزانية الصغيرة') : tt('growth tier', 'شريحة النمو'))} · ${aed(s.daily_aed)}/${L('day', 'يوم')}</span></header>
     ${(s.funnel || []).map((f) => `<div style="margin-bottom:10px"><div class="spread small"><b>${esc(tt(f.stage, f.stage_ar))}</b><span class="num">${num(f.share)}% · ${aed(f.aed)}</span></div><div class="bar-s"><i style="width:${Math.max(0, Math.min(100, f.share))}%"></i></div><span class="small ink2">${esc(f.how)}</span></div>`).join('')}
     <p class="small muted">${L('Chat ads (WhatsApp / Messenger) are not used: you do not offer them.', 'إعلانات المحادثة (واتساب / ماسنجر) غير مستخدمة.')}</p></div></div>
@@ -71,7 +75,8 @@ function playbook(p, s) {
     <tr><td>${L('above', 'أكثر من')}</td>${['prospecting', 'retargeting', 'existing'].map((k) => `<td><input type="number" data-split="split.${k}" value="${sp[k] || 0}" min="0" max="100" style="width:60px"></td>`).join('')}</tr></tbody></table>
     <h3 style="margin-top:14px">${L('Offers', 'العروض')} ${tip(tt('Never a percentage or an amount off: the checker blocks it in every mode. Only these.', 'لا نسبة ولا مبلغ خصم أبداً: فقط هذه.'))}</h3>
     <div class="row small"><label><input type="checkbox" data-f="offers_allowed" ${d.offers_allowed ? 'checked' : ''}> ${L('Use offers in ads', 'استخدام العروض في الإعلانات')}</label><label><input type="checkbox" data-f="free_gift" ${d.free_gift ? 'checked' : ''}> ${L('Free gift with every order', 'هدية مجانية مع كل طلب')}</label>
-      <label>${L('Coupon code', 'كود الخصم')} <input data-f="coupon_code" value="${esc(d.coupon_code || '')}" style="width:90px"></label></div>
+      <label>${L('Coupon code', 'كود الخصم')} <input data-f="coupon_code" value="${esc(d.coupon_code || '')}" style="width:90px"></label>
+      <label><input type="checkbox" data-f="pay_later" ${d.pay_later ? 'checked' : ''}> ${L('Pay in 4 with Tabby / Tamara', 'قسّميها على ٤ دفعات مع تابي / تمارا')}</label></div>
     <label class="small" style="display:block;margin-top:6px">${L('Gifts we give (names, comma-separated; never invented)', 'الهدايا التي نقدمها (بالاسم)')} <input data-f="gifts" value="${esc((d.gifts || []).join(', '))}" style="width:100%"></label></div></div>`;
 }
 
@@ -140,6 +145,7 @@ function wire(S, el) {
     };
   });
   el.querySelectorAll('[data-lang]').forEach((i) => { i.onchange = () => { const ls = new Set(draft.languages || []); if (i.checked) ls.add(i.dataset.lang); else ls.delete(i.dataset.lang); draft.languages = [...ls]; dirty = true; re(); }; });
+  el.querySelectorAll('[data-econf]').forEach((i) => { i.onchange = () => { set('econ.' + i.dataset.econf, Number(i.value)); re(); }; });
   el.querySelectorAll('[data-split]').forEach((i) => { i.onchange = () => { set(i.dataset.split, Number(i.value)); re(); }; });
   el.querySelectorAll('[data-knob]').forEach((i) => { i.onchange = () => { const v = i.value === '' ? 0 : Number(i.value); set('knobs.' + i.dataset.knob, i.dataset.pct === '1' ? v / 100 : v); re(); }; });
   el.querySelectorAll('[data-tb]').forEach((i) => { i.onchange = () => { set('tune_bounds.' + i.dataset.tb, Number(i.value)); re(); }; });

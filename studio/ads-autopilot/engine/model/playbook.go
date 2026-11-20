@@ -49,6 +49,21 @@ type Knobs struct {
 	ConversionsPerWeek int     `json:"conversions_per_week"`   // what one ad set needs a week to exit learning (default 50, Meta)
 }
 
+// EconInputs: VAT is removed from revenue first (prices include it), then the payment fee on the order total by
+// payment family, the delivery cost and the free gift. Defaults: the owner, 20 Nov 2026.
+type EconInputs struct {
+	VATPct      float64 `json:"vat_pct"`       // 5
+	BNPLFeePct  float64 `json:"bnpl_fee_pct"`  // Tabby / Tamara 7
+	CardFeePct  float64 `json:"card_fee_pct"`  // Stripe (cards, Apple Pay) 2.5
+	CODFeePct   float64 `json:"cod_fee_pct"`   // Quiqup cash collection 1.5
+	DeliveryAED float64 `json:"delivery_aed"`  // Quiqup 15 per order
+	GiftCostAED float64 `json:"gift_cost_aed"` // the free gift per order (unknown yet: 0 until he adds it)
+}
+
+func DefaultEconInputs() EconInputs {
+	return EconInputs{VATPct: 5, BNPLFeePct: 7, CardFeePct: 2.5, CODFeePct: 1.5, DeliveryAED: 15}
+}
+
 // TuneBounds: the range inside which the self-learning loop may move a threshold on its own.
 type TuneBounds struct {
 	HardStopMin float64 `json:"hard_stop_min"` // the "stop a non-buyer after N x break-even CPA" multiple (default 2..4)
@@ -102,6 +117,9 @@ type Playbook struct {
 	FreeGift          bool     `json:"free_gift"`           // "Free gift with every order" / «هدية مجانية مع كل طلب»
 	CouponCode        string   `json:"coupon_code"`         // "Use code GLOW at checkout" / «استخدمي الكود GLOW»
 	Gifts             []string `json:"gifts"`               // the gifts we give, by name (filled by the owner; never invented)
+	PayLater          bool     `json:"pay_later"`           // "Pay in 4 with Tabby or Tamara" / «قسّميها على ٤ دفعات مع تابي أو تمارا»
+	// Econ: the shop's real unit economics (Strategy → How it decides); the math is shown there
+	Econ EconInputs `json:"econ"`
 	// Occasions (Strategy → Occasions): nil = the defaults. Nothing seasonal goes live without his approval unless
 	// AutoApproveOccasions (off by default).
 	Occasions            []Occasion `json:"occasions,omitempty"`
@@ -121,7 +139,7 @@ func DefaultPlaybook() Playbook {
 		Instructions: "Focus on the latest arrivals and the products trending now. Do not push old evergreen items (for example snail mucin) unless the shop's own sales show they are winning.\n" +
 			"ركّز على أحدث المنتجات والأكثر رواجاً الآن. لا تروّج للمنتجات القديمة (مثل سنيل ميوسين) إلا إذا أثبتت مبيعات المتجر أنها تربح.",
 		Focus: []PBRule{}, Avoid: []PBRule{}, FreshnessPct: 70, MinStock: 3, AgeMin: 18, AgeMax: 45, Gender: "women",
-		Languages: []string{"ar", "en"}, SelfTune: "bounds", TuneBounds: TuneBounds{2, 4, 2, 3.5}, OffersAllowed: true, FreeGift: true, CouponCode: "GLOW", Gifts: []string{}, ExcludeBuyersDays: 180, Split: Split{Prospecting: 70, Retargeting: 20, Existing: 10}, SmallSplit: Split{Prospecting: 80, Retargeting: 20},
+		Languages: []string{"ar", "en"}, SelfTune: "bounds", TuneBounds: TuneBounds{2, 4, 2, 3.5}, OffersAllowed: true, FreeGift: true, CouponCode: "GLOW", Gifts: []string{}, PayLater: true, Econ: DefaultEconInputs(), ExcludeBuyersDays: 180, Split: Split{Prospecting: 70, Retargeting: 20, Existing: 10}, SmallSplit: Split{Prospecting: 80, Retargeting: 20},
 	}
 }
 
@@ -259,6 +277,13 @@ func (p Playbook) Normalize() Playbook {
 	}
 	p.Gifts = gs
 	p.Occasions = normOccasions(p.Occasions)
+	e, de := p.Econ, DefaultEconInputs()
+	if e == (EconInputs{}) { // a playbook saved before these existed
+		e = de
+	}
+	e.VATPct, e.BNPLFeePct, e.CardFeePct, e.CODFeePct = clampF(e.VATPct, 0, 20), clampF(e.BNPLFeePct, 0, 20), clampF(e.CardFeePct, 0, 20), clampF(e.CODFeePct, 0, 20)
+	e.DeliveryAED, e.GiftCostAED = clampF(e.DeliveryAED, 0, 500), clampF(e.GiftCostAED, 0, 500)
+	p.Econ = e
 	if p.SelfTune != "off" && p.SelfTune != "ask" {
 		p.SelfTune = "bounds"
 	}
@@ -602,6 +627,9 @@ func (p Playbook) OfferFacts() []string {
 	}
 	if p.CouponCode != "" {
 		f = append(f, "Use code "+p.CouponCode+" at checkout / استخدمي الكود "+p.CouponCode)
+	}
+	if p.PayLater {
+		f = append(f, "Pay in 4 with Tabby or Tamara / قسّميها على ٤ دفعات مع تابي أو تمارا")
 	}
 	return f
 }

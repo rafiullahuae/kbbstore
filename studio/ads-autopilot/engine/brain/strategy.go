@@ -32,7 +32,7 @@ func (e *Engine) strategy(acct string, in CycleInput) map[string]any {
 		pb = *in.Playbook
 	}
 	def, defE := DefaultRules(), DefaultEcon()
-	r, ec := withKnobs(def, defE, pb.Knobs)
+	r, ec := withKnobs(def, defE.WithInputs(pb.Econ), pb.Knobs)
 	var L Ledger
 	e.load(acct, "ledger", &L)
 	r = L.Apply(r, pb.Knobs, pb.TuneBounds)

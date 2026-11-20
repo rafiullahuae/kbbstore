@@ -85,6 +85,7 @@ type apiOrders struct {
 	Orders []struct {
 		Day    string `json:"day"`
 		IsSale bool   `json:"is_sale"`
+		Family string `json:"payment_family"`
 		Items  []struct {
 			ProductID *string `json:"product_id"`
 			Qty       int     `json:"qty"`
@@ -208,6 +209,7 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 
 	// units sold per product: sale orders of the last 28 shop days, split 14 + 14 (the momentum signal)
 	units, prev := map[string]int{}, map[string]int{}
+	fam, nSale := map[string]float64{}, 0
 	cut := today.AddDate(0, 0, -13).Format("2006-01-02")
 	oq := url.Values{"from": {today.AddDate(0, 0, -27).Format("2006-01-02")}, "to": {today.Format("2006-01-02")}, "limit": {"200"}}
 	after = 0
@@ -218,13 +220,19 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 			if errors.Is(err, ErrUnauthorized) {
 				return err
 			}
-			units, prev = map[string]int{}, map[string]int{} // momentum is a bonus signal: without it the rest still holds
+			units, prev, fam, nSale = map[string]int{}, map[string]int{}, map[string]float64{}, 0 // momentum is a bonus signal: without it the rest still holds
 			break
 		}
 		for _, od := range o.Orders {
 			if !od.IsSale {
 				continue
 			}
+			nSale++
+			f := od.Family
+			if f != "bnpl" && f != "card" && f != "cod" {
+				f = "other"
+			}
+			fam[f]++
 			for _, it := range od.Items {
 				if it.ProductID == nil || it.Qty <= 0 {
 					continue
@@ -243,6 +251,12 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 	}
 
 	snap.Orders = orders
+	if nSale > 0 {
+		snap.Orders28, snap.PaymentMix = nSale, map[string]float64{}
+		for k, v := range fam {
+			snap.PaymentMix[k] = v / float64(nSale)
+		}
+	}
 	for i := range snap.Products {
 		p := &snap.Products[i]
 		if m, ok := margins[p.ID]; ok {

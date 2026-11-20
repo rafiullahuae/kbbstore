@@ -104,10 +104,10 @@ func TestOccasionDates(t *testing.T) {
 	}
 }
 
-// Offers: free gift + the coupon code by default; never a % (the linter enforces it); off = nothing.
+// Offers: free gift + the coupon code + pay in 4 (Tabby / Tamara) by default; never a % (the linter enforces it); off = nothing.
 func TestOfferFacts(t *testing.T) {
 	pb := DefaultPlaybook().Normalize()
-	if f := pb.OfferFacts(); len(f) != 2 || pb.CouponCode != "GLOW" {
+	if f := pb.OfferFacts(); len(f) != 3 || pb.CouponCode != "GLOW" {
 		t.Fatalf("%v", f)
 	}
 	pb.CouponCode = "glow 20%!"

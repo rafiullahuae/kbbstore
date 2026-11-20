@@ -317,9 +317,9 @@ func (ac *Acct) targetCPA(in model.CycleInput) float64 {
 	br := ac.app.brain
 	ac.app.mu.RUnlock()
 	if t, ok := br.(interface {
-		TargetCPA(model.ShopSnapshot) float64
-	}); ok {
-		if v := t.TargetCPA(in.Shop); v > 0 {
+		TargetCPAWith(model.ShopSnapshot, model.EconInputs) float64
+	}); ok && in.Playbook != nil {
+		if v := t.TargetCPAWith(in.Shop, in.Playbook.Econ); v > 0 {
 			return v
 		}
 	}

@@ -269,3 +269,18 @@ func TestOffersOnlyCouponAndFreeGift(t *testing.T) {
 		}
 	}
 }
+
+// The owner (20 Nov 2026): "pay in 4 with Tabby / Tamara" is allowed; gift tiers are not ("a better gift above AED X").
+// MUTATION: drop the gift_tier rule → the tier lines pass, red.
+func TestPayLaterYesGiftTiersNo(t *testing.T) {
+	for _, c := range []struct{ text, lang string }{{"Pay in 4 with Tabby or Tamara. Free gift with every order.", "en"}, {"قسّميها على ٤ دفعات مع تابي أو تمارا. هدية مجانية مع كل طلب.", "ar"}} {
+		if r := Lint(CopyFields{PrimaryText: c.text, Headline: map[string]string{"en": "Your K-beauty glow", "ar": "توهّج كوري"}[c.lang], CTA: "SHOP_NOW"}, LintOptions{Lang: c.lang, Strictness: Balanced}); !r.OK {
+			t.Errorf("%q flagged: [%s]", c.text, rulesOf(r))
+		}
+	}
+	for _, c := range []struct{ text, lang string }{{"Get a better gift on orders above AED 200", "en"}, {"Spend AED 300 and get a bigger gift", "en"}, {"هدية أكبر للطلبات فوق ٢٠٠ درهم", "ar"}} {
+		if r := Lint(CopyFields{PrimaryText: c.text}, LintOptions{Lang: c.lang, Strictness: Relaxed}); !hasRule(r, "gift_tier") || r.OK {
+			t.Errorf("%q: want gift_tier, got [%s]", c.text, rulesOf(r))
+		}
+	}
+}

@@ -76,18 +76,19 @@ func TestEconomics(t *testing.T) {
 	now := time.Date(2026, 11, 20, 9, 0, 0, 0, time.UTC)
 	shop := ShopSnapshot{Products: []Product{{ID: "1", PriceAED: 100, InStock: true}, {ID: "2", PriceAED: 60, InStock: true}, {ID: "3", PriceAED: 80, InStock: true}}}
 	e := ComputeEconomics(DefaultEcon(), shop, now)
-	// AOV = median 80 x 1.6 = 128; exVAT 121.90; contribution = 121.90*.45 - 12 - .035*128 - 1 - .03*121.90 = 33.70
+	// AOV = median 80 x 1.6 = 128; exVAT 121.90; the owner's fees (assumed mix 50% card 2.5%, 30% Tabby/Tamara 7%,
+	// 20% cash 1.5% = 3.65% of 128), Quiqup 15: contribution = 121.90*.45 - 15 - .0365*128 - .03*121.90 = 31.53
 	near(t, "AOV", e.AOV, 128, 0.01)
 	if e.AOVSource != "feed_median" {
 		t.Fatal(e.AOVSource)
 	}
-	near(t, "BE CPA", e.BreakEvenCPA, 33.70, 0.02)
-	near(t, "BE ROAS", e.BreakEvenROAS, 128/33.70, 0.02)
+	near(t, "BE CPA", e.BreakEvenCPA, 31.53, 0.02)
+	near(t, "BE ROAS", e.BreakEvenROAS, 128/31.53, 0.02)
 	// 20 Nov 2026 is inside White Friday (tolerance 1.15): target = 33.70*.75*1.15
 	if e.Season != "White Friday" {
 		t.Fatalf("season %q", e.Season)
 	}
-	near(t, "target CPA", e.TargetCPA, 33.70*0.75*1.15, 0.02)
+	near(t, "target CPA", e.TargetCPA, 31.53*0.75*1.15, 0.02)
 	// Orders replace the feed estimate once there are 10+.
 	shop.Orders = []OrderDay{{Date: "2026-11-10", Orders: 12, NetRevenue: 2400}}
 	if e := ComputeEconomics(DefaultEcon(), shop, now); e.AOVSource != "orders" || e.AOV != 200 {

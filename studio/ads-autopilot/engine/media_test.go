@@ -251,6 +251,35 @@ func TestOccasionWaitsForApproval(t *testing.T) {
 	}
 }
 
+// A product that sells out while its ad runs is an ALERT, never an automatic pause (the owner: "if it's generating
+// good results it should continue"). MUTATION: pause the ad in stockAlerts → red.
+func TestSoldOutAlertsNeverPauses(t *testing.T) {
+	ac, m := testApp(t)
+	ac.app.brain = quietBrain{}
+	ctx := context.Background()
+	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil {
+		t.Fatal(err)
+	}
+	ac.app.mu.Lock()
+	for i := range ac.app.shopSnap.Products {
+		ac.app.shopSnap.Products[i].InStock = false
+	}
+	ac.app.mu.Unlock()
+	n0 := len(m.Writes())
+	out, err := ac.Cycle(ctx, model.AutopilotAuto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, w := range m.Writes()[n0:] {
+		if w.Form["status"] == "PAUSED" && !strings.HasSuffix(w.Path, "/campaigns") && !strings.HasSuffix(w.Path, "/adsets") && !strings.HasSuffix(w.Path, "/ads") {
+			t.Fatalf("a sold-out product paused something: %s %v", w.Path, w.Form)
+		}
+	}
+	if n, _ := out["stock_alerts"].(int); n < 1 {
+		t.Fatalf("no sold-out alert: %v", out["stock_alerts"])
+	}
+}
+
 // A fresh account with nothing linked says why Approvals is empty, with the fix; Auto-link fills the links from the
 // portfolio. MUTATION: drop the links blocker → red.
 func TestReadinessSaysWhy(t *testing.T) {
