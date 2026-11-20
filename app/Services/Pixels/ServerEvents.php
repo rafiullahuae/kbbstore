@@ -607,7 +607,7 @@ final class ServerEvents
         $out = ['due' => 0, 'sent' => 0, 'failed' => 0, 'dropped' => 0];
 
         try {
-            $rows = DB::table('marketing_capi_retries')->where('next_at', '<=', now())->orderBy('next_at')->limit($limit)->get();
+            $rows = DB::table('marketing_capi_retries')->where('next_at', '<=', now())->orderBy('next_at')->orderBy('id')->limit($limit)->get();
         } catch (\Throwable) {
             return $out;
         }

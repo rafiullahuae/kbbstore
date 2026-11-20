@@ -194,7 +194,11 @@ it('has nothing that outlives a single request', function () {
     // events, finishes queued bookings, polls due shipments (one indexed
     // EXISTS when nothing is due, 30 Quiqup calls an hour at most), exits.
     // Nothing is held between runs.
-    expect(substr_count($console, 'Schedule::command('))->toBe(16, 'the set of scheduled commands has changed');
+    // 17 with Lane AP-API: `kbb:capi-retry`, every minute -- re-sends Meta
+    // server events that failed, from marketing_capi_retries (one indexed read
+    // when nothing is due, at most 20 sends a run), exits. Nothing is held
+    // between runs.
+    expect(substr_count($console, 'Schedule::command('))->toBe(17, 'the set of scheduled commands has changed');
 });
 
 it('names the memos that would go stale the day that premise changes', function () {

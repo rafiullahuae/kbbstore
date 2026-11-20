@@ -231,6 +231,16 @@ it('has an authorization layer reading the role column', function () {
 
     expect($middleware)->toBe([
         /*
+         * Lane AP-API (Growth & Marketing -> Ads Autopilot), and I have read
+         * this file as instructed.
+         *
+         * AutopilotApiAuth authorises no admin and reads no role. It is the
+         * door of /autopilot-api/v1/* -- a machine with a connection key, no
+         * session -- and answers 401/403/429 there and nowhere else (it is
+         * attached per route in routes/autopilot-api.php, never globally).
+         */
+        'AutopilotApiAuth',
+        /*
          * Lane CT (Growth & Marketing -> Cart Tracking), and I have come and
          * read this file as instructed.
          *
