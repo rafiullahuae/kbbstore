@@ -100,7 +100,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     if (w === 1440 && lang === 'en') {
       const tid = await page.$$eval('[data-job]', (d) => (d.find((x) => /test/i.test(x.innerText) && x.querySelector('[data-jedit]')) || d[0]).dataset.job);
       await page.click(`[data-jedit="${tid}"]`); await page.waitForSelector('[data-editor]');
-      await page.$eval('[data-e="product_ids"]', (s) => { for (const o of s.options) o.selected = false; s.options[0].selected = true; if (s.options[1]) s.options[1].selected = true; });
+      await page.click('[data-epick]'); await page.waitForSelector('dialog.pk[open] .pk-row'); // the product picker (picker.js)
+      while (await page.$('dialog.pk [data-un]')) await page.click('dialog.pk [data-un]'); // each click repaints the list
+      for (let i = 0; i < 2; i++) await page.click('dialog.pk .pk-row:not(.off):not(.on)');
+      await page.click('dialog.pk [data-save]'); await sleep(150);
       await page.selectOption('[data-e="format"]', 'carousel');
       await page.fill('[data-e="note"]', 'Lead with the hydrating texture, Arabic hook first.');
       await shot('plan-edit');
