@@ -163,13 +163,13 @@ func TestShadowWritesNothing(t *testing.T) {
 func TestActivationIsChecked(t *testing.T) {
 	m, x, mc := rig(t)
 	e := liveEnv(t, mc)
-	e.Limits.MaxActiveAds = 2 // the owner's ad is active: one slot left, then the create_ad check needs +1 → 2 ok
+	e.Limits.MaxActiveAds = 1 // the owner's own active ad is not counted (22 Nov): one slot for ours
 	res := x.Run(context.Background(), e, launchBatch())
 	if res[3].Status != "done" {
 		t.Fatalf("%+v", res[3])
 	}
 	e2 := liveEnv(t, mc)
-	e2.Limits.MaxActiveAds = 2
+	e2.Limits.MaxActiveAds = 1
 	more := []model.Proposal{{ID: "z", Kind: model.KindCreateAd, Target: "tmp:a2", Params: map[string]any{"adset_id": res[1].MetaID, "creative_id": "cr-ar-1"}}}
 	r := x.Run(context.Background(), e2, more)
 	if r[0].Status != "refused" {

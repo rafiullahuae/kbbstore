@@ -2,6 +2,12 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.5
+- Your limits are now for the autopilot's own ads only, as you asked. Your own campaigns — their budgets, their spend and their ads — are no longer counted: the daily limit, the monthly limit and Max active ads apply to the "KAA:" campaigns alone. This unblocks the first launch ("no room for a starter campaign … AED 1500 already committed" was your own campaigns' budgets).
+- Meta's account spending limit now adds both: what is spent + what the autopilot may still spend this month + what your own campaigns' daily budgets need until month end. It moves with your budgets, so it never stops your own ads.
+- New Meta rule "KAA: monthly limit" (with the existing "KAA: daily limit") holds the autopilot's own campaigns to your limits while the Mac is closed.
+- Overview → Your limits shows the autopilot's own spend today and this month.
+
 ## 0.6.4
 - Fixed: "Run it" only marked the ads approved and asked the planner to prefer them — nothing made them go live, and nothing showed it. Now Run it creates a job "Run your ads made with Claude" that puts exactly those ads live in your prospecting ad set at once (Auto or Practice), inside your limits. Plan → Upcoming jobs (and Recent jobs) shows it with every step; Campaigns shows the ads named "Made with Claude · …".
 - If your Max active ads is full, Run it now says so at once ("no free ad slot: N active, your maximum is M — raise it to X") instead of quietly waiting. The autopilot never pauses a running ad to make room for new ones without results.

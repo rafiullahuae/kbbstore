@@ -52,9 +52,16 @@ func TestFils(t *testing.T) {
 }
 
 func TestCommittedDaily(t *testing.T) {
-	// owner 50 + ours 100; the paused campaign's ad set (80) does not count
-	if got := CommittedDaily(tree()); got != 150 {
-		t.Fatalf("committed = %v, want 150", got)
+	// ours 100 only: the owner's own 50/day is not his limits' business (22 Nov: "ignore my ads budget and spend");
+	// the paused campaign's ad set (80) does not count. MUTATION: drop the !c.Managed skip → 150, red.
+	if got := CommittedDaily(tree()); got != 100 {
+		t.Fatalf("committed = %v, want 100 (the app's own campaigns only)", got)
+	}
+	if got := CommittedDailyOwn(tree()); got != 50 {
+		t.Fatalf("own committed = %v, want 50", got)
+	}
+	if got := ActiveAds(tree()); got != 1 {
+		t.Fatalf("active ads = %d, want 1 (the owner's own active ad is not counted)", got)
 	}
 }
 
@@ -78,14 +85,15 @@ func TestCheckTable(t *testing.T) {
 		{"no limits: a pause still goes", prop(model.KindPause, "201", nil), func(e *Env) { e.Limits.DailyAED = 0 }, true, "ok", ""},
 		{"owner's campaign never touched", prop(model.KindSetBudget, "100", map[string]any{"daily_budget": 55.0}), nil, false, "limits", "did not make"},
 		{"owner's campaign never paused", prop(model.KindPause, "101", nil), nil, false, "limits", "did not make"},
-		// daily cap with what is already running: 150 committed + 140 = 290 ≤ 300 ok; +151 = 301 refused.
+		// daily cap with what OURS already runs (the owner's 50/day is not counted, 22 Nov): 100 + 200 = 300 ok;
+		// +201 = 301 refused.
 		// MUTATION: drop "committed+" in the daily check → the 151 row goes green and the test red.
-		{"daily cap counts running budgets (fits)", prop(model.KindCreateCampaign, "tmp:c", map[string]any{"daily_budget": 140.0}), func(e *Env) { e.MonthSpendAED = 0 }, true, "ok", ""},
-		{"daily cap counts running budgets (over)", prop(model.KindCreateCampaign, "tmp:c", map[string]any{"daily_budget": 151.0}), func(e *Env) { e.MonthSpendAED = 0 }, false, "limits", "daily limit"},
-		// monthly: 1000 spent + (150+100) × 11 days = 3750 ≤ 6000; with 3300 spent → 6050 > 6000
+		{"daily cap counts running budgets (fits)", prop(model.KindCreateCampaign, "tmp:c", map[string]any{"daily_budget": 200.0}), func(e *Env) { e.MonthSpendAED = 0 }, true, "ok", ""},
+		{"daily cap counts running budgets (over)", prop(model.KindCreateCampaign, "tmp:c", map[string]any{"daily_budget": 201.0}), func(e *Env) { e.MonthSpendAED = 0 }, false, "limits", "daily limit"},
+		// monthly (ours only): 1000 spent + (100+100) × 11 days = 3200 ≤ 6000; with 3900 spent → 6100 > 6000
 		// MUTATION: use committed instead of committed×DaysLeftInMonth → the over row goes green.
 		{"monthly projection fits", prop(model.KindCreateCampaign, "tmp:c", map[string]any{"daily_budget": 100.0}), nil, true, "ok", ""},
-		{"monthly projection over", prop(model.KindCreateCampaign, "tmp:c", map[string]any{"daily_budget": 100.0}), func(e *Env) { e.MonthSpendAED = 3300 }, false, "limits", "monthly limit"},
+		{"monthly projection over", prop(model.KindCreateCampaign, "tmp:c", map[string]any{"daily_budget": 100.0}), func(e *Env) { e.MonthSpendAED = 3900 }, false, "limits", "monthly limit"},
 		// step %: 100 → 120 is +20% (ok), → 121 is +21% (refused), → 79 is -21% (refused)
 		// MUTATION: compare pct > step*2 → the 121 row goes green.
 		{"budget step at the limit", prop(model.KindSetBudget, "200", map[string]any{"daily_budget": 120.0}), nil, true, "ok", ""},
@@ -94,7 +102,9 @@ func TestCheckTable(t *testing.T) {
 		{"bid step over the limit", prop(model.KindSetBid, "201", map[string]any{"bid_amount": 50.0}), nil, false, "limits", "step"},
 		{"bid step fits", prop(model.KindSetBid, "201", map[string]any{"bid_amount": 46.0}), nil, true, "ok", ""},
 		// a budget raise inside the step but over the daily cap: 150 + (118-100) = 168 fine; with daily 160 → refused
-		{"budget raise over the daily cap", prop(model.KindSetBudget, "200", map[string]any{"daily_budget": 118.0}), func(e *Env) { e.Limits.DailyAED = 160 }, false, "limits", "daily limit"},
+		{"budget raise over the daily cap", prop(model.KindSetBudget, "200", map[string]any{"daily_budget": 118.0}), func(e *Env) { e.Limits.DailyAED = 110 }, false, "limits", "daily limit"},
+		// the owner's own campaign (50/day) is NOT counted (22 Nov): 118 fits a 160 limit
+		{"the owner's budget is not counted", prop(model.KindSetBudget, "200", map[string]any{"daily_budget": 118.0}), func(e *Env) { e.Limits.DailyAED = 160 }, true, "ok", ""},
 		// cooldown: changed 71 h ago → refused; 73 h ago → ok. Pause is exempt.
 		// MUTATION: skip the cooldown block → the 71h row goes green.
 		{"cooldown blocks a change", prop(model.KindSetBudget, "200", map[string]any{"daily_budget": 110.0}), func(e *Env) { e.Ledger.NoteEdit("200", t0.Add(-71*time.Hour), true, true) }, false, "limits", "cooldown"},
@@ -102,14 +112,16 @@ func TestCheckTable(t *testing.T) {
 		{"pause ignores cooldown", prop(model.KindPause, "200", nil), func(e *Env) { e.Ledger.NoteEdit("200", t0.Add(-1*time.Hour), true, true) }, true, "ok", ""},
 		// max active ads: 2 active (owner's + ours) of 3 → one more ok, ActivatedNow=1 → refused
 		{"max active ads fits", prop(model.KindResume, "203", nil), nil, true, "ok", ""},
-		{"max active ads reached", prop(model.KindResume, "203", nil), func(e *Env) { e.ActivatedNow = 1 }, false, "limits", "ads are active"},
-		{"create ad when full", prop(model.KindCreateAd, "tmp:a", map[string]any{"adset_id": "201", "creative_id": "x"}), func(e *Env) { e.Limits.MaxActiveAds = 2 }, false, "limits", "ads are active"},
+		{"max active ads reached", prop(model.KindResume, "203", nil), func(e *Env) { e.ActivatedNow = 2 }, false, "limits", "ads are active"},
+		{"create ad when full", prop(model.KindCreateAd, "tmp:a", map[string]any{"adset_id": "201", "creative_id": "x"}), func(e *Env) { e.Limits.MaxActiveAds = 1 }, false, "limits", "ads are active"},
+		// the owner's own active ad is NOT counted (22 Nov): one of ours active, max 2 → one more fits
+		{"the owner's ads are not counted", prop(model.KindCreateAd, "tmp:a", map[string]any{"adset_id": "201", "creative_id": "x"}), func(e *Env) { e.Limits.MaxActiveAds = 2 }, true, "ok", ""},
 		// countries
 		{"country outside the list", prop(model.KindCreateAdSet, "tmp:s", map[string]any{"campaign_id": "200", "countries": []any{"AE", "KW"}}), nil, false, "limits", "country KW"},
 		{"countries inside the list", prop(model.KindCreateAdSet, "tmp:s", map[string]any{"campaign_id": "200", "countries": []any{"AE", "SA"}}), nil, true, "ok", ""},
 		{"adset under the owner's campaign", prop(model.KindCreateAdSet, "tmp:s", map[string]any{"campaign_id": "100", "countries": []any{"AE"}}), nil, false, "limits", "did not make"},
 		// resume of a paused campaign commits its ad set budget (80): 150+80=230 ok; daily 200 → refused
-		{"resume commits its budget", prop(model.KindResume, "300", nil), func(e *Env) { e.Limits.DailyAED = 200 }, false, "limits", "daily limit"},
+		{"resume commits its budget", prop(model.KindResume, "300", nil), func(e *Env) { e.Limits.DailyAED = 170 }, false, "limits", "daily limit"},
 		// Meta's write rate: edited 10 s ago → refused (30 s rule); 4 budget changes this hour → refused
 		// MUTATION: change 30*time.Second to 5*time.Second → the 10s row goes green.
 		{"30 s between edits", prop(model.KindPause, "202", nil), func(e *Env) { e.Ledger.NoteEdit("202", t0.Add(-10*time.Second), false, false) }, false, "rate", "30 s"},

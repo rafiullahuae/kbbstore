@@ -121,10 +121,35 @@ func running(status, effective string) bool {
 // CommittedDaily: the daily budget the account is committed to right now, in AED: every running campaign's budget
 // (campaign budget) or the sum of its running ad sets' budgets (ad set budgets). ALL campaigns, the owner's too: his
 // limits are the account's ceiling. Lifetime budgets count in the monthly projection, not here.
+//
+// ONLY the app's own campaigns ("KAA:"), the owner's rule of 22 Nov: "my campaigns budget should not calculate in
+// the system, the budget which i set, that is only for the auto pilot system ads ... ignore my ads budget and spend".
+// His own campaigns run outside his limits and are never counted against them.
 func CommittedDaily(tree []model.Campaign) float64 {
 	sum := 0.0
 	for _, c := range tree {
-		if !running(c.Status, c.EffectiveStatus) {
+		if !c.Managed || !running(c.Status, c.EffectiveStatus) {
+			continue
+		}
+		if c.DailyBudgetAED > 0 {
+			sum += c.DailyBudgetAED
+			continue
+		}
+		for _, s := range c.AdSets {
+			if running(s.Status, s.EffectiveStatus) {
+				sum += s.DailyBudgetAED
+			}
+		}
+	}
+	return sum
+}
+
+// CommittedDailyOwn: the daily budgets of the OWNER's own running campaigns (not "KAA:"). Never counted against
+// his limits; only added to Meta's account spending limit so that limit never stops his ads (safety, 22 Nov).
+func CommittedDailyOwn(tree []model.Campaign) float64 {
+	sum := 0.0
+	for _, c := range tree {
+		if c.Managed || !running(c.Status, c.EffectiveStatus) {
 			continue
 		}
 		if c.DailyBudgetAED > 0 {
@@ -143,17 +168,21 @@ func CommittedDaily(tree []model.Campaign) float64 {
 func committedLifetime(tree []model.Campaign) float64 {
 	sum := 0.0
 	for _, c := range tree {
-		if running(c.Status, c.EffectiveStatus) {
+		if c.Managed && running(c.Status, c.EffectiveStatus) {
 			sum += c.LifetimeBudgetAED
 		}
 	}
 	return sum
 }
 
-// ActiveAds counts ads that are ACTIVE (or in review to go active) in running ad sets and campaigns.
+// ActiveAds counts the APP's ads that are ACTIVE (or in review to go active) in running ad sets and campaigns
+// (Max active ads is for the autopilot's own ads; the owner's own ads are not counted, 22 Nov).
 func ActiveAds(tree []model.Campaign) int {
 	n := 0
 	for _, c := range tree {
+		if !c.Managed {
+			continue
+		}
 		for _, s := range c.AdSets {
 			for _, a := range s.Ads {
 				if a.Status == "ACTIVE" && running(s.Status, "") && running(c.Status, "") {

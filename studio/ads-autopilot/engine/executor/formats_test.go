@@ -163,7 +163,7 @@ func TestGlobalCap(t *testing.T) {
 	if d := Check(p, e); !d.OK {
 		t.Fatalf("%v", d)
 	}
-	e.GlobalDailyAED, e.OtherCommitted = 400, 200 // 200 elsewhere + 150 here + 100 new = 450 > 400
+	e.GlobalDailyAED, e.OtherCommitted = 400, 250 // 250 elsewhere + 100 ours here (the owner's own 50 not counted) + 100 new = 450 > 400
 	if d := Check(p, e); d.OK || !strings.Contains(d.Reasons[0], "all accounts") {
 		t.Fatalf("%v", d)
 	}

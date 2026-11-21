@@ -37,7 +37,7 @@ export function render(S, el) {
   const doing = tt(st.autopilot.doing, st.autopilot.doing_ar) || tt('The autopilot is off for this account. Pick Practice or Auto at the top once your limits are set.', 'الطيار الآلي متوقف لهذا الحساب. اختاري «تدريب» أو «تلقائي» في الأعلى بعد تحديد الحدود.');
   const today = new Date().toISOString().slice(0, 10);
   const steps = [['sync', tt('Read Meta', 'قراءة ميتا'), !!st.raw.last_sync], ['judge', tt('Judge every ad', 'تقييم كل إعلان'), !!st.autopilot.last_cycle_at], ['plan', tt('Plan', 'التخطيط'), !!st.plan], ['act', tt(mode === 'auto' ? 'Act' : 'Log (practice)', mode === 'auto' ? 'التنفيذ' : 'التسجيل (تدريب)'), !!st.autopilot.last_cycle_at && String(st.autopilot.last_cycle_at).slice(0, 10) === today], ['report', tt('Daily report', 'التقرير اليومي'), !!st.report]];
-  const dayPct = L.daily_aed ? Math.min(1, st.kpis.today.spend / L.daily_aed) : 0;
+  const dayPct = L.daily_aed ? Math.min(1, (st.today_spend_app ?? st.kpis.today.spend) / L.daily_aed) : 0; // the app's own ads (22 Nov)
   const monPct = L.monthly_aed ? Math.min(1, st.month_spend / L.monthly_aed) : 0;
   const tile = (key, label, ar, val, fmt, lowerBetter, series2) => {
     const d = prev && prev[key] ? (k[key] - prev[key] / 30 * 7) / (prev[key] / 30 * 7 || 1) : null;
@@ -64,9 +64,9 @@ export function render(S, el) {
         <button type="button" class="onhero" id="cyc">${esc(tt('Run a cycle', 'تشغيل دورة'))}</button></div>
     </div>
     <div class="card"><header><h2>${esc(tt('Your limits', 'حدودك'))}</h2><a href="#/settings">${esc(tt('Change limits', 'تغيير الحدود'))}</a></header>
-      ${st.limits_set ? `<div class="spread small"><span>${esc(tt('Today', 'اليوم'))}</span><span class="num">${aed(st.kpis.today.spend)} / ${aed(L.daily_aed)}</span></div><div class="meter ${dayPct > 0.9 ? 'hot' : ''}"><i style="width:${(dayPct * 100).toFixed(1)}%"></i></div>
-      <div class="spread small" style="margin-top:12px"><span>${esc(tt('This month', 'هذا الشهر'))}</span><span class="num">${aed(st.month_spend)} / ${aed(L.monthly_aed)}</span></div><div class="meter ${monPct > 0.9 ? 'hot' : ''}"><i style="width:${(monPct * 100).toFixed(1)}%"></i></div>
-      <p class="small muted" style="margin-top:12px">${esc(tt('Meta itself enforces the monthly cap (account spending limit), so the ads stop even while your Mac is closed.', 'تفرض ميتا نفسها الحد الشهري، فتتوقف الإعلانات حتى وجهازك مغلق.'))}</p>
+      ${st.limits_set ? `<div class="spread small"><span>${esc(tt('Today', 'اليوم'))}</span><span class="num">${aed(st.today_spend_app ?? st.kpis.today.spend)} / ${aed(L.daily_aed)}</span></div><div class="meter ${dayPct > 0.9 ? 'hot' : ''}"><i style="width:${(dayPct * 100).toFixed(1)}%"></i></div>
+      <div class="spread small" style="margin-top:12px"><span>${esc(tt('This month', 'هذا الشهر'))}</span><span class="num">${aed(st.month_spend)} / ${aed(L.monthly_aed)}</span></div><div class="meter ${monPct > 0.9 ? 'hot' : ''}"><i style="width:${(monPct * 100).toFixed(1)}%"></i></div><p class="small muted" style="margin:8px 0 0">${esc(tt('Your limits are for the autopilot\'s own ads only; your own campaigns are not counted. Meta\'s account spending limit adds both, so your ads are never stopped by it.', 'حدودكِ لإعلانات الطيار الآلي فقط؛ حملاتكِ الخاصة لا تُحتسب. حد الإنفاق في حساب Meta يجمع الاثنين فلا تتوقف إعلاناتكِ بسببه.'))}</p>
+      <p class="small muted" style="margin-top:8px">${esc(tt('While your Mac is closed, Meta itself holds the autopilot\'s ads to these limits (KAA: daily and monthly rules).', 'وجهازكِ مغلق، تُبقي Meta إعلانات الطيار الآلي ضمن هذه الحدود (قواعد KAA اليومية والشهرية).'))}</p>
       <p class="small muted">${esc(tt('Step', 'خطوة'))} ±${num(L.max_budget_step_pct)}% · ${esc(tt('cooldown', 'انتظار'))} ${num(L.cooldown_hours)} h · ${esc(tt('max ads', 'أقصى إعلانات'))} ${num(L.max_active_ads)}</p>`
       : `<div class="alert warn">${esc(tt('No limits yet: nothing will launch until you set a daily and a monthly limit.', 'لا توجد حدود: لن يُطلق شيء حتى تحدّدي الحد اليومي والشهري.'))}</div><p><a href="#/settings"><button type="button">${esc(tt('Set limits', 'تحديد الحدود'))}</button></a></p>`}
     </div>

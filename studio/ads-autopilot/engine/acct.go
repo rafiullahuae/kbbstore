@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"kaa/executor"
+	"kaa/meta"
 	"kaa/model"
 	"kaa/safety"
 	"kaa/store"
@@ -379,13 +380,40 @@ func (ac *Acct) metricRows() []model.MetricRow {
 }
 
 // monthSpend: campaign-level spend this calendar month (account time zone), the whole account.
+// todaySpendApp: what the app's own campaigns spent today (the Overview's "Today … / daily limit").
+func (ac *Acct) todaySpendApp() float64 {
+	day := ac.app.now().In(ac.loc()).Format("2006-01-02")
+	ac.mu.RLock()
+	defer ac.mu.RUnlock()
+	ours := map[string]bool{}
+	for _, c := range ac.tree {
+		if c.Managed {
+			ours[c.ID] = true
+		}
+	}
+	s := 0.0
+	for _, r := range ac.metrics {
+		if r.Level == "campaign" && r.Date == day && (ours[r.ObjectID] || strings.HasPrefix(r.Name, meta.ManagedPrefix)) {
+			s += r.SpendAED
+		}
+	}
+	return s
+}
+
 func (ac *Acct) monthSpend() float64 {
 	prefix := ac.app.now().In(ac.loc()).Format("2006-01")
 	ac.mu.RLock()
 	defer ac.mu.RUnlock()
+	// the app's own campaigns only (22 Nov: his limits are for the autopilot's ads; his own spend is ignored)
+	ours := map[string]bool{}
+	for _, c := range ac.tree {
+		if c.Managed {
+			ours[c.ID] = true
+		}
+	}
 	s := 0.0
 	for _, r := range ac.metrics {
-		if r.Level == "campaign" && strings.HasPrefix(r.Date, prefix) {
+		if r.Level == "campaign" && strings.HasPrefix(r.Date, prefix) && (ours[r.ObjectID] || strings.HasPrefix(r.Name, meta.ManagedPrefix)) {
 			s += r.SpendAED
 		}
 	}
@@ -405,7 +433,9 @@ func (ac *Acct) ensureSafety(ctx context.Context) (safety.Report, error) {
 		}
 	}
 	ac.mu.RLock()
-	in := safety.Input{Limits: ac.settings.Limits, Tree: ac.tree}
+	in := safety.Input{Limits: ac.settings.Limits, Tree: ac.tree,
+		// his own campaigns' budgets for the rest of the month: added to the account limit, never to his limits
+		OwnRemainingAED: executor.CommittedDailyOwn(ac.tree) * float64(executor.DaysLeftInMonth(ac.app.now().In(ac.loc())))}
 	sn := ac.safety
 	auto := ac.settings.Automated
 	ac.mu.RUnlock()
@@ -815,6 +845,7 @@ func (ac *Acct) stateBytes() []byte {
 	ac.mu.RUnlock()
 	st["creatives"] = len(ac.creatives.all())
 	st["month_spend"] = math.Round(ac.monthSpend()*100) / 100
+	st["today_spend_app"] = math.Round(ac.todaySpendApp()*100) / 100 // the daily limit is for the app's own ads (22 Nov)
 	b, _ := json.Marshal(st)
 	ac.mu.Lock()
 	ac.stateJSON = b

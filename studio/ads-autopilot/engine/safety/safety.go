@@ -70,8 +70,11 @@ type Net struct {
 
 type Input struct {
 	Limits        model.Limits
-	MonthSpendAED float64
+	MonthSpendAED float64 // the APP's own campaigns' spend this month
 	Tree          []model.Campaign
+	// what the owner's own campaigns need for the rest of the month (their daily budgets × days left): added to the
+	// account limit so it never stops his ads (22 Nov)
+	OwnRemainingAED float64
 }
 
 type CapReport struct {
@@ -182,12 +185,16 @@ func (n *Net) Ensure(ctx context.Context, in Input) (Report, error) {
 		return rep, nil
 	}
 
-	// (a) spend_cap
+	// (a) spend_cap. The owner, 22 Nov: "if the system budget + my budget, the system update the monthly budget by
+	// adding both budgets. but the daily budget is for the system ads only." So the account limit = what is spent +
+	// what the autopilot may still spend this month (his monthly limit − its own spend) + what HIS campaigns need for
+	// the rest of the month (their daily budgets × days left, OwnRemainingAED): it moves with his budgets, it never
+	// stops his own ads, and the whole account still has a ceiling while the Mac is closed.
 	acc, err := n.Meta.Account(ctx, act)
 	if err != nil {
 		return rep, fmt.Errorf("reading the account: %w", err)
 	}
-	target, ok := CapTarget(acc.AmountSpentAED, in.Limits.MonthlyAED, in.MonthSpendAED)
+	target, ok := CapTarget(acc.AmountSpentAED+in.OwnRemainingAED, in.Limits.MonthlyAED, in.MonthSpendAED)
 	cr := CapReport{BeforeAED: acc.SpendCapAED, TargetAED: target, AfterAED: acc.SpendCapAED}
 	if !ok {
 		cr.Action, cr.Reason = "skipped", "no positive cap expresses it (0 would REMOVE the cap)"
@@ -207,7 +214,7 @@ func (n *Net) Ensure(ctx context.Context, in Input) (Report, error) {
 				cr.AfterAED = write
 				// read back: if Meta restarted amount_spent at the write, the cap above is too generous; recompute
 				if acc2, err := n.Meta.Account(ctx, act); err == nil {
-					if t2, ok2 := CapTarget(acc2.AmountSpentAED, in.Limits.MonthlyAED, in.MonthSpendAED); ok2 && acc2.SpendCapAED > t2+tolAED && n.capWritesToday(now) < maxCapWritesDay {
+					if t2, ok2 := CapTarget(acc2.AmountSpentAED+in.OwnRemainingAED, in.Limits.MonthlyAED, in.MonthSpendAED); ok2 && acc2.SpendCapAED > t2+tolAED && n.capWritesToday(now) < maxCapWritesDay {
 						if err := n.Meta.SetSpendCap(ctx, act, t2); err == nil {
 							n.State.CapWrites = append(n.State.CapWrites, now)
 							n.State.LastCapAED, cr.AfterAED = t2, t2
@@ -370,6 +377,12 @@ func DesiredRules(l model.Limits, tree []model.Campaign) ([]Rule, []string) {
 			nRun = 1
 		}
 		per := fils(l.DailyAED / float64(nRun))
+		if l.MonthlyAED > 0 { // the monthly limit, held on Meta now that the account cap is not the app's (22 Nov)
+			out = append(out, Rule{Name: "KAA: monthly limit", Execution: pause, Evaluation: map[string]any{
+				"evaluation_type": "TRIGGER",
+				"trigger":         map[string]any{"type": "STATS_CHANGE", "field": "spent", "operator": "GREATER_THAN", "value": fils(l.MonthlyAED / float64(nRun))},
+				"filters":         []any{f("entity_type", "EQUAL", "CAMPAIGN"), f("name", "CONTAIN", meta.ManagedPrefix), f("time_preset", "EQUAL", "THIS_MONTH")}}})
+		}
 		out = append(out, Rule{Name: "KAA: daily limit", Execution: pause, Evaluation: map[string]any{
 			"evaluation_type": "TRIGGER",
 			"trigger":         map[string]any{"type": "STATS_CHANGE", "field": "spent", "operator": "GREATER_THAN", "value": per},

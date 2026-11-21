@@ -106,8 +106,8 @@ func TestEnsureIsIdempotent(t *testing.T) {
 	if got := capWrites(m); len(got) != 1 || got[0] != "17345.00" {
 		t.Fatalf("spend_cap writes %v (Meta takes standard units: 17345.00)", got)
 	}
-	if len(m.Rules()) != 4 {
-		t.Fatalf("%d rules, want 4", len(m.Rules()))
+	if len(m.Rules()) != 5 { // the three CPA rules + daily limit + monthly limit (22 Nov)
+		t.Fatalf("%d rules, want 5", len(m.Rules()))
 	}
 	before := len(m.Writes())
 	rep2, err := n.Ensure(context.Background(), in)
@@ -183,7 +183,7 @@ func TestRulesFollowLimits(t *testing.T) {
 	for _, r := range m.Rules() {
 		names[r["name"].(string)]++
 	}
-	if names["KAA: daily limit"] != 1 || names["My own rule"] != 1 || len(names) != 2 {
+	if names["KAA: daily limit"] != 1 || names["KAA: monthly limit"] != 1 || names["My own rule"] != 1 || len(names) != 3 {
 		t.Fatalf("rules after: %v (report %+v)", names, rep.Rules)
 	}
 	for _, r := range m.Rules() {
@@ -208,4 +208,22 @@ func TestDailyRuleSplitsAcrossRunningCampaigns(t *testing.T) {
 		}
 	}
 	t.Fatal("no daily rule")
+}
+
+// The owner, 22 Nov: "if the system budget + my budget, the system update the monthly budget by adding both
+// budgets. but the daily budget is for the system ads only." Meta's account limit = spent + what the autopilot may
+// still spend this month (6000 − 1000 of ITS OWN) + what his own campaigns need to month end (900): 12345 + 5000 +
+// 900 = 18245, so his ads are never stopped by it. MUTATION: drop OwnRemainingAED from the CapTarget call → 17345.
+func TestAccountLimitAddsTheOwnersBudgets(t *testing.T) {
+	m, n := rig(t)
+	rep, err := n.Ensure(context.Background(), Input{Limits: lim(), MonthSpendAED: 1000, OwnRemainingAED: 900})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.SpendCap.AfterAED != 18245 {
+		t.Fatalf("cap %+v, want 18245 (spent 12345 + ours 5000 + his 900)", rep.SpendCap)
+	}
+	if got := capWrites(m); len(got) != 1 || got[0] != "18245.00" {
+		t.Fatalf("spend_cap writes %v", got)
+	}
 }

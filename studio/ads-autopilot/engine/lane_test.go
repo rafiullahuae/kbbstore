@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"kaa/brain"
+	"kaa/executor"
 	"kaa/model"
 )
 
@@ -307,7 +308,9 @@ func TestStarterNeedsLimits(t *testing.T) {
 	if out["starter"] != nil || len(objStatus(m, "campaigns", "KAA:")) != 0 || ac.starter.State != "" {
 		t.Fatal("a starter set without limits")
 	}
-	ac.settings.Limits.DailyAED, ac.settings.Limits.MonthlyAED = 55, 1000 // 50 AED/day of the owner's already runs
+	// a daily limit too small for a campaign (70% of 12 = 8.4 < the 10 AED floor); the owner's own 50 AED/day is NOT
+	// counted any more (22 Nov: his limits are for the autopilot's ads only)
+	ac.settings.Limits.DailyAED, ac.settings.Limits.MonthlyAED = 12, 1000
 	out, _ = ac.Cycle(context.Background(), model.AutopilotAuto)
 	if out["starter"] != nil || ac.starter.State != "skipped" || !strings.Contains(ac.starter.Why, "no room") {
 		t.Fatalf("tiny room: %v %+v", out["starter"], ac.starter)
@@ -367,5 +370,24 @@ func TestMockClaudeDrivesTheRealBrain(t *testing.T) {
 	}
 	if ids := eb.(interface{ TrendingProductIDs() []string }).TrendingProductIDs(); len(ids) == 0 {
 		t.Fatal("trending matched no shop product")
+	}
+}
+
+// The owner, 22 Nov: "my campaigns budget should not calculate in the system, the budget which i set, that is only
+// for the auto pilot system ads". His own campaign (50 AED/day, running) leaves the whole 55 AED/day to the app:
+// the first launch is built (before, "no room": 55 − 50 left 5).
+func TestOwnersBudgetsDoNotCount(t *testing.T) {
+	ac, m := testApp(t)
+	ac.app.brain = quietBrain{}
+	ac.settings.Limits.DailyAED, ac.settings.Limits.MonthlyAED = 55, 1000
+	if err := ac.Sync(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if own := executor.CommittedDailyOwn(ac.input().Tree); own != 50 { // metamock.Seed: "Owner – Always on", 50 AED/day
+		t.Fatalf("the owner's own campaign: %v AED/day, want 50", own)
+	}
+	out, _ := ac.Cycle(context.Background(), model.AutopilotAuto)
+	if out["starter"] == nil || len(objStatus(m, "campaigns", "KAA:")) == 0 {
+		t.Fatalf("the owner's own budget still blocked the first launch: %+v", ac.starter)
 	}
 }

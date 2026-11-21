@@ -79,8 +79,8 @@ func TestCycleThenKill(t *testing.T) {
 			t.Fatalf("launched campaign is %s", st)
 		}
 	}
-	if len(m.Rules()) != 4 {
-		t.Fatalf("%d Meta rules after a launch, want 4", len(m.Rules()))
+	if len(m.Rules()) != 5 { // 3 CPA rules + daily limit + monthly limit (22 Nov)
+		t.Fatalf("%d Meta rules after a launch, want 5", len(m.Rules()))
 	}
 	k := a.Kill(context.Background())
 	if len(k["paused"].([]string)) != 1 {
@@ -109,7 +109,7 @@ func TestCycleThenKill(t *testing.T) {
 			t.Fatalf("after kill: write %s %v", w.Path, w.Form)
 		}
 	}
-	if len(m.Rules()) != 4 {
+	if len(m.Rules()) != 5 {
 		t.Fatal("the Meta-side rules must stay after a kill")
 	}
 }

@@ -69,7 +69,11 @@ Short link prefix: `MAPI` = `https://developers.facebook.com/documentation/ads-c
   spending-cap"**; "Setting a new spend cap only applies to spend AFTER the time at which you set it".
   `amount_spent` = spent "with respect to spend_cap". **Write: `spend_cap` float in the STANDARD denomination
   (23.50 for USD 23.50); 0 = no cap; `spend_cap_action=reset|delete`.** — `MAPI/reference/ad-account.md`
-- Engine (`safety`): cap target = `amount_spent + max(0, monthly − spent this month)`, written in AED with 2
+- Engine (`safety`, 0.6.5, the owner's rule of 22 Nov: his limits are for the app's own campaigns only): cap target =
+  `amount_spent + his own campaigns' daily budgets × days left + max(0, monthly − the APP's spend this month)` (so
+  the cap never stops his ads); the app's own campaigns are held by `KAA: daily limit` and `KAA: monthly limit`
+  (TRIGGER, per KAA campaign, TODAY / THIS_MONTH spent > limit ÷ running KAA campaigns). Before 0.6.5: target =
+  `amount_spent + max(0, monthly − spent this month)`, written in AED with 2
   decimals, never ≤ 0 (refused twice: `DecideCap` and `SetSpendCap`), never raises a lower cap the owner set by hand
   (only the cap the app itself last wrote), ≤ 6 writes a day, re-read after a write (if Meta reset amount_spent the
   cap is lowered again). **[inferred]** whether a write resets amount_spent: handled both ways by the re-read.
