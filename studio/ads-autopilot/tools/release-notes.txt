@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.5.2
+- Fixed: Claude desktop made the ads but could not save them ("send session_id"). Saving now works whatever Claude calls the session, and with no session named it saves the ads it just made.
+
 ## 0.5.1
 - Cloud creation card: if GitHub or the app refuses the key, the reason now stays on the card (it used to flash by and leave "Not connected" with no reason).
 
