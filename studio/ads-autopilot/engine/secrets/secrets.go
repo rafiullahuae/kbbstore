@@ -36,7 +36,7 @@ import (
 const Service = "KBB Ads Autopilot"
 
 // Names the engine stores. Anything else is refused.
-var Names = []string{"meta_token", "meta_app_secret", "anthropic_key", "shop_token"}
+var Names = []string{"meta_token", "meta_app_secret", "anthropic_key", "shop_token", "github_token"}
 
 type Store interface {
 	Get(name string) (string, error) // "" + nil when not set
@@ -122,6 +122,8 @@ func CheckFormat(name, v string) error {
 			return "a shop connection key (kbbap_…)"
 		case strings.HasPrefix(v, "AIza"):
 			return "a Google key (AIza…)"
+		case strings.HasPrefix(v, "github_pat_"), strings.HasPrefix(v, "ghp_"):
+			return "a GitHub key (github_pat_…)"
 		}
 		return ""
 	}
@@ -129,6 +131,15 @@ func CheckFormat(name, v string) error {
 		"meta_token":    {"EAA", "Meta tokens start with EAA"},
 		"anthropic_key": {"sk-ant-", "Claude keys start with sk-ant-"},
 		"shop_token":    {"kbbap_", "Shop connection keys start with kbbap_ (kbeautybliss.com admin → Ads Autopilot → API keys)"},
+	}
+	if name == "github_token" { // Settings → Connections → Cloud creation (GitHub): fine-grained github_pat_… or classic ghp_…
+		if strings.HasPrefix(v, "github_pat_") || strings.HasPrefix(v, "ghp_") {
+			return nil
+		}
+		if x := what(v); x != "" {
+			return fmt.Errorf("This looks like %s, not a GitHub key. GitHub keys start with github_pat_.", x)
+		}
+		return errors.New("This does not look like a GitHub key. GitHub keys start with github_pat_.")
 	}
 	if w, ok := want[name]; ok {
 		if strings.HasPrefix(v, w[0]) {

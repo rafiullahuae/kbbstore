@@ -246,7 +246,7 @@ window.addEventListener('hashchange', go);
 // While the engine refreshes itself (on start, after the Mac wakes, when this page comes back) a slim row under the
 // top bar shows each step; offline it says it is waiting and when it tries again; finished, the nav foot says
 // "Up to date · 10:42". The numbers on screen stay as they were meanwhile (no blank screens).
-const WSTEP = { connections: ['Meta · Claude · shop', 'ميتا · Claude · المتجر'], sync: ['Meta numbers', 'أرقام ميتا'], research: ['Research', 'الأبحاث'], cycle: ['Plan', 'الخطة'] };
+const WSTEP = { connections: ['Meta · Claude · shop', 'ميتا · Claude · المتجر'], sync: ['Meta numbers', 'أرقام ميتا'], research: ['Research', 'الأبحاث'], cycle: ['Plan', 'الخطة'], cloud: ['Cloud ads', 'إعلانات السحابة'] };
 const WICON = { ok: '✓', skipped: '–', failed: '!', offline: '×', running: '…', waiting: '·' };
 const hhmm = (iso) => new Date(iso).toLocaleTimeString(getLang() === 'ar' ? 'ar-AE' : 'en-AE', { hour: '2-digit', minute: '2-digit' });
 const realTime = (iso) => !!iso && !String(iso).startsWith('0001');

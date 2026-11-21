@@ -186,6 +186,7 @@ func main() {
 		if !*noSched {
 			s.schedOn.Store(true)
 			s.sched.start(s.shutdown)
+			s.app.startExchange(s.shutdown) // cloud creation: every 15 min while open (exchange_wire.go)
 		}
 	}()
 

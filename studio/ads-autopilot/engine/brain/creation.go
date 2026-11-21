@@ -68,6 +68,12 @@ type CreationRequest struct {
 	StartedAt  time.Time `json:"started_at,omitempty"`
 	DoneAt     time.Time `json:"done_at,omitempty"`
 	SessionID  string    `json:"session_id,omitempty"`
+	// Cloud creation (cloud.go side: engine/exchange_wire.go): the same request, pushed to the exchange as a job for
+	// the scheduled cloud Claude Code task. queued | working | finished | imported | withdrawn | failed.
+	Cloud   string    `json:"cloud,omitempty"`
+	CloudAt time.Time `json:"cloud_at,omitempty"`
+	CloudBy string    `json:"cloud_by,omitempty"`
+	CloudN  int       `json:"cloud_n,omitempty"` // ads imported from the cloud
 }
 
 type Notice struct {
@@ -174,6 +180,9 @@ func (e *Engine) creationAfterCycle(ctx context.Context, acct string, b *Brain, 
 	}
 	e.saveCreations(acct, reqs)
 	e.mu.Unlock()
+	if len(fresh) > 0 && CreationChanged != nil {
+		CreationChanged(acct) // the cloud exchange pushes the new jobs now (engine/exchange_wire.go)
+	}
 	for _, r := range fresh {
 		e.notify(acct, Notice{Kind: "needed", Title: "New ads needed", Req: r.ID, Body: r.Title + ". Start creating.", BodyAR: r.TitleAR + ". ابدئي الإنشاء."})
 	}
@@ -370,6 +379,9 @@ func (e *Engine) markCreation(acct, id, status, session string) (CreationRequest
 	e.mu.Unlock()
 	if ok {
 		e.push(acct)
+		if CreationChanged != nil && status != "started" {
+			CreationChanged(acct) // done here / dismissed: the cloud job is withdrawn
+		}
 	}
 	return out, ok
 }
