@@ -140,7 +140,7 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 			Audience: "the prospecting campaign (Advantage+ audience), budget one step up from 3 days before", Source: "occasion", Target: inst.ID, Creatives: crs, Occasion: &inst, Slots: pb.Slots(), UpdatedAt: now.UTC()}
 		j.logf(now, "prepared %d ads for %s (%s → %s%s); waiting for your approval", len(crs), inst.Name, inst.Start, inst.End, map[bool]string{true: ", estimated date", false: ""}[inst.Estimated])
 		js.Jobs = append(js.Jobs, j)
-		ac.notifyOwner(j.Title, fmt.Sprintf("%s starts %s. Open Approvals → Occasions.", inst.Name, inst.Start), fmt.Sprintf("%s يبدأ %s. افتحي الموافقات ← المناسبات.", inst.NameAR, inst.Start))
+		ac.notifyOwnerRef(j.ID, j.Title, fmt.Sprintf("%s starts %s. Open Approvals → Occasions.", inst.Name, inst.Start), fmt.Sprintf("%s يبدأ %s. افتحي الموافقات ← المناسبات.", inst.NameAR, inst.Start))
 		if c, ok := br.(interface {
 			OccasionCreation(acct, title, titleAR, brief string, productIDs []string) string
 		}); ok {
@@ -162,7 +162,7 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 			if left <= d && left > 0 && !containsInt(j.Reminded, d) {
 				j.Reminded = append(j.Reminded, d)
 				j.logf(now, "reminder: %d days left, not approved yet", left)
-				ac.notifyOwner(fmt.Sprintf("%s in %d days — not approved yet · %s بعد %d أيام — لم تتم الموافقة بعد", j.Occasion.Name, left, j.Occasion.NameAR, left), "Approvals → Occasions", "الموافقات ← المناسبات")
+				ac.notifyOwnerRef(j.ID, fmt.Sprintf("%s in %d days — not approved yet · %s بعد %d أيام — لم تتم الموافقة بعد", j.Occasion.Name, left, j.Occasion.NameAR, left), "Approvals → Occasions", "الموافقات ← المناسبات")
 			}
 		}
 	}
@@ -178,16 +178,61 @@ func containsInt(xs []int, x int) bool {
 }
 
 // notifyOwner: the Mac notification (through the brain's notifier) + an Overview alert.
-func (ac *Acct) notifyOwner(title, body, bodyAR string) {
+func (ac *Acct) notifyOwner(title, body, bodyAR string) { ac.notifyOwnerRef("", title, body, bodyAR) }
+
+// notifyOwnerRef: the same, tied to an occasion package: approving it takes the notice and the alert away
+// (the owner, 21 Nov: "X in N days — not approved yet" stayed after he approved it).
+func (ac *Acct) notifyOwnerRef(ref, title, body, bodyAR string) {
 	ac.alert("info", title+" — "+body)
 	ac.app.mu.RLock()
 	br := ac.app.brain
 	ac.app.mu.RUnlock()
 	if n, ok := br.(interface {
+		NotifyRef(acct, ref, title, body, bodyAR string)
+	}); ok && ref != "" {
+		n.NotifyRef(ac.id, ref, title, body, bodyAR)
+	} else if n, ok := br.(interface {
 		Notify(acct, title, body, bodyAR string)
 	}); ok {
 		n.Notify(ac.id, title, body, bodyAR)
 	}
+}
+
+// occasionSettled: the package was approved -- its "ready for your approval" / "not approved yet" notices and
+// Overview alerts go at once. Returns how many went.
+func (ac *Acct) occasionSettled(j Job) int {
+	if j.Occasion == nil {
+		return 0
+	}
+	ac.app.mu.RLock()
+	br := ac.app.brain
+	ac.app.mu.RUnlock()
+	k := 0
+	if c, ok := br.(interface{ ClearNotices(acct, ref string) int }); ok {
+		k += c.ClearNotices(ac.id, j.ID)
+	}
+	name := j.Occasion.Name
+	ac.mu.Lock()
+	kept := ac.alerts[:0:0]
+	for _, al := range ac.alerts {
+		if name != "" && strings.HasPrefix(al.Text, name) && (strings.Contains(al.Text, "not approved yet") || strings.Contains(al.Text, "ready for your approval")) {
+			k++
+			continue
+		}
+		kept = append(kept, al)
+	}
+	ch := len(kept) != len(ac.alerts)
+	if ch {
+		ac.alerts = kept
+		ac.stateJSON = nil
+	}
+	alerts := append([]model.Alert(nil), ac.alerts...)
+	ac.mu.Unlock()
+	if ch {
+		_ = ac.st.Save("alerts", alerts)
+		ac.publish("alerts", alerts)
+	}
+	return k
 }
 
 // occasionProposals: the approved package → ads into the prospecting ad set (rejected ads left out) + the ramp.

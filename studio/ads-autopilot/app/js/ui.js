@@ -1,4 +1,5 @@
-import { t, getLang } from './i18n.js';
+import { t, tt, getLang } from './i18n.js';
+import { api } from './api.js';
 
 // Every string from data goes through esc() before it reaches innerHTML.
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -108,4 +109,24 @@ export function failCard(el, title, err, retry) {
     : (err && err.message) || t('It did not load.');
   el.innerHTML = `<div class="card" data-failed><header><h2>${esc(title)}</h2></header><p class="alert warn small">${esc(why)}</p><div class="row"><button type="button" class="ghost small" data-retry>${esc(t('Try again'))}</button></div></div>`;
   el.querySelector('[data-retry]').onclick = () => { el.innerHTML = '<div class="sk" style="height:120px"></div>'; retry(); };
+}
+
+// Settings → Accounts and Portfolio: "Automate" is a clear On/Off toggle, not a tiny checkbox (the owner, 21 Nov).
+export function autoToggle(a) {
+  const on = !!a.automate, off = a.status !== 'ACTIVE';
+  return `<button type="button" class="tgl ${on ? 'on' : ''}" role="switch" aria-checked="${on}" data-auto="${esc(a.id)}" ${off ? 'disabled' : ''} aria-label="${esc(tt('Automate', 'أتمتة'))} ${esc(a.name || a.id)}"><span class="tgl-k"></span><span class="tgl-t">${esc(on ? tt('On', 'مفعّل') : tt('Off', 'متوقف'))}</span></button>`;
+}
+export function wireAutoToggles(root, after) {
+  root.querySelectorAll('button[data-auto]').forEach((b) => {
+    b.onclick = async () => {
+      const id = b.dataset.auto, on = b.getAttribute('aria-checked') !== 'true';
+      b.disabled = true;
+      try {
+        await api(`/api/accounts/${id}`, { method: 'PUT', body: { automated: on }, noAccount: true });
+        b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); b.querySelector('.tgl-t').textContent = on ? tt('On', 'مفعّل') : tt('Off', 'متوقف');
+        if (after) await after(on, id);
+      } catch (e) { toast(e.message); }
+      b.disabled = false;
+    };
+  });
 }

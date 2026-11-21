@@ -22,6 +22,7 @@ import { renderPending } from './creative/render.js';
 import { openCreate } from './create/create.js';
 import { onRenderRequest } from './create/remote.js';
 import { creationBanner, wireBanner, loadCreation, setCreation, CS } from './create/banner.js';
+import { claudeCodeEvent } from './create/claudecode.js';
 import { startupNote } from './screens/updates.js';
 
 const I = {
@@ -350,6 +351,7 @@ window.addEventListener('online', () => warmNow('online'));
       return;
     }
     if (type === 'heartbeat') return;
+    if (type === 'claudecode') { claudeCodeEvent(d.data); return; } // Settings → Connections card, live (create/claudecode.js)
     const acct = d && d.account;
     if (type === 'render.request') { // the Claude-app connector asks this tab to draw (create/remote.js)
       if (acct && acct !== getAccount()) switchAccount(acct);

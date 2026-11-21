@@ -325,6 +325,9 @@ func (c *mcpConn) call(name string, args map[string]any, progress func(int, int,
 			return nil, errors.New("nothing saved for this session yet: call save_to_library first")
 		}
 		launch, _ := args["launch_now"].(bool)
+		if os.Getenv("KAA_MCP_NO_LAUNCH") == "1" { // an unattended Claude Code run never launches (claudecode.go)
+			launch = false
+		}
 		var out map[string]any
 		if err := c.post("/api/launch", "POST", map[string]any{"creative_ids": ids, "launch": launch, "key": argKey(name, args)}, &out); err != nil {
 			return nil, err
@@ -486,6 +489,9 @@ func (c *mcpConn) do(method, path string, body any) (*http.Response, error) {
 	}
 	req, _ := http.NewRequest(method, "http://"+addr+path, rd)
 	req.Header.Set("X-KAA", tok)
+	if a := os.Getenv("KAA_MCP_ACCOUNT"); actRe.MatchString(a) { // an auto-run works on its request's account
+		req.Header.Set("X-KAA-Account", a)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	r, err := c.hc.Do(req)
 	if err != nil {

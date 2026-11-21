@@ -848,6 +848,9 @@ func (s *server) jobsAPI(w http.ResponseWriter, r *http.Request, ac *Acct, rest 
 			j.Status = "approved"
 			j.logf(now, "you approved it")
 		}
+		if verb == "approve" && j.Kind == "occasion" {
+			defer ac.occasionSettled(*j) // after the save below: the reminders are settled
+		}
 	default:
 		jsonErr(w, 404, "PUT /api/jobs/{id}, POST /api/jobs/{id}/approve|skip|unskip|remove-product|find-products, GET /api/jobs/{id}/brief, POST /api/jobs/replan")
 		return

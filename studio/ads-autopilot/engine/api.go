@@ -381,6 +381,8 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		s.mcpAPI(w, r, p)
 	case p == "/api/exchange" || strings.HasPrefix(p, "/api/exchange/"): // cloud creation (exchange_wire.go)
 		s.exchangeAPI(w, r, p)
+	case p == "/api/claudecode" || strings.HasPrefix(p, "/api/claudecode/"): // Claude Code on this Mac (claudecode.go)
+		s.claudeCodeAPI(w, r, p)
 	case (p == "/api/brain/plan" || p == "/api/brain/copy") && r.Method == http.MethodPost:
 		if ac := s.acct(w, r); ac != nil {
 			s.brainAPI(w, r, strings.TrimPrefix(p, "/api/brain/"), ac)

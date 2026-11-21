@@ -1,5 +1,5 @@
 import { t, tt } from '../i18n.js';
-import { esc, aed, num, pct, tip, toast } from '../ui.js';
+import { esc, aed, num, pct, tip, toast, autoToggle, wireAutoToggles } from '../ui.js';
 import { api } from '../api.js';
 import { switchAccount, refreshAccounts } from '../main.js';
 const a_hist = (r) => (r.backfill ? `${esc(r.backfill.state || '')}${r.backfill.rows ? ' · ' + r.backfill.rows + ' rows' : ''}` : '—');
@@ -21,21 +21,16 @@ export function render(S, el) {
     <td><span class="pill ${esc(r.mode)}">${esc(t(r.mode))}</span>${r.limits_set ? '' : `<br><span class="small muted">${esc(tt('no limits', 'بلا حدود'))}</span>`}</td>
     <td class="n">${aed(r.d7.spend)}</td><td class="n">${num(r.d7.roas, 2)}</td><td class="n">${aed(r.d7.cpa)}</td><td class="n">${aed(r.d7.cpc, 2)}</td><td class="n">${pct(r.d7.ctr)}</td><td class="n">${r.alerts || '—'}</td>
     <td class="n">${a_hist(r)}</td>
-    <td><input type="checkbox" data-auto="${esc(r.id)}" ${r.automate ? 'checked' : ''} ${r.status !== 'ACTIVE' ? 'disabled' : ''} aria-label="${esc(t('Automate'))} ${esc(r.name)}"></td>
+    <td>${autoToggle(r)}</td>
     <td><button class="ghost small" data-open="${esc(r.id)}">${esc(tt('Open', 'فتح'))}</button></td></tr>`).join('')}
   </tbody></table></div>
   ${p ? `<div class="card"><header><h2>${esc(tt('What the portfolio taught it', 'ما تعلّمه من المحفظة كلها'))}</h2><a href="#/learned">${esc(tt('Details', 'التفاصيل'))} →</a></header>
     <div class="list">${(p.winners || []).slice(0, 6).map((w) => `<div>✓ <span>${esc(w)}</span></div>`).join('') || `<div class="muted">${esc(tt('Not enough history yet.', 'لا يوجد سجل كافٍ بعد.'))}</div>`}</div></div>` : ''}
   </div>`;
   el.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => { switchAccount(b.dataset.open); location.hash = '#/dashboard'; }; });
-  el.querySelectorAll('[data-auto]').forEach((c) => {
-    c.onchange = async () => {
-      const id = c.dataset.auto, on = c.checked;
-      try {
-        await api(`/api/accounts/${id}`, { method: 'PUT', body: { automated: on }, noAccount: true }); await refreshAccounts();
-                toast(on ? tt('Account will be automated.', 'سيتم أتمتة الحساب.') : tt('Account no longer automated.', 'توقفت أتمتة الحساب.'), async () => { await api(`/api/accounts/${id}`, { method: 'PUT', body: { automated: !on }, noAccount: true }); await refreshAccounts(); c.checked = !on; });
-      } catch (e) { c.checked = !on; toast(e.message); }
-    };
+  wireAutoToggles(el, async (on, id) => {
+    await refreshAccounts();
+    toast(on ? tt('Account will be automated.', 'سيتم أتمتة الحساب.') : tt('Account no longer automated.', 'توقفت أتمتة الحساب.'), async () => { await api(`/api/accounts/${id}`, { method: 'PUT', body: { automated: !on }, noAccount: true }); await refreshAccounts(); });
   });
 }
 export async function load() { return false; }

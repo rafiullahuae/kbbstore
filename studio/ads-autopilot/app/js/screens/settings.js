@@ -1,11 +1,12 @@
 import { tt } from '../i18n.js';
-import { esc, toast, tip, aed, num } from '../ui.js';
+import { esc, toast, tip, aed, num, autoToggle, wireAutoToggles } from '../ui.js';
 import { api, getAccount } from '../api.js';
 import { refreshState, refreshAccounts } from '../main.js';
 import { brainSettings, saveBrainSettings } from '../data.js';
 import { mountGenerators } from '../creative/gen-ui.js';
 import { mountOneKey, mountClaudeApp, mountCreationMode } from '../create/settings-cc.js';
 import { mountCloud } from '../create/cloud.js';
+import { mountClaudeCode } from '../create/claudecode.js';
 import { mountUpdates } from './updates.js';
 
 let tab = 'limits';
@@ -90,7 +91,7 @@ export function render(S, el) {
       ${connCard('meta', 'Meta', c.meta, [['token', tt('System-user token', 'رمز مستخدم النظام'), true, c.meta?.token], ['app_id', tt('App ID', 'معرّف التطبيق'), false, c.meta?.app_id], ['app_secret', tt('App secret', 'سر التطبيق'), true, c.meta?.app_secret]])}
       ${connCard('claude', 'Claude', c.claude, [['api_key', tt('Anthropic API key', 'مفتاح Anthropic'), true, c.claude?.key]])}
       ${connCard('shop', tt('Shop', 'المتجر'), c.shop, [['feed_url', tt('Product feed', 'كتالوج المنتجات'), false, c.shop?.feed_url, 'https://kbeautybliss.com/feeds/meta-catalog.xml'], ['token', tt('Shop connection key', 'مفتاح ربط المتجر'), true, c.shop?.token]])}</div>
-      <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div class="grid g2" style="margin-top:16px"><div id="mcp-mount"></div><div id="ok-mount"></div></div><div id="cloud-mount" style="margin-top:16px"></div>`;
+      <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div class="grid g2" style="margin-top:16px"><div id="mcp-mount"></div><div id="ok-mount"></div></div><div id="ccode-mount" style="margin-top:16px"></div><div id="cloud-mount" style="margin-top:16px"></div>`;
     if (c.checking && !S.connWaiting) { // one request that answers when the first test is done (no polling)
       S.connWaiting = true;
       api('/api/connections/retest', { method: 'POST', noAccount: true }).then((r) => { S.conn = r; S.connWaiting = false; CHECKING = false; if (el.isConnected) render(S, el); }).catch(() => { S.connWaiting = false; });
@@ -98,6 +99,7 @@ export function render(S, el) {
     v.querySelector('#conn-retest').onclick = async (e) => { e.target.disabled = true; try { S.conn = await api('/api/connections/retest', { method: 'POST', noAccount: true }); render(S, el); } catch (x) { toast(x.message); e.target.disabled = false; } };
     mountClaudeApp(v.querySelector('#mcp-mount')); // Claude desktop connector (create/settings-cc.js)
     mountOneKey(v.querySelector('#ok-mount')); // the ONE optional AI pictures & video key
+    mountClaudeCode(v.querySelector('#ccode-mount')); // Claude Code on this Mac: auto-creation, no Enter (create/claudecode.js)
     mountCloud(v.querySelector('#cloud-mount')); // cloud creation through the GitHub exchange (create/cloud.js)
     v.querySelectorAll('[data-save]').forEach((b) => {
       b.onclick = async () => {
@@ -110,7 +112,7 @@ export function render(S, el) {
     mountUpdates(v); // screens/updates.js keeps its own state: a re-render never loses an upload or an install
   } else if (tab === 'accounts') {
     v.innerHTML = `<div class="card"><header><h2>${esc(tt('Ad accounts', 'الحسابات الإعلانية'))}</h2><span class="sub">${esc(tt('Automate = the autopilot may act there (inside that account\'s limits).', 'أتمتة = يعمل الطيار الآلي فيه ضمن حدوده.'))}</span></header><table><thead><tr><th>${esc(tt('Account', 'الحساب'))}</th><th>${esc(tt('Automate', 'أتمتة'))}</th><th>${esc(tt('Links', 'الروابط'))}</th></tr></thead><tbody>${S.accounts.map((a) => `<tr><td><b>${esc(a.name)}</b><br><span class="small muted">${esc(a.id)} · ${esc(a.status)}${a.backfill ? ' · ' + esc(tt('history', 'السجل')) + ' ' + esc(a.backfill.state || '') : ''}</span></td>
-      <td><input type="checkbox" data-auto="${esc(a.id)}" ${a.automate ? 'checked' : ''} ${a.status !== 'ACTIVE' ? 'disabled' : ''}></td>
+      <td>${autoToggle(a)}</td>
       <td class="small">${['page', 'instagram', 'pixel', 'catalog'].map((k) => { const lc = (a.link_checks || {})[k]; return `<span class="chip ${lc && lc.ok ? 'acc' : ''}" title="${esc((lc && (lc.name || lc.error)) || '')}">${esc(k)} ${lc ? (lc.ok ? '✓' : '!') : '—'}</span>`; }).join(' ')}
         <button type="button" class="ghost small" data-autolink="${esc(a.id)}" title="${esc(tt('Pick this ad account\'s own Page, Instagram, pixel and catalog from its business', 'اختيار الصفحة والبكسل والكتالوج من نشاط هذا الحساب'))}">${esc(tt('Auto-link', 'ربط تلقائي'))}</button></td></tr>`).join('')}</tbody></table></div>`;
     // Link by hand (the owner, 21 Nov: Auto-link said "no business owns this ad account" and there was nowhere to pick
@@ -135,9 +137,7 @@ export function render(S, el) {
         };
       });
     }).catch((e) => { if (v.isConnected) { const p = document.createElement('p'); p.className = 'small'; p.textContent = tt('Could not read the accounts list: ', 'تعذّرت قراءة قائمة الحسابات: ') + e.message; v.appendChild(p); } });
-    v.querySelectorAll('[data-auto]').forEach((cb) => {
-      cb.onchange = async () => { try { await api(`/api/accounts/${cb.dataset.auto}`, { method: 'PUT', body: { automated: cb.checked }, noAccount: true }); await refreshAccounts(); toast(tt('Saved.', 'تم الحفظ.')); } catch (e) { cb.checked = !cb.checked; toast(e.message); } };
-    });
+    wireAutoToggles(v, async (on) => { await refreshAccounts(); toast(on ? tt('Automate: On for this account.', 'الأتمتة: مفعّلة لهذا الحساب.') : tt('Automate: Off for this account.', 'الأتمتة: متوقفة لهذا الحساب.')); });
   } else {
     const e = st.economics || {};
     v.innerHTML = `<div class="grid g2"><div class="card"><header><h2>${esc(tt('Unit economics in use', 'اقتصاديات الوحدة المستخدمة'))}</h2></header><table><tbody>

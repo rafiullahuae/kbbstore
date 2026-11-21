@@ -285,7 +285,7 @@ func (a *App) exchangeRun(r exchange.Remote, eb *brain.Engine, x *exchangeSync, 
 			}
 			x.mu.Unlock()
 			switch {
-			case open && !there && !(j != nil && j.Withdrawn):
+			case open && !there && !(j != nil && j.Withdrawn) && req.Local != "queued" && req.Local != "working": // this Mac's Claude Code has it
 				b := eb.CloudBrief(ac.id, ac.brainInput(), *req)
 				bb := exchange.MustJSON(b)
 				put[exchange.JobDir(ac.id, req.ID)+"/brief.json"] = bb
@@ -735,7 +735,11 @@ func (s *server) exchangeAPI(w http.ResponseWriter, r *http.Request, p string) {
 			jsonErr(w, 501, "no brain")
 			return
 		}
-		writeJSON(w, eb.AddCreationRequest(ac.id, ac.brainInput(), in.ProductIDs, in.Angle))
+		req := eb.AddCreationRequest(ac.id, ac.brainInput(), in.ProductIDs, in.Angle)
+		if c := a.ccRunner(); c != nil { // as a cycle's request: Claude Code on this Mac picks it up (claudecode.go)
+			c.changed(ac.id)
+		}
+		writeJSON(w, req)
 	default:
 		jsonErr(w, 404, "no such endpoint")
 	}

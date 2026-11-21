@@ -27,6 +27,9 @@ func (e *Engine) OccasionCreation(acct, title, titleAR, brief string, productIDs
 	r.Brief = creationBrief(r, brief)
 	e.saveCreations(acct, append([]CreationRequest{r}, reqs...))
 	e.mu.Unlock()
+	if CreationChanged != nil {
+		CreationChanged(acct) // Claude Code on this Mac and the cloud pick it up at once
+	}
 	e.notify(acct, Notice{Kind: "needed", Title: title + " due — start creating", Req: r.ID, Body: r.Title, BodyAR: r.TitleAR})
 	return r.ID
 }

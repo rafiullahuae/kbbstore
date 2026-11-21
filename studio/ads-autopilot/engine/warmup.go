@@ -281,6 +281,9 @@ func (a *App) warmUp(ctx context.Context, reason string) bool {
 			a.warmSet("cloud", "ok", fmt.Sprintf("%v ad(s) brought back, %v job(s) sent", sum["imported"], sum["pushed"]))
 		}
 	}
+	if c := a.ccRunner(); c != nil { // Claude Code on this Mac: pending requests are made now (claudecode.go)
+		c.kick("warm-up")
+	}
 	a.st.Append("warmup", fmt.Sprintf("refresh finished (%s)", map[bool]string{true: "up to date", false: "with problems: see the steps"}[full]), a.WarmState())
 	return true
 }

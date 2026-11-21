@@ -535,6 +535,9 @@ func (s *server) mcpAPI(w http.ResponseWriter, r *http.Request, p string) {
 			mcpSeen.tool = in.Tool
 		}
 		mcpSeen.Unlock()
+		if c := s.app.ccRunner(); c != nil && in.Tool != "" { // an auto-run's live line on its card
+			c.toolSeen(in.Tool)
+		}
 		if first {
 			s.publish("connections", map[string]any{"account": "", "data": map[string]any{"mcp": true}})
 		}

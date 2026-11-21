@@ -74,16 +74,24 @@ type CreationRequest struct {
 	CloudAt time.Time `json:"cloud_at,omitempty"`
 	CloudBy string    `json:"cloud_by,omitempty"`
 	CloudN  int       `json:"cloud_n,omitempty"` // ads imported from the cloud
+	// Claude Code on this Mac (engine/claudecode.go): queued | working | done | failed, what the card says, ads saved.
+	Local     string    `json:"local,omitempty"`
+	LocalNote string    `json:"local_note,omitempty"`
+	LocalN    int       `json:"local_n,omitempty"`
+	LocalAt   time.Time `json:"local_at,omitempty"`
 }
 
 type Notice struct {
-	At     time.Time `json:"at"`
-	Kind   string    `json:"kind"` // needed | due_soon | auto
-	Title  string    `json:"title"`
-	Body   string    `json:"body"`
-	BodyAR string    `json:"body_ar"`
-	Req    string    `json:"request,omitempty"`
-	Shown  bool      `json:"shown"` // the OS notification ran
+	ID        string    `json:"id,omitempty"`
+	At        time.Time `json:"at"`
+	Kind      string    `json:"kind"` // needed | due_soon | auto | cloud_done | local_done
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	BodyAR    string    `json:"body_ar"`
+	Req       string    `json:"request,omitempty"`
+	Shown     bool      `json:"shown"`               // the OS notification ran
+	Ref       string    `json:"ref,omitempty"`       // what settles it (an occasion package id): ClearNotices
+	Dismissed bool      `json:"dismissed,omitempty"` // the owner's ✕, or settled: no longer shown
 }
 
 func (e *Engine) creations(acct string) []CreationRequest {
@@ -280,6 +288,7 @@ func notifyOS(title, body string) bool {
 
 func (e *Engine) notify(acct string, n Notice) {
 	n.At = time.Now().UTC()
+	n.ID = fmt.Sprintf("n%x", hash32(fmt.Sprint(n.At.UnixNano(), n.Kind, n.Title, n.Req)))
 	n.Shown = notifyOS(n.Title, n.Body)
 	e.mu.Lock()
 	var ns []Notice
@@ -311,9 +320,13 @@ func (e *Engine) creationView(acct string) map[string]any {
 	if reqs == nil {
 		reqs = []CreationRequest{}
 	}
-	if ns == nil {
-		ns = []Notice{}
+	shown := []Notice{}
+	for _, n := range ns {
+		if !n.Dismissed {
+			shown = append(shown, n)
+		}
 	}
+	ns = shown
 	return map[string]any{"mode": st.CreationMode, "fallback_hours": st.FallbackHours, "requests": reqs, "notifications": ns}
 }
 
@@ -392,6 +405,14 @@ func (e *Engine) serveCreation(w http.ResponseWriter, r *http.Request, p, acct s
 		js(e.creationView(acct))
 	case strings.HasPrefix(p, "creation/") && r.Method == http.MethodPost:
 		parts := strings.Split(strings.TrimPrefix(p, "creation/"), "/")
+		if len(parts) == 3 && parts[0] == "notice" && parts[2] == "dismiss" { // the ✕ on a notice card
+			if !e.DismissNotice(acct, parts[1]) {
+				bad(404, "no such notice")
+				return
+			}
+			js(map[string]bool{"ok": true})
+			return
+		}
 		if len(parts) != 2 {
 			bad(404, "no such route")
 			return

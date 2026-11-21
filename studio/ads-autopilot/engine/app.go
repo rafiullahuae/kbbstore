@@ -123,6 +123,7 @@ type App struct {
 	testShopBase   string      // -mock with KAA_MOCK_SHOP_API=1: the fake shop API (metamock/shopapi.go)
 	noBackfill     bool        // Go tests that do not want the history import running in the background
 	warm           warmer      // the refresh on start / wake / page return (warmup.go)
+	cc             *ccRunner   // Claude Code on this Mac: auto-creation on the Max plan (claudecode.go)
 	firstTest      atomic.Bool // ConnectionsView started a first test (connectAll may also run from the warm-up)
 	updating       atomic.Bool // an update is being installed / checked: no sync or cycle starts (update_flow.go)
 }

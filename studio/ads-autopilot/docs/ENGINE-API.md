@@ -116,3 +116,7 @@ Check: `NODE_PATH=… node tools/create-check.cjs [--shots]`.
 | GET /api/exchange | cloud creation (exchange_wire.go): `{owner, repo, token{set,last4}, connected, expires, last_push, last_pull, last_sync, last_error, counts{waiting,working,finished,failed,withdrawn}, jobs[], token_url}` |
 | PUT /api/exchange | `{owner, repo, token?}`: the GitHub key is checked live (private repo, reads + writes, reaches no other private repo) BEFORE it is kept in the Keychain |
 | DELETE /api/exchange, POST /api/exchange/sync | forget the key; push / withdraw / pull + import now (also on start, on wake = warm-up step `cloud`, every 15 min) |
+| GET /api/claudecode | Claude Code on this Mac (claudecode.go): `{detect{found, path, version, signed_in, auth_method, ready, problem, problem_ar}, auto, auto_set, busy, current?, runs[{request, title, start, seconds, state, kind, reason, ads, held}], paused_until?, timeout_min, allowed_tools}`; SSE `claudecode` pushes the same |
+| PUT /api/claudecode | `{auto: bool}` (default: on when found and signed in with the subscription) |
+| POST /api/claudecode/test, POST /api/claudecode/run | a tiny "ok" prompt, timed → `{ok, reply, seconds, reason?}`; `{request?}` try now (clears that request's backoff and the usage pause) |
+| creation requests | + `local` (queued \| working \| done \| failed), `local_note`, `local_n`; notices + `id`, `ref`; POST /api/brain/x/creation/notice/{id}/dismiss |

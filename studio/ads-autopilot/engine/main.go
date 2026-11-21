@@ -188,6 +188,9 @@ func main() {
 			s.sched.start(s.shutdown)
 			s.app.startExchange(s.shutdown) // cloud creation: every 15 min while open (exchange_wire.go)
 		}
+		// Claude Code on this Mac (claudecode.go): creation, not the autopilot's schedule; a -mock engine only ever
+		// runs the CLI named by KAA_CLAUDE_BIN
+		s.app.startClaudeCode(newCCRunner(s.app, s.exe, s.data, s.tabs), s.shutdown)
 	}()
 
 	sig := make(chan os.Signal, 1)
