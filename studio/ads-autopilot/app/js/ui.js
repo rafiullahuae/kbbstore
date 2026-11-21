@@ -59,7 +59,8 @@ export function toast(msg, undo) {
     el.append(b);
   }
   document.getElementById('toasts').append(el);
-  setTimeout(() => el.remove(), undo ? 8000 : 4000);
+  // long enough to read: 4 s, longer for a long message (a cycle's result), at most 15 s
+  setTimeout(() => el.remove(), undo ? 8000 : Math.min(15000, Math.max(4000, String(msg).length * 55)));
 }
 
 export function confirmBox(title, body, okLabel, danger) {

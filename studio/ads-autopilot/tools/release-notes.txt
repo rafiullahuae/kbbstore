@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.6
+- "Run a cycle" now says at once that it started (and the button shows "Running…" until it ends), then what it did: how many changes were made on Meta, what waits for your approval, the first launch, and any error. A full cycle can take a few minutes; before, nothing showed until it was over.
+- Longer messages stay on screen long enough to read.
+
 ## 0.6.5
 - Your limits are now for the autopilot's own ads only, as you asked. Your own campaigns — their budgets, their spend and their ads — are no longer counted: the daily limit, the monthly limit and Max active ads apply to the "KAA:" campaigns alone. This unblocks the first launch ("no room for a starter campaign … AED 1500 already committed" was your own campaigns' budgets).
 - Meta's account spending limit now adds both: what is spent + what the autopilot may still spend this month + what your own campaigns' daily budgets need until month end. It moves with your budgets, so it never stops your own ads.

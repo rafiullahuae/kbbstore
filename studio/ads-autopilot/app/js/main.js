@@ -247,8 +247,34 @@ document.addEventListener('keydown', (e) => {
     if (nx) switchAccount(nx.id);
   }
 });
+// runCycle: says at once that it started (the owner, 22 Nov: "i clicked run cycle, nothing happend ... i didn't see
+// any notice") — a full cycle reads every live ad from Meta, plans and launches, and can take minutes — keeps the
+// button busy so a second click does not queue a second cycle, and ends with what it did and anything that failed.
+let cycling = false;
 export async function runCycle() {
-  try { await api('/api/cycle', { method: 'POST', body: { mode: S.state?.autopilot.mode === 'auto' ? 'auto' : 'shadow' } }); toast(tt('Cycle finished.', 'انتهت الدورة.')); await refreshState(); } catch (x) { toast(x.message); }
+  if (cycling) { toast(tt('A cycle is already running — it finishes by itself; Activity shows each step.', 'الدورة تعمل الآن وتنتهي وحدها؛ النشاط يُظهر كل خطوة.')); return; }
+  cycling = true; window.__kaaCycling = true; // the Overview redraws itself meanwhile: the button stays "Running…"
+  const btns = [...document.querySelectorAll('#cyc')];
+  btns.forEach((b) => { b.disabled = true; b.dataset.label = b.textContent; b.textContent = tt('Running… (reading Meta)', 'تعمل… (قراءة Meta)'); });
+  toast(tt('Cycle started: reading Meta, judging every ad, planning and launching inside your limits. It can take a few minutes; Activity shows each step.', 'بدأت الدورة: قراءة Meta وتقييم كل إعلان والتخطيط والإطلاق ضمن حدودك. قد تستغرق بضع دقائق؛ النشاط يُظهر كل خطوة.'));
+  const t0 = Date.now();
+  try {
+    const r = await api('/api/cycle', { method: 'POST', body: { mode: S.state?.autopilot.mode === 'auto' ? 'auto' : 'shadow' } });
+    const c = (r && r.counts) || {};
+    const done = (c.done || 0) + (c.duplicate || 0), bad = (c.failed || 0) + (c.refused || 0);
+    const secs = Math.round((Date.now() - t0) / 1000);
+    const parts = [tt(`Cycle finished in ${secs} s: ${done} change(s) made on Meta`, `انتهت الدورة خلال ${secs} ث: ${done} تغيير على Meta`)];
+    if (c.shadow) parts.push(tt(`${c.shadow} waiting for your approval (Approvals)`, `${c.shadow} بانتظار موافقتك (الموافقات)`));
+    if (bad) parts.push(tt(`${bad} refused or failed (Activity says why)`, `${bad} رُفض أو فشل (النشاط يذكر السبب)`));
+    if (r && r.starter && r.starter.why) parts.push(tt(`First launch: ${r.starter.why}`, `الإطلاق الأول: ${r.starter.why}`));
+    for (const k of ['sync_error', 'safety_error', 'error']) if (r && r[k]) parts.push(`⚠ ${r[k]}`);
+    toast(parts.join(' · '));
+    await refreshState();
+  } catch (x) { toast(tt('The cycle stopped: ', 'توقفت الدورة: ') + x.message); }
+  finally {
+    cycling = false; window.__kaaCycling = false;
+    document.querySelectorAll('#cyc').forEach((b) => { b.disabled = false; b.textContent = b.dataset.label || tt('Run a cycle', 'تشغيل دورة'); });
+  }
 }
 window.addEventListener('hashchange', go);
 

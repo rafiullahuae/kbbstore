@@ -61,7 +61,7 @@ export function render(S, el) {
       <div class="row"><a href="#/plan"><button type="button" class="onhero solid">${esc(tt("Open today's plan", 'خطة اليوم'))}</button></a>
         <button type="button" class="onhero" id="why">${esc(tt('Ask Claude why', 'اسألي Claude لماذا'))}</button>
         <button type="button" class="onhero" id="rep">${esc(tt('Daily report AR/EN', 'التقرير اليومي ع/EN'))}</button>
-        <button type="button" class="onhero" id="cyc">${esc(tt('Run a cycle', 'تشغيل دورة'))}</button></div>
+        <button type="button" class="onhero" id="cyc"${window.__kaaCycling ? ' disabled' : ''}>${esc(window.__kaaCycling ? tt('Running… (reading Meta)', 'تعمل… (قراءة Meta)') : tt('Run a cycle', 'تشغيل دورة'))}</button></div>
     </div>
     <div class="card"><header><h2>${esc(tt('Your limits', 'حدودك'))}</h2><a href="#/settings">${esc(tt('Change limits', 'تغيير الحدود'))}</a></header>
       ${st.limits_set ? `<div class="spread small"><span>${esc(tt('Today', 'اليوم'))}</span><span class="num">${aed(st.today_spend_app ?? st.kpis.today.spend)} / ${aed(L.daily_aed)}</span></div><div class="meter ${dayPct > 0.9 ? 'hot' : ''}"><i style="width:${(dayPct * 100).toFixed(1)}%"></i></div>
