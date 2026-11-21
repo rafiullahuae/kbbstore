@@ -101,7 +101,39 @@ func (ac *Acct) launch(ctx context.Context, in launchReq) (map[string]any, int, 
 	}
 	out := map[string]any{"account": ac.id, "approved": ids}
 	if !in.Launch {
-		out["note"] = "approved: the next cycle tests them inside your limits"
+		// Run it: a real job that puts exactly these ads live (ownerrun.go), shown on Plan → Upcoming jobs
+		st := ac.Settings()
+		jid := ac.queueOwnerRun(ids, "You pressed Run it in Create with Claude.")
+		out["job"] = jid
+		switch {
+		case jid == "":
+			out["note"] = "already on Meta"
+		case st.Automated && st.Limits.Set() && st.Limits.Autopilot != model.AutopilotOff:
+			// he approved them by pressing Run it: they run now in Auto and in Practice (as approved jobs always do)
+			ac.mu.RLock()
+			active := executor.ActiveAds(ac.tree)
+			ac.mu.RUnlock()
+			max := st.Limits.MaxActiveAds
+			if max <= 0 {
+				max = 6 // the executor's default (checks.go maxAds)
+			}
+			if free := max - active; free < len(ids) {
+				// said NOW, not discovered later: the ads wait for a free slot (the autopilot never pauses a
+				// running ad to make room for new ones that have no results yet)
+				out["waiting"] = true
+				out["note"] = fmt.Sprintf("no free ad slot: %d ads are active and your maximum is %d. Raise Settings → Limits → Max active ads to %d and they go live at once (they are queued on Plan → Upcoming jobs)", active, max, active+len(ids))
+				out["raise_to"] = active + len(ids)
+			} else {
+				out["note"], out["starting"] = "going live now, inside your limits: Plan → Upcoming jobs shows each step", true
+			}
+			ac.runOwnerJobNow(jid)
+		case !st.Automated:
+			out["note"] = "queued, but this account is not automated by the app (Portfolio → switch it on)"
+		case !st.Limits.Set():
+			out["note"] = "queued, but nothing launches until the daily and monthly limits are set (Settings → Limits)"
+		default:
+			out["note"] = "queued, but the autopilot is Off (top bar → Practice or Auto)"
+		}
 		return out, 200, nil
 	}
 	st := ac.Settings()

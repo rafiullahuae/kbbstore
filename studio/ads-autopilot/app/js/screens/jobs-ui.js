@@ -8,7 +8,7 @@ import { pickProducts, dropCatalog } from './picker.js';
 const cache = new Map();
 window.addEventListener('kaa:stale', (e) => (e.detail || []).forEach((id) => cache.delete(id)));
 let editing = '', brief = null, busy = '', picked = null; // picked: the products chosen in the open editor (null = unchanged)
-const KIND = { build_funnel: ['Funnel build', 'بناء المسار'], test: ['Creative test', 'اختبار إعلان'], refresh: ['Refresh', 'تجديد'], occasion: ['Occasion', 'مناسبة'],
+const KIND = { owner_run: ['Your ads (Run it)', 'إعلاناتكِ (شغّليه)'], reprice: ['Price fix', 'تصحيح السعر'], build_funnel: ['Funnel build', 'بناء المسار'], test: ['Creative test', 'اختبار إعلان'], refresh: ['Refresh', 'تجديد'], occasion: ['Occasion', 'مناسبة'],
   funnel_retargeting: ['Retargeting', 'إعادة استهداف'], funnel_existing: ['Existing customers', 'عملاء حاليون'], funnel_lookalike: ['Lookalikes', 'جمهور مشابه'] };
 const STATUS = { planned: ['planned', 'مخطط'], approved: ['approved', 'موافق عليه'], skipped: ['skipped', 'متجاوز'], waiting: ['waiting', 'ينتظر'], done: ['done', 'تم'], failed: ['failed', 'فشل'] };
 

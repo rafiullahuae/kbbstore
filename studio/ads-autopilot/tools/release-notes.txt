@@ -2,6 +2,11 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.4
+- Fixed: "Run it" only marked the ads approved and asked the planner to prefer them — nothing made them go live, and nothing showed it. Now Run it creates a job "Run your ads made with Claude" that puts exactly those ads live in your prospecting ad set at once (Auto or Practice), inside your limits. Plan → Upcoming jobs (and Recent jobs) shows it with every step; Campaigns shows the ads named "Made with Claude · …".
+- If your Max active ads is full, Run it now says so at once ("no free ad slot: N active, your maximum is M — raise it to X") instead of quietly waiting. The autopilot never pauses a running ad to make room for new ones without results.
+- Ads you pressed Run it on before this version (and that are not on Meta) get the same job by themselves at the next cycle.
+
 ## 0.6.3
 - Create window: every idea shows its products. ✕ takes a product out, "+ Add or swap a product" puts one in — the words and the design stay, the photos and price follow (no Claude call).
 - Create window: "↻ Redraw & save" on each idea and "↻ Redraw all & save" for the whole set: the SAME design drawn again in every size and the video, and saved to the library — including sizes the quality check used to hold back (they were the "missing" ones; now they are saved and you are told). "Regenerate" still means a NEW design from Claude.

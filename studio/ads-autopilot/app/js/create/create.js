@@ -409,7 +409,8 @@ async function runIt(launch) {
     const r = await api('/api/launch', { method: 'POST', body: { creative_ids: ids.slice(0, 12), launch, key: s.id + (launch ? '-launch' : '-run') } });
     await api(`/api/brain/x/create/${s.id}`, { method: 'PUT', body: { ran: ids, proposals: r.proposals || [] } });
     window.__kaaLaunch = Object.assign({ ids }, r);
-    if (!launch) toast(tt(`Approved: the autopilot tests ${ids.length} ads in its next cycle.`, `تمت الموافقة: يختبر الطيار الآلي ${ids.length} إعلانات في دورته القادمة.`));
+    if (!launch && r.waiting) toast(tt(`Saved and queued, but they wait: ${r.note}.`, `حُفظت ووُضعت في الطابور لكنها تنتظر: لا توجد خانة إعلان فارغة. ارفعي الإعدادات ← الحدود ← الحد الأقصى للإعلانات النشطة إلى ${r.raise_to}.`));
+    else if (!launch) toast(r.starting ? tt(`${ids.length} ads are going live now in your prospecting ad set, inside your limits. Plan → Upcoming jobs → "Run your ads made with Claude" shows each step; Campaigns shows them once Meta has them.`, `${ids.length} إعلانات تُنشر الآن في مجموعة الاستكشاف ضمن حدودكِ. الخطة ← المهام القادمة ← «تشغيل إعلاناتكِ» تُظهر كل خطوة.`) : tt(`Saved and approved — ${r.note || ''}.`, `حُفظت ووُوفق عليها — ${r.note || ''}.`));
     else toast(tt(`Launched: ${(r.counts || {}).done || 0} steps done, ${(r.counts || {}).refused || 0} refused by the checks.`, `أُطلق: ${(r.counts || {}).done || 0} خطوات، ورُفضت ${(r.counts || {}).refused || 0}.`));
     void ds;
   } catch (e) { toast(e.message); }

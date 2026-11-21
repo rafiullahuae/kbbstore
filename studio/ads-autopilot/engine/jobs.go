@@ -180,7 +180,8 @@ func upsert(js *JobSet, j Job, now time.Time) {
 
 // refreshJobs: the queue from this cycle's plan, the first launch and the funnel's missing pieces.
 func (ac *Acct) refreshJobs(ctx context.Context, in model.CycleInput, plan model.Plan, starter []model.Proposal, stWhy string, env executor.Env) {
-	ac.attachRegen() // regen.go: saved designs join their package before the queue is read
+	ac.attachRegen()    // regen.go: saved designs join their package before the queue is read
+	ac.ownerBacklog(in) // ownerrun.go: ads approved with Run it before 0.6.4 get their run job
 	now := env.Now
 	loc := ac.loc()
 	js := ac.jobSet()
@@ -503,6 +504,8 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 		return ac.extraCampaignProposals(in, j, env, pid, tag, adsInto)
 	case "occasion":
 		return ac.occasionProposals(in, j, env.Limits.MaxBudgetStepPct, pid)
+	case "owner_run": // the ads he pressed Run it on (ownerrun.go)
+		return ac.ownerRunProposals(in, j, pid)
 	case "reprice": // the same creative with the corrected price replaces a live ad (reprice.go)
 		ps, why, gone := ac.repriceProposals(in, j, pid)
 		if gone {
@@ -618,7 +621,7 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 		}
 		ps, why := ac.materialise(ctx, in, *j, env)
 		n := countKind(ps, model.KindCreateAd)
-		if j.Kind == "reprice" && why == msgRepriceGone {
+		if (j.Kind == "reprice" && why == msgRepriceGone) || (j.Kind == "owner_run" && why == msgOwnerRunDone) {
 			j.Status, j.Result, j.Waiting = "done", why, ""
 			j.logf(now, "%s", why)
 			continue
