@@ -289,7 +289,7 @@ func RankForOccasion(prods []Product, pb Playbook, o Occasion, sig RankSignals) 
 		if season == "sale" { // White Friday & co: best sellers and new arrivals
 			score = 0.6*salesN + 0.3*newS + 0.15*r.Parts["trend"] + 0.1*r.Parts["momentum"] - pen
 		}
-		sp := SlotPick{ID: p.ID, Title: p.Title, Brand: p.Brand, Image: p.Image, URL: p.URL, PriceAED: p.PriceAED, Fit: r3(fit), Tags: tags, Seasons: seasons, Yours: yours,
+		sp := SlotPick{ID: p.ID, Title: p.Title, Brand: p.Brand, Image: p.Image, URL: p.URL, PriceAED: p.Selling(), Fit: r3(fit), Tags: tags, Seasons: seasons, Yours: yours,
 			Units30: p.Units30, Units90: sold(p), New: isNew, Trending: r.Trending, Pinned: r.Pinned}
 		if sp.Units30 == 0 {
 			sp.Units30 = p.Units14

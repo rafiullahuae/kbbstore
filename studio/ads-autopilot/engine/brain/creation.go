@@ -443,7 +443,7 @@ func (e *Engine) serveCreation(w http.ResponseWriter, r *http.Request, p, acct s
 		var out []map[string]any
 		for _, x := range in().Shop.Products {
 			if x.InStock && x.Image != "" {
-				out = append(out, map[string]any{"id": x.ID, "title": x.Title, "brand": x.Brand, "type": x.Type, "price_aed": x.PriceAED})
+				out = append(out, map[string]any{"id": x.ID, "title": x.Title, "brand": x.Brand, "type": x.Type, "price_aed": x.Selling()})
 			}
 		}
 		js(out)
@@ -470,7 +470,7 @@ func (e *Engine) brief(acct string, in CycleInput) map[string]any {
 	}
 	for _, id := range tr.Selling {
 		if p, ok := idx[id]; ok && p.InStock && len(top) < 8 {
-			top = append(top, map[string]any{"id": p.ID, "title": p.Title, "price_aed": p.PriceAED, "trending": true})
+			top = append(top, map[string]any{"id": p.ID, "title": p.Title, "price_aed": p.Selling(), "trending": true})
 		}
 	}
 	for _, p := range in.Shop.Products {
@@ -478,7 +478,7 @@ func (e *Engine) brief(acct string, in CycleInput) map[string]any {
 			break
 		}
 		if p.InStock && p.Image != "" && !contains(tr.Selling, p.ID) {
-			top = append(top, map[string]any{"id": p.ID, "title": p.Title, "price_aed": p.PriceAED})
+			top = append(top, map[string]any{"id": p.ID, "title": p.Title, "price_aed": p.Selling()})
 		}
 	}
 	rr := e.richResearch()

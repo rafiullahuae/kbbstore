@@ -63,6 +63,7 @@ type Acct struct {
 	jobs      JobSet           // the editable job queue (jobs.go)
 
 	work        sync.Mutex // sync / cycle / kill on this account: one at a time
+	repriceMu   sync.Mutex // the price-correction plan (reprice.go)
 	cycleCancel context.CancelFunc
 	bfOn        bool
 

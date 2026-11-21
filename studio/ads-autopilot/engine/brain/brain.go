@@ -723,7 +723,7 @@ func plannerInput(in CycleInput, rr RulesResult, promo bool) map[string]any {
 		}
 	} else {
 		for _, p := range pickProductsT(in.Shop, in.Research, in.Trending, 40) {
-			prods = append(prods, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED,
+			prods = append(prods, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.Selling(),
 				"margin_pct": p.MarginPct, "stock": p.Stock})
 		}
 	}

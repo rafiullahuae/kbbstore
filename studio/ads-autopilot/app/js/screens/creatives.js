@@ -7,6 +7,7 @@ import { renderVideo } from '../creative/motion.js';
 import { score, shipDesign } from '../creative/quality.js';
 import { generateBackground } from '../creative/gen-ui.js';
 import { openCreate } from '../create/create.js';
+import { repriceCard, wireRepriceCard } from '../create/reprice.js';
 
 let tab = 'images', langF = 'all', busy = '';
 const thumbs = new Map();
@@ -194,12 +195,13 @@ function madeWithClaude(S, v) {
   const ss = S.cache.get(`${getAccount()}|ccsessions`);
   if (!ss) { v.innerHTML = `<div class="cc-hist">${'<div class="sk" style="height:150px"></div>'.repeat(6)}</div>`; return; }
   if (!ss.length) { v.innerHTML = `<div class="card">${empty(tt('Nothing made with Claude yet', 'لا شيء صُنع مع Claude بعد'), tt('Press ✨ Create with Claude (or C) and say what you want.', 'اضغطي ✨ أنشئي مع Claude (أو C) وقولي ما تريدين.'))}</div>`; return; }
-  v.innerHTML = `<div class="cc-hist">${ss.map((s) => { const o = s.outcome || { verdict: 'not_run' }; const [en, ar, cls] = VERD[o.verdict] || VERD.not_run; const d0 = (s.designs || [])[0] || {};
+  v.innerHTML = repriceCard() + `<div class="cc-hist">${ss.map((s) => { const o = s.outcome || { verdict: 'not_run' }; const [en, ar, cls] = VERD[o.verdict] || VERD.not_run; const d0 = (s.designs || [])[0] || {};
     return `<div class="card" data-sess="${esc(s.id)}" tabindex="0" role="button"><header><h2 style="font-size:15px">${txt(s.prompt || d0.headline || s.id)}</h2></header>
       <div class="row small"><span class="chip ${cls}">${esc(tt(en, ar))}${o.spend ? ` · ROAS ${o.roas}` : ''}</span><span class="chip">${esc(s.source === 'claude_app' ? tt('Claude app · Max', 'تطبيق Claude · Max') : tt('Box · API', 'الصندوق · API'))}</span>
       <span class="muted">${esc(new Date(s.at).toLocaleDateString())}</span></div>
       <p class="small ink2" style="margin:8px 0 0">${esc(tt(`${(s.ideas || []).length} idea(s) · ${(s.designs || []).length} designs · ${(s.turns || []).length} turn(s) · ${(s.saved || []).length} saved · ${(s.ran || []).length} ran`, `${(s.ideas || []).length} فكرة · ${(s.designs || []).length} تصميم · ${(s.turns || []).length} جولة · ${(s.saved || []).length} محفوظ · ${(s.ran || []).length} شُغّل`))}</p>
       <p class="small muted" style="margin:4px 0 0">${txt(d0.headline || '')}</p></div>`; }).join('')}</div>`;
+  wireRepriceCard(v, () => { const id = getAccount(); S.cache.delete(`${id}|ccsessions`); S.cache.delete(`${id}|creatives`); S.cache.delete(`${id}|designs`); dropList('creatives'); });
   v.querySelectorAll('[data-sess]').forEach((n) => { n.onclick = () => openCreate({ session: ss.find((s) => s.id === n.dataset.sess) }); n.onkeydown = (e) => { if (e.key === 'Enter') n.click(); }; });
 }
 

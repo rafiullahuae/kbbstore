@@ -6,6 +6,8 @@
 package brain
 
 import (
+	"fmt"
+	"math"
 	"time"
 
 	"kaa/model"
@@ -479,4 +481,24 @@ type LintIssue struct {
 	Field    string `json:"field"`
 	Why      string `json:"why"`
 	Fix      string `json:"fix,omitempty"`
+}
+
+// Selling: the sale price when the shop runs one, else the regular price (model.Product.Selling).
+func (p Product) Selling() float64 {
+	if p.SalePrice > 0 && (p.PriceAED <= 0 || p.SalePrice < p.PriceAED) {
+		return p.SalePrice
+	}
+	return p.PriceAED
+}
+
+// PriceLabel: the price as a design prints it ("AED 49" / "49 درهم"; fils kept when the price has them: "AED 49.50").
+func PriceLabel(lang string, aed float64) string {
+	n := fmt.Sprintf("%.0f", aed)
+	if math.Abs(aed-math.Round(aed)) >= 0.005 {
+		n = fmt.Sprintf("%.2f", aed)
+	}
+	if lang == "ar" {
+		return n + " درهم"
+	}
+	return "AED " + n
 }

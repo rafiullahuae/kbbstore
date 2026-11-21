@@ -373,6 +373,10 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		}
 	case p == "/api/proposals" || strings.HasPrefix(p, "/api/proposals/"):
 		s.proposalsAPI(w, r, p)
+	case p == "/api/reprice" || strings.HasPrefix(p, "/api/reprice/"): // correct every ad's price (reprice.go)
+		if ac := s.acct(w, r); ac != nil {
+			s.repriceAPI(w, r, ac, p)
+		}
 	case p == "/api/launch" && r.Method == http.MethodPost: // Create with Claude → Run it / Launch now (create_wire.go)
 		s.launchAPI(w, r)
 	case (p == "/api/render" || strings.HasPrefix(p, "/api/render/")) && r.Method == http.MethodPost:

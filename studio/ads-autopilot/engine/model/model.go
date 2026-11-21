@@ -349,6 +349,12 @@ type Creative struct {
 	Used        bool      `json:"used"`
 	Approved    bool      `json:"approved,omitempty"` // the owner said "Run it" (made with Claude): the next cycle tests it first
 	Origin      string    `json:"origin,omitempty"`   // "cloud_max": made by the scheduled cloud task on the owner's Max plan (exchange_wire.go)
+	// the picture / video redrawn in place (reprice.go: the price corrected to the sale price): MediaRev counts the
+	// redraws (a stale upload result never overwrites a newer picture), OldMetaIDs are the Meta creatives it replaced
+	// (live ads still showing one of them are swapped by a "reprice" job)
+	MediaRev   int      `json:"media_rev,omitempty"`
+	OldMetaIDs []string `json:"old_meta_ids,omitempty"`
+	RepricedAt string   `json:"repriced_at,omitempty"`
 }
 
 // ── the audit log ──
@@ -414,4 +420,13 @@ type LLMUsage struct {
 	CacheWriteTokens int     `json:"cache_creation_input_tokens"`
 	WebSearches      int     `json:"web_searches"`
 	CostUSD          float64 `json:"cost_usd"`
+}
+
+// Selling: what a shopper pays today — the sale price when the shop runs one, else the regular price. Every price
+// an ad shows (copy, the picture's chip, the video's end card) is this one, never the struck-through regular price.
+func (p Product) Selling() float64 {
+	if p.SaleAED > 0 && (p.PriceAED <= 0 || p.SaleAED < p.PriceAED) {
+		return p.SaleAED
+	}
+	return p.PriceAED
 }

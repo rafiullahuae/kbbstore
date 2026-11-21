@@ -183,11 +183,7 @@ func designFor(s CopySet, x copyExtra, prods []Product, tmpl string) DesignSpec 
 	}
 	price := ""
 	if len(prods) > 0 {
-		if s.Lang == "ar" {
-			price = fmt.Sprintf("%.0f درهم", prods[0].PriceAED)
-		} else {
-			price = fmt.Sprintf("AED %.0f", prods[0].PriceAED)
-		}
+		price = PriceLabel(s.Lang, prods[0].Selling()) // the sale price when there is one (the owner, 21 Nov)
 	}
 	badge := x.badge
 	if badge == "" && len(prods) > 0 {
@@ -274,7 +270,7 @@ func (b *Brain) copyAsk(cr CopyRequest, prods []Product, r Research) []byte {
 		if len([]rune(desc)) > 700 {
 			desc = string([]rune(desc)[:700])
 		}
-		pinfo = append(pinfo, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED, "description": desc})
+		pinfo = append(pinfo, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.Selling(), "description": desc})
 	}
 	var angles []string
 	for _, n := range r.Notes {

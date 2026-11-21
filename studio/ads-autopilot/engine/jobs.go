@@ -72,6 +72,10 @@ type Job struct {
 	NotFor    []string  `json:"not_for,omitempty"`
 	Log       []JobLog  `json:"log,omitempty"`
 	UpdatedAt time.Time `json:"updated_at"`
+	// reprice (reprice.go): the old ad was paused by this job, so its replacement still has to go live; Tries counts
+	// the runs that failed (a swap is retried at the next cycles: Meta's 30 s edit rule, a busy moment)
+	Swapped bool `json:"swapped,omitempty"`
+	Tries   int  `json:"tries,omitempty"`
 }
 
 type JobSet struct {
@@ -496,6 +500,12 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 		return ac.extraCampaignProposals(in, j, env, pid, tag, adsInto)
 	case "occasion":
 		return ac.occasionProposals(in, j, env.Limits.MaxBudgetStepPct, pid)
+	case "reprice": // the same creative with the corrected price replaces a live ad (reprice.go)
+		ps, why, gone := ac.repriceProposals(in, j, pid)
+		if gone {
+			return nil, msgRepriceGone
+		}
+		return ps, why
 	case "funnel_retargeting":
 		if in.Links.CatalogID == "" || in.Links.PixelID == "" {
 			return nil, "link the product catalog and the pixel first"
@@ -605,12 +615,17 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 		}
 		ps, why := ac.materialise(ctx, in, *j, env)
 		n := countKind(ps, model.KindCreateAd)
-		if why == "" {
+		if j.Kind == "reprice" && why == msgRepriceGone {
+			j.Status, j.Result, j.Waiting = "done", why, ""
+			j.logf(now, "%s", why)
+			continue
+		}
+		if why == "" && j.Kind != "reprice" { // a price swap pauses the ad it replaces: it needs no new slot
 			var room []model.Proposal
 			room, why, j.RaiseTo = ac.slotsFor(in, env, *j, n, pending, paused, func(s string) string { return "job-" + jobPID.ReplaceAllString(j.ID, "-") + "-" + s })
 			ps = append(room, ps...) // the room first: the executor counts live ads at each create
 		}
-		if why == "" {
+		if why == "" && j.Kind != "reprice" {
 			if n > 0 && env.Limits.MaxActiveAds > 0 && executor.ActiveAds(env.Tree)-len(paused)+pending+n > env.Limits.MaxActiveAds {
 				why = fmt.Sprintf("no free ad slot: %d ads active, your maximum is %d (Settings → Limits)", executor.ActiveAds(env.Tree)+pending, env.Limits.MaxActiveAds)
 			}
@@ -623,7 +638,9 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 			continue
 		}
 		j.Waiting = ""
-		pending += n
+		if j.Kind != "reprice" { // its new ad takes the slot of the ad it pauses
+			pending += n
+		}
 		j.ProposalIDs = nil
 		for _, p := range ps {
 			j.ProposalIDs = append(j.ProposalIDs, p.ID)
@@ -674,7 +691,17 @@ func (ac *Acct) noteJobs(results []executor.Result, mode string) {
 			continue
 		}
 		changed = true
+		if j.Kind == "reprice" {
+			if r, ok := by[repricePauseID(j.ID)]; ok && (r.Status == "done" || r.Status == "duplicate") {
+				j.Swapped = true
+			}
+		}
 		switch {
+		case j.Kind == "reprice" && cnt["done"]+cnt["duplicate"] != seen && cnt["shadow"] != seen && j.Tries < 5:
+			j.Tries++ // a price swap is retried at the next cycles (the old ad must not stay showing the old price)
+			j.Waiting, j.Result = "will try again at the next cycle: "+strings.Join(uniq(errs), "; "), ""
+			j.logf(now, "%s", j.Waiting)
+			continue
 		case cnt["done"]+cnt["duplicate"] == seen:
 			j.Status, j.Result = "done", fmt.Sprintf("ran: %d steps done", seen)
 		case cnt["shadow"] == seen:
@@ -1028,7 +1055,7 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 	}
 	ps, why := ac.materialise(ctx, in, *j, env)
 	raise := 0
-	if why == "" { // every ad of it fits, or none goes: room by rotation, else it waits and says the limit that fits (volume.go)
+	if why == "" && j.Kind != "reprice" { // every ad of it fits, or none goes: room by rotation, else it waits and says the limit that fits (volume.go)
 		var room []model.Proposal
 		room, why, raise = ac.slotsFor(in, env, *j, countKind(ps, model.KindCreateAd), 0, map[string]bool{}, func(s string) string { return "job-" + jobPID.ReplaceAllString(id, "-") + "-" + s })
 		ps = append(room, ps...)

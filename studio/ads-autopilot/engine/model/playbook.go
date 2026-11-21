@@ -544,7 +544,7 @@ func Rank(prods []Product, pb Playbook, sig RankSignals) []RankedProduct {
 		if !p.InStock || p.Image == "" || p.PriceAED <= 0 {
 			continue
 		}
-		rp := RankedProduct{ID: p.ID, Title: p.Title, Brand: p.Brand, Category: p.Category, Image: p.Image, URL: p.URL, PriceAED: p.PriceAED,
+		rp := RankedProduct{ID: p.ID, Title: p.Title, Brand: p.Brand, Category: p.Category, Image: p.Image, URL: p.URL, PriceAED: p.Selling(),
 			InStock: true, Units14: p.Units14, AgeDays: -1, Parts: map[string]float64{}}
 		// trend
 		trend := 0.0

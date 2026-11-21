@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.1
+- Prices: every ad now shows the price the shop charges today — the sale price when there is one (it showed the regular price). Claude is told the sale price too.
+- Creatives → Made with Claude → "Correct prices on all ads": redraws every saved picture and video with the sale price. The designs stay exactly as they are (same photo, colours, words); only the price changes. Ads already running on Meta are replaced by the corrected version in the same ad set.
+
 ## 0.6.0
 - Ads are made automatically with Claude Code on this Mac (your Max plan): whenever new ads are needed and the app is open, Claude Code makes them in the background — no Start, no Enter. Settings → Connections → Claude Code on this Mac shows Signed in ✓, an Automatic On/Off switch and a Test button. Cards show "Being made by Claude Code on this Mac…" and then "Made: N ads". It never launches ads by itself unless the account is in Auto with limits set.
 - Approving an occasion now clears its reminders at once; every notice has a ✕.

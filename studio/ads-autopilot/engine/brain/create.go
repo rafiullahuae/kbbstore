@@ -320,7 +320,7 @@ func (b *Brain) Create(ctx context.Context, req CreateRequest, prev *CreateSessi
 		if len(cat) >= 200 {
 			break
 		}
-		cat = append(cat, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.PriceAED})
+		cat = append(cat, map[string]any{"id": p.ID, "title": p.Title, "brand": p.Brand, "type": p.Type, "price_aed": p.Selling()})
 	}
 	var angles []string
 	for _, n := range r.Notes {

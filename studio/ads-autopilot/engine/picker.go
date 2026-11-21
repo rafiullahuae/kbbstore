@@ -34,9 +34,10 @@ import (
 )
 
 const (
-	msgJobAvoided = "all products for this job were avoided — choose products"
-	msgAdAvoided  = "all products for this ad were avoided — choose products"
-	stChoose      = "choose" // a waiting proposal with no allowed product left: it waits for the owner's pick
+	msgJobAvoided  = "all products for this job were avoided — choose products"
+	msgRepriceGone = "the ad stopped running before its price was corrected: nothing to swap"
+	msgAdAvoided   = "all products for this ad were avoided — choose products"
+	stChoose       = "choose" // a waiting proposal with no allowed product left: it waits for the owner's pick
 )
 
 var productIDRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$`)
@@ -1233,7 +1234,7 @@ func (ac *Acct) pendingView() pendingViewSet {
 					break
 				}
 				if p, ok := by[id]; ok {
-					o.Products = append(o.Products, pickProd{p.ID, p.Title, p.Image, p.PriceAED, pb.Pinned(p)})
+					o.Products = append(o.Products, pickProd{p.ID, p.Title, p.Image, p.Selling(), pb.Pinned(p)})
 				}
 			}
 		}

@@ -87,8 +87,8 @@ func cloudProduct(p Product, trending bool) exchange.Product {
 	if d := strings.TrimSpace(tagRe.ReplaceAllString(p.Description, " ")); d != "" {
 		facts += ". " + truncate(d, 900)
 	}
-	out := exchange.Product{ID: p.ID, Title: p.Title, Brand: p.Brand, Category: p.Type, PriceAED: p.PriceAED, SaleAED: p.SalePrice,
-		PriceEN: fmt.Sprintf("AED %.0f", p.PriceAED), PriceAR: fmt.Sprintf("%.0f درهم", p.PriceAED), Facts: facts, Photo: p.Image, URL: p.URL, Trending: trending}
+	out := exchange.Product{ID: p.ID, Title: p.Title, Brand: p.Brand, Category: p.Type, PriceAED: p.Selling(), SaleAED: p.SalePrice,
+		PriceEN: PriceLabel("en", p.Selling()), PriceAR: PriceLabel("ar", p.Selling()), Facts: facts, Photo: p.Image, URL: p.URL, Trending: trending}
 	for _, u := range p.Images {
 		if len(out.Photos) < 3 && u != p.Image {
 			out.Photos = append(out.Photos, u)

@@ -70,6 +70,10 @@ func (c *creativeLib) Put(cr model.Creative) error {
 	cr.PNG, cr.Video = "", ""
 	for i := range c.list {
 		if c.list[i].ID == cr.ID {
+			if cur := c.list[i]; cur.MediaRev > cr.MediaRev { // redrawn since this copy was read: its upload ids are stale
+				cr.Media, cr.MediaRev, cr.OldMetaIDs, cr.RepricedAt = cur.Media, cur.MediaRev, cur.OldMetaIDs, cur.RepricedAt
+				cr.ImageHash, cr.VideoID, cr.MetaID = cur.ImageHash, cur.VideoID, cur.MetaID
+			}
 			c.list[i] = cr
 			return c.st.Save("creatives/index", c.list)
 		}
@@ -147,4 +151,54 @@ func (c *creativeLib) Add(cr model.Creative, now time.Time) (model.Creative, err
 	}
 	c.list = append(c.list, cr)
 	return cr, c.st.Save("creatives/index", c.list)
+}
+
+// ReplaceMedia redraws a creative in place (reprice.go): same id, same copy, same place in every package and queue;
+// only the picture / video changes. Meta's ids for the old media are dropped (the next upload sends the new one)
+// and the old Meta creative id is kept, so a live ad still showing it can be swapped. Returns the old Meta id.
+func (c *creativeLib) ReplaceMedia(id, png, video string, now time.Time) (model.Creative, string, error) {
+	var media []byte
+	kind := ""
+	switch {
+	case png != "" && video != "":
+		return model.Creative{}, "", errors.New("a picture or a video, not both")
+	case png != "":
+		b, err := base64.StdEncoding.DecodeString(png)
+		if err != nil || len(b) > maxPNG || !bytes.HasPrefix(b, []byte("\x89PNG\r\n\x1a\n")) {
+			return model.Creative{}, "", fmt.Errorf("png must be base64 of a PNG file up to %d MB", maxPNG>>20)
+		}
+		media, kind = b, "png"
+	case video != "":
+		b, err := base64.StdEncoding.DecodeString(video)
+		if err != nil || len(b) > maxVideo || len(b) < 12 || string(b[4:8]) != "ftyp" {
+			return model.Creative{}, "", fmt.Errorf("video must be base64 of an MP4 file up to %d MB", maxVideo>>20)
+		}
+		media, kind = b, "mp4"
+	default:
+		return model.Creative{}, "", errors.New("send png or video")
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for i := range c.list {
+		cr := c.list[i]
+		if cr.ID != id {
+			continue
+		}
+		if cr.Media != kind {
+			return cr, "", fmt.Errorf("creative %s holds a %q, not a %s", id, cr.Media, kind)
+		}
+		if err := store.WriteAtomic(c.mediaPath(cr), media, 0o600); err != nil {
+			return cr, "", err
+		}
+		old := cr.MetaID
+		if old != "" {
+			cr.OldMetaIDs = append(cr.OldMetaIDs, old)
+		}
+		cr.ImageHash, cr.VideoID, cr.MetaID = "", "", ""
+		cr.MediaRev++
+		cr.RepricedAt = now.UTC().Format(time.RFC3339)
+		c.list[i] = cr
+		return cr, old, c.st.Save("creatives/index", c.list)
+	}
+	return model.Creative{}, "", fmt.Errorf("no creative %q in the library", id)
 }
