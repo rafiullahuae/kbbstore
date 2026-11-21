@@ -291,7 +291,7 @@ func (s *server) occasionsAPI(w http.ResponseWriter, r *http.Request, ac *Acct) 
 			upcoming = append(upcoming, o.Instances(now, 400)...)
 		}
 	}
-	writeJSON(w, map[string]any{"account": ac.id, "occasions": all.Occasions, "upcoming": upcoming, "packages": pkgs, "ads": ads,
+	writeJSON(w, map[string]any{"account": ac.id, "occasions": all.Occasions, "upcoming": upcoming, "packages": pkgs, "ads": ads, "titles": ac.titlesOf(pkgs),
 		"auto_approve": pb.AutoApproveOccasions, "countries": st.Limits.Countries, "defaults": model.DefaultOccasions()})
 }
 

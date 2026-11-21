@@ -4,6 +4,7 @@
 import { tt } from '../i18n.js';
 import { esc, toast } from '../ui.js';
 import { api, getAccount, img, hydrate } from '../api.js';
+import { pickProducts, productChips, wireChips, dropCatalog } from './picker.js';
 
 const cache = new Map();
 window.addEventListener('kaa:stale', (e) => (e.detail || []).forEach((id) => cache.delete(id)));
@@ -24,6 +25,8 @@ export function occasionsCard() {
     return `<div class="card" style="background:var(--surface);margin-bottom:10px" data-pkg="${esc(j.id)}"><header><h3>${esc(tt(j.title, j.title_ar))}</h3><span class="chip ${j.status === 'approved' ? 'acc' : 'warn'}">${esc(j.status)}</span></header>
       <p class="small">${esc(oc.start || '')} → ${esc(oc.end || '')}${oc.estimated ? ` <span class="muted">(${esc(tt('estimated date: it follows the moon sighting', 'تاريخ تقديري: يتبع رؤية الهلال'))})</span>` : ''} · ${esc(tt('goes live', 'يُنشر'))} ${esc(new Date(j.when).toLocaleDateString())} · ${esc(j.audience || '')}</p>
       <p class="small ink2">${esc(j.why || '')}</p>
+      ${j.products_gone ? `<p class="small pk-wait">${esc(tt(j.waiting || '', 'كل منتجات هذه المهمة مستبعدة — اختاري المنتجات'))}</p>` : ''}
+      <div class="row" style="align-items:flex-start">${productChips((j.product_ids || []).map((id) => ({ id, title: (o.titles || {})[id] || id })))}<button type="button" class="${j.products_gone ? '' : 'ghost'} small" data-occpick="${esc(j.id)}" style="margin-top:6px">${esc(tt('Change products', 'تغيير المنتجات'))}</button></div>
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${ads.map((a) => `<div class="card" style="padding:10px;${rej.has(a.id) ? 'opacity:.45' : ''}"><img data-src="${esc(img(a.image_url || ''))}" alt="" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:var(--surface3)">
         <span class="chip">${esc((a.lang || '').toUpperCase())}</span><p class="small" dir="auto"><b>${esc(a.headline)}</b><br>${esc(a.primary_text)}</p>
         <button type="button" class="ghost small" data-occad="${rej.has(a.id) ? 'restore-ad' : 'reject-ad'}" data-job="${esc(j.id)}" data-cr="${esc(a.id)}">${esc(rej.has(a.id) ? tt('Put back', 'إرجاع') : tt('Reject this ad', 'رفض هذا الإعلان'))}</button></div>`).join('')}</div>
@@ -35,6 +38,14 @@ export function wireOccasions(el, rerender) {
   hydrate(el); // the pictures come with the session token (blob: URLs)
   const after = async (msg) => { await loadOccasions(true); if (msg) toast(msg); rerender(); };
   el.querySelectorAll('[data-occad]').forEach((b) => { b.onclick = async () => { try { await api(`/api/jobs/${encodeURIComponent(b.dataset.job)}/${b.dataset.occad}`, { method: 'POST', body: { creative_id: b.dataset.cr } }); await after(); } catch (e) { toast(e.message); } }; });
+  wireChips(el.querySelector('[data-occasions]') || el, async () => { await loadOccasions(true); rerender(); });
+  el.querySelectorAll('[data-occpick]').forEach((b) => { b.onclick = async () => {
+    const j = ((cache.get(getAccount()) || {}).packages || []).find((x) => x.id === b.dataset.occpick) || {};
+    const ids = await pickProducts({ title: tt(`Products for: ${j.title || ''}`, `منتجات: ${j.title_ar || j.title || ''}`), selected: j.product_ids || [], max: 6,
+      hint: tt('Its ads are prepared again for these products, in Arabic and English.', 'تُحضَّر إعلاناتها من جديد لهذه المنتجات، بالعربية والإنجليزية.') });
+    if (!ids) return;
+    try { await api(`/api/jobs/${encodeURIComponent(j.id)}`, { method: 'PUT', body: { product_ids: ids } }); dropCatalog(); await after(tt('Prepared again with your products.', 'حُضّرت من جديد بمنتجاتك.')); } catch (e) { toast(e.message); }
+  }; });
   el.querySelectorAll('[data-occok]').forEach((b) => { b.onclick = async () => {
     b.disabled = true;
     try { const r = await api(`/api/jobs/${encodeURIComponent(b.dataset.occok)}/approve`, { method: 'POST', body: {} }); await after(r.run_error ? r.run_error : r.run ? tt('Approved and live: ', 'تمت الموافقة ونُشر: ') + Object.entries(r.run.counts || {}).map(([k, v]) => `${k} ${v}`).join(', ') : tt('Approved: it goes live at its time.', 'تمت الموافقة: يُنشر في موعده.')); } catch (e) { b.disabled = false; toast(e.message); }

@@ -1276,3 +1276,24 @@ func (s *server) pickerAPI(w http.ResponseWriter, r *http.Request, ac *Acct, p s
 	ac.dirty()
 	writeJSON(w, out)
 }
+
+// titlesOf: product id → title for the cards that list products (jobs, occasion packages).
+func (ac *Acct) titlesOf(jobs []Job) map[string]string {
+	a := ac.app
+	a.mu.RLock()
+	shop := a.shopSnap
+	a.mu.RUnlock()
+	want := map[string]bool{}
+	for _, j := range jobs {
+		for _, id := range j.ProductIDs {
+			want[id] = true
+		}
+	}
+	out := map[string]string{}
+	for _, p := range shop.Products {
+		if want[p.ID] {
+			out[p.ID] = p.Title
+		}
+	}
+	return out
+}

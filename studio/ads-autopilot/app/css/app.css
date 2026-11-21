@@ -328,4 +328,27 @@ dialog.cc { max-width: 1180px; width: 94vw; max-height: 92vh; }
 
 /* the app is newer than the engine running it (main.js staleEngine) */
 .stale-engine { padding: 18px 20px; font-size: 15px; line-height: 1.6; border: 1px solid var(--bad); }
+
+/* the product picker (screens/picker.js): Approvals, Plan → Upcoming jobs, Approvals → Occasions */
+dialog.pk { max-width: 820px; width: 94vw; max-height: 90vh; }
+.pk-dl { max-height: 90vh; box-sizing: border-box; }
+.pk-h h2 { margin: 0; }
+.pk-tools { gap: 8px; flex-wrap: wrap; }
+.pk-tools input[type=search] { flex: 1 1 220px; }
+.pk-order { display: flex; flex-wrap: wrap; gap: 6px; }
+.pk-list { overflow: auto; max-height: 52vh; border: 1px solid var(--line); border-radius: 14px; padding: 4px; display: flex; flex-direction: column; }
+.pk-row { display: grid; grid-template-columns: auto 52px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px; border-radius: 10px; cursor: pointer; }
+.pk-row:hover { background: var(--surface2); }
+.pk-row.on { background: var(--accent-soft); }
+.pk-row.off { opacity: .55; cursor: not-allowed; }
+.pk-row img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; background: var(--surface3); }
+.pk-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pk-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-b { display: flex; flex-wrap: wrap; gap: 4px; }
+.pk-f { gap: 10px; flex-wrap: wrap; align-items: center; }
+.pk-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pk-chip { white-space: normal; max-width: 100%; }
+.pk-chip .x { opacity: .7; }
+.pk-chip .x:hover { opacity: 1; }
+.pk-wait { color: var(--warn); font-weight: 600; }
 .chip .x { background: none; border: 0; padding: 0 0 0 4px; cursor: pointer; color: inherit; font-size: 13px; line-height: 1; }

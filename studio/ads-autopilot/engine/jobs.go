@@ -699,7 +699,7 @@ func (s *server) jobsAPI(w http.ResponseWriter, r *http.Request, ac *Acct, rest 
 			js.Jobs = []Job{}
 		}
 		st := ac.Settings()
-		writeJSON(w, map[string]any{"account": ac.id, "jobs": js.Jobs, "replan_note": js.ReplanNote, "mode": st.Limits.Autopilot, "now": now})
+		writeJSON(w, map[string]any{"account": ac.id, "jobs": js.Jobs, "titles": ac.titlesOf(js.Jobs), "replan_note": js.ReplanNote, "mode": st.Limits.Autopilot, "now": now})
 		return
 	}
 	if rest == "replan" && r.Method == http.MethodPost {
