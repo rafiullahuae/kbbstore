@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.4.1
+- Fixed: with a system-user key, Auto-link said "no business in the portfolio owns this ad account" and showed no Pages or pixels. The app now finds your business, Pages, Instagram and pixels through the ad account itself.
+- Settings → Accounts → Link by hand: choose each ad account's Facebook Page, Instagram, pixel and catalog from a list, or paste the id; each link is checked with Meta when you save.
+
 ## 0.4.0
 - Strategy (new, top of Think): how it decides with your real costs (VAT first, Tabby/Tamara 7%, cards 2.5%, cash 1.5%, Quiqup AED 15, your gift cost), your Playbook (your own instructions, Focus/Avoid products, prefer new & trending, audiences, budget split, offers: free gift, GLOW, pay in 4), ranked products with reasons, rules you can change, occasions and "Our playbook".
 - Professional campaigns: one Advantage+ Sales campaign for new customers (past buyers left out) and Advantage+ catalog remarketing for people who viewed or added to cart; lookalikes once you have enough buyers; every setting shown with why. No WhatsApp ads.
