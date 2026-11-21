@@ -5,6 +5,7 @@ import { refreshState, refreshAccounts } from '../main.js';
 import { brainSettings, saveBrainSettings } from '../data.js';
 import { mountGenerators } from '../creative/gen-ui.js';
 import { mountOneKey, mountClaudeApp, mountCreationMode } from '../create/settings-cc.js';
+import { mountCloud } from '../create/cloud.js';
 import { mountUpdates } from './updates.js';
 
 let tab = 'limits';
@@ -89,7 +90,7 @@ export function render(S, el) {
       ${connCard('meta', 'Meta', c.meta, [['token', tt('System-user token', 'رمز مستخدم النظام'), true, c.meta?.token], ['app_id', tt('App ID', 'معرّف التطبيق'), false, c.meta?.app_id], ['app_secret', tt('App secret', 'سر التطبيق'), true, c.meta?.app_secret]])}
       ${connCard('claude', 'Claude', c.claude, [['api_key', tt('Anthropic API key', 'مفتاح Anthropic'), true, c.claude?.key]])}
       ${connCard('shop', tt('Shop', 'المتجر'), c.shop, [['feed_url', tt('Product feed', 'كتالوج المنتجات'), false, c.shop?.feed_url, 'https://kbeautybliss.com/feeds/meta-catalog.xml'], ['token', tt('Shop connection key', 'مفتاح ربط المتجر'), true, c.shop?.token]])}</div>
-      <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div class="grid g2" style="margin-top:16px"><div id="mcp-mount"></div><div id="ok-mount"></div></div>`;
+      <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div class="grid g2" style="margin-top:16px"><div id="mcp-mount"></div><div id="ok-mount"></div></div><div id="cloud-mount" style="margin-top:16px"></div>`;
     if (c.checking && !S.connWaiting) { // one request that answers when the first test is done (no polling)
       S.connWaiting = true;
       api('/api/connections/retest', { method: 'POST', noAccount: true }).then((r) => { S.conn = r; S.connWaiting = false; CHECKING = false; if (el.isConnected) render(S, el); }).catch(() => { S.connWaiting = false; });
@@ -97,6 +98,7 @@ export function render(S, el) {
     v.querySelector('#conn-retest').onclick = async (e) => { e.target.disabled = true; try { S.conn = await api('/api/connections/retest', { method: 'POST', noAccount: true }); render(S, el); } catch (x) { toast(x.message); e.target.disabled = false; } };
     mountClaudeApp(v.querySelector('#mcp-mount')); // Claude desktop connector (create/settings-cc.js)
     mountOneKey(v.querySelector('#ok-mount')); // the ONE optional AI pictures & video key
+    mountCloud(v.querySelector('#cloud-mount')); // cloud creation through the GitHub exchange (create/cloud.js)
     v.querySelectorAll('[data-save]').forEach((b) => {
       b.onclick = async () => {
         const card = b.closest('[data-conn]'), body = b.dataset.save === 'meta' ? { auth: 'system_user' } : {};
