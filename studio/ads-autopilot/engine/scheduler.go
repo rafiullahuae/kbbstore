@@ -133,6 +133,7 @@ func (s *scheduler) step() {
 				defer ac.work.Unlock()
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 				defer cancel()
+				defer ac.cancellable(cancel)() // an update can stop this sync (update_flow.go pauseAutopilot)
 				if err := ac.Sync(ctx); err != nil {
 					ac.alertOnce("Sync with Meta failed: " + err.Error())
 				}

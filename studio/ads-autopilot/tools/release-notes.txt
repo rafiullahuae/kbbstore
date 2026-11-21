@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.4.3
+- Fixed: an update could sit on "Pause the autopilot" while a long sync or cycle was running. Updates now stop it safely after 10 seconds and carry on; the next cycle picks up where it stopped.
+- Includes 0.4.1 (Pages and pixels found with a system-user key, Link by hand) and 0.4.2 (keys kept in a backup so updates can't empty them).
+
 ## 0.4.2
 - Your keys can no longer disappear after an update: every key is now also kept in a backup in your "KBB Ads Autopilot Data" folder (readable only by your Mac user, never touched by updates). If the Mac's Keychain doesn't give a key back, the backup does, and the Keychain is repaired by itself. Paste your keys once more after this update; from then on they stay.
 

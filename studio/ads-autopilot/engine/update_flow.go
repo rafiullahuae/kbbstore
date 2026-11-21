@@ -148,8 +148,23 @@ func (s *server) pauseAutopilot(wait time.Duration) bool {
 	}
 	s.app.updating.Store(true)
 	deadline := time.Now().Add(wait)
+	// The owner, 21 Nov: an install sat on "Pause the autopilot" while a cycle (up to 20 minutes, with the history
+	// import of 8 accounts) held the account. A running cycle is cancelled after a short grace, the way Stop
+	// everything does it: every Meta write is idempotent and the next cycle picks up where this one stopped.
+	grace := time.Now().Add(10 * time.Second)
+	cancelled := false
 	for _, ac := range s.app.Accounts() {
 		for !ac.work.TryLock() {
+			if !cancelled && time.Now().After(grace) {
+				for _, x := range s.app.Accounts() {
+					x.mu.Lock()
+					if x.cycleCancel != nil {
+						x.cycleCancel()
+					}
+					x.mu.Unlock()
+				}
+				cancelled = true
+			}
 			if time.Now().After(deadline) {
 				return false
 			}
