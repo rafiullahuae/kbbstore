@@ -84,6 +84,11 @@ type Connections struct {
 	Claude connClaude `json:"claude"`
 	Shop   connShop   `json:"shop"`
 	Store  string     `json:"secret_store"`
+	// Checked: the three were tested since this engine started. Until then the page shows the saved keys and
+	// "Checking…", never empty cards (the owner, 21 Nov: after every update the cards read empty and "Not connected"
+	// until the first test finished, which looked exactly like the keys had vanished).
+	Checked  bool `json:"checked"`
+	Checking bool `json:"checking,omitempty"`
 }
 
 type DailyReport struct {
@@ -117,6 +122,7 @@ type App struct {
 	testFeedURL    string
 	noBackfill     bool        // Go tests that do not want the history import running in the background
 	warm           warmer      // the refresh on start / wake / page return (warmup.go)
+	firstTest      atomic.Bool // ConnectionsView started a first test (connectAll may also run from the warm-up)
 	updating       atomic.Bool // an update is being installed / checked: no sync or cycle starts (update_flow.go)
 }
 
@@ -438,6 +444,33 @@ func (a *App) dirtyAll() {
 	}
 }
 
+// ConnectionsView: what GET /api/connections answers. Before the first test of this run it is the saved keys and
+// settings read live (never blank), marked checking, and the first test is started if nothing has started it.
+func (a *App) ConnectionsView() Connections {
+	a.mu.RLock()
+	c, cfg := a.conns, a.cfg
+	a.mu.RUnlock()
+	if c.Checked {
+		return c
+	}
+	c.Checking = true
+	c.Store = a.sec.Kind()
+	c.Meta.Token = secrets.Describe(a.sec, "meta_token")
+	c.Meta.Secret = secrets.Describe(a.sec, "meta_app_secret")
+	c.Meta.AppID = cfg.MetaAppID
+	c.Claude.Key = secrets.Describe(a.sec, "anthropic_key")
+	c.Shop.Token = secrets.Describe(a.sec, "shop_token")
+	c.Shop.FeedURL = cfg.ShopFeedURL
+	if a.firstTest.CompareAndSwap(false, true) {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cancel()
+			a.connectAll(ctx)
+		}()
+	}
+	return c
+}
+
 // connectAll: on launch and after a Settings change. The three run side by side; then every account the app knows
 // is checked (its links) and the history import starts for any account that has none yet.
 func (a *App) connectAll(ctx context.Context) Connections {
@@ -450,7 +483,7 @@ func (a *App) connectAll(ctx context.Context) Connections {
 	go func() { defer wg.Done(); c = a.testClaude(ctx) }()
 	go func() { defer wg.Done(); s = a.testShop(ctx) }()
 	wg.Wait()
-	conns := Connections{Meta: m, Claude: c, Shop: s, Store: a.sec.Kind()}
+	conns := Connections{Meta: m, Claude: c, Shop: s, Store: a.sec.Kind(), Checked: true}
 	a.mu.Lock()
 	a.conns = conns
 	if a.cfg.Selected == "" && len(a.portfolio.AdAccounts) > 0 {

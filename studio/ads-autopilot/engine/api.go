@@ -73,10 +73,7 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 
 	// ── shared ──
 	case p == "/api/connections" && r.Method == http.MethodGet:
-		a.mu.RLock()
-		c := a.conns
-		a.mu.RUnlock()
-		writeJSON(w, c)
+		writeJSON(w, a.ConnectionsView())
 	case p == "/api/connections/retest" && r.Method == http.MethodPost: // "Try again": read the keys and test again
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
 		defer cancel()

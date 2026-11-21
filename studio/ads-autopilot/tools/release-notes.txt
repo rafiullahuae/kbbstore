@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.4.5
+- Fixed: after an update, Settings → Connections showed empty boxes and "Not connected" until the app finished reconnecting, which looked like your keys had vanished. It now shows your saved keys (•••• last 4) with "Checking…" and turns green by itself when the test finishes. Your keys were not lost: don't paste them again.
+
 ## 0.4.4
 - Choose the products yourself: in Approvals, Plan → Upcoming jobs and Approvals → Occasions, every ad shows its products. Change products opens a picker (search, photo, price, stock, new / trending badges); 📌 Pin puts a product first; ⊘ Don't promote this product again removes it everywhere (with Undo).
 - If every product of a planned ad was avoided, it says so and waits for you to choose.
