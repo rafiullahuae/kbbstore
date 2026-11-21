@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.5.1
+- Cloud creation card: if GitHub or the app refuses the key, the reason now stays on the card (it used to flash by and leave "Not connected" with no reason).
+
 ## 0.5.0
 - More ads, planned every day: Strategy → Rules → Activity level (Steady / Active, the default / Aggressive). Active keeps 8–12 live ads, adds 4–6 new ones every Monday and Thursday, replaces losers the same day and gives winners new hooks within 48 hours. A 2nd campaign only when your budget can feed it (the screen says why).
 - Overview → Today's plan (Arabic + English): yesterday's results from your real orders, what changed, today's jobs with times, and "Today's ads: N to create — Start creating".

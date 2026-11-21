@@ -50,7 +50,14 @@ export async function mountCloud(el) {
       await api('/api/exchange', { method: 'PUT', noAccount: true, body: { owner: el.querySelector('#cx-owner').value.trim(), repo: el.querySelector('#cx-repo').value.trim(), token: el.querySelector('#cx-key').value.trim() } });
       toast(tt('Connected. The key is in the Keychain; jobs go to the cloud from now on.', 'تم الاتصال. المفتاح في سلسلة المفاتيح؛ تذهب الطلبات للسحابة من الآن.'));
       mountCloud(el);
-    } catch (e) { toast(e.message); save.disabled = false; }
+    } catch (e) {
+      // the refusal stays on the card (the owner, 21 Nov: a toast came and went, the card still said "Not connected"
+      // with no reason): what GitHub or the check said, in full, until the next try
+      toast(e.message); save.disabled = false;
+      let p = el.querySelector('#cx-err');
+      if (!p) { p = document.createElement('p'); p.id = 'cx-err'; p.className = 'alert danger small'; save.parentElement.insertAdjacentElement('afterend', p); }
+      p.textContent = tt('Not saved: ', 'لم يُحفظ: ') + e.message;
+    }
   };
   const sy = el.querySelector('#cx-sync');
   if (sy) sy.onclick = async () => { sy.disabled = true; try { await api('/api/exchange/sync', { method: 'POST', noAccount: true }); toast(tt('Synced.', 'تمت المزامنة.')); } catch (e) { toast(e.message); } mountCloud(el); };
