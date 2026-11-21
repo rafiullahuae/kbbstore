@@ -191,7 +191,9 @@ func (a *App) warmUp(ctx context.Context, reason string) bool {
 				continue
 			}
 			sctx, c := context.WithTimeout(ctx, 10*time.Minute)
+			done := ac.cancellable(c) // an update can stop this sync (update_flow.go pauseAutopilot)
 			err := ac.Sync(sctx)
+			done()
 			c()
 			ac.work.Unlock()
 			if err != nil {

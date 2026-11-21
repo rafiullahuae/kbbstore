@@ -93,10 +93,74 @@ func (c *Client) Portfolio(ctx context.Context) (model.Portfolio, error) {
 	for _, a := range mine {
 		add(a, "", "personal")
 	}
+	// A SYSTEM-USER token (the owner's, 21 Nov) gets nothing from me/businesses: Meta lists businesses for people,
+	// not for system users, so every account came back with no business and Auto-link said "no business in the
+	// portfolio owns this ad account" with no Pages or pixels anywhere. Fall back to each account's own `business`
+	// field, then to the assets the account itself can use (promote_pages, adspixels, instagram_accounts) and the
+	// Pages assigned to the token (me/accounts). Each step is best-effort: a refused edge is noted, never fatal.
+	inBiz := map[string]bool{}
+	for _, b := range p.Businesses {
+		inBiz[b.ID] = true
+	}
+	assigned, _ := getAll[named](ctx, c, "me/accounts", url.Values{"fields": {"id,name"}, "limit": {"100"}}, 500)
+	for i := range p.AdAccounts {
+		acct := &p.AdAccounts[i]
+		if acct.BusinessID != "" && inBiz[acct.BusinessID] {
+			continue
+		}
+		var info struct {
+			Business named `json:"business"`
+		}
+		_ = c.Get(ctx, acct.ID, url.Values{"fields": {"business{id,name}"}}, &info)
+		var errs []string
+		get := func(path, fields string) []model.AssetRef {
+			xs, err := getAll[named](ctx, c, path, url.Values{"fields": {fields}, "limit": {"100"}}, 500)
+			if err != nil {
+				errs = append(errs, path+": "+err.Error())
+			}
+			return refs(xs)
+		}
+		B := model.Business{ID: info.Business.ID, Name: info.Business.Name, AdAccounts: []string{acct.ID}}
+		if B.ID != "" && !inBiz[B.ID] {
+			B.Pages = get(B.ID+"/owned_pages", "id,name")
+			B.Instagram = get(B.ID+"/owned_instagram_accounts", "id,username")
+			B.Pixels = get(B.ID+"/owned_pixels", "id,name")
+			B.Catalogs = get(B.ID+"/owned_product_catalogs", "id,name")
+			acct.BusinessID, acct.Relation = B.ID, "owned"
+		} else {
+			B.ID, B.Name = "act:"+acct.ID, acct.Name+" (its own assets)"
+		}
+		// what the ad account itself can use, merged in (the business edges may be empty for a system user)
+		B.Pages = mergeRefs(B.Pages, get(acct.ID+"/promote_pages", "id,name"), refs(assigned))
+		B.Pixels = mergeRefs(B.Pixels, get(acct.ID+"/adspixels", "id,name"))
+		B.Instagram = mergeRefs(B.Instagram, get(acct.ID+"/instagram_accounts", "id,username"))
+		if len(errs) > 0 {
+			B.Error = strings.Join(errs, "; ")
+		}
+		if B.ID != "" && inBiz[B.ID] {
+			continue
+		}
+		inBiz[B.ID] = true
+		p.Businesses = append(p.Businesses, B)
+	}
 	if berr != nil && merr != nil {
 		return p, fmt.Errorf("could not list businesses (%v) nor ad accounts (%v)", berr, merr)
 	}
 	return p, nil
+}
+
+// mergeRefs: the union of asset lists, first occurrence kept, never nil.
+func mergeRefs(lists ...[]model.AssetRef) []model.AssetRef {
+	out, seen := []model.AssetRef{}, map[string]bool{}
+	for _, l := range lists {
+		for _, x := range l {
+			if x.ID != "" && !seen[x.ID] {
+				seen[x.ID] = true
+				out = append(out, x)
+			}
+		}
+	}
+	return out
 }
 
 // CheckAsset: a live check that the token can read a linked object (page, Instagram account, pixel, catalog).

@@ -597,6 +597,21 @@ func (ac *Acct) finishCycle(t0 time.Time, out map[string]any) {
 	ac.publish("cycle.end", out)
 }
 
+// cancellable: while the caller holds ac.work outside a cycle (a scheduled or warm-up sync), its cancel is where a
+// cycle's would be, so an install (and Stop everything) can stop it instead of waiting; the returned func clears it.
+func (ac *Acct) cancellable(cancel context.CancelFunc) func() {
+	ac.mu.Lock()
+	if ac.cycleCancel == nil {
+		ac.cycleCancel = cancel
+	}
+	ac.mu.Unlock()
+	return func() {
+		ac.mu.Lock()
+		ac.cycleCancel = nil
+		ac.mu.Unlock()
+	}
+}
+
 // Kill: this account's autopilot off, its running cycle cancelled, every ACTIVE campaign the app made in it paused.
 // The owner's own campaigns are not touched; Meta's safety rules and the spend cap stay in place.
 func (ac *Acct) Kill(ctx context.Context) map[string]any {

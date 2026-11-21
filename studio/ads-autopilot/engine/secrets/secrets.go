@@ -169,7 +169,8 @@ var (
 func New(dataDir string, onValue func(string)) Store {
 	if goos == "darwin" && os.Getenv("KAA_SECRETS_FILE") == "" {
 		if _, err := os.Stat(securityPath); err == nil {
-			return &keychain{cache: map[string]string{}, on: onValue, index: filepath.Join(dataDir, "keys-index.json"), run: run}
+			kc := &keychain{cache: map[string]string{}, on: onValue, index: filepath.Join(dataDir, "keys-index.json"), run: run}
+			return &mirror{kc: kc, bk: &fileStore{path: filepath.Join(dataDir, "keys-backup.json"), on: onValue}}
 		}
 	}
 	return NewFile(dataDir, onValue)
@@ -445,4 +446,62 @@ func clipErr(s string) string {
 		s = s[:200]
 	}
 	return s
+}
+
+// ── Keychain + backup (the owner, 21 Nov: "why why why? the keys are vanishing upon any updates") ──
+//
+// Twice, after an update, every key came back empty on his Mac although nothing in the app deletes a key and the
+// Keychain item is service + name (not tied to the app folder or the engine build). Whatever macOS answered there,
+// the keys must never depend on the Keychain alone: every key is ALSO kept in keys-backup.json in the data folder
+// (0600, readable by his Mac user only; the data folder is never touched by an update, a roll back or a replaced app
+// folder). Read: Keychain first; if it gives nothing or refuses, the backup answers and the Keychain is repaired
+// from it. Save: both; the save succeeds if either store took it. Delete: both.
+type mirror struct {
+	kc *keychain
+	bk *fileStore
+}
+
+func (m *mirror) Kind() string { return "keychain" }
+
+func (m *mirror) Get(name string) (string, error) {
+	v, kerr := m.kc.Get(name)
+	if v != "" {
+		if b, _ := m.bk.Get(name); b != v { // a key saved before the backup existed joins it
+			_ = m.bk.Set(name, v)
+		}
+		return v, nil
+	}
+	b, berr := m.bk.Get(name)
+	if b != "" {
+		var ke *KeyError
+		if kerr == nil || (errors.As(kerr, &ke) && ke.Missing != "") { // the Keychain said "not there": put it back (a refusal is left alone)
+			m.kc.mu.Lock()
+			delete(m.kc.cache, name)
+			m.kc.mu.Unlock()
+			_ = m.kc.Set(name, b)
+		}
+		return b, nil
+	}
+	if kerr != nil {
+		return "", kerr
+	}
+	return "", berr
+}
+
+func (m *mirror) Set(name, value string) error {
+	kerr := m.kc.Set(name, value)
+	berr := m.bk.Set(name, value)
+	if kerr != nil && berr != nil {
+		return kerr
+	}
+	return nil
+}
+
+func (m *mirror) Delete(name string) error {
+	kerr := m.kc.Delete(name)
+	berr := m.bk.Delete(name)
+	if kerr != nil {
+		return kerr
+	}
+	return berr
 }

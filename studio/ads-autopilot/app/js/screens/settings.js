@@ -105,6 +105,28 @@ export function render(S, el) {
       <td><input type="checkbox" data-auto="${esc(a.id)}" ${a.automate ? 'checked' : ''} ${a.status !== 'ACTIVE' ? 'disabled' : ''}></td>
       <td class="small">${['page', 'instagram', 'pixel', 'catalog'].map((k) => { const lc = (a.link_checks || {})[k]; return `<span class="chip ${lc && lc.ok ? 'acc' : ''}" title="${esc((lc && (lc.name || lc.error)) || '')}">${esc(k)} ${lc ? (lc.ok ? '✓' : '!') : '—'}</span>`; }).join(' ')}
         <button type="button" class="ghost small" data-autolink="${esc(a.id)}" title="${esc(tt('Pick this ad account\'s own Page, Instagram, pixel and catalog from its business', 'اختيار الصفحة والبكسل والكتالوج من نشاط هذا الحساب'))}">${esc(tt('Auto-link', 'ربط تلقائي'))}</button></td></tr>`).join('')}</tbody></table></div>`;
+    // Link by hand (the owner, 21 Nov: Auto-link said "no business owns this ad account" and there was nowhere to pick
+    // a Page): every Page / Instagram / pixel / catalog the token can see, per account, or an id typed in.
+    const LK = [['page_id', 'pages', tt('Facebook Page', 'صفحة فيسبوك')], ['instagram_user_id', 'instagram_accounts', tt('Instagram', 'إنستغرام')], ['pixel_id', 'pixels', tt('Pixel / dataset', 'البكسل')], ['catalog_id', 'catalogs', tt('Catalog', 'الكتالوج')]];
+    api('/api/accounts', { noAccount: true }).then((r) => {
+      if (!v.isConnected) return;
+      const bz = (r && r.businesses) || [], pool = {};
+      for (const [, key] of LK) { pool[key] = []; const seen = {}; for (const b of bz) for (const x of (b[key] || b[key === 'instagram_accounts' ? 'instagram' : key] || [])) if (x && x.id && !seen[x.id]) { seen[x.id] = 1; pool[key].push({ id: x.id, name: (x.name || x.username || x.id) + (b.name ? ' · ' + b.name : '') }); } }
+      const rows = (r && r.accounts) || [];
+      const host = document.createElement('div'); host.className = 'card'; host.style.marginTop = '16px';
+      host.innerHTML = `<header><h2>${esc(tt('Link by hand', 'الربط يدوياً'))}</h2><span class="sub">${esc(tt('Pick what each ad account uses, or paste an id from Meta Business Settings. A sales campaign needs a Page and the pixel; remarketing needs the catalog.', 'اختاري ما يستخدمه كل حساب، أو ألصقي المعرّف من إعدادات أعمال ميتا. حملة المبيعات تحتاج صفحة والبكسل؛ وإعادة الاستهداف تحتاج الكتالوج.'))}</span></header>
+        ${rows.map((a) => `<details data-hand="${esc(a.id)}"><summary><b>${esc(a.name || a.id)}</b> <span class="small muted">${esc(a.id)}</span></summary><div class="grid g2" style="margin:10px 0">${LK.map(([f, key, label]) => { const cur = (a.links || {})[f] || ''; const opts = pool[key] || []; return `<label class="f"><span>${esc(label)}</span><select data-f="${f}"><option value="">${esc(tt('— none —', '— لا شيء —'))}</option>${opts.map((o) => `<option value="${esc(o.id)}" ${o.id === cur ? 'selected' : ''}>${esc(o.name)}</option>`).join('')}${cur && !opts.some((o) => o.id === cur) ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : ''}</select><input data-typed="${f}" placeholder="${esc(tt('or paste the id', 'أو ألصقي المعرّف'))}" style="margin-top:4px"></label>`; }).join('')}</div><button type="button" data-handsave="${esc(a.id)}">${esc(tt('Save links', 'حفظ الروابط'))}</button></details>`).join('')}
+        ${bz.some((b) => b.error) ? `<p class="small muted">${esc(tt('Meta refused some lists: ', 'رفضت ميتا بعض القوائم: '))}${esc(bz.filter((b) => b.error).map((b) => b.name + ': ' + b.error).join(' · ').slice(0, 400))}</p>` : ''}
+        ${!Object.values(pool).some((l) => l.length) ? `<p class="small">${esc(tt('Meta showed no Pages or pixels to this key. In Business Settings → Users → System users → your system user → Assign assets, give it your Page, pixel (dataset) and catalog, then click Try again in Connections — or paste the ids here.', 'لم تُظهر ميتا صفحات أو بكسل لهذا المفتاح. في إعدادات الأعمال ← المستخدمون ← مستخدمو النظام ← مستخدمك ← تعيين الأصول، امنحيه الصفحة والبكسل والكتالوج، ثم اضغطي «حاول مجدداً» في الاتصالات — أو ألصقي المعرّفات هنا.'))}</p>` : ''}`;
+      v.appendChild(host);
+      host.querySelectorAll('[data-handsave]').forEach((b) => {
+        b.onclick = async () => {
+          const box = b.closest('[data-hand]'), links = {};
+          for (const [f] of LK) { const typed = box.querySelector(`[data-typed="${f}"]`).value.trim(); const sel = box.querySelector(`[data-f="${f}"]`).value; links[f] = typed || sel; }
+          try { const res = await api(`/api/accounts/${encodeURIComponent(b.dataset.handsave)}`, { method: 'PUT', body: { links }, noAccount: true }); const lc = res.link_checks || {}; const bad = Object.entries(lc).filter(([, c]) => c && !c.ok); toast(bad.length ? tt('Saved, but Meta refused: ', 'حُفظ، لكن ميتا رفضت: ') + bad.map(([k, c]) => k + ' (' + (c.error || '') + ')').join(', ') : tt('Linked and checked with Meta.', 'تم الربط والتحقق مع ميتا.')); await refreshAccounts(); render(S, el); } catch (e) { toast(e.message); }
+        };
+      });
+    }).catch((e) => { if (v.isConnected) { const p = document.createElement('p'); p.className = 'small'; p.textContent = tt('Could not read the accounts list: ', 'تعذّرت قراءة قائمة الحسابات: ') + e.message; v.appendChild(p); } });
     v.querySelectorAll('[data-auto]').forEach((cb) => {
       cb.onchange = async () => { try { await api(`/api/accounts/${cb.dataset.auto}`, { method: 'PUT', body: { automated: cb.checked }, noAccount: true }); await refreshAccounts(); toast(tt('Saved.', 'تم الحفظ.')); } catch (e) { cb.checked = !cb.checked; toast(e.message); } };
     });
