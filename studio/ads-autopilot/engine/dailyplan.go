@@ -173,7 +173,7 @@ func (ac *Acct) makeDailyPlan(ctx context.Context, trigger string) DailyPlan {
 		line := DayLine{At: at, Job: j.ID, Text: fmt.Sprintf("%s · %s", at.In(loc).Format("15:04"), j.Title), AR: fmt.Sprintf("%s · %s", at.In(loc).Format("15:04"), firstNonEmpty(j.TitleAR, j.Title))}
 		if j.Waiting != "" {
 			line.Text += " (waiting: " + j.Waiting + ")"
-			line.AR += " (ينتظر: " + j.Waiting + ")"
+			line.AR += " (ينتظر — التفاصيل في الخطة)"
 		}
 		d.Today = append(d.Today, line)
 		if (volKind(j.Kind) || j.Kind == "test" || j.Kind == "refresh") && len(j.ProductIDs) > 0 {
@@ -193,8 +193,12 @@ func (ac *Acct) makeDailyPlan(ctx context.Context, trigger string) DailyPlan {
 		}
 	}
 	syncEvery, _ := a.intervals()
-	d.Today = append(d.Today, DayLine{At: now.Add(syncEvery), Text: fmt.Sprintf("Every %s while the app is open: sync with Meta, the rules, and the new ads' early signals (next %s)", syncEvery, now.Add(syncEvery).In(loc).Format("15:04")),
-		AR: fmt.Sprintf("كل %s والتطبيق مفتوح: مزامنة مع Meta والقواعد وإشارات الإعلانات الجديدة (التالية %s)", syncEvery, now.Add(syncEvery).In(loc).Format("15:04"))})
+	every, everyAR := fmt.Sprintf("%.0f min", syncEvery.Minutes()), fmt.Sprintf("%.0f دقيقة", syncEvery.Minutes())
+	if syncEvery == time.Hour {
+		every, everyAR = "hour", "ساعة"
+	}
+	d.Today = append(d.Today, DayLine{At: now.Add(syncEvery), Text: fmt.Sprintf("Every %s while the app is open: sync with Meta, the rules, and the new ads' early signals (next %s)", every, now.Add(syncEvery).In(loc).Format("15:04")),
+		AR: fmt.Sprintf("كل %s والتطبيق مفتوح: مزامنة مع Meta والقواعد وإشارات الإعلانات الجديدة (التالية %s)", everyAR, now.Add(syncEvery).In(loc).Format("15:04"))})
 	sort.SliceStable(d.Today, func(i, k int) bool { return d.Today[i].At.Before(d.Today[k].At) })
 	// what it is watching
 	w := ac.watchState()

@@ -296,6 +296,8 @@ def run(base):
     else:
         check(False, "no National Day package to approve: %s" % [j.get("id") for j in occ["packages"]])
 
+    simulate_10_days(base)
+
     # the account switch: each account its own data and limits
     s, sel = call(base, "POST", "/api/accounts/select", {"account": "act_1000000002"})
     t = time.time()
@@ -333,6 +335,74 @@ def run(base):
           "scripted Claude answered: %s" % json.dumps(k_, sort_keys=True))
     s, log = call(base, "GET", "/api/log?limit=3000")
     check(not any("EAAMOCK" in json.dumps(e) or "sk-ant-mock" in json.dumps(e) for e in log["entries"]), "audit log: %d entries, no key in it" % len(log["entries"]))
+
+
+def simulate_10_days(base):
+    """10 days at the Active level (the owner, 21 Nov 2026: "create more campaigns / ads ... plan super well on daily
+    basis and monitor closely"): every morning the daily plan, then the day's cycle and the hourly check. Counts live
+    ads per day, batches, early stops / rule stops and refills, and checks no limit is ever breached."""
+    from datetime import datetime, timedelta, timezone
+    MAXADS, DAILY = 14, 300
+    call(base, "PUT", "/api/limits", {"max_active_ads": MAXADS})
+    s, st = call(base, "GET", "/api/state")
+    for c in st["campaigns"]:  # the day-8 seeding made every ad of the sales campaign a winner; back to the mock's own mix
+        call(base, "POST", "/api/test/meta-tag", {"id": c["id"], "tag": ""})
+    s, pb = call(base, "PUT", "/api/playbook", {"knobs": {"activity_level": "active"}})
+    check(s == 200 and pb["playbook"]["knobs"]["activity_level"] == "active", "10-day simulation: Active level, max %d active ads, AED %d/day" % (MAXADS, DAILY))
+    s, t = call(base, "GET", "/api/today")
+    now = datetime.fromisoformat(t["now"].replace("Z", "+00:00"))
+    dub = now + timedelta(hours=4)
+    ahead = (10.0 - dub.hour - dub.minute / 60.0) % 24  # each simulated day at 10:00 Dubai, after the 09:00 batch
+    call(base, "POST", "/api/test/clock", {"advance_hours": round(ahead, 2)})
+    s, lg0 = call(base, "GET", "/api/log?limit=3000")
+    seq0 = max([e["seq"] for e in lg0["entries"]] or [0])
+    rows, breach, plans = [], [], set()
+    for day in range(10):
+        if day:
+            call(base, "POST", "/api/test/clock", {"advance_hours": 24})
+        s1, tp = call(base, "POST", "/api/today/plan", {})
+        s2, cy = call(base, "POST", "/api/cycle", {"mode": "auto"})
+        s3, ck = call(base, "POST", "/api/today/check", {})
+        if s1 != 200 or s2 != 200 or s3 != 200:
+            print("       day %d: plan %d cycle %d check %d %s" % (day + 1, s1, s2, s3, str(cy)[:200]))
+        dp = tp.get("daily_plan") or {}
+        plans.add(dp.get("date"))
+        s, st = call(base, "GET", "/api/state")
+        s, vol = call(base, "GET", "/api/volume")
+        v = vol["volume"]
+        active = sum(1 for c in st["campaigns"] for a_ in c["adsets"] for ad in a_["ads"] if ad["status"] == "ACTIVE" and a_["status"] == "ACTIVE" and c["status"] == "ACTIVE")
+        committed = sum(c.get("daily_budget") or 0 for c in st["campaigns"] if c["status"] == "ACTIVE") + sum(a_.get("daily_budget") or 0 for c in st["campaigns"] if c["status"] == "ACTIVE" for a_ in c["adsets"] if a_["status"] == "ACTIVE")
+        s, js = call(base, "GET", "/api/jobs")
+        date = dp.get("date", "").replace("-", "")
+        batch = [j for j in js["jobs"] if j["id"].startswith("vol-%s-" % date) and "fill" not in j["id"] and j["status"] == "done"]
+        fills = [j for j in js["jobs"] if j["id"].startswith("vol-%s-fill" % date) and j["status"] == "done"]
+        waiting = [j["waiting"] for j in js["jobs"] if j["id"].startswith("vol-%s" % date) and j["status"] in ("planned", "approved") and j.get("waiting")]
+        rows.append((dp.get("date"), v["live"], v["live_min"], v["live_max"], active, round(committed), len(batch), len(fills), len(waiting)))
+        if active > MAXADS or committed > DAILY + 0.01:
+            breach.append((dp.get("date"), active, committed))
+        if waiting:
+            print("       %s waiting: %s" % (dp.get("date"), sorted(set(waiting))[:3]))
+    if os.environ.get("KAA_SIM_DEBUG"):
+        for j in js["jobs"]:
+            if j["id"].startswith("vol-") or j["kind"] == "test":
+                print("       job %s %s %s | %s | %s" % (j["id"], j["status"], j["when"][:16], j.get("waiting", ""), j.get("result", "")[:90]))
+    s, lg = call(base, "GET", "/api/log?limit=3000")
+    new = [e for e in lg["entries"] if e["seq"] > seq0]
+    kills = [e for e in new if e["kind"] == "kill"]
+    early = [e for e in kills if "early stop" in e["summary"]]
+    stops = [e for e in new if e["kind"] == "execution" and "pause" in e["summary"]]
+    skips = [e for e in new if e["kind"] == "volume" and "not planned" in e["summary"]]
+    print("       day        live  target  active  AED/day  batch  refill  waiting")
+    for r in rows:
+        print("       %s  %4d  %2d–%-3d  %6d  %7d  %5d  %6d  %7d" % r)
+    batches = [r for r in rows if r[6] > 0]
+    in_range = [r for r in rows[2:] if r[2] <= r[1] <= r[3]]
+    check(len(plans) == 10, "a daily plan every day: %d distinct dates" % len(plans))
+    check(not breach, "no limit breached in 10 days (max active ads %d, AED %d/day): %s" % (MAXADS, DAILY, breach or "none"))
+    check(len([r for r in batches if r[6] >= 3]) >= 2, "twice-weekly batches: %d batch days (%s), %d new ads in batches, %d refills"
+          % (len(batches), ", ".join("%s: %d" % (r[0], r[6]) for r in batches), sum(r[6] for r in rows), sum(r[7] for r in rows)))
+    check(len(in_range) >= 6, "live ads inside the target on %d of the last 8 days (%s)" % (len(in_range), [r[1] for r in rows]))
+    print("       stops: %d by the rules/watch (%d early, first 72 h), %d pauses executed (incl. rotation for new batches); skipped plans logged: %d" % (len(kills), len(early), len(stops), len(skips)))
 
 
 if __name__ == "__main__":

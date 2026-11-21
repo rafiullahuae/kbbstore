@@ -80,11 +80,18 @@ var levelSpec = map[string]struct {
 
 var dayNames = map[string][2]string{"mon": {"Mon", "الاثنين"}, "tue": {"Tue", "الثلاثاء"}, "wed": {"Wed", "الأربعاء"}, "thu": {"Thu", "الخميس"}, "fri": {"Fri", "الجمعة"}, "sat": {"Sat", "السبت"}, "sun": {"Sun", "الأحد"}}
 
-// occasionReserve: ad slots kept free for the occasion packages he approved, and those starting within 3 days (their
-// ads go live when he approves; the cadence must not have taken every slot under his Max active ads by then).
+// occasionReserve: ad slots kept free for the funnel's missing pieces, the occasion packages he approved, and those
+// starting within 3 days (their ads go live when he approves; the cadence must not have taken every slot under his
+// Max active ads by then). A batch still goes out by rotating (one out for one in), so it never needs these slots.
 func occasionReserve(js JobSet, now time.Time) int {
 	n := 0
 	for _, j := range js.Jobs {
+		// the funnel's missing pieces come before more of the same: their ads keep a slot (the lookalike ad set's 2,
+		// the existing-customer ad set's 1) unless they wait on something else (an audience, a link)
+		if (j.Kind == "funnel_lookalike" || j.Kind == "funnel_existing") && open(j.Status) && (j.Waiting == "" || strings.HasPrefix(j.Waiting, "no free ad slot")) {
+			n += map[string]int{"funnel_lookalike": 2, "funnel_existing": 1}[j.Kind]
+			continue
+		}
 		if j.Kind != "occasion" || !open(j.Status) || j.Occasion == nil {
 			continue
 		}
@@ -287,7 +294,7 @@ func (ac *Acct) planCadence(in model.CycleInput, js *JobSet, now time.Time) {
 	loc := ac.loc()
 	tCPA := ac.targetCPA(in)
 	v := volumeFor(pb, in.Limits, tCPA, in.Tree)
-	v.capTo(in.Limits.MaxActiveAds - v.OtherLive - occasionReserve(*js, now)) // an occasion package keeps its slots
+	v.capTo(in.Limits.MaxActiveAds - v.OtherLive - occasionReserve(*js, now)) // an occasion package and a funnel piece keep their slots
 	f := findFunnel(in.Tree, in.Audiences)
 	want := map[string]bool{}
 	logf := func(s string, a ...any) {
@@ -295,6 +302,14 @@ func (ac *Acct) planCadence(in model.CycleInput, js *JobSet, now time.Time) {
 	}
 	defer func() { // drop what the plan no longer wants (a level change, a batch now full)
 		var keep []Job
+		for i := range js.Jobs {
+			j := &js.Jobs[i]
+			if volKind(j.Kind) && strings.HasPrefix(j.ID, "vol-") && j.Status == "planned" && !j.Edited && now.Sub(j.When) > 48*time.Hour {
+				j.Status, j.Result = "skipped", "expired: not run within 48 h of its time"+map[bool]string{true: " (" + j.Waiting + ")", false: ""}[j.Waiting != ""]
+				j.logf(now, "%s", j.Result)
+				logf("plan: %s %s", j.Title, j.Result)
+			}
+		}
 		for _, j := range js.Jobs {
 			if (volKind(j.Kind) || j.Kind == "funnel_campaign") && strings.HasPrefix(j.ID, "vol-") && j.Status == "planned" && !j.Edited && !want[j.ID] && j.When.After(now) {
 				logf("plan: %s removed (%s level no longer needs it)", j.Title, v.Level)
@@ -584,24 +599,27 @@ func (ac *Acct) jobCreative(ctx context.Context, j Job, p model.Product, lang st
 	return id, nil
 }
 
+// rotateAfter: an ad has had its first 72 h (early read) and a day of the daily rules before a batch may rotate it out.
+const rotateAfter = 96 * time.Hour
+
 // roomFor: a batch at the live-ad target (or at his Max active ads) makes room by pausing the weakest ad old enough to
-// have been judged (7+ days, not a winner); without one the job waits and says why. pending: new ads already taken
+// have been judged (4+ days, not a winner); without one the job waits and says why. pending: new ads already taken
 // by earlier jobs in this pass; paused: ads already chosen to make room.
 func (ac *Acct) roomFor(in model.CycleInput, env executor.Env, j Job, n, pending int, paused map[string]bool, pid func(string) string) ([]model.Proposal, string) {
-	if !volKind(j.Kind) || n == 0 {
+	if (!volKind(j.Kind) && j.Kind != "test") || n == 0 { // the planner's tests are new ads in the same campaign too
 		return nil, ""
 	}
 	v := volumeFor(*in.Playbook, env.Limits, ac.targetCPA(in), env.Tree)
+	reserve := occasionReserve(ac.jobSet(), env.Now)
+	v.capTo(env.Limits.MaxActiveAds - v.OtherLive - reserve)
 	over := 0
 	if v.LiveMax > 0 {
 		over = v.Live - len(paused) + pending + n - v.LiveMax
 	}
-	if env.Limits.MaxActiveAds > 0 {
-		over = max(over, executor.ActiveAds(env.Tree)-len(paused)+pending+n-env.Limits.MaxActiveAds+occasionReserve(ac.jobSet(), env.Now))
-	}
 	if over <= 0 {
 		return nil, ""
 	}
+	over = min(over, n) // one out for one in: a batch rotates, it never cuts the account below where it was
 	w := ac.watchState()
 	ws := map[string]bool{}
 	for _, x := range winners(in, ac.targetCPA(in), ac.loc()) {
@@ -626,7 +644,7 @@ func (ac *Acct) roomFor(in model.CycleInput, env executor.Env, j Job, n, pending
 		for _, s := range c.AdSets {
 			for _, a := range s.Ads {
 				seen, ok := w.FirstSeen[a.ID]
-				if a.Status != "ACTIVE" || paused[a.ID] || ws[a.ID] || !ok || env.Now.Sub(seen) < 7*24*time.Hour {
+				if a.Status != "ACTIVE" || paused[a.ID] || ws[a.ID] || !ok || env.Now.Sub(seen) < rotateAfter {
 					continue
 				}
 				score := pu[a.ID] * 1000 // fewest purchases first, then the most spent per purchase
@@ -641,15 +659,32 @@ func (ac *Acct) roomFor(in model.CycleInput, env executor.Env, j Job, n, pending
 	}
 	sort.Slice(cs, func(i, k int) bool { return cs[i].score < cs[k].score })
 	if len(cs) < over {
-		return nil, fmt.Sprintf("live ads at the target (%d) and no ad old enough (7 days) to rotate out yet", v.LiveMax)
+		why := fmt.Sprintf("%d live ads, the target is %d: no ad old enough to rotate out yet (4+ days, not a winner)", v.Live-len(paused)+pending, v.LiveMax)
+		if reserve > 0 {
+			why += fmt.Sprintf("; %d slot(s) under your Max active ads are kept for an occasion package or a funnel piece", reserve)
+		}
+		return nil, why
 	}
 	var ps []model.Proposal
 	for _, c := range cs[:over] {
 		paused[c.id] = true
 		ps = append(ps, model.Proposal{ID: pid("room-" + jobPID.ReplaceAllString(c.id, "-")), Kind: model.KindPause, Target: c.id, Params: map[string]any{"level": "ad"},
-			Why: "Makes room for the new test batch: the weakest ad that has had 7+ days (fewest purchases, highest cost per purchase); winners are never rotated out.", Confidence: 0.6})
+			Why: "Makes room for the new test batch: the weakest ad that has had 4+ days (fewest purchases, highest cost per purchase); winners are never rotated out.", Confidence: 0.6})
 	}
 	return ps, ""
+}
+
+// cadenceNow: the job queue re-planned for the level now (Strategy → Activity level); when a cycle is running it does
+// the same at its end.
+func (ac *Acct) cadenceNow() {
+	if !ac.work.TryLock() {
+		return
+	}
+	defer ac.work.Unlock()
+	js := ac.jobSet()
+	ac.planCadence(ac.input(), &js, ac.app.now())
+	ac.saveJobs(js)
+	ac.st.Append("volume", "activity level changed: the upcoming jobs were planned again for "+ac.playbook().Knobs.Activity(), nil)
 }
 
 // ── jobs at their times between the cycles ──
@@ -789,6 +824,23 @@ func (ac *Acct) extraCampaignProposals(in model.CycleInput, j Job, env executor.
 		return nil, why
 	}
 	return append(ps, more...), ""
+}
+
+// oneEditPerAd: a rule's pause and a batch's room-making pause on the same ad in one run would edit it twice (Meta:
+// one edit per object every 30 s); the rule's stays, it makes the same room.
+func oneEditPerAd(ps []model.Proposal) []model.Proposal {
+	seen := map[string]bool{}
+	var out []model.Proposal
+	for _, p := range ps {
+		if p.Kind == model.KindPause {
+			if seen[p.Target] {
+				continue
+			}
+			seen[p.Target] = true
+		}
+		out = append(out, p)
+	}
+	return out
 }
 
 // ── API: GET /api/volume (Strategy → How much it runs) ──

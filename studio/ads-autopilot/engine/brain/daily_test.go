@@ -22,7 +22,7 @@ func TestEarlyKillOnlyOnStrongEvidence(t *testing.T) {
 		t.Fatalf("strong evidence not stopped: %+v", v)
 	}
 	// the same low CTR but clicks at a normal price: one signal → watched, not stopped
-	if v := at(func(s *EarlyStats) { s.Impr, s.Clicks, s.SpendAED = 4000, 8, 12 }); v.Verdict != "weak" {
+	if v := at(func(s *EarlyStats) { s.Impr, s.Clicks, s.SpendAED = 8000, 16, 32 }); v.Verdict != "weak" || len(v.Signals) != 1 {
 		t.Fatalf("one signal stopped an ad: %+v", v)
 	}
 	// too few impressions to read anything

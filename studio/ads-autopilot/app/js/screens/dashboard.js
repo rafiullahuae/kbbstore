@@ -1,6 +1,7 @@
 // Overview (H · Sage Calm): live hero + limits, 6 KPI tiles with sparklines,
 // spend vs sales + who is buying, creatives + trending now, plan / needs you / accounts.
 import { readinessCard } from './funnel-ui.js';
+import { dailyPlanCard, watchingCard, wireToday, loadToday } from './today-ui.js';
 import { tt, getLang } from '../i18n.js';
 import { esc, aed, num, pct, ago, lineChart, spark, txt, tip, verdictChip, toast } from '../ui.js';
 import { api, getAccount, authed } from '../api.js';
@@ -70,6 +71,7 @@ export function render(S, el) {
       : `<div class="alert warn">${esc(tt('No limits yet: nothing will launch until you set a daily and a monthly limit.', 'لا توجد حدود: لن يُطلق شيء حتى تحدّدي الحد اليومي والشهري.'))}</div><p><a href="#/settings"><button type="button">${esc(tt('Set limits', 'تحديد الحدود'))}</button></a></p>`}
     </div>
   </section>
+  <section class="grid g2">${dailyPlanCard(S)}${watchingCard(S)}</section>
   <section class="kpis">
     ${tile('spend', 'Spend', 'الإنفاق', k.spend, (v) => aed(v))}
     ${tile('purchases', 'Orders', 'الطلبات', k.purchases, (v) => num(v))}
@@ -113,6 +115,7 @@ export function render(S, el) {
   el.querySelector('#why').onclick = () => why(st);
   const ap = el.querySelector('#approve');
   if (ap) ap.onclick = async () => { try { const r = await api('/api/cycle', { method: 'POST', body: { mode: 'auto' } }); toast(tt(`Done: ${JSON.stringify(r.counts || {})}`, `تم: ${JSON.stringify(r.counts || {})}`)); } catch (e) { toast(e.message); } };
+  wireToday(S, el, () => render(S, el));
   fillThumbs(el, st);
 }
 
@@ -170,6 +173,7 @@ export async function load(S) {
   let changed = false;
   if (!S.cache.has('|trending')) { S.cache.set('|trending', await api('/api/brain/x/trending').catch(() => ({ items: [] }))); changed = true; }
   if (!S.cache.has(`${id}|designs`)) { S.cache.set(`${id}|designs`, await api('/api/brain/x/designs').catch(() => [])); changed = true; }
+  if (await loadToday(S)) changed = true; // the daily plan + watching now (today-ui.js)
   return changed && /#\/(overview|dashboard)?$/.test(location.hash || '#/overview');
 }
 void ago; void authed;

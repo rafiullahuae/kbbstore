@@ -14,8 +14,8 @@ const TABS = [['how', 'How it decides', 'كيف يقرّر'], ['playbook', 'Your
 export async function load() {
   const k = getAccount();
   if (cache.has(k)) return false;
-  const [s, p, o] = await Promise.all([api('/api/brain/x/strategy'), api('/api/playbook'), api('/api/occasions')]);
-  cache.set(k, { s, p, o });
+  const [s, p, o, v] = await Promise.all([api('/api/brain/x/strategy'), api('/api/playbook'), api('/api/occasions'), api('/api/volume').catch(() => null)]);
+  cache.set(k, { s, p, o, v });
   if (!dirty || draftFor !== k) { draft = JSON.parse(JSON.stringify(p.playbook)); draftFor = k; dirty = false; } // unsaved edits survive a refresh
   return true;
 }
@@ -87,9 +87,35 @@ function products(s) {
       <td class="small ink2">${(r.why || []).map(esc).join(' · ')}</td><td class="row"><button type="button" class="ghost small" data-pin="${esc(r.id)}" data-label="${esc(r.title)}">${L('Pin', 'تثبيت')}</button><button type="button" class="ghost small" data-avoid="${esc(r.id)}" data-label="${esc(r.title)}">${L('Avoid', 'تجنّب')}</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 
+// Activity level + "How much it runs" (engine/volume.go): saved at once (he asked for it applied, not hidden).
+const LEVELS = [['steady', 'Steady', 'هادئ', "Today's behaviour: one weekly batch, the planner decides the count.", 'السلوك الحالي: دفعة أسبوعية واحدة والمخطِّط يقرّر العدد.'],
+  ['active', 'Active', 'نشِط', '8–12 live ads, a batch of 4–6 new ads every Mon + Thu, losers refilled the same day, winners iterated within 48 h.', '٨–١٢ إعلاناً نشطاً، دفعة من ٤–٦ كل اثنين وخميس، استبدال الخاسر في اليوم نفسه، وتطوير الرابح خلال ٤٨ ساعة.'],
+  ['aggressive', 'Aggressive', 'جريء', '12–20 live ads, batches Mon / Wed / Fri, up to 3 prospecting campaigns when the budget feeds them.', '١٢–٢٠ إعلاناً نشطاً، دفعات الاثنين والأربعاء والجمعة، حتى ٣ حملات جذب إن كفت الميزانية.']];
+const CSTAT = { live: ['live', 'تعمل', 'acc'], planned: ['planned', 'مخطّطة', 'acc'], needs_budget: ['needs budget', 'تحتاج ميزانية', 'warn'], not_at_this_level: ['not at this level', 'ليست في هذا المستوى', ''] };
+function volume(v) {
+  if (!v || !v.volume) return '';
+  const x = v.volume, cur = (draft.knobs || {}).activity_level || x.level;
+  const fill = x.live_max ? Math.min(1, x.live / x.live_max) : 0;
+  const DAR = { mon: 'الاثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس', fri: 'الجمعة', sat: 'السبت', sun: 'الأحد' };
+  const days = (x.batch_days || []).map((d) => tt(d[0].toUpperCase() + d.slice(1), DAR[d] || d)).join(' + ');
+  return `<div class="grid g2" data-volume><div class="card"><header><h2>${L('Activity level', 'مستوى النشاط')} ${tip(tt('How many ads it runs and how often it tests new ones. Never above your limits: new ads go into the budgets you already have; a new campaign is built only when the budget feeds its learning.', 'كم إعلاناً يشغّل وكم مرة يختبر جديداً. لا يتجاوز حدودك أبداً.'))}</h2><span class="small muted">${L('saved at once', 'يُحفظ فوراً')}</span></header>
+    <div class="seg" data-levels>${LEVELS.map(([id, en, ar]) => `<button type="button" data-level="${id}" class="${cur === id ? 'on' : ''}">${esc(tt(en, ar))}</button>`).join('')}</div>
+    <div class="list small" style="margin-top:10px">${LEVELS.map(([id, en, ar, d, dar]) => `<div><span class="chip ${cur === id ? 'acc' : ''}">${esc(tt(en, ar))}</span><span class="ink2">${esc(tt(d, dar))}</span></div>`).join('')}</div>
+    <p class="small">${esc(tt(x.why, x.why_ar))}</p></div>
+  <div class="card"><header><h2>${L('How much it runs', 'كم يشغّل')}</h2><span class="sub">${esc(tt('target CPA', 'تكلفة الطلب المستهدفة'))} ${aed(x.target_cpa)}</span></header>
+    <div class="spread small"><span>${L('Live prospecting ads now', 'إعلانات الجذب النشطة الآن')}</span><b data-live>${num(x.live)}${x.live_max ? ` / ${esc(tt('target', 'الهدف'))} ${num(x.live_min)}–${num(x.live_max)}` : ''}</b></div>
+    ${x.live_max ? `<div class="meter"><i style="width:${(fill * 100).toFixed(1)}%"></i></div>` : ''}
+    ${x.limit_capped ? `<div class="alert warn small" style="margin-top:8px">${esc(tt(`Your Max active ads is ${x.max_active_ads}: it aims for ${x.live_min}–${x.live_max} instead of ${x.level_min}–${x.level_max}.`, `الحد الأقصى للإعلانات النشطة ${x.max_active_ads}: الهدف ${x.live_min}–${x.live_max} بدلاً من ${x.level_min}–${x.level_max}.`))} <button type="button" class="small" data-raise="${x.level_max + x.other_live}">${esc(tt(`Raise to ${x.level_max + x.other_live}`, `ارفعيه إلى ${x.level_max + x.other_live}`))}</button></div>` : ''}
+    <p class="small">${L('New ads', 'الإعلانات الجديدة')}: <b>${x.batch_max ? `${x.batch_min ? num(x.batch_min) + '–' : esc(tt('up to ', 'حتى '))}${num(x.batch_max)}` : '—'}</b> ${L('every', 'كل')} <b>${esc(days)}</b>${x.refill_same_day ? ` · ${L('losers refilled the same day', 'الخاسر يُستبدل في اليوم نفسه')} · ${L('winners iterated within', 'تطوير الرابح خلال')} ${num(x.iterate_hours)} h` : ''}</p>
+    <h3>${L('Campaigns and why', 'الحملات ولماذا')}</h3>
+    <div class="list small" data-campaigns>${(x.campaigns || []).map((c) => { const cs = CSTAT[c.status] || [c.status, c.status, '']; return `<div><span class="chip ${cs[2]}">${esc(tt(cs[0], cs[1]))}</span><span><b>${esc(tt(c.name, c.name_ar))}</b><br><span class="ink2">${esc(tt(c.why, c.why_ar))}</span></span></div>`; }).join('')}</div>
+    ${(v.upcoming || []).length ? `<h3>${L('Next new ads', 'الإعلانات الجديدة القادمة')}</h3><div class="list small">${v.upcoming.slice(0, 6).map((j) => `<div><span class="chip">${esc(new Date(j.when).toLocaleString(tt('en-AE', 'ar-AE'), { weekday: 'short', hour: '2-digit', minute: '2-digit' }))}</span><span>${esc(tt(j.title, j.title_ar))}${j.waiting ? ` <span class="muted">(${esc(j.waiting)})</span>` : ''}</span></div>`).join('')}</div><a href="#/plan" class="small">${L('All upcoming jobs', 'كل المهام القادمة')} →</a>` : ''}
+  </div></div>`;
+}
+
 function rules(s) {
   const k = draft.knobs || {};
-  return `<div class="card"><header><h2>${L('Decision rules', 'قواعد القرار')}</h2><button type="button" class="ghost small" data-resetknobs>${L('Reset all to defaults', 'إعادة الكل للافتراضي')}</button></header>
+  return `${volume(cache.get(getAccount()).v)}<div class="card"><header><h2>${L('Decision rules', 'قواعد القرار')}</h2><button type="button" class="ghost small" data-resetknobs>${L('Reset all to defaults', 'إعادة الكل للافتراضي')}</button></header>
     <table><thead><tr><th>${L('Rule', 'القاعدة')}</th><th class="n">${L('Now', 'الآن')}</th><th class="n">${L('Default', 'الافتراضي')}</th><th>${L('Your value', 'قيمتك')}</th><th>${L('Why', 'السبب')}</th></tr></thead><tbody>
     ${(s.rules || []).map((r) => { const pctKnob = ['kill_p', 'scale_p'].includes(r.knob); const v = k[r.knob]; const shown = v ? (pctKnob ? v * 100 : v) : ''; return `<tr><td><b>${esc(tt(r.label, r.label_ar))}</b> <span class="chip ${r.source === 'yours' ? 'acc' : r.source === 'self-tuned' ? 'warn' : ''}">${esc(r.source)}</span></td><td class="n">${num(r.value, 2)} ${esc(r.unit)}</td><td class="n muted">${num(r.default, 2)}</td>
       <td><input type="number" data-knob="${esc(r.knob)}" data-pct="${pctKnob ? 1 : 0}" value="${shown}" placeholder="${esc(tt('default', 'افتراضي'))}" min="${r.min}" max="${r.max}" step="${r.step}" style="width:90px"></td><td class="small ink2">${esc(r.why)}</td></tr>`; }).join('')}</tbody></table></div>
@@ -150,6 +176,17 @@ function wire(S, el) {
   el.querySelectorAll('[data-knob]').forEach((i) => { i.onchange = () => { const v = i.value === '' ? 0 : Number(i.value); set('knobs.' + i.dataset.knob, i.dataset.pct === '1' ? v / 100 : v); re(); }; });
   el.querySelectorAll('[data-tb]').forEach((i) => { i.onchange = () => { set('tune_bounds.' + i.dataset.tb, Number(i.value)); re(); }; });
   el.querySelectorAll('[data-tunev]').forEach((b) => { b.onclick = () => { set('self_tune', b.dataset.tunev); re(); }; });
+  el.querySelectorAll('[data-level]').forEach((b) => { b.onclick = async () => {
+    try {
+      const r = await api('/api/playbook', { method: 'PUT', body: { knobs: { activity_level: b.dataset.level } } });
+      draft.knobs = draft.knobs || {}; draft.knobs.activity_level = r.playbook.knobs.activity_level;
+      const c = cache.get(getAccount()); c.p = r; c.v = await api('/api/volume').catch(() => c.v);
+      toast(tt('Activity level saved: the plan follows at once. Logged in Activity.', 'حُفظ مستوى النشاط: تتبعه الخطة فوراً.')); re();
+    } catch (e) { toast(e.message); }
+  }; });
+  const rz = el.querySelector('[data-raise]'); if (rz) rz.onclick = async () => {
+    try { await api('/api/limits', { method: 'PUT', body: { max_active_ads: Number(rz.dataset.raise) } }); const c = cache.get(getAccount()); c.v = await api('/api/volume'); toast(tt('Max active ads raised (Settings → Limits).', 'رُفع الحد الأقصى للإعلانات النشطة.')); re(); } catch (e) { toast(e.message); }
+  };
   const rk = el.querySelector('[data-resetknobs]'); if (rk) rk.onclick = () => { draft.knobs = {}; dirty = true; re(); };
   el.querySelectorAll('[data-rm]').forEach((b) => { b.onclick = () => { const [k, i] = b.dataset.rm.split(':'); draft[k].splice(Number(i), 1); dirty = true; re(); }; });
   el.querySelectorAll('[data-add]').forEach((b) => { b.onclick = () => {

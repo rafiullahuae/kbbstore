@@ -368,6 +368,11 @@ window.addEventListener('online', () => warmNow('online'));
       return;
     }
     if (type === 'alert' || type === 'action.alert') toast((d.data && d.data.text) || d.text || 'Alert');
+    if (type === 'dailyplan' || type === 'watch') { // today-ui.js: the daily plan / watching now, read again once
+      if (acct) S.cache.delete(`${acct}|today`);
+      if (acct === getAccount() && ['overview', 'plan'].includes(S.route)) rerender();
+      return;
+    }
     if (['metrics.updated', 'cycle.end', 'action.execution', 'action.kill', 'research.updated', 'backfill.progress', 'connections'].includes(type)) {
       const ids = acct ? [acct] : [...S.states.keys()];
       window.dispatchEvent(new CustomEvent('kaa:stale', { detail: ids })); // strategy / jobs / funnel / occasions caches
