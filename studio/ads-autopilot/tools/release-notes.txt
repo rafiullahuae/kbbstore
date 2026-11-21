@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.10
+- Fixed: rebuilding the first launch reused the campaign it had just archived ("Ad Sets may not be added to archived Campaigns"), because both attempts that day had the same internal ids. Every attempt now has its own; what an earlier attempt left (paused, no ads, never spent) is archived first.
+- When Meta refuses ads because your Meta app is not published ("…app that is in development mode…"), the Last cycle card and an alert say exactly what to do. Until you fix it, the hourly cycles wait 6 hours instead of building and archiving an empty campaign every hour; your own Run a cycle always tries at once.
+
 ## 0.6.9
 - "Last cycle — every step" now also says WHY the first launch did not start when it does not (before, the line was simply missing), and lists every job that is waiting (your Run it ads, occasions, tests) with its reason.
 

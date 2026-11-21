@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"kaa/executor"
@@ -63,8 +64,9 @@ type Acct struct {
 	audiences []model.Audience // custom audiences with Meta's sizes, read every sync
 	jobs      JobSet           // the editable job queue (jobs.go)
 
-	work        sync.Mutex // sync / cycle / kill on this account: one at a time
-	repriceMu   sync.Mutex // the price-correction plan (reprice.go)
+	work        sync.Mutex  // sync / cycle / kill on this account: one at a time
+	repriceMu   sync.Mutex  // the price-correction plan (reprice.go)
+	manualCycle atomic.Bool // the running cycle is the owner's own "Run a cycle" (starter.go: Meta-setting wait)
 	cycleCancel context.CancelFunc
 	bfOn        bool
 
@@ -630,7 +632,9 @@ func (ac *Acct) finishCycle(t0 time.Time, out map[string]any) {
 	out["ms"] = now.Sub(t0).Milliseconds()
 	props, _ := out["_props"].([]model.Proposal)
 	delete(out, "_props")
-	ac.saveRunReport(ac.cycleReport(t0, out, props)) // Overview → Last cycle: every step (runreport.go)
+	rr := ac.cycleReport(t0, out, props)
+	ac.saveRunReport(rr) // Overview → Last cycle: every step (runreport.go)
+	ac.alertMetaFixes(rr)
 	ac.st.Append("cycle", "cycle end", out)
 	ac.publish("cycle.end", out)
 }

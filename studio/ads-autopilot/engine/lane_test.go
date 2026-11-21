@@ -436,3 +436,52 @@ func TestStoppedFirstLaunchIsBuiltAgain(t *testing.T) {
 		t.Fatalf("an ad switched on: %q, want launched", ac.starter.State)
 	}
 }
+
+// 22 Nov, the owner's account: the rebuild reused the campaign it had just archived because both attempts had the
+// same day-based ids ("already done earlier", then "Ad Sets may not be added to archived Campaigns"). Two attempts
+// at different times have different ids, and the earlier attempt's leftover is archived, never reused.
+func TestStarterAttemptsHaveOwnIDs(t *testing.T) {
+	ac, _ := testApp(t)
+	ac.app.brain = quietBrain{}
+	in := ac.input()
+	env := ac.env(model.AutopilotAuto)
+	a, why := ac.starterPlan(context.Background(), in, nil, env)
+	if len(a) == 0 {
+		t.Fatalf("no first launch: %s", why)
+	}
+	env.Now = env.Now.Add(3 * time.Minute)
+	b, _ := ac.starterPlan(context.Background(), in, nil, env)
+	ids := map[string]bool{}
+	for _, p := range a {
+		ids[p.ID], ids[p.Target] = true, true
+	}
+	for _, p := range b {
+		if p.Kind == model.KindCreateCampaign && (ids[p.ID] || ids[p.Target]) {
+			t.Fatalf("the second attempt reuses %s / %s", p.ID, p.Target)
+		}
+	}
+	if h := metaFixHint("failed: Meta error 100/1885183: Invalid parameter (Ads creative post was created by an app that is in development mode.)"); !strings.Contains(h, "Publish") {
+		t.Fatalf("no fix for the development-mode refusal: %q", h)
+	}
+}
+
+// A launch refused because his Meta app is not published: the hourly cycles wait 6 hours (no empty campaign
+// built and archived every hour); his own Run a cycle tries at once.
+func TestUnpublishedAppWaitsButManualTries(t *testing.T) {
+	ac, _ := testApp(t)
+	now := time.Now()
+	ac.mu.Lock()
+	ac.starter = StarterState{State: "failed", At: now.Add(-time.Hour), Items: []PendingItem{{Result: &executor.Result{Status: "failed",
+		Error: "Meta error 100/1885183: Invalid parameter (Ads creative post was created by an app that is in development mode. It must be in public to create this ad.)"}}}}
+	ac.mu.Unlock()
+	env := ac.env(model.AutopilotAuto)
+	idle := model.CycleInput{Tree: []model.Campaign{{ID: "4", Status: "ACTIVE"}}}
+	if ok, why := ac.starterNeeded(idle, nil, env); ok || !strings.Contains(why, "Publish") {
+		t.Fatalf("hourly cycle: %v %q, want a wait naming the fix", ok, why)
+	}
+	ac.manualCycle.Store(true)
+	defer ac.manualCycle.Store(false)
+	if ok, why := ac.starterNeeded(idle, nil, env); !ok {
+		t.Fatalf("his own Run a cycle must try at once: %q", why)
+	}
+}

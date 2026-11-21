@@ -255,7 +255,9 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		if in.Mode != model.AutopilotAuto {
 			in.Mode = model.AutopilotShadow
 		}
+		ac.manualCycle.Store(true) // his own Run a cycle: a first launch waiting on a Meta setting is tried at once
 		out, err := ac.Cycle(context.Background(), in.Mode)
+		ac.manualCycle.Store(false)
 		if errors.Is(err, errBusy) || errors.Is(err, errUpdating) {
 			jsonErr(w, 409, err.Error())
 			return

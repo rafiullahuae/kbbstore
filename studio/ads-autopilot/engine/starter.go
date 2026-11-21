@@ -87,6 +87,15 @@ func (ac *Acct) starterNeeded(in model.CycleInput, brainProps []model.Proposal, 
 	ac.mu.RLock()
 	prev := ac.starter
 	ac.mu.RUnlock()
+	// a launch refused for a Meta setting only he can change (his Meta app not published): the hourly cycles do not
+	// build and archive an empty campaign every hour; they wait 6 hours. His own Run a cycle always tries at once.
+	if prev.State == "failed" && env.Now.Sub(prev.At) < 6*time.Hour && !ac.manualCycle.Load() {
+		for _, it := range prev.Items {
+			if it.Result != nil && metaFixHint(it.Result.Error) != "" {
+				return false, "waiting for a Meta setting: " + metaFixHint(it.Result.Error)
+			}
+		}
+	}
 	// "launched" holds for 7 days when an ad of it was really switched on (AdsOn, 0.6.8) — even if he paused it
 	// since. A record from 0.6.7 and before (launched as soon as its CAMPAIGN was made, 22 Nov) holds only while
 	// an app ad is live: the owner's stopped launch, with no ad ever on, is built again, not waited out.
@@ -527,8 +536,11 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 		}
 		return m
 	}
-	day := env.Now.In(ac.loc()).Format("20060102")
-	tag := "st" + day[4:]
+	// each attempt has its own ids (day + time): a first launch that stopped part-way earlier the same day must not
+	// be "already done" again — on 22 Nov the rebuild reused the campaign it had just archived ("Ad Sets may not be
+	// added to archived Campaigns"). What an earlier attempt left is archived first (leftoverStarters).
+	day := env.Now.In(ac.loc()).Format("20060102-1504")
+	tag := "st" + strings.ReplaceAll(day[4:], "-", "")
 	id := func(s string) string { return "starter-" + day + "-" + s }
 	countries := funnelCountries(pb, lim.Countries)
 	cc := strings.Join(anyToStrings(countries), "+")
@@ -777,7 +789,7 @@ func leftoverStarters(in model.CycleInput, env executor.Env, building []model.Pr
 		if live {
 			continue
 		}
-		out = append(out, model.Proposal{ID: "starter-" + env.Now.Format("20060102") + "-leftover-" + c.ID, Kind: model.KindArchive, Target: c.ID, Params: map[string]any{},
+		out = append(out, model.Proposal{ID: "starter-" + env.Now.Format("20060102-1504") + "-leftover-" + c.ID, Kind: model.KindArchive, Target: c.ID, Params: map[string]any{},
 			Why: "An earlier first launch stopped part-way and left this campaign empty and paused; it is archived and the first launch is built again.", Confidence: 0.9})
 	}
 	return out

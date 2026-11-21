@@ -78,6 +78,9 @@ func resultSteps(props []model.Proposal, results []executor.Result) []RunStep {
 			st.Status, st.Detail = "warn", "not done: "+strings.Join(r.Decision.Reasons, "; ")
 		default:
 			st.Status, st.Detail = "fail", "failed: "+firstNonEmpty(r.Error, strings.Join(r.Decision.Reasons, "; "))
+			if h := metaFixHint(st.Detail); h != "" {
+				st.Detail += " — FIX: " + h
+			}
 		}
 		if p.Why != "" && len(st.Detail) < 400 {
 			st.Detail = strings.TrimSpace(st.Detail + " — why: " + p.Why)
@@ -187,4 +190,24 @@ func (ac *Acct) liveAppAds() int {
 	ac.mu.RLock()
 	defer ac.mu.RUnlock()
 	return executor.ActiveAds(ac.tree)
+}
+
+// metaFixHint: what the owner does about a Meta refusal that only he can fix (his own Meta settings).
+func metaFixHint(msg string) string {
+	m := strings.ToLower(msg)
+	switch {
+	case strings.Contains(m, "development mode") || strings.Contains(m, "1885183"):
+		return "your Meta app is not published (Development / \"Unpublished\"); Meta creates ads only through a published (Live) app: developers.facebook.com → My Apps → your app → App settings → Basic: Privacy Policy URL, Category and app icon, Save → then Publish (or switch App Mode to Live) at the top of the app's page; then Overview → Run a cycle"
+	}
+	return ""
+}
+
+// alertMetaFixes: one Overview alert per Meta setting the owner must change (not repeated while it stands).
+func (ac *Acct) alertMetaFixes(r RunReport) {
+	for _, s := range r.Steps {
+		if i := strings.Index(s.Detail, " — FIX: "); i >= 0 {
+			ac.alertOnce("Meta refused the ads: " + s.Detail[i+len(" — FIX: "):])
+			return
+		}
+	}
 }
