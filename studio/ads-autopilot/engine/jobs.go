@@ -227,6 +227,8 @@ func (ac *Acct) refreshJobs(ctx context.Context, in model.CycleInput, plan model
 	js.Jobs = keep
 	// occasions: packages prepared at their prep date, waiting for approval (occasions.go)
 	ac.refreshOccasions(ctx, in, &js, now)
+	// the activity level's cadence: test batches, same-day refills, winners' new hooks, extra campaigns (volume.go)
+	ac.planCadence(in, &js, now)
 	// the funnel's missing pieces (only once the main campaign exists)
 	f := findFunnel(in.Tree, in.Audiences)
 	if f.prosp != nil {
@@ -411,7 +413,7 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 			var cards []any
 			var first model.Creative
 			for i, p := range prods {
-				crID, err := ac.starterCreative(ctx, p, lang, copyOf)
+				crID, err := ac.jobCreative(ctx, j, p, lang, copyOf) // volume.go: a reword / new hook gets new copy
 				if err != nil {
 					return nil, err.Error()
 				}
@@ -431,7 +433,7 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 			return ps, ""
 		}
 		for i, p := range prods {
-			crID, err := ac.starterCreative(ctx, p, lang, copyOf)
+			crID, err := ac.jobCreative(ctx, j, p, lang, copyOf) // volume.go: a reword / new hook gets new copy
 			if err != nil {
 				return nil, err.Error()
 			}
@@ -452,7 +454,7 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 	}
 	f := findFunnel(in.Tree, in.Audiences)
 	switch j.Kind {
-	case "test", "refresh", "seasonal":
+	case "test", "refresh", "seasonal", "batch", "reword": // batch / reword: volume.go, watch.go
 		set := ac.prospectingSet(in, lang)
 		if set == "" {
 			return nil, "needs the prospecting campaign first (the first launch)"
@@ -469,7 +471,7 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 		if why != "" {
 			return nil, why
 		}
-		if j.Kind == "refresh" && j.Target != "" {
+		if (j.Kind == "refresh" || j.Kind == "reword") && j.Target != "" {
 			ps = append(ps, model.Proposal{ID: pid("pause"), Kind: model.KindPause, Target: j.Target, Params: map[string]any{}, Why: "Replaced by a fresh concept (it was tiring).", Confidence: 0.7})
 		}
 		if j.Kind == "seasonal" && f.prosp != nil {
@@ -485,6 +487,8 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 				Why: fmt.Sprintf("Seasonal ramp: one step up (≤ %.0f%%) before the peak.", step), Confidence: 0.6})
 		}
 		return ps, ""
+	case "funnel_campaign": // a 2nd / 3rd prospecting campaign, only when its budget feeds its learning (volume.go)
+		return ac.extraCampaignProposals(in, j, env, pid, tag, adsInto)
 	case "occasion":
 		return ac.occasionProposals(in, j, env.Limits.MaxBudgetStepPct, pid)
 	case "funnel_retargeting":
@@ -584,6 +588,7 @@ func hash32(s string) uint32 {
 func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.Env, mode string) (cycle, owner []model.Proposal) {
 	js := ac.jobSet()
 	now := env.Now
+	pending, paused := 0, map[string]bool{} // new ads and room-making pauses already taken by earlier jobs in this pass (volume.go)
 	for i := range js.Jobs {
 		j := &js.Jobs[i]
 		if j.ID == jobFirstLaunch || (j.Status != "planned" && j.Status != "approved") || j.When.After(now) {
@@ -594,9 +599,15 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 			continue
 		}
 		ps, why := ac.materialise(ctx, in, *j, env)
+		n := countKind(ps, model.KindCreateAd)
 		if why == "" {
-			if n := countKind(ps, model.KindCreateAd); n > 0 && env.Limits.MaxActiveAds > 0 && executor.ActiveAds(env.Tree)+n > env.Limits.MaxActiveAds {
-				why = fmt.Sprintf("no free ad slot: %d ads active, your maximum is %d (Settings → Limits)", executor.ActiveAds(env.Tree), env.Limits.MaxActiveAds)
+			var room []model.Proposal
+			room, why = ac.roomFor(in, env, *j, n, pending, paused, func(s string) string { return "job-" + jobPID.ReplaceAllString(j.ID, "-") + "-" + s })
+			ps = append(room, ps...) // the room first: the executor counts live ads at each create
+		}
+		if why == "" {
+			if n > 0 && env.Limits.MaxActiveAds > 0 && executor.ActiveAds(env.Tree)-len(paused)+pending+n > env.Limits.MaxActiveAds {
+				why = fmt.Sprintf("no free ad slot: %d ads active, your maximum is %d (Settings → Limits)", executor.ActiveAds(env.Tree)+pending, env.Limits.MaxActiveAds)
 			}
 		}
 		if why != "" {
@@ -607,6 +618,7 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 			continue
 		}
 		j.Waiting = ""
+		pending += n
 		j.ProposalIDs = nil
 		for _, p := range ps {
 			j.ProposalIDs = append(j.ProposalIDs, p.ID)

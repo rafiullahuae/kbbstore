@@ -359,6 +359,14 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 				s.jobsAPI(w, r, ac, strings.TrimPrefix(strings.TrimPrefix(p, "/api/jobs"), "/"))
 			}
 		}
+	case p == "/api/today" || strings.HasPrefix(p, "/api/today/") || p == "/api/volume": // daily plan, watching now, activity level (dailyplan.go, watch.go, volume.go)
+		if ac := s.acct(w, r); ac != nil {
+			if p == "/api/volume" {
+				s.volumeAPI(w, r, ac)
+			} else {
+				s.todayAPI(w, r, ac, strings.TrimPrefix(strings.TrimPrefix(p, "/api/today"), "/"))
+			}
+		}
 	case p == "/api/catalog" || p == "/api/undo" || strings.HasPrefix(p, "/api/products/"): // the product picker (picker.go)
 		if ac := s.acct(w, r); ac != nil {
 			s.pickerAPI(w, r, ac, p)

@@ -16,12 +16,14 @@ type scheduler struct {
 	tick       time.Duration
 	attempt    map[string]time.Time // last sync attempt per account: a failing sync is retried every 5 min
 	tokenCheck time.Time
-	lastWall   time.Time     // onTick: the previous tick on the wall clock
-	lastMono   time.Duration // and on the monotonic clock
+	lastWall   time.Time            // onTick: the previous tick on the wall clock
+	lastMono   time.Duration        // and on the monotonic clock
+	opened     map[string]bool      // the account's daily plan was handled since the app opened (dailyplan.go)
+	dueTry     map[string]time.Time // last between-cycles run of due jobs (volume.go runDue)
 }
 
 func newScheduler(a *App) *scheduler {
-	return &scheduler{a: a, tick: 30 * time.Second, attempt: map[string]time.Time{}}
+	return &scheduler{a: a, tick: 30 * time.Second, attempt: map[string]time.Time{}, opened: map[string]bool{}, dueTry: map[string]time.Time{}}
 }
 
 func (s *scheduler) intervals() (time.Duration, time.Duration) { return s.a.intervals() }
@@ -117,11 +119,30 @@ func (s *scheduler) step() {
 		ac.mu.Unlock()
 		doSync, doCycle := due(now, lastSync, lastCycle, syncEvery, cycleEvery)
 		ac := ac
+		// the Daily Plan: at the first open of the day, or from 07:00 while open (dailyplan.go)
+		if ac.maybeDailyPlan(context.Background(), !s.opened[ac.id]) {
+			s.opened[ac.id] = true
+		} else if d, ok := ac.dailyPlan(); ok && d.Date == now.In(ac.loc()).Format("2006-01-02") {
+			s.opened[ac.id] = true
+		}
 		switch {
 		case doCycle:
 			go func() {
 				if _, err := ac.Cycle(context.Background(), "auto"); err != nil && err != errBusy {
 					log.Printf("cycle %s: %v", ac.id, err)
+				}
+				if ac.work.TryLock() { // close monitoring after the cycle's sync (watch.go)
+					ac.watch(context.Background())
+					ac.work.Unlock()
+				}
+			}()
+		case ac.hasDue(now) && now.Sub(s.dueTry[ac.id]) >= 5*time.Minute: // jobs at their times between cycles
+			s.dueTry[ac.id] = now
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+				defer cancel()
+				if _, err := ac.runDue(ctx); err != nil && err != errBusy {
+					ac.alertOnce("Running today's jobs failed: " + err.Error())
 				}
 			}()
 		case doSync && now.Sub(s.attempt[ac.id]) >= 5*time.Minute:
@@ -136,7 +157,9 @@ func (s *scheduler) step() {
 				defer ac.cancellable(cancel)() // an update can stop this sync (update_flow.go pauseAutopilot)
 				if err := ac.Sync(ctx); err != nil {
 					ac.alertOnce("Sync with Meta failed: " + err.Error())
+					return
 				}
+				ac.watch(ctx) // the hourly close check (watch.go)
 			}()
 		}
 	}
