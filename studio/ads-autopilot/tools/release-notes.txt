@@ -2,6 +2,12 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.4.6
+- Occasions now come with 5 products picked for the season (winter: barrier and rich creams, lip care, masks; summer: sunscreen, oil control), ranked by your real sales in the last 90 days, new arrivals and trends. Each shows units sold, New/Trending and why it fits.
+- ✕ removes a product from that occasion and the next-best one takes its place at once (it won't come back there); ⊘ never promotes it anywhere.
+- Find products refreshes the list with today's sales and stock and fills the empty places, keeping what you pinned.
+- Products per occasion: Strategy → Occasions (3–8, default 5). Season tags per product: Strategy → Products (your choice wins).
+
 ## 0.4.5
 - Fixed: after an update, Settings → Connections showed empty boxes and "Not connected" until the app finished reconnecting, which looked like your keys had vanished. It now shows your saved keys (•••• last 4) with "Checking…" and turns green by itself when the test finishes. Your keys were not lost: don't paste them again.
 
