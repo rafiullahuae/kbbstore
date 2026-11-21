@@ -148,6 +148,14 @@ func (ac *Acct) cycleReport(t0 time.Time, out map[string]any, props []model.Prop
 		r.Steps = append(r.Steps, RunStep{Title: "First launch", Status: "ok", Detail: why})
 	case stState.State == "skipped" || stState.State == "failed":
 		r.Steps = append(r.Steps, RunStep{Title: "First launch", Status: "warn", Detail: stState.Why})
+	default:
+		if why, _ := out["starter_why"].(string); why != "" {
+			st := "info"
+			if ac.liveAppAds() == 0 { // nothing of the app's runs: the reason it did not build is the news
+				st = "warn"
+			}
+			r.Steps = append(r.Steps, RunStep{Title: "First launch", Status: st, Detail: "not started: " + why})
+		}
 	}
 	if res, ok := out["results"].([]executor.Result); ok {
 		for _, s := range resultSteps(props, res) {
@@ -163,8 +171,20 @@ func (ac *Acct) cycleReport(t0 time.Time, out map[string]any, props []model.Prop
 			r.Steps = append(r.Steps, RunStep{Title: "Changes on Meta", Status: "info", Detail: "nothing needed changing this time"})
 		}
 	}
+	// jobs that wait (Run it, occasions, tests): each with its reason
+	for _, j := range ac.jobSet().Jobs {
+		if open(j.Status) && j.Waiting != "" {
+			r.Steps = append(r.Steps, RunStep{Title: "Waiting: " + j.Title, Status: "warn", Detail: j.Waiting})
+		}
+	}
 	if e, ok := out["safety_error"].(string); ok && e != "" {
 		r.Steps = append(r.Steps, RunStep{Title: "Meta safety rules", Status: "fail", Detail: e})
 	}
 	return r
+}
+
+func (ac *Acct) liveAppAds() int {
+	ac.mu.RLock()
+	defer ac.mu.RUnlock()
+	return executor.ActiveAds(ac.tree)
 }

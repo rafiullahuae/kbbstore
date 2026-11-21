@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.9
+- "Last cycle — every step" now also says WHY the first launch did not start when it does not (before, the line was simply missing), and lists every job that is waiting (your Run it ads, occasions, tests) with its reason.
+
 ## 0.6.8
 - Fixed: the first launch counted as "launched" as soon as its campaign was made. When a cycle stopped part-way (your "context deadline exceeded"), the campaign and ad set were left with no ads, and every later cycle skipped the first launch for 7 days. Now it counts only once an ad is switched on; a launch that stopped part-way is built again at the next cycle, and the empty paused campaign it left (never spent, no live ad) is archived first so you never have two.
 - Fixed: the "KAA: monthly limit" Meta rule added in 0.6.5 used a this-month figure, which Meta's real-time rules do not take; it is removed (and deleted from your account if it was made). The month is held by the account spending limit and the autopilot's own budgets.

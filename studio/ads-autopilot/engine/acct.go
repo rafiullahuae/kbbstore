@@ -546,6 +546,8 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 	if len(sp) > 0 {
 		co.Proposals = append(dropCreates(co.Proposals), sp...)
 		out["starter"] = map[string]any{"proposals": len(sp), "why": stWhy, "mode": env.Limits.Autopilot}
+	} else {
+		out["starter_why"] = stWhy // the Last cycle card says why the first launch did not run (runreport.go)
 	}
 	// the editable job queue (jobs.go): refreshed from this plan; due jobs become proposals now
 	ac.refreshJobs(ctx, in, co.Plan, sp, stWhy, env)
