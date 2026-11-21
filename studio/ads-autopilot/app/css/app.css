@@ -109,6 +109,8 @@ label.f > span { font-weight: 500; }
 /* KPI tiles */
 .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 1400px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.kpis.kpis-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tw { overflow: auto; max-height: 480px; }
 .kpi { background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0; box-shadow: var(--shadow); }
 .kpi .l { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
 .kpi .v { font: 700 24px/1.2 var(--font-head); font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }

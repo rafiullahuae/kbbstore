@@ -1,8 +1,9 @@
 import { t, tt } from '../i18n.js';
 import { esc, aed, tip, empty } from '../ui.js';
 import { jobsCard, wireJobs, loadJobs } from './jobs-ui.js';
+import { dailyPlanCard, wireToday, loadToday } from './today-ui.js';
 
-export const load = () => loadJobs(false);
+export const load = async (S) => { const a = await loadJobs(false); const b = await loadToday(S); return a || b; };
 
 const FORMAT = { single_image: 'Single image', single_video: 'Single video', reels_stories: 'Reels & Stories', carousel: 'Carousel', collection: 'Collection', catalog: 'Advantage+ catalog', flexible: 'Flexible format', click_to_whatsapp: 'Click to WhatsApp', click_to_messenger: 'Click to Messenger', whatsapp_status: 'WhatsApp Status', partnership: 'Partnership' };
 const AUD = { women_gcc_ar: 'Arabic-speaking women 18-45, GCC', women_uae_en: 'English-speaking women 18-45, UAE', broad: 'Broad (Advantage+)', retarget_viewers: 'Product viewers 14d', retarget_cart: 'Cart abandoners 7d', retarget_engagers: 'Video viewers & engagers', lookalike_buyers: 'Lookalike of buyers', existing_customers: 'Existing customers' };
@@ -11,6 +12,7 @@ export function render(S, el) {
   inner(S, el);
   const pg = el.querySelector('.page');
   if (pg) { pg.insertAdjacentHTML('afterbegin', jobsCard(S)); wireJobs(S, el, () => render(S, el)); }
+  if (pg) { pg.insertAdjacentHTML('afterbegin', dailyPlanCard(S)); wireToday(S, el, () => render(S, el)); } // the Daily Plan first
 }
 
 function inner(S, el) {

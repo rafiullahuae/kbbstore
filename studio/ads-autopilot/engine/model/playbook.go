@@ -47,6 +47,26 @@ type Knobs struct {
 	RetargetMaxFreq    float64 `json:"retarget_max_frequency"` // retargeting is scaled only while its 7-day frequency is below this (default 3)
 	CostCapMinConvWeek int     `json:"cost_cap_min_conv_week"` // cost cap is suggested only from this many purchases a week (default 50)
 	ConversionsPerWeek int     `json:"conversions_per_week"`   // what one ad set needs a week to exit learning (default 50, Meta)
+	// Strategy → Rules → Activity level (the owner, 21 Nov 2026: "the system should create more campaigns / ad etc."):
+	// steady | active | aggressive; "" = active (he asked for more, so it ships on). Creative volume and test cadence
+	// only; never above his limits (engine/volume.go).
+	ActivityLevel string `json:"activity_level"`
+}
+
+// Activity levels (engine/volume.go).
+const (
+	ActivitySteady     = "steady"
+	ActivityActive     = "active"
+	ActivityAggressive = "aggressive"
+)
+
+// Activity: the level in force (Active when unset or unknown).
+func (k Knobs) Activity() string {
+	switch k.ActivityLevel {
+	case ActivitySteady, ActivityAggressive:
+		return k.ActivityLevel
+	}
+	return ActivityActive
 }
 
 // EconInputs: VAT is removed from revenue first (prices include it), then the payment fee on the order total by
@@ -263,6 +283,9 @@ func (p Playbook) Normalize() Playbook {
 	}
 	if k.ConversionsPerWeek < 0 || k.ConversionsPerWeek > 500 {
 		k.ConversionsPerWeek = 0
+	}
+	if k.ActivityLevel != ActivitySteady && k.ActivityLevel != ActivityActive && k.ActivityLevel != ActivityAggressive {
+		k.ActivityLevel = "" // a select stores one of its own options or the default
 	}
 	p.Knobs = k
 	p.CouponCode = strings.ToUpper(strings.Map(func(r rune) rune {

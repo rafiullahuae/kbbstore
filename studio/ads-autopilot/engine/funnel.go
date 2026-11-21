@@ -52,6 +52,7 @@ type AudienceView struct {
 // funnelObjects: the app's own campaigns and ad sets, by role (from their KAA: names).
 type funnelObjs struct {
 	prosp, catalog  *model.Campaign
+	extra           []*model.Campaign // Prospecting #2 / #3 (volume.go), only when the budget feeds their learning
 	newSets         []model.AdSet
 	existing        *model.AdSet
 	lookalike       *model.AdSet
@@ -72,6 +73,8 @@ func findFunnel(tree []model.Campaign, aus []model.Audience) funnelObjs {
 		case c.Objective == "PRODUCT_CATALOG_SALES" && f.catalog == nil:
 			f.catalog = c
 			f.catSets = c.AdSets
+		case c.Objective == "OUTCOME_SALES" && extraN(c.Name) > 0:
+			f.extra = append(f.extra, c)
 		case c.Objective == "OUTCOME_SALES" && f.prosp == nil && !strings.Contains(c.Name, "Click-to"):
 			f.prosp = c
 			for j := range c.AdSets {
@@ -190,6 +193,12 @@ func (ac *Acct) Funnel(in model.CycleInput, pb model.Playbook) map[string]any {
 				pp.Suggest = append(pp.Suggest, s.Name+" is learning-limited: consolidating ad sets or raising the budget would feed it.")
 			}
 		}
+		for _, c := range f.extra {
+			pp.Objects = append(pp.Objects, objOf(c))
+			for _, s := range c.AdSets {
+				pp.Objects = append(pp.Objects, setObj(s))
+			}
+		}
 		pp.Why = fmt.Sprintf("Built by the app (%s).", f.prosp.Name)
 	} else {
 		pp.Why = "Not built yet: the first launch builds it (Plan → First launch)."
@@ -301,7 +310,7 @@ func (ac *Acct) Funnel(in model.CycleInput, pb model.Playbook) map[string]any {
 		}
 		aus = append(aus, v)
 	}
-	return map[string]any{"account": ac.id, "tier": tier, "small_budget_aed": k.SmallBudget(), "split": sp, "target_cpa": tCPA, "pieces": pieces, "audiences": aus,
+	return map[string]any{"account": ac.id, "volume": volumeFor(pb, in.Limits, tCPA, in.Tree), "tier": tier, "small_budget_aed": k.SmallBudget(), "split": sp, "target_cpa": tCPA, "pieces": pieces, "audiences": aus,
 		"chat_ads": "not offered (your decision)"}
 }
 

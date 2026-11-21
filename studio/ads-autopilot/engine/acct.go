@@ -532,6 +532,7 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		co.Proposals = rest
 	}
 	co.Proposals = holdRetargeting(co.Proposals, in, ac.loc())
+	co.Proposals = oneEditPerAd(co.Proposals) // volume.go
 	var results []executor.Result
 	if len(co.Proposals) > 0 {
 		results = ex.Run(ctx, env, co.Proposals)

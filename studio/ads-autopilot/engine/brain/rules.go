@@ -608,3 +608,90 @@ func pct(p float64) string {
 	}
 	return fmt.Sprintf("%.0f%%", p*100)
 }
+
+// ---------- close monitoring: a new ad's first 72 hours (the owner, 21 Nov 2026: "monitor closely the running / new
+// campaigns") ----------
+
+// EarlyStats: a new ad's numbers so far (settling days included: early signals are about attention, not purchases)
+// and the account's medians over its ads with enough impressions.
+type EarlyStats struct {
+	AgeHours       float64
+	Impr, Clicks   int64
+	ATC, Purch     float64
+	SpendAED       float64
+	MedCTR, MedCPC float64 // account medians (CTR as a fraction, CPC in AED)
+	MedATCPerClick float64
+	TargetCPA      float64
+}
+
+// EarlyVerdict: too_early | promising | watch | weak | kill. Kill needs STRONG evidence (a small budget and one quiet
+// morning is noise): enough impressions and spend, no purchase, a CTR credibly far below the account's median
+// (P(CTR < half the median) >= 0.95 on the Beta posterior) AND a second independent signal (expensive clicks, or
+// plenty of clicks and no add-to-cart where the account's ads usually get some). One signal alone is only "weak":
+// watched every hour, never stopped.
+type EarlyVerdict struct {
+	Verdict string   `json:"verdict"`
+	Why     string   `json:"why"`
+	WhyAR   string   `json:"why_ar"`
+	PLow    float64  `json:"p_ctr_low"`
+	Signals []string `json:"signals,omitempty"`
+}
+
+const (
+	EarlyMinImpr   = 1500 // below this an early read of CTR is noise
+	EarlyKillP     = 0.95 // P(CTR < half the median) needed to call it
+	EarlyWindowH   = 72
+	earlyCTRFrac   = 0.5
+	earlyCPCMult   = 2.0
+	earlyATCClicks = 25
+)
+
+// Early: the early read of one new ad. Pure.
+func Early(s EarlyStats) EarlyVerdict {
+	ctr := 0.0
+	if s.Impr > 0 {
+		ctr = float64(s.Clicks) / float64(s.Impr)
+	}
+	p2 := func(x float64) string { return fmt.Sprintf("%.2f%%", x*100) }
+	switch {
+	case s.Purch > 0:
+		return EarlyVerdict{Verdict: "promising", Why: fmt.Sprintf("Already %.0f purchase(s): kept.", s.Purch), WhyAR: fmt.Sprintf("حقّق %.0f طلباً بالفعل: يستمر.", s.Purch)}
+	case s.Impr < EarlyMinImpr || s.MedCTR <= 0:
+		return EarlyVerdict{Verdict: "too_early", Why: fmt.Sprintf("%d impressions so far; an early read needs %d.", s.Impr, EarlyMinImpr),
+			WhyAR: fmt.Sprintf("%d ظهوراً حتى الآن؛ الحكم المبكر يحتاج %d.", s.Impr, EarlyMinImpr)}
+	}
+	pLow := PRateBelow(s.Clicks, s.Impr, earlyCTRFrac*s.MedCTR)
+	pHigh := 1 - PRateBelow(s.Clicks, s.Impr, s.MedCTR)
+	v := EarlyVerdict{PLow: round2(pLow)}
+	var sig []string
+	if pLow >= EarlyKillP {
+		sig = append(sig, fmt.Sprintf("CTR %s vs median %s (%s sure it is under half)", p2(ctr), p2(s.MedCTR), pct(pLow)))
+	}
+	if s.MedCPC > 0 && s.Clicks > 0 && s.SpendAED/float64(s.Clicks) >= earlyCPCMult*s.MedCPC {
+		sig = append(sig, fmt.Sprintf("CPC AED %.2f vs median %.2f", s.SpendAED/float64(s.Clicks), s.MedCPC))
+	}
+	if s.Clicks >= earlyATCClicks && s.ATC == 0 && s.MedATCPerClick >= 0.04 {
+		sig = append(sig, fmt.Sprintf("%d clicks, no add-to-cart (account median %.0f per 100 clicks)", s.Clicks, s.MedATCPerClick*100))
+	}
+	v.Signals = sig
+	enoughSpend := s.TargetCPA <= 0 || s.SpendAED >= 0.5*s.TargetCPA
+	switch {
+	case pLow >= EarlyKillP && len(sig) >= 2 && enoughSpend:
+		v.Verdict = "kill"
+		v.Why = "Strong early evidence: " + strings.Join(sig, "; ") + ". Stopped early; its slot is refilled today."
+		v.WhyAR = "دليل مبكر قوي (نسبة نقر منخفضة جداً وإشارة ثانية مستقلة). أُوقف مبكراً وتُملأ خانته اليوم."
+	case len(sig) > 0:
+		v.Verdict = "weak"
+		v.Why = "Weak early signal (" + strings.Join(sig, "; ") + "); not enough evidence to stop it: checked every hour."
+		v.WhyAR = "إشارة مبكرة ضعيفة؛ لا تكفي لإيقافه: يُفحص كل ساعة."
+	case pHigh >= 0.8:
+		v.Verdict = "promising"
+		v.Why = fmt.Sprintf("CTR %s beats the account median %s (%s likely).", p2(ctr), p2(s.MedCTR), pct(pHigh))
+		v.WhyAR = fmt.Sprintf("نسبة النقر %s أعلى من متوسط الحساب %s.", p2(ctr), p2(s.MedCTR))
+	default:
+		v.Verdict = "watch"
+		v.Why = fmt.Sprintf("CTR %s vs median %s after %d impressions: in range, still learning.", p2(ctr), p2(s.MedCTR), s.Impr)
+		v.WhyAR = fmt.Sprintf("نسبة النقر %s مقابل متوسط %s بعد %d ظهوراً: ضمن المعدّل، ما زال يتعلّم.", p2(ctr), p2(s.MedCTR), s.Impr)
+	}
+	return v
+}

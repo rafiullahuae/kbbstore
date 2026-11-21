@@ -100,6 +100,9 @@ func (s *server) playbookAPI(w http.ResponseWriter, r *http.Request, ac *Acct) {
 			what = "playbook reset to the defaults"
 		}
 		ac.st.Append("config", fmt.Sprintf("%s (v%d): %s — applies at the next cycle", what, next.Version, strings.Join(ch, "; ")), map[string]any{"changes": ch, "playbook": next})
+		if cur.Knobs.Activity() != next.Knobs.Activity() { // the activity level: the job queue follows at once (volume.go)
+			ac.cadenceNow()
+		}
 	default:
 		jsonErr(w, 405, "GET or PUT")
 		return
