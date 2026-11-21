@@ -50,20 +50,6 @@ func (s *server) brainExtra(w http.ResponseWriter, r *http.Request, p string) bo
 	ac.mu.RLock()
 	id := ac.id // never empty, even before the first sync (the brain keys its files by it)
 	ac.mu.RUnlock()
-	eb.ServeBrain(w, r, id, func() model.CycleInput {
-		a.mu.RLock()
-		shopSnap, research, learnings := a.shopSnap, a.research, a.learnings
-		a.mu.RUnlock()
-		ac.mu.RLock()
-		in := model.CycleInput{Now: a.now(), Limits: ac.settings.Limits, Account: ac.accountRef(), Tree: cloneTree(ac.tree), Shop: shopSnap, Research: research, Links: ac.settings.Links, Learnings: learnings,
-			Audiences: append([]model.Audience(nil), ac.audiences...)}
-		ac.mu.RUnlock()
-		fshop, pb, _ := ac.filteredShop(shopSnap)
-		in.Shop, in.Playbook, in.JobNotes = fshop, &pb, ac.jobNotes()
-		in.Metrics, in.Creatives = ac.metricRows(), ac.creatives.all()
-		in.History = ac.st.Recent(200, "execution", "check", "cycle", "kill", "alert", "safety")
-		in.LongHistory, in.Creatives37 = ac.longHistory()
-		return in
-	})
+	eb.ServeBrain(w, r, id, ac.brainInput) // the same input the cloud briefs use (exchange_wire.go)
 	return true
 }

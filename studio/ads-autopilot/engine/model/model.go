@@ -348,6 +348,7 @@ type Creative struct {
 	MetaID      string    `json:"meta_creative_id,omitempty"`
 	Used        bool      `json:"used"`
 	Approved    bool      `json:"approved,omitempty"` // the owner said "Run it" (made with Claude): the next cycle tests it first
+	Origin      string    `json:"origin,omitempty"`   // "cloud_max": made by the scheduled cloud task on the owner's Max plan (exchange_wire.go)
 }
 
 // ── the audit log ──

@@ -119,7 +119,7 @@ func (a *App) warmUp(ctx context.Context, reason string) bool {
 	}
 	a.warm.st.Running, a.warm.st.Reason, a.warm.st.Started, a.warm.st.Offline, a.warm.st.RetryAt = true, reason, a.now(), false, time.Time{}
 	a.warm.st.Runs++
-	a.warm.st.Steps = []warmStep{{ID: "connections", State: "waiting"}, {ID: "sync", State: "waiting"}, {ID: "research", State: "waiting"}, {ID: "cycle", State: "waiting"}}
+	a.warm.st.Steps = []warmStep{{ID: "connections", State: "waiting"}, {ID: "sync", State: "waiting"}, {ID: "research", State: "waiting"}, {ID: "cycle", State: "waiting"}, {ID: "cloud", State: "waiting"}}
 	a.warm.mu.Unlock()
 	a.warmPublish()
 	a.st.Append("warmup", "refresh started ("+reason+")", map[string]any{"reason": reason})
@@ -153,7 +153,7 @@ func (a *App) warmUp(ctx context.Context, reason string) bool {
 		a.warm.st.Offline = true
 		a.warm.mu.Unlock()
 		a.warmSet("connections", "offline", "Meta did not answer (no internet?). Trying again in "+d.Round(time.Second).String()+".")
-		for _, s := range []string{"sync", "research", "cycle"} {
+		for _, s := range []string{"sync", "research", "cycle", "cloud"} {
 			a.warmSet(s, "waiting", "waits for the internet")
 		}
 		a.st.Append("warmup", "refresh waits: Meta did not answer (no internet?); trying again in "+d.Round(time.Second).String(), map[string]any{"error": conns.Meta.Error})
@@ -267,6 +267,18 @@ func (a *App) warmUp(ctx context.Context, reason string) bool {
 			a.warmSet("cycle", "failed", strings.Join(failed, " · "))
 		} else {
 			a.warmSet("cycle", "ok", "")
+		}
+	}
+	// 5. cloud creation (exchange_wire.go): push the jobs this refresh raised, bring back what the cloud made meanwhile
+	if a.exRemote() == nil {
+		a.warmSet("cloud", "skipped", "cloud creation is not connected")
+	} else {
+		a.warmSet("cloud", "running", "")
+		if sum, err := a.exchangeSync(ctx, "warm-up"); err != nil {
+			full = false
+			a.warmSet("cloud", "failed", err.Error())
+		} else {
+			a.warmSet("cloud", "ok", fmt.Sprintf("%v ad(s) brought back, %v job(s) sent", sum["imported"], sum["pushed"]))
 		}
 	}
 	a.st.Append("warmup", fmt.Sprintf("refresh finished (%s)", map[bool]string{true: "up to date", false: "with problems: see the steps"}[full]), a.WarmState())
