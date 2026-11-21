@@ -105,7 +105,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   // 3 ─ Plan shows it
   await H(() => { const d = document.querySelector('dialog.cc[open]'); if (d) d.close(); });
   await page.goto(base + '/app/#/plan');
-  await page.waitForFunction(() => /Recent jobs|Upcoming/.test(document.body.innerText), null, { timeout: 20000 }).catch(() => {});
+  await page.waitForFunction(() => /Run your \d+ ad/.test(document.body.textContent), null, { timeout: 30000 }).catch(() => {}); // the job list loads after the page
   await H(() => document.querySelectorAll('details').forEach((d) => { d.open = true; }));
   const planTxt = await H(() => { const e = [...document.querySelectorAll('.list > div, [data-job]')].find((x) => /Run your \d+ ad/.test(x.textContent)); return e ? e.textContent : ''; });
   if (!planTxt) console.log('PLAN', await H(() => [...document.querySelectorAll('details')].map((d) => d.textContent.slice(0, 600)).join(' || ')));

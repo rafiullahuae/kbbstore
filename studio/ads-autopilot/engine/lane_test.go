@@ -339,7 +339,7 @@ func TestStarterNeededGuards(t *testing.T) {
 	if ok, w := ac.starterNeeded(idle, nil, env); !ok {
 		t.Fatalf("an idle account (only the owner's campaign running) did not start: %s", w)
 	}
-	ac.starter = StarterState{State: "launched", At: now.Add(-48 * time.Hour)}
+	ac.starter = StarterState{State: "launched", At: now.Add(-48 * time.Hour), AdsOn: true} // its ads were switched on (he may have paused them since)
 	if ok, _ := ac.starterNeeded(idle, nil, env); ok {
 		t.Fatal("a second starter 2 days after the first")
 	}
@@ -389,5 +389,50 @@ func TestOwnersBudgetsDoNotCount(t *testing.T) {
 	out, _ := ac.Cycle(context.Background(), model.AutopilotAuto)
 	if out["starter"] == nil || len(objStatus(m, "campaigns", "KAA:")) == 0 {
 		t.Fatalf("the owner's own budget still blocked the first launch: %+v", ac.starter)
+	}
+}
+
+// The owner, 22 Nov: the first launch stopped part-way ("context deadline exceeded") after its campaign was made;
+// it was recorded "launched", every later cycle skipped it for 7 days, and no ad ever reached Ads Manager. His
+// account exactly: the app's campaign PAUSED, its ad set made, no ad switched on, AED 0 spent, record "launched".
+//
+//	1  starterNeeded → true (build again). MUTATION: drop the ActiveAds condition → false, red.
+//	2  leftoverStarters → that campaign archived first (never two). Anything that spent or has a live ad: kept.
+//	3  noteStarter: a run whose campaign was made but no ad switched on is "failed", not "launched".
+func TestStoppedFirstLaunchIsBuiltAgain(t *testing.T) {
+	ac, _ := testApp(t)
+	now := time.Now()
+	half := model.Campaign{ID: "c1", Name: "KAA: Prospecting · Advantage+ sales", Managed: true, Status: "PAUSED", EffectiveStatus: "PAUSED", DailyBudgetAED: 770,
+		AdSets: []model.AdSet{{ID: "s1", CampaignID: "c1", Status: "ACTIVE", EffectiveStatus: "IN_PROCESS", Ads: []model.Ad{}}}}
+	ran := model.Campaign{ID: "c2", Name: "KAA: Retargeting", Managed: true, Status: "PAUSED", EffectiveStatus: "PAUSED",
+		AdSets: []model.AdSet{{ID: "s2", CampaignID: "c2", Status: "ACTIVE", Ads: []model.Ad{{ID: "a2", Status: "PAUSED"}}}}}
+	in := model.CycleInput{Now: now, Tree: []model.Campaign{half, ran}, Metrics: []model.MetricRow{{Date: now.Format("2006-01-02"), Level: "campaign", ObjectID: "c2", SpendAED: 40}}}
+	ac.mu.Lock()
+	ac.starter = StarterState{State: "launched", At: now.Add(-time.Hour)}
+	ac.mu.Unlock()
+	env := ac.env(model.AutopilotAuto)
+	env.Tree = in.Tree
+	// c2 spent this week, so step 1 is checked on c1 alone
+	in1 := in
+	in1.Tree, in1.Metrics = []model.Campaign{half}, nil
+	env.Tree = in1.Tree
+	if ok, why := ac.starterNeeded(in1, nil, env); !ok {
+		t.Fatalf("a launch with no live ad must be built again, got %q", why)
+	}
+	env.Tree = in.Tree
+	lo := leftoverStarters(in, env, nil)
+	if len(lo) != 1 || lo[0].Target != "c1" || lo[0].Kind != model.KindArchive {
+		t.Fatalf("leftovers %+v, want only c1 archived (c2 spent: kept)", lo)
+	}
+	props := []model.Proposal{{ID: "starter-x-sales", Kind: model.KindCreateCampaign}, {ID: "starter-x-ad-1", Kind: model.KindCreateAd}}
+	res := []executor.Result{{ProposalID: "starter-x-sales", Status: "done"}, {ProposalID: "starter-x-ad-1", Status: "failed", Error: "context deadline exceeded"}}
+	ac.noteStarter(props, res, model.AutopilotAuto, "test")
+	if ac.starter.State != "failed" {
+		t.Fatalf("campaign made, no ad on: %q, want failed", ac.starter.State)
+	}
+	res[1] = executor.Result{ProposalID: "starter-x-ad-1", Status: "done", Steps: []string{"created PAUSED", "activated ad 9"}}
+	ac.noteStarter(props, res, model.AutopilotAuto, "test")
+	if ac.starter.State != "launched" {
+		t.Fatalf("an ad switched on: %q, want launched", ac.starter.State)
 	}
 }

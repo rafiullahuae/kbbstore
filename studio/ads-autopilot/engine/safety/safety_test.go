@@ -106,8 +106,8 @@ func TestEnsureIsIdempotent(t *testing.T) {
 	if got := capWrites(m); len(got) != 1 || got[0] != "17345.00" {
 		t.Fatalf("spend_cap writes %v (Meta takes standard units: 17345.00)", got)
 	}
-	if len(m.Rules()) != 5 { // the three CPA rules + daily limit + monthly limit (22 Nov)
-		t.Fatalf("%d rules, want 5", len(m.Rules()))
+	if len(m.Rules()) != 4 { // the three CPA rules + daily limit (no THIS_MONTH trigger rule: Meta refuses it)
+		t.Fatalf("%d rules, want 4", len(m.Rules()))
 	}
 	before := len(m.Writes())
 	rep2, err := n.Ensure(context.Background(), in)
@@ -183,7 +183,7 @@ func TestRulesFollowLimits(t *testing.T) {
 	for _, r := range m.Rules() {
 		names[r["name"].(string)]++
 	}
-	if names["KAA: daily limit"] != 1 || names["KAA: monthly limit"] != 1 || names["My own rule"] != 1 || len(names) != 3 {
+	if names["KAA: daily limit"] != 1 || names["KAA: monthly limit"] != 0 || names["My own rule"] != 1 || len(names) != 2 {
 		t.Fatalf("rules after: %v (report %+v)", names, rep.Rules)
 	}
 	for _, r := range m.Rules() {
@@ -225,5 +225,22 @@ func TestAccountLimitAddsTheOwnersBudgets(t *testing.T) {
 	}
 	if got := capWrites(m); len(got) != 1 || got[0] != "18245.00" {
 		t.Fatalf("spend_cap writes %v", got)
+	}
+}
+
+// Meta's TRIGGER rules take TODAY presets only (META-FACTS §7): every trigger rule the app writes uses TODAY, and
+// every rule is limited to the app's own "KAA:" objects (the owner's campaigns are never in scope).
+func TestRulesAreValidAndOnlyOurs(t *testing.T) {
+	l := lim()
+	rules, _ := DesiredRules(l, nil)
+	for _, r := range rules {
+		b, _ := json.Marshal(r.Evaluation)
+		s := string(b)
+		if strings.Contains(s, `"TRIGGER"`) && !strings.Contains(s, `"TODAY"`) {
+			t.Errorf("%s: a trigger rule must use TODAY: %s", r.Name, s)
+		}
+		if !strings.Contains(s, `"KAA:"`) {
+			t.Errorf("%s: not limited to the app's own objects: %s", r.Name, s)
+		}
 	}
 }

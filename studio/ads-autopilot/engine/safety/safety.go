@@ -377,12 +377,9 @@ func DesiredRules(l model.Limits, tree []model.Campaign) ([]Rule, []string) {
 			nRun = 1
 		}
 		per := fils(l.DailyAED / float64(nRun))
-		if l.MonthlyAED > 0 { // the monthly limit, held on Meta now that the account cap is not the app's (22 Nov)
-			out = append(out, Rule{Name: "KAA: monthly limit", Execution: pause, Evaluation: map[string]any{
-				"evaluation_type": "TRIGGER",
-				"trigger":         map[string]any{"type": "STATS_CHANGE", "field": "spent", "operator": "GREATER_THAN", "value": fils(l.MonthlyAED / float64(nRun))},
-				"filters":         []any{f("entity_type", "EQUAL", "CAMPAIGN"), f("name", "CONTAIN", meta.ManagedPrefix), f("time_preset", "EQUAL", "THIS_MONTH")}}})
-		}
+		// (no "monthly" TRIGGER rule: Meta's trigger rules take TODAY presets only, META-FACTS §7 — 0.6.5 added one
+		// with THIS_MONTH and Meta can refuse it. The month is held by the account spending limit above and by the
+		// app's own budget pacing.)
 		out = append(out, Rule{Name: "KAA: daily limit", Execution: pause, Evaluation: map[string]any{
 			"evaluation_type": "TRIGGER",
 			"trigger":         map[string]any{"type": "STATS_CHANGE", "field": "spent", "operator": "GREATER_THAN", "value": per},

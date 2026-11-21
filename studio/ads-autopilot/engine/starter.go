@@ -36,6 +36,7 @@ type StarterState struct {
 	At    time.Time     `json:"at"`
 	Why   string        `json:"why,omitempty"`
 	Items []PendingItem `json:"proposals,omitempty"`
+	AdsOn bool          `json:"ads_on,omitempty"` // an ad of the launch was switched on at Meta (0.6.8)
 }
 
 const starterShare = 0.7 // of the room under the limits; the rest stays free for scaling winners
@@ -86,7 +87,10 @@ func (ac *Acct) starterNeeded(in model.CycleInput, brainProps []model.Proposal, 
 	ac.mu.RLock()
 	prev := ac.starter
 	ac.mu.RUnlock()
-	if prev.State == "launched" && env.Now.Sub(prev.At) < 7*24*time.Hour {
+	// "launched" holds for 7 days when an ad of it was really switched on (AdsOn, 0.6.8) — even if he paused it
+	// since. A record from 0.6.7 and before (launched as soon as its CAMPAIGN was made, 22 Nov) holds only while
+	// an app ad is live: the owner's stopped launch, with no ad ever on, is built again, not waited out.
+	if prev.State == "launched" && env.Now.Sub(prev.At) < 7*24*time.Hour && (prev.AdsOn || executor.ActiveAds(in.Tree) > 0) {
 		return false, "a starter set was launched less than 7 days ago"
 	}
 	return true, ""
@@ -639,6 +643,9 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 			model.Proposal{ID: id("ad-cat"), Kind: model.KindCreateAd, Target: "tmp:" + tag + "-catad",
 				Params: map[string]any{"name": "Retargeting AR · catalog", "adset_id": "tmp:" + tag + "-catset", "creative_id": "tmp:" + tag + "-catcr"}, Why: "The retargeting ad.", Confidence: 0.7})
 	}
+	// a first launch that stopped part-way (a campaign made, its ads never on) leaves an empty paused campaign:
+	// archived before the new one is built, so the account never holds two (22 Nov, "context deadline exceeded")
+	ps = append(leftoverStarters(in, env, ps), ps...)
 	return ps, fmt.Sprintf("funnel build (%s tier): %d Arabic + %d English ads in %d prospecting ad set(s), AED %.0f/day prospecting%s%s", fb.Tier, nAR, nEN,
 		map[bool]int{true: 2, false: 1}[split], fb.Prospecting,
 		map[bool]string{true: fmt.Sprintf(" (existing customers capped at AED %.0f)", fb.ExistingCap), false: ""}[fb.ExistingCap > 0],
@@ -713,7 +720,10 @@ func (ac *Acct) noteStarter(props []model.Proposal, results []executor.Result, m
 			r := r
 			it.Status, it.Result = r.Status, &r
 		}
-		if p.Kind == model.KindCreateCampaign && (it.Status == "done" || it.Status == "duplicate") {
+		// launched = an ad of it is ON at Meta, not merely its campaign made: a launch that stopped part-way (the
+		// owner's 22 Nov cycle hit "context deadline exceeded" after the campaign) is "failed" and retried at the
+		// next cycle, never "launched" and left alone for 7 days with no ads
+		if p.Kind == model.KindCreateAd && (it.Status == "done" || it.Status == "duplicate") && it.Result != nil && adSwitchedOn(it.Result.Steps) {
 			launched = true
 		}
 		s.Items = append(s.Items, it)
@@ -723,10 +733,52 @@ func (ac *Acct) noteStarter(props []model.Proposal, results []executor.Result, m
 	}
 	if mode == model.AutopilotAuto {
 		s.State = map[bool]string{true: "launched", false: "failed"}[launched]
+		s.AdsOn = launched
 	}
 	ac.mu.Lock()
 	ac.starter, ac.stateJSON = s, nil
 	ac.mu.Unlock()
 	_ = ac.st.Save("starter", s)
 	ac.st.Append("starter", fmt.Sprintf("starter (%s): %s", s.State, why), s)
+}
+
+// adSwitchedOn: the executor's steps of a create_ad say the ad itself was activated.
+func adSwitchedOn(steps []string) bool {
+	for _, s := range steps {
+		if strings.HasPrefix(s, "activated ad ") {
+			return true
+		}
+	}
+	return false
+}
+
+// leftoverStarters: archive proposals for the app's campaigns a stopped first launch left behind — PAUSED, no ad
+// switched on, never spent a fils. Anything that ever ran, or that has a live ad, is left alone.
+func leftoverStarters(in model.CycleInput, env executor.Env, building []model.Proposal) []model.Proposal {
+	spent := map[string]bool{}
+	for _, r := range in.Metrics {
+		if r.Level == "campaign" && r.SpendAED > 0 {
+			spent[r.ObjectID] = true
+		}
+	}
+	var out []model.Proposal
+	for _, c := range in.Tree {
+		if !c.Managed || c.Status != "PAUSED" || spent[c.ID] {
+			continue
+		}
+		live := false
+		for _, s := range c.AdSets {
+			for _, a := range s.Ads {
+				if a.Status == "ACTIVE" {
+					live = true
+				}
+			}
+		}
+		if live {
+			continue
+		}
+		out = append(out, model.Proposal{ID: "starter-" + env.Now.Format("20060102") + "-leftover-" + c.ID, Kind: model.KindArchive, Target: c.ID, Params: map[string]any{},
+			Why: "An earlier first launch stopped part-way and left this campaign empty and paused; it is archived and the first launch is built again.", Confidence: 0.9})
+	}
+	return out
 }
