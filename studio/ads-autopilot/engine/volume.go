@@ -599,6 +599,81 @@ func (ac *Acct) jobCreative(ctx context.Context, j Job, p model.Product, lang st
 	return id, nil
 }
 
+// slotsFor: room for a job's n new ads. A batch / test rotates under the live-ad target (roomFor); an occasion
+// package he approved goes live WHOLE under his Max active ads: the app's weakest prospecting ads make room (judged
+// ones first, never a winner, never another occasion ad), and when even that cannot fit it, nothing of it runs and it
+// waits saying the Max active ads that fits (raise: that number, for the "Raise to N" button).
+func (ac *Acct) slotsFor(in model.CycleInput, env executor.Env, j Job, n, pending int, paused map[string]bool, pid func(string) string) ([]model.Proposal, string, int) {
+	if j.Kind != "occasion" {
+		ps, why := ac.roomFor(in, env, j, n, pending, paused, pid)
+		return ps, why, 0
+	}
+	lim := env.Limits.MaxActiveAds
+	active := executor.ActiveAds(env.Tree) - len(paused) + pending
+	over := active + n - lim
+	if n == 0 || lim <= 0 || over <= 0 {
+		return nil, "", 0
+	}
+	w := ac.watchState()
+	ws := map[string]bool{}
+	for _, x := range winners(in, ac.targetCPA(in), ac.loc()) {
+		ws[x.ad] = true
+	}
+	sp, pu := map[string]float64{}, map[string]float64{}
+	for _, r := range in.Metrics {
+		if r.Level == "ad" {
+			sp[r.ObjectID] += r.SpendAED
+			pu[r.ObjectID] += r.Purchases
+		}
+	}
+	type cand struct {
+		id     string
+		judged bool
+		score  float64
+	}
+	var cs []cand
+	for _, c := range env.Tree {
+		if !c.Managed || c.Objective != "OUTCOME_SALES" || c.Status != "ACTIVE" {
+			continue
+		}
+		for _, s := range c.AdSets {
+			if s.Status != "ACTIVE" || strings.Contains(s.Name, "existing customers") {
+				continue
+			}
+			for _, a := range s.Ads {
+				if a.Status != "ACTIVE" || paused[a.ID] || ws[a.ID] || strings.Contains(a.Name, "Occasion") || (env.Ledger != nil && env.Now.Sub(env.Ledger.LastEdit(a.ID)) < 30*time.Second) {
+					continue
+				}
+				seen, ok := w.FirstSeen[a.ID]
+				score := pu[a.ID] * 1000
+				if pu[a.ID] > 0 {
+					score -= sp[a.ID] / pu[a.ID]
+				} else {
+					score -= sp[a.ID]
+				}
+				cs = append(cs, cand{a.ID, ok && env.Now.Sub(seen) >= rotateAfter, score})
+			}
+		}
+	}
+	sort.SliceStable(cs, func(i, k int) bool {
+		if cs[i].judged != cs[k].judged {
+			return cs[i].judged
+		}
+		return cs[i].score < cs[k].score
+	})
+	if len(cs) < over {
+		raise := lim + over - len(cs)
+		return nil, fmt.Sprintf("its %d ads do not fit: %d ads active, your Max active ads is %d, and only %d of the app's own prospecting ads can make room (winners are kept). Raise Max active ads to %d (Settings → Limits) and it goes live whole", n, active, lim, len(cs), raise), raise
+	}
+	var ps []model.Proposal
+	for _, c := range cs[:over] {
+		paused[c.id] = true
+		ps = append(ps, model.Proposal{ID: pid("room-" + jobPID.ReplaceAllString(c.id, "-")), Kind: model.KindPause, Target: c.id, Params: map[string]any{"level": "ad"},
+			Why: fmt.Sprintf("Makes room for the occasion package you approved (%d ads, Max active ads %d): the app's weakest prospecting ad (fewest purchases, highest cost per purchase); winners are never rotated out.", n, lim), Confidence: 0.6})
+	}
+	return ps, "", 0
+}
+
 // rotateAfter: an ad has had its first 72 h (early read) and a day of the daily rules before a batch may rotate it out.
 const rotateAfter = 96 * time.Hour
 

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"kaa/executor"
 	"kaa/model"
 )
 
@@ -234,6 +235,7 @@ func TestOccasionWaitsForApproval(t *testing.T) {
 			t.Fatalf("an occasion ad went live without approval: %v", w.Form)
 		}
 	}
+	ac.app.now = func() time.Time { return nd.AddDate(0, 0, -2).Add(time.Hour) } // he approves an hour later
 	s := testServer(ac)
 	call(t, s, "POST", "/api/jobs/"+j.ID+"/reject-ad", ac.id, map[string]any{"creative_id": j.Creatives[0]})
 	code, out := call(t, s, "POST", "/api/jobs/"+j.ID+"/approve", ac.id, map[string]any{})
@@ -246,8 +248,60 @@ func TestOccasionWaitsForApproval(t *testing.T) {
 			live++
 		}
 	}
-	if live != len(j.Creatives)-1 {
-		t.Fatalf("%d occasion ads live, want %d (one rejected)", live, len(j.Creatives)-1)
+	if active := executor.ActiveAds(ac.input().Tree); live != len(j.Creatives)-1 || active > 20 {
+		t.Fatalf("%d occasion ads live, want %d (one rejected); %d ads active (Max 20); run %v", live, len(j.Creatives)-1, active, out["run"])
+	}
+}
+
+// An approved occasion package goes live WHOLE or not at all. With Max active ads too tight even after the app's own
+// prospecting ads make room, nothing of it runs: it waits saying the limit that fits ("Raise to N"); once he raises
+// it, approving again puts every ad live inside the new limit. The defect it guards (21 Nov, occasion slots + activity
+// level merged): a 9-ad package went 8 live and 1 refused at the cap, silently. MUTATION: drop the slotsFor call in
+// runJobNow → a partial package goes live, red; return raise 0 → no "Raise to N", red.
+func TestApprovedOccasionLiveWholeOrRaiseTo(t *testing.T) {
+	ac, m := testApp(t)
+	ac.app.brain = quietBrain{}
+	ctx := context.Background()
+	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil {
+		t.Fatal(err)
+	}
+	nd := time.Date(ac.app.now().Year(), 12, 2, 10, 0, 0, 0, time.UTC)
+	if nd.Before(ac.app.now()) {
+		nd = nd.AddDate(1, 0, 0)
+	}
+	ac.app.now = func() time.Time { return nd.AddDate(0, 0, -2) }
+	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil {
+		t.Fatal(err)
+	}
+	j := jobOf(ac, "occasion")
+	if j == nil || len(j.Creatives) < 4 {
+		t.Fatalf("occasion package %+v", j)
+	}
+	ac.app.now = func() time.Time { return nd.AddDate(0, 0, -2).Add(time.Hour) }
+	occLive := func() int {
+		n := 0
+		for _, o := range m.Objects("ads") {
+			if strings.Contains(o["name"].(string), "Occasion") && o["status"] == "ACTIVE" {
+				n++
+			}
+		}
+		return n
+	}
+	active := executor.ActiveAds(ac.input().Tree)
+	ac.settings.Limits.MaxActiveAds = active // no free slot, and fewer movable ads than the package needs
+	s := testServer(ac)
+	code, out := call(t, s, "POST", "/api/jobs/"+j.ID+"/approve", ac.id, map[string]any{})
+	j2 := ac.jobByID(j.ID)
+	if code != 200 || out["run_error"] == nil || occLive() != 0 || j2.RaiseTo <= active || !strings.Contains(j2.Waiting, "Raise Max active ads to") {
+		t.Fatalf("tight cap: code %d run_error %v, %d occasion ads live, raise_to %d, waiting %q (active %d)", code, out["run_error"], occLive(), j2.RaiseTo, j2.Waiting, active)
+	}
+	ac.settings.Limits.MaxActiveAds = j2.RaiseTo // the "Raise to N" button
+	ac.app.now = func() time.Time { return nd.AddDate(0, 0, -2).Add(2 * time.Hour) }
+	if _, _, err := ac.runJobNow(ctx, j.ID); err != nil {
+		t.Fatalf("after raising to %d: %v", j2.RaiseTo, err)
+	}
+	if n, a := occLive(), executor.ActiveAds(ac.input().Tree); n != len(j.Creatives) || a > j2.RaiseTo || ac.jobByID(j.ID).RaiseTo != 0 {
+		t.Fatalf("after raising to %d: %d of %d occasion ads live, %d active", j2.RaiseTo, n, len(j.Creatives), a)
 	}
 }
 

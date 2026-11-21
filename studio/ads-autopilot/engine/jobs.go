@@ -47,6 +47,7 @@ type Job struct {
 	When          time.Time `json:"when"`
 	Status        string    `json:"status"` // planned | approved | skipped | waiting | done | failed
 	Waiting       string    `json:"waiting,omitempty"`
+	RaiseTo       int       `json:"raise_to,omitempty"` // an approved package that cannot fit under Max active ads: the limit that fits it (volume.go occasionRoom)
 	BudgetAED     float64   `json:"budget_aed,omitempty"`
 	ProductIDs    []string  `json:"product_ids"`
 	Lang          string    `json:"lang,omitempty"`
@@ -606,7 +607,7 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 		n := countKind(ps, model.KindCreateAd)
 		if why == "" {
 			var room []model.Proposal
-			room, why = ac.roomFor(in, env, *j, n, pending, paused, func(s string) string { return "job-" + jobPID.ReplaceAllString(j.ID, "-") + "-" + s })
+			room, why, j.RaiseTo = ac.slotsFor(in, env, *j, n, pending, paused, func(s string) string { return "job-" + jobPID.ReplaceAllString(j.ID, "-") + "-" + s })
 			ps = append(room, ps...) // the room first: the executor counts live ads at each create
 		}
 		if why == "" {
@@ -1023,11 +1024,17 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 		return nil, 404, errors.New("no such job")
 	}
 	ps, why := ac.materialise(ctx, in, *j, env)
+	raise := 0
+	if why == "" { // every ad of it fits, or none goes: room by rotation, else it waits and says the limit that fits (volume.go)
+		var room []model.Proposal
+		room, why, raise = ac.slotsFor(in, env, *j, countKind(ps, model.KindCreateAd), 0, map[string]bool{}, func(s string) string { return "job-" + jobPID.ReplaceAllString(id, "-") + "-" + s })
+		ps = append(room, ps...)
+	}
 	if why != "" {
 		js := ac.jobSet()
 		for i := range js.Jobs {
 			if js.Jobs[i].ID == id {
-				js.Jobs[i].Waiting = why
+				js.Jobs[i].Waiting, js.Jobs[i].RaiseTo = why, raise
 				js.Jobs[i].logf(ac.app.now(), "waiting: %s", why)
 			}
 		}
@@ -1037,6 +1044,7 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 	js := ac.jobSet()
 	for i := range js.Jobs {
 		if js.Jobs[i].ID == id {
+			js.Jobs[i].RaiseTo = 0
 			js.Jobs[i].ProposalIDs = nil
 			for _, p := range ps {
 				js.Jobs[i].ProposalIDs = append(js.Jobs[i].ProposalIDs, p.ID)

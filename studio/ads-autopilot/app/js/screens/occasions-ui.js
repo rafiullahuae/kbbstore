@@ -44,6 +44,7 @@ export function occasionsCard() {
     return `<div class="card" style="background:var(--surface);margin-bottom:10px" data-pkg="${esc(j.id)}"><header><h3>${esc(tt(j.title, j.title_ar))}</h3><span class="chip ${j.status === 'approved' ? 'acc' : 'warn'}">${esc(j.status)}</span></header>
       <p class="small">${esc(oc.start || '')} → ${esc(oc.end || '')}${oc.estimated ? ` <span class="muted">(${esc(tt('estimated date: it follows the moon sighting', 'تاريخ تقديري: يتبع رؤية الهلال'))})</span>` : ''} · ${esc(tt('goes live', 'يُنشر'))} ${esc(new Date(j.when).toLocaleDateString())} · ${esc(j.audience || '')}</p>
       <p class="small ink2">${esc(j.why || '')}</p>
+      ${j.raise_to ? `<div class="alert warn small" data-occraise-box>${esc(tt(`It waits: ${j.waiting || ''}.`, `ينتظر: إعلاناتها لا تتسع تحت الحد الأقصى للإعلانات النشطة. ارفعيه إلى ${j.raise_to} ليُنشر كاملاً.`))} <button type="button" class="small" data-occraise="${esc(j.id)}" data-n="${esc(j.raise_to)}">${esc(tt(`Raise to ${j.raise_to} and go live`, `ارفعيه إلى ${j.raise_to} وانشري`))}</button></div>` : ''}
       ${j.products_gone ? `<p class="small pk-wait">${esc(tt(j.waiting || '', 'كل منتجات هذه المهمة مستبعدة — اختاري المنتجات'))}</p>` : ''}
       ${(() => { const picks = (o.picks || {})[j.id] || (j.product_ids || []).map((id) => ({ id, title: (o.titles || {})[id] || id })); const n = Math.max(j.slots || o.slots || 5, picks.length);
         return `<div class="row" style="justify-content:space-between"><b class="small">${esc(tt(`Products ${picks.length} of ${n}`, `المنتجات ${picks.length} من ${n}`))}</b><span class="row"><button type="button" class="small" data-occfind="${esc(j.id)}" title="${esc(tt('Reads the shop again (sales, stock, new arrivals) and fills every empty slot; your pinned and kept products stay', 'يقرأ المتجر من جديد (المبيعات، المخزون، الجديد) ويملأ كل خانة فارغة؛ منتجاتك المثبتة والمحتفظ بها تبقى'))}">${esc(tt('Find products', 'ابحث عن منتجات'))}</button><button type="button" class="ghost small" data-occpick="${esc(j.id)}">${esc(tt('Change products', 'تغيير المنتجات'))}</button></span></div>${slotCards(j, picks, n)}`; })()}
@@ -79,6 +80,15 @@ export function wireOccasions(el, rerender) {
   el.querySelectorAll('[data-occfind]').forEach((b) => { b.onclick = async () => {
     b.disabled = true; b.textContent = tt('Finding…', 'جارٍ البحث…');
     try { const r = await api(`/api/jobs/${encodeURIComponent(b.dataset.occfind)}/find-products`, { method: 'POST', body: {} }); dropCatalog(); await after(changed(r)); } catch (e) { b.disabled = false; toast(e.message); }
+  }; });
+  // an approved package that does not fit under Max active ads: raise it to the number that fits, then run it whole
+  el.querySelectorAll('[data-occraise]').forEach((b) => { b.onclick = async () => {
+    b.disabled = true;
+    try {
+      await api('/api/limits', { method: 'PUT', body: { max_active_ads: Number(b.dataset.n) } });
+      const r = await api(`/api/jobs/${encodeURIComponent(b.dataset.occraise)}/approve`, { method: 'POST', body: {} });
+      await after(r.run_error ? r.run_error : tt(`Max active ads is ${b.dataset.n}: the package is live.`, `الحد الأقصى ${b.dataset.n}: الحزمة منشورة.`));
+    } catch (e) { b.disabled = false; toast(e.message); }
   }; });
   el.querySelectorAll('[data-occok]').forEach((b) => { b.onclick = async () => {
     b.disabled = true;

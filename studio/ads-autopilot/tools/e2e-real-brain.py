@@ -357,6 +357,11 @@ def simulate_10_days(base):
     s, lg0 = call(base, "GET", "/api/log?limit=3000")
     seq0 = max([e["seq"] for e in lg0["entries"]] or [0])
     rows, breach, plans = [], [], set()
+    # the limit is lowered (30 -> 14) under ads already live: the app may not ADD ads above it (active ads above the
+    # limit may only fall), and it never pauses his live ads just to meet a lowered limit
+    s, st0 = call(base, "GET", "/api/state")
+    prev = sum(1 for c in st0["campaigns"] for a_ in c["adsets"] for ad in a_["ads"] if ad["status"] == "ACTIVE" and a_["status"] == "ACTIVE" and c["status"] == "ACTIVE")
+    start = prev
     for day in range(10):
         if day:
             call(base, "POST", "/api/test/clock", {"advance_hours": 24})
@@ -378,8 +383,9 @@ def simulate_10_days(base):
         fills = [j for j in js["jobs"] if j["id"].startswith("vol-%s-fill" % date) and j["status"] == "done"]
         waiting = [j["waiting"] for j in js["jobs"] if j["id"].startswith("vol-%s" % date) and j["status"] in ("planned", "approved") and j.get("waiting")]
         rows.append((dp.get("date"), v["live"], v["live_min"], v["live_max"], active, round(committed), len(batch), len(fills), len(waiting)))
-        if active > MAXADS or committed > DAILY + 0.01:
+        if active > max(MAXADS, prev) or committed > DAILY + 0.01:
             breach.append((dp.get("date"), active, committed))
+        prev = active
         if waiting:
             print("       %s waiting: %s" % (dp.get("date"), sorted(set(waiting))[:3]))
     if os.environ.get("KAA_SIM_DEBUG"):
@@ -398,7 +404,7 @@ def simulate_10_days(base):
     batches = [r for r in rows if r[6] > 0]
     in_range = [r for r in rows[2:] if r[2] <= r[1] <= r[3]]
     check(len(plans) == 10, "a daily plan every day: %d distinct dates" % len(plans))
-    check(not breach, "no limit breached in 10 days (max active ads %d, AED %d/day): %s" % (MAXADS, DAILY, breach or "none"))
+    check(not breach, "no limit breached in 10 days (max active ads %d, lowered from 30 with %d live; AED %d/day): %s; active per day %s" % (MAXADS, start, DAILY, breach or "none", [r[4] for r in rows]))
     check(len([r for r in batches if r[6] >= 3]) >= 2, "twice-weekly batches: %d batch days (%s), %d new ads in batches, %d refills"
           % (len(batches), ", ".join("%s: %d" % (r[0], r[6]) for r in batches), sum(r[6] for r in rows), sum(r[7] for r in rows)))
     check(len(in_range) >= 6, "live ads inside the target on %d of the last 8 days (%s)" % (len(in_range), [r[1] for r in rows]))
