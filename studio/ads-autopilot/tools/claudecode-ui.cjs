@@ -94,8 +94,13 @@ const check = (ok, name, info = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  $
   const ld = await page.$eval('[data-local-done]', (e) => e.textContent.replace(/\s+/g, ' ')).catch(() => '');
   check(/Made by Claude Code on this Mac/.test(ld), 'Approvals: "Made by Claude Code on this Mac"', ld.slice(0, 100));
   await shot(page, 'approvals-done-1280');
-  const runs = fs.readFileSync(runLog, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((r) => r.argv.includes('--mcp-config'));
+  const runs = fs.readFileSync(runLog, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((r) => r.argv && r.argv.includes('--mcp-config'));
   const r0 = runs[0] || { argv: [], env: [] };
+  // the full round trip through the REAL connector: create_ad_set → save_to_library → run_it (session named the
+  // way a model may name it, launch_now asked for and refused by the unattended run)
+  const ri = fs.readFileSync(runLog, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).find((r) => r.run_it) || {};
+  const appr = ((ri.run_it || {}).approved || []);
+  check(ri.saved && ri.saved.length > 0 && appr.length === ri.saved.length && !(ri.run_it || {}).proposals && /next cycle/.test((ri.run_it || {}).note || ''), 'create_ad_set → save_to_library → run_it round trip; run_it approves, never launches', `${(ri.saved || []).length} saved, ${appr.length} approved`);
   const allowed = r0.argv[r0.argv.indexOf('--allowedTools') + 1] || '';
   check(runs.length === 1 && !r0.env.includes('ANTHROPIC_API_KEY'), 'one run; no ANTHROPIC_API_KEY in its environment', `${runs.length} run(s)`);
   check(allowed.split(',').length === 7 && allowed.split(',').every((x) => x.startsWith('mcp__kbb__')) && r0.argv.includes('dontAsk') && r0.argv.includes('--strict-mcp-config'), 'only the KBB tools, strict MCP, dontAsk', allowed.slice(0, 60) + '…');
@@ -150,7 +155,7 @@ const check = (ok, name, info = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  $
   await page.$eval('[data-ccode]', (e) => e.scrollIntoView());
   await shot(page, 'settings-ar-390');
   await browser.close();
-  const runs2 = fs.readFileSync(runLog, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((r) => r.argv.includes('--mcp-config'));
+  const runs2 = fs.readFileSync(runLog, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((r) => r.argv && r.argv.includes('--mcp-config'));
   check(runs2.length === 2, 'one run per request (two requests, two runs)', `${runs2.length}`);
   check(!errors.length, 'no console errors', errors.slice(0, 3).join(' | '));
   check(!failed.length, 'no failed requests', failed.slice(0, 3).join(' | '));

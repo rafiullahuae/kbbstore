@@ -534,6 +534,28 @@ func creationNotices(t *testing.T, eb *brain.Engine, ac *Acct) []brain.Notice {
 	return ns
 }
 
+// The runner's allowed tools are EXACTLY the connector's tools (renaming one in mcp.go without the runner would make
+// every auto-run refuse that tool under dontAsk), and the unattended prompt names the steps it must call.
+// MUTATION: rename "save_to_library" in ccTools → red.
+func TestClaudeCodeToolsMatchTheConnector(t *testing.T) {
+	var names []string
+	for _, x := range mcpTools() {
+		names = append(names, x.(map[string]any)["name"].(string))
+	}
+	if strings.Join(names, ",") != strings.Join(ccTools, ",") {
+		t.Fatalf("connector %v, runner %v", names, ccTools)
+	}
+	p := ccPrompt(brain.CreationRequest{ID: "cq1", Count: 2, Brief: "brief"}, true)
+	for _, step := range []string{"get_brief", "create_ad_set ONCE with request_id cq1", "save_to_library with the session_id", "revise once", "run_it with the session_id and launch_now false"} {
+		if !strings.Contains(p, step) {
+			t.Fatalf("prompt lacks %q", step)
+		}
+	}
+	if strings.Contains(ccPrompt(brain.CreationRequest{ID: "cq1"}, false), "Call run_it") {
+		t.Fatal("run_it asked for outside Auto")
+	}
+}
+
 // Where the CLI is found: PATH first, then the documented install folders (~/.local/bin from the native installer);
 // nothing → "". A -mock engine never finds a real CLI (only KAA_CLAUDE_BIN), so a self-test can never spend the
 // owner's Max usage. MUTATION: drop the mockURL check → the mock finds the PATH one, red.

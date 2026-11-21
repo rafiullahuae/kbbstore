@@ -36,6 +36,10 @@ const tool = async (name, args) => { const m = await rpc('tools/call', { name, a
   const made = await tool('create_ad_set', { request_id: rid, prompt: 'auto-run', ideas: [{ product_ids: (req.product_ids || []).slice(0, 1), angle: req.angle || 'glow', hook: 'glass skin', template: 'glow', formats: ['1:1', '4:5'], show_price: true, ar: set('ar'), en: set('en') }] }); turns++;
   const saved = await tool('save_to_library', { session_id: made.session_id }); turns++;
   const n = (saved.saved_creative_ids || []).length, held = (saved.held_back_by_quality_check || []).length;
+  // run_it the way a model may name the session (sessionId, 0.5.2's sessionArg) and asking for launch_now: an
+  // unattended run must never launch (KAA_MCP_NO_LAUNCH), so the answer only approves
+  const ran = await tool('run_it', { sessionId: made.session_id, launch_now: true }); turns++;
+  if (process.env.FAKE_CC_LOG) fs.appendFileSync(process.env.FAKE_CC_LOG, JSON.stringify({ run_it: ran, saved: saved.saved_creative_ids || [] }) + '\n');
   out({ type: 'result', subtype: 'success', is_error: false, result: `Saved ${n} ads, ${held} held back.`, num_turns: turns });
   mcp.stdin.end();
   process.exit(0);
