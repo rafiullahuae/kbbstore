@@ -1067,6 +1067,7 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 	if err := ac.Sync(ctx); err != nil {
 		return nil, 502, fmt.Errorf("cannot read the account before acting: %w", err)
 	}
+	ac.syncIdentity(ctx) // every ad is made with the Page / Instagram of his own ads (identity.go)
 	in := ac.input()
 	env := ac.env(model.AutopilotAuto)
 	j := ac.jobByID(id)

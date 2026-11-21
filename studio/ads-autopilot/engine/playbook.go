@@ -7,6 +7,7 @@ package main
 // launched. Changes apply at the next cycle and are logged ("config"), with the old and new value.
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -39,7 +40,11 @@ func (ac *Acct) loadPlaybook() {
 func (ac *Acct) filteredShop(s model.ShopSnapshot) (model.ShopSnapshot, model.Playbook, []model.Excluded) {
 	pb := ac.playbook()
 	f, ex := pb.Filter(s)
-	return f, pb, ex
+	// only the products on his source pages (the super-sale page by default, 22 Nov), whatever else allows them
+	pages := pb.Sources()
+	on, known := ac.app.onSourcePages(pages)
+	f, ex2 := model.OnPages(f, on, known, pages)
+	return f, pb, append(ex, ex2...)
 }
 
 // diffPlaybook: the owner-readable list of what changed (for the log).
@@ -85,6 +90,10 @@ func (s *server) playbookAPI(w http.ResponseWriter, r *http.Request, ac *Acct) {
 			next = model.DefaultPlaybook()
 		}
 		next = next.Normalize()
+		next.SourcePages = cleanPages(next.SourcePages) // shop pages only; empty = the super-sale page
+		if strings.Join(next.Sources(), "|") != strings.Join(cur.Sources(), "|") {
+			go s.app.refreshSourcePages(context.Background()) // read the new pages now, not at the next hour
+		}
 		next.UpdatedAt, next.Version = s.app.now().UTC(), cur.Version+1
 		ch := diffPlaybook(cur, next)
 		ac.mu.Lock()
@@ -112,8 +121,18 @@ func (s *server) playbookAPI(w http.ResponseWriter, r *http.Request, ac *Acct) {
 	shop := a.shopSnap
 	a.mu.RUnlock()
 	_, pb, ex := ac.filteredShop(shop)
-	writeJSON(w, map[string]any{"account": ac.id, "playbook": pb, "defaults": model.DefaultPlaybook().Normalize(), "excluded": ex,
-		"products": len(shop.Products), "allowed": len(shop.Products) - len(ex)})
+	var shown []model.Excluded // his own avoid / stock / margin reasons in full; "not on the page" only counted
+	notOn := 0
+	for _, x := range ex {
+		if strings.HasPrefix(x.Reason, "not on ") || strings.Contains(x.Reason, "could not be read yet") {
+			notOn++
+			continue
+		}
+		shown = append(shown, x)
+	}
+	writeJSON(w, map[string]any{"account": ac.id, "playbook": pb, "defaults": model.DefaultPlaybook().Normalize(), "excluded": shown,
+		"products": len(shop.Products), "allowed": len(shop.Products) - len(ex), "not_on_pages": notOn,
+		"source_pages": s.app.sourcePagesView(pb.Sources())})
 }
 
 // ── first seen: the newness signal ──

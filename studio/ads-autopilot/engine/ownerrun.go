@@ -39,10 +39,10 @@ func liveMeta(tree []model.Campaign) map[string]bool {
 	return m
 }
 
-func ownerRunID(ids []string) string {
+func ownerRunID(ids []string, page string) string {
 	s := append([]string(nil), ids...)
 	sort.Strings(s)
-	h := sha256.Sum256([]byte(strings.Join(s, ",")))
+	h := sha256.Sum256([]byte(strings.Join(s, ",") + "|" + page)) // a new Page = a new run (the old ads were wrong)
 	return "run-" + hex.EncodeToString(h[:])[:10]
 }
 
@@ -55,7 +55,10 @@ func (ac *Acct) queueOwnerRun(ids []string, why string) string {
 		ids = ids[:12]
 	}
 	now := ac.app.now()
-	id := ownerRunID(ids)
+	ac.mu.RLock()
+	page := ac.settings.Links.PageID
+	ac.mu.RUnlock()
+	id := ownerRunID(ids, page)
 	js := ac.jobSet()
 	for _, j := range js.Jobs {
 		if j.ID == id {
@@ -120,10 +123,21 @@ func (ac *Acct) ownerRunProposals(in model.CycleInput, j Job, pid func(string) s
 func (ac *Acct) ownerBacklog(in model.CycleInput) {
 	live := liveMeta(in.Tree)
 	queued := map[string]bool{}
+	lib := map[string]model.Creative{}
+	for _, c := range ac.creatives.all() {
+		lib[c.ID] = c
+	}
 	for _, j := range ac.jobSet().Jobs {
-		if j.Kind == "owner_run" || j.Kind == "occasion" {
+		if j.Kind == "occasion" || (j.Kind == "owner_run" && open(j.Status)) {
 			for _, c := range j.Creatives {
 				queued[c] = true
+			}
+		}
+		if j.Kind == "owner_run" && !open(j.Status) { // ran, but its ad is gone (deleted, or made with the old Page)
+			for _, c := range j.Creatives {
+				if x := lib[c]; x.MetaID != "" && live[x.MetaID] {
+					queued[c] = true
+				}
 			}
 		}
 	}

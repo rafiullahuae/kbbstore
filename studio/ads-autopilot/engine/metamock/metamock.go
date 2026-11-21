@@ -123,7 +123,22 @@ func (s *Server) Seed() {
 	a := s.id()
 	s.adsets = append(s.adsets, obj{"id": a, "campaign_id": c, "name": "Owner – UAE", "status": "ACTIVE", "effective_status": "ACTIVE",
 		"optimization_goal": "OFFSITE_CONVERSIONS", "targeting": obj{"geo_locations": obj{"countries": []string{"AE"}}}})
-	s.ads = append(s.ads, obj{"id": s.id(), "adset_id": a, "campaign_id": c, "name": "Owner – ad 1", "status": "ACTIVE", "effective_status": "ACTIVE", "creative": obj{"id": s.id()}})
+	cr := s.id()
+	s.creatives[cr] = obj{"id": cr, "actor_id": OwnerPageID, "object_story_spec": obj{"page_id": OwnerPageID, "instagram_user_id": OwnerInstagramID}}
+	s.ads = append(s.ads, obj{"id": s.id(), "adset_id": a, "campaign_id": c, "name": "Owner – ad 1", "status": "ACTIVE", "effective_status": "ACTIVE", "creative": obj{"id": cr}})
+}
+
+// OwnerPageID / OwnerInstagramID: the Page and Instagram account the owner's own seeded ad runs from (the app takes
+// its identity from them, engine/identity.go). The same as the engine's MockLinks, so other checks see no change.
+var OwnerPageID, OwnerInstagramID = "200000000001", "500000000001"
+
+// SetCreativeIdentity: the Page / Instagram an existing creative shows (tests).
+func (s *Server) SetCreativeIdentity(id, page, ig string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if c, ok := s.creatives[id]; ok {
+		c["actor_id"], c["object_story_spec"] = page, obj{"page_id": page, "instagram_user_id": ig}
+	}
 }
 
 func (s *Server) id() string { s.nextID++; return strconv.FormatInt(s.nextID, 10) }

@@ -12,6 +12,7 @@ import (
 	"sort"
 	"sync"
 	"sync/atomic"
+	"testing"
 	"time"
 	_ "time/tzdata" // the account's time zone (Asia/Dubai) on any machine
 
@@ -98,10 +99,11 @@ type DailyReport struct {
 }
 
 type App struct {
-	st      *store.Store // global: config, connections, portfolio, research, learnings
-	sec     secrets.Store
-	now     func() time.Time
-	publish func(name string, v any)
+	pagesFromFeed atomic.Bool  // -mock / tests: every product of the fake feed counts as on the source pages
+	st            *store.Store // global: config, connections, portfolio, research, learnings
+	sec           secrets.Store
+	now           func() time.Time
+	publish       func(name string, v any)
 
 	mu        sync.RWMutex
 	cfg       Config
@@ -130,6 +132,9 @@ type App struct {
 
 func newApp(st *store.Store, now func() time.Time, publish func(string, any)) *App {
 	a := &App{st: st, now: now, publish: publish, accounts: map[string]*Acct{}}
+	if testing.Testing() { // the engine's own tests never read the real shop's pages
+		a.pagesFromFeed.Store(true)
+	}
 	a.sec = secrets.New(st.Dir, st.AddSecret)
 	// a saved file this version cannot read is said in Activity (store.Load keeps a copy), never read as "never set"
 	for _, x := range []struct {
@@ -439,6 +444,7 @@ func (a *App) testShop(ctx context.Context) connShop {
 	a.mu.Lock()
 	a.shopSnap = snap
 	a.mu.Unlock()
+	a.refreshSourcePages(ctx) // the products on his source pages (sourcepages.go), read with the shop
 	a.dirtyAll()
 	return c
 }

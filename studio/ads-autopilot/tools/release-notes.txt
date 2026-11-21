@@ -2,6 +2,12 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.11
+- Page & Instagram: every campaign and ad the autopilot makes now runs from the same Facebook Page and Instagram as your own ads (K-Beauty Bliss · kbeauty.bliss), read from your running ads at every cycle and before every launch. It no longer guesses from names (which put the ads on the wrong Page). Anything Meta made with the old Page is never reused. Settings → Accounts: "Page & Instagram: the same as my own ads" (on), or pick them by hand.
+- Landing page: every ad goes to the super-sale page in its language — English https://kbeautybliss.com/super-sale/, Arabic https://kbeautybliss.com/ar/super-sale/, an ad mixing Arabic and English → the English page. Settings → Accounts → "Landing page for every ad" changes it. Ads you edit by hand in Ads Manager are never touched.
+- Products: the autopilot now promotes ONLY the products on the super-sale page (every page of it, read with the shop every hour) — first launch, occasions, suggestions and what Claude is told. Settings → Accounts → "Products come only from these pages" adds more pages. If a page cannot be read, the last list is kept; never read = nothing promoted.
+- You deleted the KAA campaign: the first launch is built again at the next cycle (it no longer waits 7 days), and your Run it ads run again — all from K-Beauty Bliss.
+
 ## 0.6.10
 - Fixed: rebuilding the first launch reused the campaign it had just archived ("Ad Sets may not be added to archived Campaigns"), because both attempts that day had the same internal ids. Every attempt now has its own; what an earlier attempt left (paused, no ads, never spent) is archived first.
 - When Meta refuses ads because your Meta app is not published ("…app that is in development mode…"), the Last cycle card and an alert say exactly what to do. Until you fix it, the hourly cycles wait 6 hours instead of building and archiving an empty campaign every hour; your own Run a cycle always tries at once.

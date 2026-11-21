@@ -134,6 +134,20 @@ func (ac *Acct) cycleReport(t0 time.Time, out map[string]any, props []model.Prop
 	} else {
 		r.Steps = append(r.Steps, RunStep{Title: "Read Meta", Status: "ok", Detail: fmt.Sprintf("%d campaign(s) of yours (not counted in your limits), %d of the autopilot's with %d live ad(s)", mine, ours, live)})
 	}
+	{ // the Page / Instagram every new ad runs from
+		ac.mu.RLock()
+		l := ac.settings.Links
+		ac.mu.RUnlock()
+		how := "the same as your own ads"
+		if l.IdentityByHand {
+			how = "picked by you"
+		}
+		st := RunStep{Title: "Page & Instagram", Status: "ok", Detail: fmt.Sprintf("%s · %s (%s)", ac.assetName(l.PageID), ac.assetName(l.InstagramUserID), how)}
+		if m, ok := out["identity_changed"].(string); ok && m != "" {
+			st.Status, st.Detail = "warn", m
+		}
+		r.Steps = append(r.Steps, st)
+	}
 	if n, ok := out["stock_alerts"].(int); ok && n > 0 {
 		r.Steps = append(r.Steps, RunStep{Title: "Stock", Status: "warn", Detail: fmt.Sprintf("%d stock alert(s): see Overview alerts (ads are never paused for it)", n)})
 	}

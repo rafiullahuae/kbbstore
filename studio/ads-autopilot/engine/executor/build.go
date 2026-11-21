@@ -285,6 +285,9 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 	if l.PageID == "" {
 		return "", nil, errors.New("no Facebook Page linked (Settings → Connections → Meta)")
 	}
+	land := func(own, lang string) string { // his landing page, in the ad's language (22 Nov)
+		return l.Landing(lang, own)
+	}
 	format := str(p.Params, "format")
 	if format == "" {
 		format = "image"
@@ -319,6 +322,7 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 			return "", nil, errors.New("the creative's link must be an https:// shop page")
 		}
 		lib = &c
+		c.Link = land(c.Link, c.Lang)
 		if c.Media == "png" {
 			spec["link_data"] = map[string]any{"message": c.PrimaryText, "link": c.Link, "name": c.Headline, "image_hash": c.ImageHash, "call_to_action": ctaFor(p, c, c.Link)}
 		} else if c.Media == "" { // a shop photo by URL (the starter set before any design is rendered): link_data.picture
@@ -343,6 +347,7 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 	case "carousel": // link_data.child_attachments, 2–10 cards (META-FACTS §14)
 		var kids []map[string]any
 		var first model.Creative
+		var cardLangs []string
 		for i, raw := range anyList(p.Params, "cards") {
 			m := raw.(map[string]any)
 			c, err := x.media(ctx, act, str(m, "creative_id"))
@@ -356,6 +361,8 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 			if link == "" {
 				link = c.Link
 			}
+			link = land(link, c.Lang)
+			cardLangs = append(cardLangs, c.Lang)
 			if !strings.HasPrefix(link, "https://kbeautybliss.com/") {
 				return "", nil, fmt.Errorf("card %d: link must be a kbeautybliss.com page", i+1)
 			}
@@ -380,11 +387,18 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 		if msg == "" {
 			msg = first.PrimaryText
 		}
-		spec["link_data"] = map[string]any{"message": msg, "link": "https://kbeautybliss.com/", "child_attachments": kids, "multi_share_optimized": true}
+		carLang := first.Lang // mixed Arabic + English cards: the English page (22 Nov)
+		for _, k := range cardLangs {
+			if k != carLang {
+				carLang = "mixed"
+			}
+		}
+		spec["link_data"] = map[string]any{"message": msg, "link": land("https://kbeautybliss.com/", carLang), "child_attachments": kids, "multi_share_optimized": true}
 		steps = append(steps, fmt.Sprintf("carousel of %d cards", len(kids)))
 	case "flexible": // asset_feed_spec, no customization rules = dynamic creative (META-FACTS §14)
 		var images, videos []map[string]any
 		link := ""
+		flexLangs := map[string]bool{}
 		for _, id := range strs(p.Params, "creative_ids") {
 			c, err := x.media(ctx, act, id)
 			if err != nil {
@@ -396,8 +410,12 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 				videos = append(videos, map[string]any{"video_id": c.VideoID})
 			}
 			if link == "" {
-				link = c.Link
+				link = land(c.Link, c.Lang)
 			}
+			flexLangs[c.Lang] = true
+		}
+		if len(flexLangs) > 1 { // Arabic + English assets together: the English page (22 Nov)
+			link = model.ShopLang(link, "mixed")
 		}
 		textObjs := func(xs []string) []map[string]string {
 			var o []map[string]string

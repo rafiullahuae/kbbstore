@@ -99,7 +99,13 @@ func (ac *Acct) starterNeeded(in model.CycleInput, brainProps []model.Proposal, 
 	// "launched" holds for 7 days when an ad of it was really switched on (AdsOn, 0.6.8) — even if he paused it
 	// since. A record from 0.6.7 and before (launched as soon as its CAMPAIGN was made, 22 Nov) holds only while
 	// an app ad is live: the owner's stopped launch, with no ad ever on, is built again, not waited out.
-	if prev.State == "launched" && env.Now.Sub(prev.At) < 7*24*time.Hour && (prev.AdsOn || executor.ActiveAds(in.Tree) > 0) {
+	appCampaign := false // a campaign of the app's still in the account (he may have paused it; deleted is gone)
+	for _, c := range in.Tree {
+		if c.Managed && c.Status != "ARCHIVED" && c.Status != "DELETED" {
+			appCampaign = true
+		}
+	}
+	if prev.State == "launched" && env.Now.Sub(prev.At) < 7*24*time.Hour && appCampaign && (prev.AdsOn || executor.ActiveAds(in.Tree) > 0) {
 		return false, "a starter set was launched less than 7 days ago"
 	}
 	return true, ""

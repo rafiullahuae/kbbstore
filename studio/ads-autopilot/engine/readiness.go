@@ -131,6 +131,9 @@ func (s *server) autolink(w http.ResponseWriter, r *http.Request, id string) {
 	}
 	picked := map[string]string{}
 	set := func(cur *string, xs []model.AssetRef, key string) {
+		if picked[key] != "" { // taken from his own ads above
+			return
+		}
 		if *cur != "" {
 			picked[key] = "kept " + *cur
 			return
@@ -142,6 +145,23 @@ func (s *server) autolink(w http.ResponseWriter, r *http.Request, id string) {
 		} else {
 			picked[key] = why
 		}
+	}
+	// the Page / Instagram of his OWN running ads first (identity.go, 22 Nov: the name guess put the ads on the
+	// wrong Page); the name match only when he has no ad running
+	if !links.IdentityByHand {
+		ictx, icancel := context.WithTimeout(r.Context(), time.Minute)
+		if id, err := ac.ownAdsIdentity(ictx); err == nil && id.PageID != "" {
+			if id.PageID != links.PageID {
+				ac.creatives.ResetMeta()
+			}
+			links.PageID = id.PageID
+			picked["page"] = ac.assetName(id.PageID) + fmt.Sprintf(" (the Page %d of your own ads use)", id.Ads)
+			if id.InstagramID != "" {
+				links.InstagramUserID = id.InstagramID
+				picked["instagram"] = ac.assetName(id.InstagramID) + " (the Instagram your own ads use)"
+			}
+		}
+		icancel()
 	}
 	set(&links.PageID, biz.Pages, "page")
 	set(&links.InstagramUserID, biz.Instagram, "instagram")

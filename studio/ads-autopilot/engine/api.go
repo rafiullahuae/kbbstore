@@ -480,6 +480,10 @@ func (s *server) putAccount(w http.ResponseWriter, r *http.Request, id string) {
 				return
 			}
 		}
+		if u := l.LandingURL; u != "" && u != "product" && !(strings.HasPrefix(u, "https://kbeautybliss.com/") && len(u) < 300 && !strings.ContainsAny(u, " \"<>")) {
+			jsonErr(w, 400, "landing page: a page of https://kbeautybliss.com/ (or \"product\" for each ad's own product page)")
+			return
+		}
 		if l.WhatsAppNumber != "" && !e164.MatchString(l.WhatsAppNumber) {
 			jsonErr(w, 400, "whatsapp_number: an international number like +9715XXXXXXXX")
 			return
@@ -490,6 +494,29 @@ func (s *server) putAccount(w http.ResponseWriter, r *http.Request, id string) {
 		ac.settings.Automated = *in.Automated
 	}
 	if in.Links != nil {
+		old := ac.settings.Links
+		if in.Links.LandingURL == "" { // a form that does not send it keeps his landing page
+			in.Links.LandingURL = old.LandingURL
+		}
+		if in.Links.WhatsAppNumber == "" {
+			in.Links.WhatsAppNumber = old.WhatsAppNumber
+		}
+		if in.Links.PageID == "" { // an empty pick never removes the Page the ads run from
+			in.Links.PageID = old.PageID
+		}
+		if in.Links.InstagramUserID == "" {
+			in.Links.InstagramUserID = old.InstagramUserID
+		}
+		if !in.Links.IdentityByHand {
+			// "the same as my own ads": the next cycle (and every launch) takes his ads' Page / Instagram (identity.go)
+		} else if in.Links.PageID != old.PageID || in.Links.InstagramUserID != old.InstagramUserID {
+			// he picked another Page / Instagram himself: kept, never changed by the app
+		} else {
+			in.Links.IdentityByHand = old.IdentityByHand || in.Links.IdentityByHand
+		}
+		if in.Links.PageID != old.PageID {
+			defer ac.creatives.ResetMeta() // nothing made with the old Page is reused
+		}
 		ac.settings.Links = *in.Links
 	}
 	set := ac.settings

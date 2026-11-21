@@ -168,6 +168,7 @@ func (ac *Acct) Decide(ctx context.Context, id string, approve bool) (map[string
 	if err := ac.Sync(ctx); err != nil { // the checks see Meta as it is now
 		return nil, 502, fmt.Errorf("cannot read the account before acting: %w", err)
 	}
+	ac.syncIdentity(ctx) // the Page / Instagram of his own ads (identity.go)
 	order := withDeps(ps.Items, idx)
 	var props []model.Proposal
 	for _, i := range order {

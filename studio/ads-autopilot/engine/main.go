@@ -218,6 +218,7 @@ func setupMock(a *App) (*metamock.Server, error) {
 	m := metamock.New("EAAMOCKTOKEN0000000000000000", "act_1000000001")
 	m.AppID, m.AppSecret = "1234567890123", "mockappsecret0000"
 	m.Seed()
+	a.pagesFromFeed.Store(true) // never read the real shop's pages in test mode
 	// several ad accounts, so the account switch runs on the real engine: each has its own owner campaign
 	for _, x := range MockAccounts[1:] {
 		m.AddAccount(x[0], x[1])

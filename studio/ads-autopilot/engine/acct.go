@@ -506,6 +506,8 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 	if err := ac.Sync(ctx); err != nil {
 		ac.alertOnce("Sync with Meta failed: " + err.Error())
 		out["sync_error"] = err.Error()
+	} else if msg := ac.syncIdentity(ctx); msg != "" { // the Page / Instagram of his own ads (identity.go)
+		out["identity_changed"] = msg
 	}
 	a.mu.RLock()
 	shopSnap, research, learnings, br := a.shopSnap, a.research, a.learnings, a.brain

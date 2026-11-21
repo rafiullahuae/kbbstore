@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // ── Account scoping (the owner, 20 Nov 2026: "read the whole business portfolio including all ad accounts … switch
 // from one ad account to another, and give multiple ad accounts to automate separately") ──
@@ -16,6 +19,13 @@ import "time"
 //   - Advantage+ catalog ads: CatalogID
 //   - click-to-WhatsApp: WhatsAppNumber linked to the Page (Page settings → WhatsApp)
 type AccountLinks struct {
+	// the Page / Instagram were picked by hand (Settings → Accounts → Link by hand): never changed by the app.
+	// Otherwise they follow the owner's own running ads (engine/identity.go, 22 Nov).
+	IdentityByHand bool `json:"identity_by_hand,omitempty"`
+	// LandingURL: where every ad the app makes sends people (the owner, 22 Nov: "all the campaigns must go to this
+	// landing page https://kbeautybliss.com/super-sale/"). "" = that page (his default); "product" = each ad's own
+	// product page; otherwise a kbeautybliss.com page. Ads he changes by hand in Ads Manager are never touched.
+	LandingURL      string `json:"landing_url,omitempty"`
 	PageID          string `json:"page_id,omitempty"`
 	InstagramUserID string `json:"instagram_user_id,omitempty"`
 	PixelID         string `json:"pixel_id,omitempty"`
@@ -81,4 +91,43 @@ type HistoryCreative struct {
 	Title      string `json:"title,omitempty"`
 	Body       string `json:"body,omitempty"`
 	CTA        string `json:"cta,omitempty"`
+}
+
+// DefaultLanding: the owner's landing page for every ad (22 Nov); an Arabic ad goes to its Arabic version (ShopLang).
+const DefaultLanding = "https://kbeautybliss.com/super-sale/"
+
+// Landing: the page an ad in lang sends people to; own = the ad's own (product) page, used when he chose
+// "product". The owner, 22 Nov: "if the ad is in arabic, the arabic super sale should be linked, and if in english,
+// the english super sale page" — every link follows the ad's language (ShopLang).
+func (l AccountLinks) Landing(lang, own string) string {
+	u := own
+	switch {
+	case l.LandingURL == "":
+		u = DefaultLanding
+	case l.LandingURL == "product":
+	case strings.HasPrefix(l.LandingURL, "https://kbeautybliss.com/"):
+		u = l.LandingURL
+	default:
+		u = DefaultLanding
+	}
+	return ShopLang(u, lang)
+}
+
+// ShopLang: a kbeautybliss.com page in the ad's language — Arabic ("ar") at /ar/… (the live shop's hreflang="ar":
+// https://kbeautybliss.com/ar/super-sale/); English, or a MIXED Arabic + English ad (lang "" / "mixed"), the
+// English page. Other links are left as they are.
+func ShopLang(u, lang string) string {
+	const base = "https://kbeautybliss.com/"
+	if !strings.HasPrefix(u, base) {
+		return u
+	}
+	rest := strings.TrimPrefix(u, base)
+	isAr := rest == "ar" || strings.HasPrefix(rest, "ar/")
+	switch {
+	case lang == "ar" && !isAr:
+		return base + "ar/" + rest
+	case lang != "ar" && isAr: // English, or mixed Arabic + English (the owner, 22 Nov): the English page
+		return base + strings.TrimPrefix(strings.TrimPrefix(rest, "ar"), "/")
+	}
+	return u
 }

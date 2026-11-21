@@ -119,6 +119,10 @@ func orI(x, d int) int {
 }
 
 type Playbook struct {
+	// SourcePages: the shop pages whose products are the ONLY ones the autopilot may promote (the owner, 22 Nov:
+	// "the system must choose all the products from the super sale page, unless i add another page in the setting
+	// ... by default keep only the super sale page"). Empty = the super-sale page (DefaultSourcePage).
+	SourcePages       []string `json:"source_pages,omitempty"`
 	Instructions      string   `json:"instructions"` // free text, Arabic or English: sent to Claude verbatim, first, with priority
 	Focus             []PBRule `json:"focus"`
 	Avoid             []PBRule `json:"avoid"`
@@ -665,4 +669,48 @@ func (p Playbook) OfferFacts() []string {
 		f = append(f, "Pay in 4 with Tabby or Tamara / قسّميها على ٤ دفعات مع تابي أو تمارا")
 	}
 	return f
+}
+
+// DefaultSourcePage: by default the autopilot promotes only what the super-sale page shows (22 Nov).
+const DefaultSourcePage = "https://kbeautybliss.com/super-sale/"
+
+// Sources: the pages whose products may be promoted (the super-sale page unless he listed others).
+func (p Playbook) Sources() []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, u := range p.SourcePages {
+		u = strings.TrimSpace(u)
+		if strings.HasPrefix(u, "https://kbeautybliss.com/") && !seen[u] {
+			seen[u] = true
+			out = append(out, u)
+		}
+	}
+	if len(out) == 0 {
+		return []string{DefaultSourcePage}
+	}
+	return out
+}
+
+// OnPages keeps the products the source pages show (a variant "3473-157" follows its product "3473"); known=false
+// (no page read yet) keeps none — nothing is promoted that is not known to be on his page.
+func OnPages(s ShopSnapshot, on map[string]bool, known bool, pages []string) (ShopSnapshot, []Excluded) {
+	out := s
+	out.Products = make([]Product, 0, len(s.Products))
+	var ex []Excluded
+	why := "not on " + strings.Join(pages, " / ")
+	if !known {
+		why = "the product page(s) " + strings.Join(pages, " / ") + " could not be read yet: nothing is promoted until they are"
+	}
+	for _, pr := range s.Products {
+		id := pr.ID
+		if i := strings.Index(id, "-"); i > 0 {
+			id = id[:i]
+		}
+		if known && (on[pr.ID] || on[id]) {
+			out.Products = append(out.Products, pr)
+			continue
+		}
+		ex = append(ex, Excluded{pr.ID, pr.Title, why})
+	}
+	return out, ex
 }

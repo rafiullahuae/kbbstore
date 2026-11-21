@@ -239,3 +239,23 @@ func (c *creativeLib) SetCopy(id, headline, text string) (model.Creative, string
 	}
 	return model.Creative{}, "", fmt.Errorf("no creative %q in the library", id)
 }
+
+// ResetMeta drops every Meta creative id the app made (the pictures' upload hashes stay): after the Page / Instagram
+// changed, the next upload makes each creative again with the new identity, never reusing one with the old Page.
+func (c *creativeLib) ResetMeta() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	n := 0
+	for i := range c.list {
+		if c.list[i].MetaID != "" {
+			c.list[i].OldMetaIDs = append(c.list[i].OldMetaIDs, c.list[i].MetaID)
+			c.list[i].MetaID = ""
+			c.list[i].MediaRev++ // a stale copy in flight never writes the old id back (Put)
+			n++
+		}
+	}
+	if n > 0 {
+		_ = c.st.Save("creatives/index", c.list)
+	}
+	return n
+}

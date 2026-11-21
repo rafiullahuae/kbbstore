@@ -485,3 +485,35 @@ func TestUnpublishedAppWaitsButManualTries(t *testing.T) {
 		t.Fatalf("his own Run a cycle must try at once: %q", why)
 	}
 }
+
+// The owner, 22 Nov: only products on his super-sale page are promoted. The first launch of 22 Nov took the
+// KORMESIC sheet mask (4068) and Biodance Caviar PDRN Eye Patches (4141), neither on the page. With the page's list,
+// every product the app may use is on it; an unread page means nothing is promoted (never a guess).
+func TestOnlySuperSaleProducts(t *testing.T) {
+	ac, _ := testApp(t)
+	a := ac.app
+	a.pagesFromFeed.Store(false)
+	defer a.pagesFromFeed.Store(true)
+	a.mu.RLock()
+	all := a.shopSnap.Products
+	a.mu.RUnlock()
+	if len(all) < 3 {
+		t.Skip("the mock shop has too few products")
+	}
+	keep := all[0].ID
+	f, _, _ := ac.filteredShop(model.ShopSnapshot{Products: all})
+	if len(f.Products) != 0 {
+		t.Fatalf("page never read: %d products allowed, want 0", len(f.Products))
+	}
+	_ = a.st.Save("source_pages", map[string]pageList{model.DefaultSourcePage: {IDs: []string{keep}, At: time.Now()}})
+	f, _, ex := ac.filteredShop(model.ShopSnapshot{Products: all})
+	if len(f.Products) != 1 || f.Products[0].ID != keep || len(ex) < len(all)-1 {
+		t.Fatalf("on the page: %v (excluded %d), want only %s", f.Products, len(ex), keep)
+	}
+	in := ac.input()
+	for _, p := range in.Shop.Products {
+		if p.ID != keep {
+			t.Fatalf("the cycle's shop holds %s, which is not on the page", p.ID)
+		}
+	}
+}
