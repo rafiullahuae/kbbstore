@@ -232,6 +232,7 @@ func setupMock(a *App) (*metamock.Server, error) {
 		return nil, err
 	}
 	a.testMetaBase, a.testClaudeBase, a.testFeedURL = mu, au, au+"/feed.xml"
+	aux.Now = mockNow
 	// The throwaway keys go to the data folder's file, NEVER the Keychain: a Keychain item is service + name, shared by
 	// every data folder, so a -mock run on the owner's Mac (any check script) would write EAAMOCK… over his real Meta
 	// token and Claude key -- his keys "vanish" with no trace. The brain's generator keys follow (KAA_SECRETS_FILE).
@@ -244,6 +245,12 @@ func setupMock(a *App) (*metamock.Server, error) {
 	}
 	if err := a.sec.Set("anthropic_key", aux.Key); err != nil {
 		return nil, err
+	}
+	if os.Getenv("KAA_MOCK_SHOP_API") == "1" { // opt-in: units sold per product from a fake shop API (the occasion-slot checks)
+		a.testShopBase = au + "/autopilot-api/v1"
+		if err := a.sec.Set("shop_token", metamock.ShopKey); err != nil {
+			return nil, err
+		}
 	}
 	a.cfg.Selected = m.Account
 	_ = a.st.Save("config", a.cfg)

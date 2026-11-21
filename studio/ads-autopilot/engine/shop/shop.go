@@ -50,6 +50,8 @@ type rss struct {
 		Availability string `xml:"http://base.google.com/ns/1.0 availability"`
 		Brand        string `xml:"http://base.google.com/ns/1.0 brand"`
 		ProductType  string `xml:"http://base.google.com/ns/1.0 product_type"`
+		Desc         string `xml:"http://base.google.com/ns/1.0 description"`
+		PlainDesc    string `xml:"description"`
 	} `xml:"channel>item"`
 }
 
@@ -104,6 +106,14 @@ func Parse(r io.Reader) (model.ShopSnapshot, error) {
 		p := model.Product{ID: strings.TrimSpace(it.ID), Title: strings.TrimSpace(it.Title), Brand: strings.TrimSpace(it.Brand),
 			PriceAED: ParsePrice(it.Price), SaleAED: ParsePrice(it.SalePrice), InStock: strings.TrimSpace(it.Availability) == "in_stock",
 			Image: strings.TrimSpace(it.Image), URL: strings.TrimSpace(it.Link), Category: strings.TrimSpace(it.ProductType)}
+		desc := it.Desc
+		if desc == "" {
+			desc = it.PlainDesc
+		}
+		if r := []rune(desc); len(r) > 2000 { // what it is is said early; the tags are kept, never the text
+			desc = string(r[:2000])
+		}
+		p.Tags = model.ClassifyProduct(p.Title, p.Category, desc)
 		snap.Products = append(snap.Products, p)
 	}
 	if len(snap.Products) == 0 {

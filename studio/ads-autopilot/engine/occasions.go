@@ -44,30 +44,18 @@ func (ac *Acct) occasionCreative(p model.Product, lang, occ string, copyOf func(
 	return id, nil
 }
 
-// occasionProducts: up to n ranked products that fit the occasion's keywords, else the best-ranked.
-func occasionProducts(in model.CycleInput, o model.Occasion, n int) []model.Product {
+// occasionProducts: the occasion's top n products (slots.go: fit to its season × units sold, new, trending; pinned
+// first; the shop is already Playbook-filtered), leaving out the ones in skip, each usable for an ad.
+func occasionProducts(in model.CycleInput, o model.Occasion, n int, trending []string, skip map[string]bool) []model.Product {
 	by := map[string]model.Product{}
 	for _, p := range in.Shop.Products {
 		by[p.ID] = p
 	}
-	ranked := model.Rank(in.Shop.Products, *in.Playbook, model.RankSignals{Now: in.Now, Baseline: firstSeenBaseline(in.Shop)})
-	var fit, rest []model.Product
-	for _, r := range ranked {
-		p := by[r.ID]
-		t := strings.ToLower(p.Title + " " + p.Category)
-		ok := false
-		for _, k := range o.Products {
-			ok = ok || strings.Contains(t, k)
+	var out []model.Product
+	for _, r := range model.RankForOccasion(in.Shop.Products, *in.Playbook, o, model.RankSignals{Now: in.Now, Trending: trending, Baseline: firstSeenBaseline(in.Shop)}) {
+		if p := by[r.ID]; len(out) < n && !skip[r.ID] && usable(p) {
+			out = append(out, p)
 		}
-		if ok {
-			fit = append(fit, p)
-		} else {
-			rest = append(rest, p)
-		}
-	}
-	out := append(fit, rest...)
-	if len(out) > n {
-		out = out[:n]
 	}
 	return out
 }
@@ -104,7 +92,7 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 		if when.Before(now) {
 			when = now
 		}
-		prods := occasionProducts(in, o, 3)
+		prods := occasionProducts(in, o, pb.Slots(), ac.trendingIDs(), nil)
 		brief := fmt.Sprintf("Occasion: %s (%s, %s to %s%s). Angle: %s. Tone: %s.", inst.Name, inst.NameAR, inst.Start, inst.End, map[bool]string{true: ", date estimated", false: ""}[inst.Estimated], o.Angle, o.Tone)
 		if o.Offer != "" {
 			brief += " The owner's offer for it: " + o.Offer + "."
@@ -149,7 +137,7 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 		}
 		j := Job{ID: id, Kind: "occasion", Title: title, TitleAR: titleAR,
 			Why: brief, When: when, Status: "planned", ProductIDs: pids, Lang: strings.Join(pb.Languages, "+"), Format: "image", CopyDirection: o.Angle,
-			Audience: "the prospecting campaign (Advantage+ audience), budget one step up from 3 days before", Source: "occasion", Target: inst.ID, Creatives: crs, Occasion: &inst, UpdatedAt: now.UTC()}
+			Audience: "the prospecting campaign (Advantage+ audience), budget one step up from 3 days before", Source: "occasion", Target: inst.ID, Creatives: crs, Occasion: &inst, Slots: pb.Slots(), UpdatedAt: now.UTC()}
 		j.logf(now, "prepared %d ads for %s (%s → %s%s); waiting for your approval", len(crs), inst.Name, inst.Start, inst.End, map[bool]string{true: ", estimated date", false: ""}[inst.Estimated])
 		js.Jobs = append(js.Jobs, j)
 		ac.notifyOwner(j.Title, fmt.Sprintf("%s starts %s. Open Approvals → Occasions.", inst.Name, inst.Start), fmt.Sprintf("%s يبدأ %s. افتحي الموافقات ← المناسبات.", inst.NameAR, inst.Start))
@@ -291,7 +279,21 @@ func (s *server) occasionsAPI(w http.ResponseWriter, r *http.Request, ac *Acct) 
 			upcoming = append(upcoming, o.Instances(now, 400)...)
 		}
 	}
+	picks := map[string][]model.SlotPick{}
+	if len(pkgs) > 0 {
+		s.app.mu.RLock()
+		shop := s.app.shopSnap
+		s.app.mu.RUnlock()
+		fs, fpb, _ := ac.filteredShop(shop) // only what the chips need (not the whole cycle input)
+		in, tr := model.CycleInput{Now: now, Shop: fs, Playbook: &fpb}, ac.trendingIDs()
+		for _, j := range pkgs {
+			if open(j.Status) {
+				picks[j.ID] = ac.slotPicks(in, j, tr)
+			}
+		}
+	}
 	writeJSON(w, map[string]any{"account": ac.id, "occasions": all.Occasions, "upcoming": upcoming, "packages": pkgs, "ads": ads, "titles": ac.titlesOf(pkgs),
+		"picks": picks, "slots": pb.Slots(),
 		"auto_approve": pb.AutoApproveOccasions, "countries": st.Limits.Countries, "defaults": model.DefaultOccasions()})
 }
 

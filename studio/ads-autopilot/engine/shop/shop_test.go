@@ -12,7 +12,7 @@ func TestParseFeed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Products) != 8 || s.OrdersSource != "none" {
+	if len(s.Products) != 16 || s.OrdersSource != "none" {
 		t.Fatalf("%d products, orders %q", len(s.Products), s.OrdersSource)
 	}
 	p := s.Products[0]
@@ -21,6 +21,19 @@ func TestParseFeed(t *testing.T) {
 	}
 	if s.Products[2].InStock {
 		t.Fatal("out_of_stock read as in stock")
+	}
+	// what each product is, from the title, category AND the feed description (the Arabic line of 8130 says rich +
+	// dry skin). MUTATION: drop the description from ClassifyProduct → Illiyoon loses "hydration", red.
+	tags := map[string]string{}
+	for _, p := range s.Products {
+		tags[p.ID] = strings.Join(p.Tags, ",")
+	}
+	for id, want := range map[string][]string{"8130": {"barrier", "cream", "rich", "hydration"}, "8170": {"spf", "light", "hydration"}, "8144": {"hydration", "body", "barrier"}, "8150": {"lip", "mask", "hydration"}, "8101": {"eye", "cream", "brightening"}} {
+		for _, w := range want {
+			if !strings.Contains(","+tags[id]+",", ","+w+",") {
+				t.Errorf("%s: tags %q, want %s", id, tags[id], w)
+			}
+		}
 	}
 }
 

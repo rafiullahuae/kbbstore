@@ -44,14 +44,14 @@ func fakeShop(t *testing.T, apiCalls *int32) *httptest.Server {
 			}
 			w.Write([]byte(`{"ok":true,"products":[{"id":"9999","margin_pct":null,"variants":[]}],"next_after":null}`))
 		case "/autopilot-api/v1/orders":
-			if r.URL.Query().Get("from") != "2026-10-24" {
+			if r.URL.Query().Get("from") != "2026-08-23" { // 90 shop days (the occasion slots read units sold in 30 and 90)
 				t.Errorf("orders range %s", r.URL.RawQuery)
 			}
 			if r.URL.Query().Get("after") == "0" {
 				w.Write([]byte(`{"ok":true,"orders":[{"day":"2026-11-18","is_sale":true,"items":[{"product_id":"3195","qty":2},{"product_id":null,"qty":1}]},{"day":"2026-11-01","is_sale":true,"items":[{"product_id":"3195","qty":1}]}],"next_after":7}`))
 				return
 			}
-			w.Write([]byte(`{"ok":true,"orders":[{"day":"2026-11-19","is_sale":false,"items":[{"product_id":"3195","qty":9}]},{"day":"2026-11-20","is_sale":true,"items":[{"product_id":"4410","qty":3}]}],"next_after":null}`))
+			w.Write([]byte(`{"ok":true,"orders":[{"day":"2026-11-19","is_sale":false,"items":[{"product_id":"3195","qty":9}]},{"day":"2026-11-20","is_sale":true,"items":[{"product_id":"4410","qty":3}]},{"day":"2026-09-15","is_sale":true,"payment_family":"card","items":[{"product_id":"3195","qty":4}]}],"next_after":null}`))
 		default:
 			w.WriteHeader(404)
 		}
@@ -71,7 +71,7 @@ func TestAPISourceWithoutKeyIsTheFeed(t *testing.T) {
 	defer srv.Close()
 	s := testSource(srv, "")
 	snap, err := s.Snapshot(context.Background())
-	if err != nil || s.OrdersSource() != "none" || snap.OrdersSource != "none" || len(snap.Products) != 8 || calls != 0 {
+	if err != nil || s.OrdersSource() != "none" || snap.OrdersSource != "none" || len(snap.Products) < 12 || calls != 0 {
 		t.Fatalf("err %v, source %q/%q, %d products, %d api calls", err, s.OrdersSource(), snap.OrdersSource, len(snap.Products), calls)
 	}
 }
@@ -102,6 +102,11 @@ func TestAPISourceReadsNetRevenueAndMargins(t *testing.T) {
 	if p := snap.Products[0]; p.Units14 != 2 || p.UnitsPrev14 != 1 || p.Stock == nil || *p.Stock != 42 || snap.Products[1].Units14 != 3 {
 		t.Fatalf("momentum / stock: %+v %+v", snap.Products[0], snap.Products[1])
 	}
+	// 30 and 90 days: the September order counts in 90 only, and never in the 28-day payment mix or the momentum.
+	// MUTATION: count u30 without its cut → 3195 reads 7 in 30 days, red.
+	if p := snap.Products[0]; p.Units30 != 3 || p.Units90 != 7 || snap.Orders28 != 3 {
+		t.Fatalf("30/90: %d/%d, orders28 %d", p.Units30, p.Units90, snap.Orders28)
+	}
 	// daily + two product pages + two order pages (each cursor followed)
 	if calls != 5 {
 		t.Fatalf("%d api calls", calls)
@@ -114,7 +119,7 @@ func TestAPISourceRefusedKeyKeepsProductsAndSaysWhy(t *testing.T) {
 	defer srv.Close()
 	s := testSource(srv, "kbbap_wrong")
 	snap, err := s.Snapshot(context.Background())
-	if !errors.Is(err, ErrUnauthorized) || snap.OrdersSource != "none" || len(snap.Products) != 8 || len(snap.Orders) != 0 {
+	if !errors.Is(err, ErrUnauthorized) || snap.OrdersSource != "none" || len(snap.Products) < 12 || len(snap.Orders) != 0 {
 		t.Fatalf("err %v, source %q, %d products", err, snap.OrdersSource, len(snap.Products))
 	}
 }

@@ -80,10 +80,18 @@ function playbook(p, s) {
     <label class="small" style="display:block;margin-top:6px">${L('Gifts we give (names, comma-separated; never invented)', 'الهدايا التي نقدمها (بالاسم)')} <input data-f="gifts" value="${esc((d.gifts || []).join(', '))}" style="width:100%"></label></div></div>`;
 }
 
+const SEASONS = [['winter', 'Winter', 'الشتاء'], ['summer', 'Summer', 'الصيف'], ['ramadan', 'Ramadan', 'رمضان'], ['gifting', 'Gifting', 'الهدايا'], ['sale', 'Sale days', 'التخفيضات']];
+// seasonChips: what a product is for (the occasion packages pick from it). His click wins over the rules; ↺ = the rules again.
+function seasonChips(r) {
+  const mine = (draft.product_seasons || {})[r.id];
+  const on = new Set(mine || r.seasons || []);
+  return `<span class="pk-b" data-seasons="${esc(r.id)}">${SEASONS.map(([k, en, ar]) => `<button type="button" class="chip${on.has(k) ? ' acc' : ''}" data-season="${esc(r.id)}" data-sk="${k}" aria-pressed="${on.has(k)}" style="cursor:pointer;${on.has(k) ? '' : 'opacity:.4;text-decoration:line-through'}">${on.has(k) ? '✓ ' : ''}${esc(tt(en, ar))}</button>`).join('')}${mine ? `<button type="button" class="chip" data-season-auto="${esc(r.id)}" title="${esc(tt('Back to what the rules say', 'العودة لما تقوله القواعد'))}">↺ ${L('yours', 'اختيارك')}</button>` : ''}</span>`;
+}
+
 function products(s) {
   return `<div class="card"><header><h2>${L('Ranked products — what it will advertise first', 'ترتيب المنتجات — ما سيُعلن عنه أولاً')} ${tip(tt('Score = freshness (trending + new arrival, by your slider) + recent sales + margin + stock − time already in ads + what won here before. Old evergreens only climb on their own sales.', 'النتيجة = الحداثة + المبيعات + الهامش + المخزون − مدة الظهور.'))}</h2><span class="sub">${L('prefer new & trending', 'فضّل الجديد')} ${num(s.freshness_pct)}%</span></header>
     <table><thead><tr><th>#</th><th>${L('Product', 'المنتج')}</th><th class="n">${L('Score', 'النتيجة')}</th><th>${L('Why', 'السبب')}</th><th></th></tr></thead><tbody>
-    ${(s.ranked || []).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.title)}</b>${r.pinned ? ' <span class="chip acc">📌</span>' : ''}${r.trending ? ` <span class="chip">${L('trending', 'رائج')}</span>` : ''}<br><span class="small muted">${esc(r.brand || '')} · ${aed(r.price)}</span></td><td class="n">${num(r.score, 1)}</td>
+    ${(s.ranked || []).map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.title)}</b>${r.pinned ? ' <span class="chip acc">📌</span>' : ''}${r.trending ? ` <span class="chip">${L('trending', 'رائج')}</span>` : ''}<br><span class="small muted">${esc(r.brand || '')} · ${aed(r.price)}</span><br>${seasonChips(r)}</td><td class="n">${num(r.score, 1)}</td>
       <td class="small ink2">${(r.why || []).map(esc).join(' · ')}</td><td class="row"><button type="button" class="ghost small" data-pin="${esc(r.id)}" data-label="${esc(r.title)}">${L('Pin', 'تثبيت')}</button><button type="button" class="ghost small" data-avoid="${esc(r.id)}" data-label="${esc(r.title)}">${L('Avoid', 'تجنّب')}</button></td></tr>`).join('')}</tbody></table></div>`;
 }
 
@@ -104,7 +112,8 @@ function occasions(o) {
   const next = {};
   for (const u of o.upcoming || []) if (!next[u.occasion] || u.start < next[u.occasion].start) next[u.occasion] = u;
   return `<div class="card"><header><h2>${L('Occasions', 'المناسبات')} ${tip(tt('At each occasion\'s lead time it prepares the ads (Arabic + English), the products and a budget ramp, and puts the package in Approvals → Occasions. Nothing seasonal goes live without your approval.', 'يحضّر الإعلانات والمنتجات والميزانية قبل كل مناسبة ويضعها في الموافقات.'))}</h2>
-    <label class="small"><input type="checkbox" data-f="auto_approve_occasions" ${draft.auto_approve_occasions ? 'checked' : ''}> ${L('Auto-approve occasions', 'موافقة تلقائية على المناسبات')}</label></header>
+    <span class="row"><label class="small">${L('Products per package', 'المنتجات في كل حزمة')} <input type="number" data-f="occasion_slots" value="${draft.occasion_slots || 5}" min="3" max="8" style="width:56px" title="${esc(tt('Each occasion package is filled with this many products: the best for the season, best sellers and new arrivals first (3 to 8)', 'تُملأ كل حزمة مناسبة بهذا العدد من المنتجات: الأنسب للموسم والأكثر مبيعاً والأحدث أولاً (٣ إلى ٨)'))}"></label>
+    <label class="small"><input type="checkbox" data-f="auto_approve_occasions" ${draft.auto_approve_occasions ? 'checked' : ''}> ${L('Auto-approve occasions', 'موافقة تلقائية على المناسبات')}</label></span></header>
     <table><thead><tr><th>${L('On', 'مفعّل')}</th><th>${L('Occasion', 'المناسبة')}</th><th>${L('Next', 'القادمة')}</th><th>${L('Ready days before', 'جاهز قبل (أيام)')}</th><th>${L('Your offer', 'عرضك')}</th></tr></thead><tbody>
     ${list.map((x, i) => { const n = next[x.id]; return `<tr><td><input type="checkbox" data-occ="${i}" data-k="on" ${x.on ? 'checked' : ''}></td><td><b>${esc(tt(x.name, x.name_ar))}</b>${(x.countries || []).length ? ` <span class="chip">${esc(x.countries.join(' '))}</span>` : ''}<br><span class="small ink2">${esc(x.angle)} · ${esc(x.tone)}</span></td>
       <td class="small">${n ? `${esc(n.start)}${n.estimated ? ` <span class="muted">(${L('estimated', 'تقديري')})</span>` : ''}` : '—'}</td><td><input type="number" data-occ="${i}" data-k="lead_days" value="${x.lead_days}" min="0" max="60" style="width:60px"></td><td><input data-occ="${i}" data-k="offer" value="${esc(x.offer || '')}" placeholder="${esc(tt('none (no discount wording)', 'لا شيء'))}"></td></tr>`; }).join('')}</tbody></table>
@@ -158,6 +167,14 @@ function wire(S, el) {
   }; });
   const pinAvoid = (attr, key) => el.querySelectorAll(`[${attr}]`).forEach((b) => { b.onclick = () => { (draft[key] = draft[key] || []).push({ kind: 'product', value: b.getAttribute(attr), label: b.dataset.label }); dirty = true; toast(tt('Added — press Save to apply.', 'أُضيف — اضغطي حفظ للتطبيق.')); re(); }; });
   pinAvoid('data-pin', 'focus'); pinAvoid('data-avoid', 'avoid');
+  el.querySelectorAll('[data-season]').forEach((b) => { b.onclick = () => {
+    const id = b.dataset.season, r = (cache.get(getAccount()).s.ranked || []).find((x) => x.id === id) || {};
+    const m = draft.product_seasons = draft.product_seasons || {};
+    const cur = new Set(m[id] || r.seasons || []);
+    if (cur.has(b.dataset.sk)) cur.delete(b.dataset.sk); else cur.add(b.dataset.sk);
+    m[id] = SEASONS.map(([k]) => k).filter((k) => cur.has(k)); dirty = true; re();
+  }; });
+  el.querySelectorAll('[data-season-auto]').forEach((b) => { b.onclick = () => { delete (draft.product_seasons || {})[b.dataset.seasonAuto]; dirty = true; re(); }; });
   el.querySelectorAll('[data-occ]').forEach((i) => { i.onchange = () => { const l = occList(); const x = l[Number(i.dataset.occ)]; x[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.type === 'number' ? Number(i.value) : i.value; dirty = true; re(); }; });
   const ao = el.querySelector('[data-addocc]'); if (ao) ao.onclick = () => {
     const name = el.querySelector('[data-newocc="name"]').value.trim(), date = el.querySelector('[data-newocc="date"]').value;

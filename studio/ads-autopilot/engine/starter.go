@@ -408,8 +408,8 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 		free--
 	}
 	nCr := free
-	if nCr > 4 {
-		nCr = 4
+	if nCr > 5 { // five product slots (the owner, 21 Nov), never past max_active_ads
+		nCr = 5
 	}
 	if nCr < 1 {
 		return nil, ac.starterSkip(fmt.Sprintf("no free ad slot under max_active_ads (%d)", lim.MaxActiveAds))
@@ -483,7 +483,9 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 	}
 	var ranked []string
 	for _, r := range model.Rank(in.Shop.Products, pb, model.RankSignals{Now: env.Now, Trending: trending, Baseline: firstSeenBaseline(in.Shop)}) {
-		ranked = append(ranked, r.ID)
+		if edit == nil || !contains(edit.NotFor, r.ID) { // ✕ on the Plan: not for the first launch (slots.go)
+			ranked = append(ranked, r.ID)
+		}
 	}
 	pick(ranked)
 	if len(prods) == 0 {

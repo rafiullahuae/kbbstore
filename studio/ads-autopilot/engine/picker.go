@@ -987,7 +987,14 @@ func (ac *Acct) avoidProduct(ctx context.Context, id string) (map[string]any, in
 			keep = []string{}
 		}
 		j.ProductIDs, j.Creatives = keep, crs
-		if (len(keep) == 0 || j.Kind == "occasion" && len(crs) == 0) && (j.ID != jobFirstLaunch || j.Edited) { // an unedited first launch just picks the next-ranked
+		var next []string
+		if j.Kind == "occasion" { // its slot takes the next-best product for the occasion, its ads prepared (slots.go)
+			next, _ = ac.refill(ctx, j)
+			keep, crs = j.ProductIDs, j.Creatives
+		}
+		if len(next) > 0 {
+			j.logf(now, "you avoided %s: %s took its slot", shortTitle(prod), ac.titleList(next))
+		} else if (len(keep) == 0 || j.Kind == "occasion" && len(crs) == 0) && (j.ID != jobFirstLaunch || j.Edited) { // an unedited first launch just picks the next-ranked
 			j.ProductsGone, j.Waiting = true, msgJobAvoided
 			j.logf(now, "you avoided %s: %s", shortTitle(prod), msgJobAvoided)
 		} else {

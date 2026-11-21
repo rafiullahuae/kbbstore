@@ -310,6 +310,11 @@ type Product struct {
 	Units14     int    `json:"units_14d,omitempty"`
 	UnitsPrev14 int    `json:"units_prev_14d,omitempty"`
 	FirstSeen   string `json:"first_seen,omitempty"`
+	// added by the occasion-slots lane (21 Nov): units sold in the last 30 and 90 shop days (sale orders), and what
+	// the product is (season.go: routine step, benefit, texture) from its title, category and feed description
+	Units30 int      `json:"units_30d,omitempty"`
+	Units90 int      `json:"units_90d,omitempty"`
+	Tags    []string `json:"tags,omitempty"`
 }
 
 type OrderDay struct {

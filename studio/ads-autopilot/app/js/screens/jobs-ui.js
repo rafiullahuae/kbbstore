@@ -28,8 +28,8 @@ function editor(job, c) {
   const ids = picked || job.product_ids || [];
   return `<div class="card" data-editor style="margin-top:8px;background:var(--surface)"><header><h3>${esc(tt('Edit this job', 'تعديل هذه المهمة'))}</h3></header>
     <div class="grid g2"><div><label class="small">${esc(tt('Products (only what your playbook allows)', 'المنتجات (المسموح بها فقط)'))}</label>
-      <div class="pk-chips">${ids.length ? ids.map((id, i) => `<span class="chip acc">${i + 1}. ${esc(nameOf(c, id))}</span>`).join('') : `<span class="small muted">${esc(tt('The autopilot picks the best-ranked ones.', 'يختار الطيار الآلي الأعلى ترتيباً.'))}</span>`}</div>
-      <button type="button" class="ghost small" data-epick="${esc(job.id)}" style="margin-top:6px">${esc(tt('Choose products', 'اختاري المنتجات'))}</button></div>
+      <div class="pk-chips">${ids.length ? ids.map((id, i) => `<span class="chip acc">${i + 1}. ${esc(nameOf(c, id))}${picked ? '' : `<button type="button" class="x" data-jrm="${esc(id)}" data-job="${esc(job.id)}" title="${esc(tt('Remove: the next suggestion takes its place', 'إزالة: يحل محله المقترح التالي'))}" aria-label="${esc(tt('Remove', 'إزالة'))}">✕</button>`}</span>`).join('') : `<span class="small muted">${esc(tt('The autopilot picks the best-ranked ones.', 'يختار الطيار الآلي الأعلى ترتيباً.'))}</span>`}</div>
+      <button type="button" class="ghost small" data-epick="${esc(job.id)}" style="margin-top:6px">${esc(tt('Choose products', 'اختاري المنتجات'))}</button>${picked || !ids.length ? '' : ` <button type="button" class="ghost small" data-jfind="${esc(job.id)}" style="margin-top:6px">${esc(tt('Find products', 'ابحث عن منتجات'))}</button>`}</div>
     <div class="list small"><div><label>${esc(tt('Budget AED/day', 'الميزانية درهم/يوم'))} <input type="number" data-e="budget_aed" value="${job.budget_aed || ''}" min="0" style="width:90px"></label></div>
       <div><label>${esc(tt('Language', 'اللغة'))} <select data-e="lang"><option value="ar" ${job.lang !== 'en' ? 'selected' : ''}>العربية</option><option value="en" ${job.lang === 'en' ? 'selected' : ''}>English</option></select></label>
       <label>${esc(tt('Format', 'الشكل'))} <select data-e="format"><option value="image" ${job.format !== 'carousel' ? 'selected' : ''}>${esc(tt('Image', 'صورة'))}</option><option value="carousel" ${job.format === 'carousel' ? 'selected' : ''}>${esc(tt('Carousel', 'دوّار'))}</option></select></label></div>
@@ -90,6 +90,16 @@ export function wireJobs(S, el, rerender) {
     const ids = await pick(b.dataset.jpick); if (!ids) return;
     try { await api(`/api/jobs/${encodeURIComponent(b.dataset.jpick)}`, { method: 'PUT', body: { product_ids: ids } }); dropCatalog(); await after(tt('Saved: it runs with your products.', 'تم الحفظ: تُنفّذ بمنتجاتك.')); } catch (e) { toast(e.message); }
   }; });
+  const slot = async (b, verb, body) => { // slots.go: ✕ = the next suggestion takes the slot; Find products refills
+    b.disabled = true;
+    try {
+      const r = await api(`/api/jobs/${encodeURIComponent(b.dataset.job)}/${verb}`, { method: 'POST', body });
+      dropCatalog();
+      await loadJobs(true); rerender(); toast(r.added && r.added.length ? tt(`${verb === 'find-products' ? 'Found' : 'Next suggestion'}: ${r.added_titles}.`, `${verb === 'find-products' ? 'وُجد' : 'المقترح التالي'}: ${r.added_titles}.`) : tt('Nothing else fits right now.', 'لا شيء آخر مناسب الآن.'));
+    } catch (e) { b.disabled = false; toast(e.message); }
+  };
+  el.querySelectorAll('[data-jrm]').forEach((b) => { b.onclick = () => slot(b, 'remove-product', { product_id: b.dataset.jrm }); });
+  el.querySelectorAll('[data-jfind]').forEach((b) => { b.dataset.job = b.dataset.jfind; b.onclick = () => slot(b, 'find-products', {}); });
   el.querySelectorAll('[data-esave]').forEach((b) => { b.onclick = async () => {
     const box = b.closest('[data-editor]'); const body = {};
     if (picked) body.product_ids = picked;

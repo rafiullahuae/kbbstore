@@ -120,6 +120,7 @@ type App struct {
 	testMetaBase   string
 	testClaudeBase string
 	testFeedURL    string
+	testShopBase   string      // -mock with KAA_MOCK_SHOP_API=1: the fake shop API (metamock/shopapi.go)
 	noBackfill     bool        // Go tests that do not want the history import running in the background
 	warm           warmer      // the refresh on start / wake / page return (warmup.go)
 	firstTest      atomic.Bool // ConnectionsView started a first test (connectAll may also run from the warm-up)
@@ -230,6 +231,9 @@ func (a *App) wire() {
 	sk := secrets.NewKey(a.sec, "shop_token")
 	src := shop.New(feed, sk.Value)
 	src.TokenErr = sk.Err
+	if a.testShopBase != "" {
+		src.TestBase(a.testShopBase)
+	}
 	a.meta, a.claude, a.shopSrc = mc, cc, src
 	if a.brain == nil {
 		a.brain = newBrain(model.BrainDeps{LLM: cc, Log: func(k, s string, d any) { a.st.Append(k, s, d) }, DataDir: a.st.Dir, Publish: a.publish, Redact: a.redact})

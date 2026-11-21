@@ -65,8 +65,12 @@ type Job struct {
 	Rejected  []string                `json:"rejected,omitempty"`
 	Occasion  *model.OccasionInstance `json:"occasion,omitempty"`
 	Reminded  []int                   `json:"reminded,omitempty"`
-	Log       []JobLog                `json:"log,omitempty"`
-	UpdatedAt time.Time               `json:"updated_at"`
+	// product slots (slots.go): how many products the job carries, and the ones the owner took out of THIS job
+	// ("not for this occasion": never suggested to it again; ⊘ Never promote is the Playbook's Avoid, everywhere)
+	Slots     int       `json:"slots,omitempty"`
+	NotFor    []string  `json:"not_for,omitempty"`
+	Log       []JobLog  `json:"log,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type JobSet struct {
@@ -770,6 +774,26 @@ func (s *server) jobsAPI(w http.ResponseWriter, r *http.Request, ac *Acct, rest 
 			j.logf(now, "you put the ad %s back", b.CreativeID)
 		}
 		j.Rejected = keep
+	case (verb == "remove-product" || verb == "find-products") && r.Method == http.MethodPost: // slots.go
+		var b struct {
+			ProductID string `json:"product_id"`
+		}
+		if err := readJSON(r, &b, 4096); err != nil || verb == "remove-product" && !productIDRe.MatchString(b.ProductID) {
+			jsonErr(w, 400, "send {product_id} of one of this job's products")
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Minute)
+		defer cancel()
+		out, err := ac.slotAction(ctx, j, verb, b.ProductID)
+		if err != nil {
+			jsonErr(w, 409, err.Error())
+			return
+		}
+		ac.saveJobs(js)
+		ac.dirty()
+		out["job"] = *j
+		writeJSON(w, out)
+		return
 	case verb == "brief" && r.Method == http.MethodGet:
 		writeJSON(w, ac.jobBrief(*j))
 		return
@@ -812,7 +836,7 @@ func (s *server) jobsAPI(w http.ResponseWriter, r *http.Request, ac *Acct, rest 
 			j.logf(now, "you approved it")
 		}
 	default:
-		jsonErr(w, 404, "PUT /api/jobs/{id}, POST /api/jobs/{id}/approve|skip|unskip, GET /api/jobs/{id}/brief, POST /api/jobs/replan")
+		jsonErr(w, 404, "PUT /api/jobs/{id}, POST /api/jobs/{id}/approve|skip|unskip|remove-product|find-products, GET /api/jobs/{id}/brief, POST /api/jobs/replan")
 		return
 	}
 	jj := *j

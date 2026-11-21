@@ -124,7 +124,12 @@ type Playbook struct {
 	// AutoApproveOccasions (off by default).
 	Occasions            []Occasion `json:"occasions,omitempty"`
 	AutoApproveOccasions bool       `json:"auto_approve_occasions"`
-	Knobs                Knobs      `json:"knobs"`
+	// OccasionSlots: how many products each occasion package carries (3–8, default 5; season.go). ProductSeasons:
+	// what the owner says a product is for (product id → winter / summer / ramadan / gifting / sale); his word wins
+	// over the rules (Strategy → Products).
+	OccasionSlots  int                 `json:"occasion_slots"`
+	ProductSeasons map[string][]string `json:"product_seasons,omitempty"`
+	Knobs          Knobs               `json:"knobs"`
 	// "Let it tune its own rules": off | bounds (default: it changes a threshold itself, only inside TuneBounds) | ask
 	SelfTune   string     `json:"self_tune"`
 	TuneBounds TuneBounds `json:"tune_bounds"`
@@ -277,6 +282,8 @@ func (p Playbook) Normalize() Playbook {
 	}
 	p.Gifts = gs
 	p.Occasions = normOccasions(p.Occasions)
+	p.OccasionSlots = p.Slots()
+	p.ProductSeasons = normSeasons(p.ProductSeasons)
 	e, de := p.Econ, DefaultEconInputs()
 	if e == (EconInputs{}) { // a playbook saved before these existed
 		e = de
@@ -457,6 +464,8 @@ type RankedProduct struct {
 	AgeDays  int                `json:"age_days"` // since the engine first saw it in the feed; -1 = there before the app
 	Units14  int                `json:"units_14d"`
 	InStock  bool               `json:"in_stock"`
+	Seasons  []string           `json:"seasons,omitempty"`       // what it is for (season.go), the owner's word or the rules'
+	Yours    bool               `json:"seasons_yours,omitempty"` // the owner set Seasons himself (Strategy → Products)
 }
 
 // RankSignals: what the ranking reads besides the products. Trending = shop product ids trending now, best first.
@@ -582,6 +591,7 @@ func Rank(prods []Product, pb Playbook, sig RankSignals) []RankedProduct {
 		score := F*(0.5*trend+0.5*newS) + (1-F)*0.5*mg + 0.35*mom + 0.15*st - 0.3*fat + 0.25*learned
 		rp.Parts = map[string]float64{"trend": r3(trend), "new": r3(newS), "momentum": r3(mom), "margin": r3(mg), "stock": r3(st), "fatigue": r3(fat), "learned": r3(learned)}
 		rp.Score = math.Round(clampF(score, 0, 2)*1000) / 10
+		rp.Seasons, rp.Yours = pb.SeasonsFor(p)
 		if pb.Pinned(p) {
 			rp.Pinned = true
 			rp.Score += 100

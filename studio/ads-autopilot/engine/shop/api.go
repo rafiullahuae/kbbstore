@@ -217,39 +217,47 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 		after = *p.NextAfter
 	}
 
-	// units sold per product: sale orders of the last 28 shop days, split 14 + 14 (the momentum signal)
-	units, prev := map[string]int{}, map[string]int{}
+	// units sold per product: sale orders of the last 90 shop days — 14 + 14 (the momentum signal), 30 and 90 (what
+	// sells, for the occasion slots); the payment mix stays on the last 28
+	units, prev, u30, u90 := map[string]int{}, map[string]int{}, map[string]int{}, map[string]int{}
 	fam, nSale := map[string]float64{}, 0
 	cut := today.AddDate(0, 0, -13).Format("2006-01-02")
-	oq := url.Values{"from": {today.AddDate(0, 0, -27).Format("2006-01-02")}, "to": {today.Format("2006-01-02")}, "limit": {"200"}}
+	cut28, cut30 := today.AddDate(0, 0, -27).Format("2006-01-02"), today.AddDate(0, 0, -29).Format("2006-01-02")
+	oq := url.Values{"from": {today.AddDate(0, 0, -89).Format("2006-01-02")}, "to": {today.Format("2006-01-02")}, "limit": {"200"}}
 	after = 0
-	for page := 0; page < 50; page++ { // 10,000 orders in 4 weeks, far past this shop
+	for page := 0; page < 60; page++ { // 12,000 orders in 90 days, far past this shop (~1,500)
 		oq.Set("after", strconv.Itoa(after))
 		var o apiOrders
 		if err := s.get(ctx, "/orders", oq, &o); err != nil {
 			if errors.Is(err, ErrUnauthorized) {
 				return err
 			}
-			units, prev, fam, nSale = map[string]int{}, map[string]int{}, map[string]float64{}, 0 // momentum is a bonus signal: without it the rest still holds
+			units, prev, u30, u90, fam, nSale = map[string]int{}, map[string]int{}, map[string]int{}, map[string]int{}, map[string]float64{}, 0 // momentum is a bonus signal: without it the rest still holds
 			break
 		}
 		for _, od := range o.Orders {
 			if !od.IsSale {
 				continue
 			}
-			nSale++
-			f := od.Family
-			if f != "bnpl" && f != "card" && f != "cod" {
-				f = "other"
+			if od.Day >= cut28 {
+				nSale++
+				f := od.Family
+				if f != "bnpl" && f != "card" && f != "cod" {
+					f = "other"
+				}
+				fam[f]++
 			}
-			fam[f]++
 			for _, it := range od.Items {
 				if it.ProductID == nil || it.Qty <= 0 {
 					continue
 				}
+				u90[*it.ProductID] += it.Qty
+				if od.Day >= cut30 {
+					u30[*it.ProductID] += it.Qty
+				}
 				if od.Day >= cut {
 					units[*it.ProductID] += it.Qty
-				} else {
+				} else if od.Day >= cut28 {
 					prev[*it.ProductID] += it.Qty
 				}
 			}
@@ -281,7 +289,7 @@ func (s *APISource) addShopData(ctx context.Context, snap *model.ShopSnapshot) e
 		if i := strings.IndexByte(g, '-'); i > 0 {
 			g = g[:i]
 		}
-		p.Units14, p.UnitsPrev14 = units[g], prev[g]
+		p.Units14, p.UnitsPrev14, p.Units30, p.Units90 = units[g], prev[g], u30[g], u90[g]
 	}
 	return nil
 }
