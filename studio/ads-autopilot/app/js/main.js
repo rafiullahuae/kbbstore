@@ -20,6 +20,7 @@ import * as settings from './screens/settings.js';
 import * as welcome from './screens/welcome.js';
 import { renderPending } from './creative/render.js';
 import { openCreate } from './create/create.js';
+import { autoFix, repriceSummary } from './create/reprice.js';
 import { onRenderRequest } from './create/remote.js';
 import { creationBanner, wireBanner, loadCreation, setCreation, CS } from './create/banner.js';
 import { claudeCodeEvent } from './create/claudecode.js';
@@ -161,8 +162,16 @@ export function switchAccount(id) {
   loadCreation(id).then(() => rerender()).catch(() => {});
 }
 
-let pendingTimer = 0;
+let pendingTimer = 0, fixTimer = 0;
 function schedulePending() {
+  clearTimeout(fixTimer); // every saved ad keeps today's price and each photo once, by itself (create/reprice.js)
+  fixTimer = setTimeout(() => (window.requestIdleCallback || setTimeout)(() => autoFix((r) => {
+    const id = getAccount();
+    if (r.fixed || r.failed.length) toast(repriceSummary(r).join(' '));
+    for (const k of ['ccsessions', 'creatives', 'designs']) S.cache.delete(`${id}|${k}`);
+    dropList('creatives');
+    if (S.route === 'creatives') rerender();
+  }).catch(() => {})), 4000);
   const st = S.state;
   if (!st || !st.designs_pending || !st.designs_pending.length) return;
   clearTimeout(pendingTimer);

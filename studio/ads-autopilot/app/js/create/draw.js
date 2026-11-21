@@ -39,7 +39,7 @@ export async function saveDesign(d, account) {
     const q = await score(d, f, A);
     if (!q.ok) { out.refused.push({ design: d.id, format: f, fails: q.fails }); continue; }
     const { b64 } = await toPNG(await renderSpec(d, f, null, { assets: A }));
-    const r = await api('/api/creatives', { method: 'POST', account, body: { id: creativeID(d, f), lang: d.lang, format: f, png: b64, headline: d.headline, primary_text: d.primary_text || d.sub || d.headline, cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source: 'owner' } });
+    const r = await api('/api/creatives', { method: 'POST', account, body: { id: creativeID(d, f), lang: d.lang, format: f, png: b64, price: d.price || 'none', layout: 2, headline: d.headline, primary_text: d.primary_text || d.sub || d.headline, cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source: 'owner' } });
     out.ids.push(r.id);
   }
   return out;
@@ -47,6 +47,6 @@ export async function saveDesign(d, account) {
 
 export async function saveVideo(d, blob, account) {
   const b64 = await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
-  const r = await api('/api/creatives', { method: 'POST', account, body: { id: creativeID(d, 'mp4'), lang: d.lang, format: '9:16', video: b64, headline: d.headline, primary_text: d.primary_text || d.sub || d.headline, cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source: 'owner' } });
+  const r = await api('/api/creatives', { method: 'POST', account, body: { id: creativeID(d, 'mp4'), lang: d.lang, format: '9:16', video: b64, price: d.price || 'none', layout: 2, headline: d.headline, primary_text: d.primary_text || d.sub || d.headline, cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source: 'owner' } });
   return r.id;
 }

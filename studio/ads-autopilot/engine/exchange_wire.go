@@ -473,6 +473,13 @@ func (a *App) importJob(r exchange.Remote, snap *exchange.Snapshot, eb *brain.En
 		return fb, 0, 1
 	}
 	_ = exchange.ReadJSON(r, snap, dir+"/done.json", &done)
+	// the price the cloud printed is the brief's (worker.mjs specsFor): recorded on each creative (brain/reprice.go)
+	var brief exchange.Brief
+	_ = exchange.ReadJSON(r, snap, exchange.JobDir(ac.id, job.ID)+"/brief.json", &brief)
+	briefPrice := map[string][2]string{}
+	for _, p := range append(append([]exchange.Product{}, brief.Products...), brief.MoreProducts...) {
+		briefPrice[p.ID] = [2]string{p.PriceAR, p.PriceEN}
+	}
 	worker := firstNonEmptyStr(done.Worker, ads.Worker, "cloud")
 	if done.Error != "" {
 		reject("done.json", "the cloud could not make it: "+done.Error)
@@ -560,6 +567,16 @@ func (a *App) importJob(r exchange.Remote, snap *exchange.Snapshot, eb *brain.En
 			}
 			cr := model.Creative{ID: id, Lang: rd.Lang, Format: rd.Format, Headline: set.Headline, PrimaryText: set.PrimaryText, CTA: firstNonEmptyStr(set.CTA, "SHOP_NOW"),
 				Link: link, ProductIDs: idea.ProductIDs, Angle: idea.Angle, Source: "owner", Origin: "cloud_max"}
+			if !idea.ShowPrice {
+				cr.Price = brain.PriceNone
+			} else if bp, ok := briefPrice[idea.ProductIDs[0]]; ok {
+				if rd.Lang == "ar" {
+					cr.Price = bp[0]
+				} else {
+					cr.Price = bp[1]
+				}
+			}
+			cr.Layout = 1 // the cloud's renderer may be older than the Mac's: a one-photo routine is redrawn here
 			if rd.Kind == "mp4" {
 				cr.Video = base64.StdEncoding.EncodeToString(b)
 			} else {

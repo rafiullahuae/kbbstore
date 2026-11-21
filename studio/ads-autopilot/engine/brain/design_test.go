@@ -296,7 +296,11 @@ func TestScenePromptRules(t *testing.T) {
 }
 
 func TestFamilyFor(t *testing.T) {
-	cases := map[string]string{"gentle morning routine": "routine", "calming heartleaf ingredient": "ingredient", "glass-skin glow": "glow", "Eid gift": "offer", "summer-proof lightweight SPF texture": "texture"}
+	// one product never takes the routine family: it drew that one photo once per step (the owner's Anua set, 21 Nov)
+	if got := familyFor("gentle morning routine", 1, 0); got == "routine" || familyFor("gentle morning routine", 2, 0) != "routine" {
+		t.Fatalf("routine angle: 1 product -> %s (must not be routine), 2 products -> %s", got, familyFor("gentle morning routine", 2, 0))
+	}
+	cases := map[string]string{"calming heartleaf ingredient": "ingredient", "glass-skin glow": "glow", "Eid gift": "offer", "summer-proof lightweight SPF texture": "texture"}
 	for a, want := range cases {
 		if got := familyFor(a, 1, 0); got != want {
 			t.Fatalf("%q -> %s, want %s", a, got, want)

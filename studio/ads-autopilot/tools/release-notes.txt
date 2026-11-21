@@ -2,6 +2,12 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.2
+- Prices, permanent fix: every saved picture and video now records the price printed on it. Whenever the app opens, and after it reads the shop again (a sale starting or ending), it compares that with the shop's price and redraws, by itself, any ad that is different. Ads running on Meta are replaced by the corrected version in the same ad set. Nothing else in the designs changes.
+- Fixed: after "Correct prices" some ads still showed the old price. The Create window kept an old copy of the set (it now always shows the latest); the library kept showing the old picture until the app restarted (it now shows the new one at once); some pictures were missed (a headline edited after saving, or a design corrected earlier); and a few were skipped by the quality check ("product 39% of the frame") — a price correction is never skipped now.
+- Sets (one product whose photo shows several items, like the Anua kit) are no longer repeated three times in the "Routine steps" design: each product photo is drawn once. Claude is told a set is one product. Saved ads with a repeated photo are redrawn automatically too.
+- Creatives → Made with Claude → "Fix all ads" does the same at any time, and says what it changed.
+
 ## 0.6.1
 - Prices: every ad now shows the price the shop charges today — the sale price when there is one (it showed the regular price). Claude is told the sale price too.
 - Creatives → Made with Claude → "Correct prices on all ads": redraws every saved picture and video with the sale price. The designs stay exactly as they are (same photo, colours, words); only the price changes. Ads already running on Meta are replaced by the corrected version in the same ad set.

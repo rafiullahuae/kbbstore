@@ -317,7 +317,9 @@ function backdrop(x, W, H, A, P, own) {
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   return true;
 }
-const imgs = (A) => A.filter(Boolean);
+// the distinct product photos: the same photo twice (one product named twice, or one set's photo) is drawn ONCE
+// (the owner, 21 Nov: the Anua set repeated three times across a routine "looks weird")
+const imgs = (A) => [...new Set(A.filter(Boolean))];
 
 // ---------- families ----------
 const F = {};
@@ -474,18 +476,19 @@ F.offer = (x, s, W, H, A, P) => {
 
 F.routine = (x, s, W, H, A, P) => {
   const z = Z(W, H), im = imgs(A);
+  if (im.length < 2) return F.collection(x, s, W, H, A, P); // one product (or one set): one photo on a podium, never repeated
   backdrop(x, W, H, A, P, () => {
     K.wash(x, W, H, [P.bg1, K.mix(P.bg2, '#FFFFFF', 0.3)], 90);
     K.meshBlobs(x, W, H, [P.accSoft, '#FFE8DD'], 31, M.time, 0.4);
   });
   const hb = header(x, s, P, { x0: z.m, x1: W - z.m, y: z.top, size: W * 0.08 });
-  const n = Math.max(1, Math.min(3, Math.max(im.length, (s.bullets || []).length || 1)));
+  const n = Math.max(1, Math.min(3, im.length)); // one column per DIFFERENT product
   const labelsH = W * 0.11, ledge = (z.tall ? z.bot - W * 0.12 : H - W * 0.12) - labelsH;
   if (!A.bg) K.horizon(x, W, ledge, ledge + W * 0.06, '#F7EEEA', '#EADBD5');
   const colW = (W - z.m * 2) / n;
   for (let i = 0; i < n; i++) {
     const k = ar() ? n - 1 - i : i, cx = z.m + colW * (k + 0.5), d = 0.12 + i * 0.12;
-    product(x, im[i] || im[0], { cx, base: ledge + W * 0.01, maxW: colW * 0.86, maxH: ledge - hb - W * 0.11 }, { delay: d, phase: i });
+    product(x, im[i], { cx, base: ledge + W * 0.01, maxW: colW * 0.86, maxH: ledge - hb - W * 0.11 }, { delay: d, phase: i });
     const ny = hb + W * 0.06, r = W * 0.03 * seg(d, d + 0.3);
     if (r > 1) { x.save(); x.fillStyle = P.goldLight; x.strokeStyle = P.gold; x.lineWidth = 3; x.beginPath(); x.arc(cx, ny, r, 0, Math.PI * 2); x.fill(); x.stroke(); x.restore(); text(x, { text: String(i + 1), role: 'num', size: W * 0.032, maxW: W * 0.06, maxLines: 1, x: cx, y: ny - W * 0.019, align: 'center', color: P.plum }); }
     const lbl = (s.bullets || [])[i];
@@ -615,7 +618,7 @@ F.collection = (x, s, W, H, A, P) => {
   const pos = n === 3 ? [0.5, 0.24, 0.76] : n === 2 ? [0.4, 0.62] : [0.5];
   for (const i of order) {
     const front = i === 0, cx = W * (ar() ? 1 - pos[i] : pos[i]);
-    product(x, im[i] || im[0], { cx, base: podTop + W * (front ? 0.03 : 0.0), maxW: W * (n === 1 ? 0.6 : 0.36), maxH: maxH * (front ? 1 : 0.82) }, { delay: front ? 0 : 0.12, phase: i, float: true });
+    product(x, im[i], { cx, base: podTop + W * (front ? 0.03 : 0.0), maxW: W * (n === 1 ? 0.6 : 0.36), maxH: maxH * (front ? 1 : 0.82) }, { delay: front ? 0 : 0.12, phase: i, float: true });
   }
   chipRow(x, s, P, W / 2, chipsY, W - z.m * 2);
   buy(x, s, P, W / 2, footY);

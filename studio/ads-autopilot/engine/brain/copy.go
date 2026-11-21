@@ -221,7 +221,7 @@ func familyFor(angle string, nProducts int, h uint32) string {
 		return false
 	}
 	switch {
-	case has("routine", "step") || nProducts >= 3:
+	case (has("routine", "step") && nProducts >= 2) || nProducts >= 3: // a routine needs different products, never one photo repeated
 		return "routine"
 	case nProducts == 2 || has("bundle", "set", "collection", "carousel"):
 		return "collection"

@@ -44,8 +44,9 @@ to kbbstore, the worker clones it (`KBB_EXCHANGE_REPO=owner/name` to use another
   invent an ingredient), `bullets` 2-3 short benefits, `badge` = the brand or empty, `cta` = `SHOP_NOW`, 2-4 short
   lines of `primary_text`. Formula: hook → benefit for a skin type / routine step → proof (the ingredient + the
   Korean-skincare angle) → reason to buy (authentic, UAE delivery, the AED price) → CTA.
-- `template` is one of `brief.design_families`. Vary families across ideas. 2+ products → `routine` or
-  `collection`. `palette`: empty (the photo decides) or 2-4 hex colours close to `brief.brand_colours`.
+- `template` is one of `brief.design_families`. Vary families across ideas. 2+ DIFFERENT products → `routine` or
+  `collection`; a set / kit / bundle is ONE product (its photo already shows every item): a single-product family,
+  never `routine`, and never the same id twice. `palette`: empty (the photo decides) or 2-4 hex colours close to `brief.brand_colours`.
 - `product_ids` only from `brief.products` (and `brief.more_products` for routines). Use the lessons and
   `winning_patterns`; follow `research` angles when they fit.
 - `scene` stays empty (no AI backgrounds in the cloud).

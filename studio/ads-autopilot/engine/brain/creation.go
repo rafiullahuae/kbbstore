@@ -517,7 +517,7 @@ func (e *Engine) brief(acct string, in CycleInput) map[string]any {
 			"Policy (wording: " + firstNonEmpty(in.Limits.AdWording, st.AdWording) + "): no cure/treat/علاج claims, no before/after, no condition-shaming questions, no whitening/تبييض, no '#1', no discounts unless a promotion is approved (" + fmt.Sprint(st.PromoApproved) + ").",
 			"Headline <= 40 characters; 2-4 short lines of primary text; CTA SHOP_NOW unless asked.",
 			"Benefit-first copy, Arabic first: hook (first 2 s, the benefit or the feel) -> benefit for a skin type / routine step (helps, visibly, texture) -> proof: the hero ingredient from the product data + the Korean-skincare angle (gentle, ingredient-first, layering, glass-skin, made in Korea) -> reason to buy (authentic, UAE delivery, the AED price; never invented pay-later, gifts or urgency) -> CTA. Design text slots: headline = the benefit, subline = the ingredient, badge = brand or price.",
-			"Design families: hero glow ingredient offer routine editorial petals texture qa collection. Formats 1:1, 4:5, 9:16 (+ motion for Reels).",
+			"Design families: hero glow ingredient offer routine editorial petals texture qa collection. routine / collection only for 2-3 DIFFERENT products, each id once; a set / kit / bundle is ONE product (its photo shows every item): use a single-product family for it. Formats 1:1, 4:5, 9:16 (+ motion for Reels).",
 			"The real product photo is always used; an AI background prompt describes only the set (no product, no text, no logos, no faces).",
 		},
 		"how": "create_ad_set renders previews in the app; revise changes only the fields you send; save_to_library runs the quality gate; run_it hands the saved creatives to the autopilot (limits and Practice/Auto apply).",

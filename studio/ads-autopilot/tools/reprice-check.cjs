@@ -77,38 +77,69 @@ const find = (dir, name) => { for (const f of fs.readdirSync(dir, { withFileType
     en: { headline: 'Fresher-looking skin, fast', primary_text: 'COSRX Low pH Good Morning cleanser, a gentle daily step. Authentic from Korea, delivered across the UAE.', sub: 'Low pH gel cleanser', bullets: ['Low pH', 'Tea tree'], badge: 'COSRX', cta: 'SHOP_NOW' } };
 
   // 1 ─ a new set prints the sale price
-  const c1 = textOf(await tool('create_ad_set', { ideas: [idea], prompt: 'new set' }));
+  // the owner's second ask (21 Nov): a set (ONE product) in the routine family drew its photo three times
+  const setIdea = Object.assign({}, idea, { template: 'routine', motion: false, ar: Object.assign({}, idea.ar, { headline: 'روتين البشرة الزجاجية في علبة واحدة', bullets: ['ترطيب على طبقات', 'إشراقة زجاجية', 'صُنع في كوريا'] }), en: Object.assign({}, idea.en, { headline: 'Glass-skin routine in one box', bullets: ['Layered hydration', 'Glass glow', 'Made in Korea'] }) });
+  const c1 = textOf(await tool('create_ad_set', { ideas: [idea, setIdea], prompt: 'new set' }));
   let ss = (await api('/api/brain/x/create')).j;
   const s1 = ss.find((s) => s.id === c1.session_id);
   const prices = [...new Set(s1.designs.map((d) => `${d.lang}:${d.price}`))];
   check('a new design prints the SALE price', s1.designs.every((d) => d.lang === 'en' ? d.price === 'AED 59' : d.price === '59 درهم'), prices.join(' · '));
   const lp = textOf(await tool('list_products', { query: 'cleanser' }));
   const p3195 = (Array.isArray(lp) ? lp : []).find((p) => p.id === '3195');
+  const setD = s1.designs.find((d) => d.template === 'routine' && d.lang === 'ar');
+  const lay = await H(async (d) => { const R = await import('/app/js/creative/render.js'); const A = await R.assets(d); const c = document.createElement('canvas'); c.width = 1080; c.height = 1350; const L = R.draw(c.getContext('2d'), d, 1080, 1350, A); return { products: L.product.length, family: L.family }; }, setD);
+  if (SHOT) { // the set, as the owner will see it now (AR + EN, 4:5)
+    const pics = [];
+    for (const d of s1.designs.filter((x) => x.template === 'routine')) pics.push(await H(async (d) => { const R = await import('/app/js/creative/render.js'); const cv = await R.renderSpec(d, '4:5', null, { assets: await R.assets(d) }); return cv.toDataURL('image/png'); }, d));
+    const p2 = await ctx.newPage();
+    await p2.setContent(`<body style="margin:0;background:#f4f2ee;font:600 15px system-ui"><div style="display:flex;gap:16px;padding:16px;flex-wrap:wrap">${pics.map((u) => `<img src="${u}" style="width:calc(50% - 8px);min-width:300px">`).join('')}</div></body>`);
+    for (const w of [1280, 390]) { await p2.setViewportSize({ width: w, height: 900 }); await sleep(200); await p2.screenshot({ path: path.join(SHOTS, `set-once-${w}.png`), fullPage: true }); }
+    await p2.close();
+  }
+  check('a one-product set is drawn ONCE (no repeated photo)', setD && lay.products === 1, `routine with 1 product, ${setD && setD.bullets.length} bullets → ${lay.products} photo(s), drawn as ${lay.family}`);
   check('Claude is told the sale price', p3195 && p3195.price_aed === 59, p3195 ? `list_products price_aed ${p3195.price_aed}` : JSON.stringify(lp).slice(0, 200));
 
   // 2 ─ the owner's state before the fix: the same set with the regular price, saved, launched
+  // served designs always carry today's price, whatever is stored (the Create box, render jobs, previews)
   const sessFile = find(dataDir, 'create_sessions.json');
   const all = JSON.parse(fs.readFileSync(sessFile, 'utf8'));
   for (const s of all) if (s.id === s1.id) for (const d of s.designs) d.price = d.lang === 'en' ? 'AED 70' : '70 درهم';
   fs.writeFileSync(sessFile, JSON.stringify(all));
-  const sv = textOf(await tool('save_to_library', { session_id: s1.id }));
-  const ids = sv.saved_creative_ids || [];
-  // the box also saves the motion version: one, drawn here from the same (old-price) design, kept with the set
-  const dv = s1.designs.find((d) => d.lang === 'en');
-  const vb64 = await H(async (d) => { const { renderVideo } = await import('/app/js/creative/motion.js'); const r = await renderVideo(Object.assign({}, d, { price: 'AED 70' }), '9:16', 6, null, () => {}); const b = new Uint8Array(await r.blob.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode.apply(null, b.subarray(i, i + 32768)); return { b64: btoa(s), mime: r.mime }; }, dv);
-  const vid = 'cc-0000aaaa' + dv.id.replace(/[^a-z0-9]/g, '').slice(-6) + '-mp4';
-  const vr = await api('/api/creatives', 'POST', { id: vid, lang: 'en', format: '9:16', video: vb64.b64, headline: dv.headline, primary_text: dv.primary_text || dv.headline, cta: 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: dv.product_ids, angle: dv.angle, source: 'owner' });
-  await api('/api/brain/x/create/' + s1.id, 'PUT', { saved: [vid] });
-  if (vr.s === 200) ids.push(vid);
+  const served = (await api('/api/brain/x/create')).j.find((s) => s.id === s1.id);
+  check('a stored old price is never served: every design comes back with the sale price', served.designs.every((d) => /59/.test(d.price)), served.designs.map((d) => d.price).join(' · '));
+
+  // 2 ─ the owner's real state: pictures and a video saved BEFORE 0.6.2 (no price recorded), drawn with AED 70
+  const legacy = async (d, f, idHash) => {
+    const old = Object.assign({}, d, { price: d.lang === 'en' ? 'AED 70' : '70 درهم' });
+    const r = await H(async ([d, f]) => {
+      const R = await import('/app/js/creative/render.js'); const D = await import('/app/js/create/draw.js');
+      const toB64 = async (blob) => { const b = new Uint8Array(await blob.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode.apply(null, b.subarray(i, i + 32768)); return btoa(s); };
+      if (f === 'mp4') { const { renderVideo } = await import('/app/js/creative/motion.js'); const v = await renderVideo(d, '9:16', 6, null, () => {}); return { id: D.creativeID(d, 'mp4'), video: await toB64(v.blob), mime: v.mime }; }
+      const { b64 } = await R.toPNG(await R.renderSpec(d, f, null, { assets: await R.assets(d) }));
+      return { id: D.creativeID(d, f), png: b64 };
+    }, [old, f]);
+    const id = idHash ? r.id.replace(/^cc-[0-9a-f]{8}/, 'cc-' + idHash) : r.id;
+    const body = { id, lang: d.lang, format: f === 'mp4' ? '9:16' : f, headline: d.headline, primary_text: d.primary_text || d.headline, cta: 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids, angle: d.angle, source: 'owner' };
+    if (r.png) body.png = r.png; else body.video = r.video;
+    const x = await api('/api/creatives', 'POST', body); // no price, no layout: exactly what 0.6.0 / 0.6.1 saved
+    return x.s === 200 ? { id, b64: r.png || r.video, mime: r.mime } : null;
+  };
+  const ids = [], legacyMedia = {};
+  for (const d of s1.designs) for (const f of d.formats) { const x = await legacy(d, f); if (x) { ids.push(x.id); legacyMedia[x.id] = x.b64; } }
+  const dv = s1.designs.find((d) => d.lang === 'en' && d.template !== 'routine');
+  const vx = await legacy(dv, 'mp4');
+  const vid = vx && vx.id, vb64 = vx || {};
+  if (vid) ids.push(vid);
+  await api('/api/brain/x/create/' + s1.id, 'PUT', { saved: ids });
   const vids = ids.filter((x) => /-mp4$/.test(x));
-  const ri = textOf(await tool('run_it', { session_id: s1.id, launch_now: true }));
+  const ri = (await api('/api/launch', 'POST', { creative_ids: ids.filter((x) => !/-mp4$/.test(x)).slice(0, 12), launch: true })).j;
   let lib = (await api('/api/creatives')).j;
   const before = Object.fromEntries(lib.filter((c) => ids.includes(c.id)).map((c) => [c.id, c]));
   const liveBefore = Object.values(before).filter((c) => c.meta_creative_id);
   const imgOf = async (id) => Buffer.from(await (await fetch(`${base}/api/creatives/${id}/file?t=${Date.now()}`, { headers: { 'X-KAA': info.token } })).arrayBuffer()).toString('base64');
   const pngBefore = {};
-  for (const id of ids.filter((x) => !/-mp4$/.test(x))) pngBefore[id] = await imgOf(id);
-  check('old state: saved with AED 70 and launched', ids.length >= 5 && vids.length === 1 && liveBefore.length >= 1, `${ids.length} saved (${vids.length} video) · run_it ${JSON.stringify(ri.counts || ri)} · ${liveBefore.length} on Meta`);
+  for (const id of ids.filter((x) => !/-mp4$/.test(x))) pngBefore[id] = legacyMedia[id];
+  check('old state (0.6.0 saves, no price recorded): AED 70 and launched', ids.length >= 12 && vids.length === 1 && liveBefore.length >= 1, `${ids.length} saved (${vids.length} video) · run_it ${JSON.stringify(ri.counts || ri)} · ${liveBefore.length} on Meta`);
   await api('/api/limits', 'PUT', { autopilot: 'auto' });
   await sleep(31000); // the owner's live ads are hours old; Meta allows one edit per object every 30 s
   const st0 = (await api('/api/state')).j;
@@ -125,12 +156,12 @@ const find = (dir, name) => { for (const f of fs.readdirSync(dir, { withFileType
   const sw = await H(() => document.documentElement.scrollWidth);
   const t0 = Date.now();
   await page.click('#rp-go');
-  await page.waitForFunction(() => document.querySelector('#rp-go') && !document.querySelector('#rp-go').disabled && /show the sale price|already shows|could not/.test(document.querySelector('#rp-out').textContent), null, { timeout: 300000 });
+  await page.waitForFunction(() => document.querySelector('#rp-go') && !document.querySelector('#rp-go').disabled && /redrawn|Nothing to fix|could not/.test(document.querySelector('#rp-out').textContent), null, { timeout: 300000 });
   const said = await H(() => document.querySelector('#rp-out').innerText);
   const vidAfter = await (await fetch(`${base}/api/creatives/${vid}/file`, { headers: { 'X-KAA': info.token } })).arrayBuffer();
   const ms = Date.now() - t0;
   if (SHOT) { await sleep(200); await page.screenshot({ path: path.join(SHOTS, 'reprice-done-1280.png') }); }
-  check('the button redraws every saved picture and the video', new RegExp(`^${ids.length} picture`).test(said) && Buffer.from(vidAfter).toString('base64') !== vb64.b64, `${ms} ms · video ${vb64.mime} ${(vidAfter.byteLength / 1e6).toFixed(2)} MB · “${said.replace(/\n/g, ' | ')}”`);
+  check('the button redraws every saved picture and the video', new RegExp(`^${ids.length} picture`).test(said) && Buffer.from(vidAfter).toString('base64') !== vb64.b64 && vidAfter.byteLength > 10000, `${ms} ms · video ${vb64.mime} ${(vidAfter.byteLength / 1e6).toFixed(2)} MB · “${said.replace(/\n/g, ' | ')}”`);
 
   // 4 ─ same ids, new media, designs say AED 59
   lib = (await api('/api/creatives')).j;
@@ -138,7 +169,7 @@ const find = (dir, name) => { for (const f of fs.readdirSync(dir, { withFileType
   check('the same library ids, redrawn once each', ids.every((id) => after[id] && after[id].media_rev === 1 && after[id].repriced_at && after[id].approved === before[id].approved), `${Object.keys(after).length}/${ids.length} kept · approved flags kept`);
   ss = (await api('/api/brain/x/create')).j;
   const s1b = ss.find((s) => s.id === s1.id);
-  check('the session now says the sale price', s1b.designs.every((d) => /59/.test(d.price)) && JSON.stringify(s1b.designs.map((d) => Object.assign({}, d, { price: '' }))) === JSON.stringify(s1.designs.map((d) => Object.assign({}, d, { price: '' }))), s1b.designs.map((d) => d.price).join(' · '));
+  check('the session now says the sale price', s1b.designs.every((d) => /59/.test(d.price)) && JSON.stringify(s1b.designs.map((d) => Object.assign({}, d, { price: '', layout: 0 }))) === JSON.stringify(s1.designs.map((d) => Object.assign({}, d, { price: '', layout: 0 }))), s1b.designs.map((d) => d.price).join(' · '));
 
   // 5 ─ the design is untouched: only the price chip's pixels moved
   const diffs = [];
@@ -178,6 +209,34 @@ const find = (dir, name) => { for (const f of fs.readdirSync(dir, { withFileType
 
   // 7 ─ again finds nothing, no errors
   const again = await api('/api/reprice', 'POST', {});
+  // 6b ─ the library shows the NEW picture at once (a redrawn picture has a new address)
+  await page.goto(base + '/app/#/creatives'); await page.waitForSelector('[data-tab="images"]'); await page.click('[data-tab="images"]');
+  await sleep(1500);
+  const srcs = await H(() => [...document.querySelectorAll('.lib img')].map((i) => i.dataset.src || i.src).filter((u) => /\/api\/creatives\//.test(u) || /^blob:/.test(u)).length);
+  const libHtml = await H(() => document.querySelector('#cv') ? document.querySelector('#cv').innerHTML : '');
+  check('the library asks for the redrawn picture, not the one it showed before', !/\/file"/.test(libHtml), `${srcs} library pictures · every address carries its version`);
+
+  // 6c ─ the owner's screenshot: the Create window reopened over a set it kept in memory with the old price
+  await page.goto(base + '/app/#/overview'); await page.waitForFunction(() => window.__kaaCreate, null, { timeout: 15000 });
+  await H((sess) => { window.__kaaCreate.session = JSON.parse(JSON.stringify(sess)); for (const d of window.__kaaCreate.session.designs) d.price = d.lang === 'en' ? 'AED 70' : '70 درهم'; }, s1);
+  await page.keyboard.press('c');
+  await page.waitForSelector('dialog.cc[open]');
+  await page.waitForFunction(() => window.__kaaCreate.session && window.__kaaCreate.session.designs.every((d) => /59/.test(d.price)), null, { timeout: 15000 }).catch(() => {});
+  const boxP = await H(() => window.__kaaCreate.session.designs.map((d) => d.price));
+  check('the Create window always shows the engine\'s corrected set (never a stale copy)', boxP.every((p) => /59/.test(p)), boxP.join(' · '));
+  await H(() => { const d = document.querySelector('dialog.cc[open]'); if (d) d.close(); });
+
+  // 7 ─ PERMANENT: nobody presses anything. One more old picture appears; the app opens; it is corrected by itself
+  const late = await legacy(dv, '1:1', 'bbbbbbbb');
+  await api('/api/brain/x/create/' + s1.id, 'PUT', { saved: [late.id] });
+  const p3 = await ctx.newPage();
+  p3.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  const tA = Date.now();
+  await p3.goto(base + '/app/#/overview');
+  let lc = null;
+  for (let i = 0; i < 120; i++) { await sleep(1000); lc = (await api('/api/creatives')).j.find((c) => c.id === late.id); if (lc && lc.media_rev >= 1) break; }
+  check('automatic: an old-price picture is corrected with no click, when the app opens', lc && lc.media_rev === 1 && /59/.test(lc.price), `${late.id} → media_rev ${lc && lc.media_rev}, shows ${lc && lc.price} · ${Date.now() - tA} ms after opening`);
+  await p3.close();
   check('a second run finds nothing to redraw', again.s === 200 && again.j.items.length === 0, `${again.j.items.length} left · ${again.j.done.length} done`);
   check('no horizontal scroll, no console errors', sw <= 1280 && !errors.length, `scrollWidth ${sw} · ${errors.length} errors ${errors.slice(0, 3).join(' | ')}`);
 

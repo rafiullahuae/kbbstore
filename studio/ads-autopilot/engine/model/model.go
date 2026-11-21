@@ -355,6 +355,11 @@ type Creative struct {
 	MediaRev   int      `json:"media_rev,omitempty"`
 	OldMetaIDs []string `json:"old_meta_ids,omitempty"`
 	RepricedAt string   `json:"repriced_at,omitempty"`
+	// what the picture shows, recorded at every save and redraw (brain/reprice.go compares it with today's price):
+	// the price label, "none" for no price, "" = saved before prices were recorded; Layout = the designer version
+	// (2: each product photo drawn once)
+	Price  string `json:"price,omitempty"`
+	Layout int    `json:"layout,omitempty"`
 }
 
 // ── the audit log ──

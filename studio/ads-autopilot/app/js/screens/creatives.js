@@ -11,6 +11,7 @@ import { repriceCard, wireRepriceCard } from '../create/reprice.js';
 
 let tab = 'images', langF = 'all', busy = '';
 const thumbs = new Map();
+const tk = (d) => `${d.id}|${d.price || ''}`; // a design drawn again when its price changes (never a stale thumbnail)
 let lastMotion = null;
 const TPL = Object.assign({ clean: FAMILY_LABELS.hero }, FAMILY_LABELS);
 const still = () => location.hash.startsWith('#/creatives');
@@ -37,7 +38,7 @@ function images(S, v, designs, lib) {
     <label class="f"><span>${esc(tt('Angle', 'الزاوية'))}</span><input id="g-a" style="width:260px" value="${esc(tt('gentle morning routine', 'روتين صباحي لطيف'))}"></label>
     <label class="f"><span>${esc(tt('Design', 'التصميم'))}</span><select id="g-t">${TEMPLATES.map((k) => `<option value="${k}">${esc(tt(...TPL[k]))}</option>`).join('')}</select></label>
     <button type="button" id="gen" style="align-self:flex-end" ${busy ? 'disabled' : ''}>${esc(busy ? tt('Working…', 'جارٍ العمل…') : tt('Create', 'إنشاء'))}</button></div></div>
-  ${ds.length || plain.length ? `<div class="lib">${ds.map((d) => `<div class="cr" data-d="${esc(d.id)}" tabindex="0" role="button"><div class="media" data-thumb="${esc(d.id)}">${thumbs.has(d.id) ? `<img src="${thumbs.get(d.id)}" alt="">` : '<div class="sk" style="height:100%"></div>'}<span class="tag">${esc((d.lang || '').toUpperCase())} · ${esc((d.formats || ['1:1']).join(' / '))}</span></div>
+  ${ds.length || plain.length ? `<div class="lib">${ds.map((d) => `<div class="cr" data-d="${esc(d.id)}" tabindex="0" role="button"><div class="media" data-thumb="${esc(d.id)}">${thumbs.has(tk(d)) ? `<img src="${thumbs.get(tk(d))}" alt="">` : '<div class="sk" style="height:100%"></div>'}<span class="tag">${esc((d.lang || '').toUpperCase())} · ${esc((d.formats || ['1:1']).join(' / '))}</span></div>
     <div class="meta"><b>${txt(d.headline)}</b><div class="row"><span class="chip">${esc(tt(...(TPL[d.template] || [d.template, d.template])))}</span><span class="chip">${esc(d.angle || '')}</span></div></div></div>`).join('')}
     ${plain.map((c) => `<div class="cr"><div class="media" ${c.media === 'png' || c.image_url ? '' : 'style="display:grid;place-items:center;padding:16px;text-align:center"'}>${libMedia(c)}<span class="tag">${esc((c.lang || '').toUpperCase())} · ${esc(c.media === 'mp4' ? tt('video', 'فيديو') : c.format || '')}${c.used ? ' · ' + esc(tt('live', 'منشور')) : ''}</span></div><div class="meta"><b>${txt(c.headline)}</b><span class="muted">${txt(c.primary_text || '')}</span></div></div>`).join('')}</div>`
     : `<div class="card">${empty(tt('No creatives yet', 'لا توجد إعلانات بعد'), tt('Create one above, or let the autopilot make them on the weekly batch day.', 'أنشئي إعلاناً أعلاه أو اتركي الطيار الآلي ينشئها في يوم الدفعة الأسبوعي.'))}</div>`}`;
@@ -61,7 +62,7 @@ function images(S, v, designs, lib) {
 
 // libMedia: a stored creative as it really is: its PNG from the engine, the shop photo a starter ad uses, or its text.
 function libMedia(c) {
-  if (c.media === 'png') return `<img data-src="/api/creatives/${encodeURIComponent(c.id)}/file" alt="${esc(c.headline || '')}" loading="lazy">`;
+  if (c.media === 'png') return `<img data-src="/api/creatives/${encodeURIComponent(c.id)}/file?v=${c.media_rev || 0}" alt="${esc(c.headline || '')}" loading="lazy">`;
   if (!c.media && /^https:\/\/kbeautybliss\.com\//.test(c.image_url || '')) return `<img data-src="${esc(img(c.image_url))}" alt="${esc(c.headline || '')}" loading="lazy">`;
   return `<span>${txt(c.headline)}</span>`;
 }
@@ -76,13 +77,13 @@ export async function postDesigns(designs, source) {
 
 async function fill(v, ds) {
   for (const d of ds) {
-    if (thumbs.has(d.id)) continue;
+    if (thumbs.has(tk(d))) continue;
     const cv = await renderSpec(d, '4:5');
     const s = document.createElement('canvas'); s.width = 320; s.height = 400; s.getContext('2d').drawImage(cv, 0, 0, 320, 400);
-    thumbs.set(d.id, s.toDataURL('image/jpeg', 0.82));
+    thumbs.set(tk(d), s.toDataURL('image/jpeg', 0.82));
     if (!still()) return;
     const slot = v.querySelector(`[data-thumb="${CSS.escape(d.id)}"] .sk`);
-    if (slot) slot.outerHTML = `<img src="${thumbs.get(d.id)}" alt="">`;
+    if (slot) slot.outerHTML = `<img src="${thumbs.get(tk(d))}" alt="">`;
   }
 }
 
@@ -177,7 +178,7 @@ function motion(S, v, designs) {
       if (lastMotion) URL.revokeObjectURL(lastMotion.url);
       lastMotion = { url: URL.createObjectURL(r.blob) };
       const b64 = await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.readAsDataURL(r.blob); });
-      await api('/api/creatives', { method: 'POST', body: { lang: d.lang, format: f, video: b64, headline: d.headline, primary_text: d.primary_text || d.sub || '', cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids, angle: d.angle, source: 'brain' } });
+      await api('/api/creatives', { method: 'POST', body: { lang: d.lang, format: f, video: b64, price: d.price || 'none', layout: 2, headline: d.headline, primary_text: d.primary_text || d.sub || '', cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids, angle: d.angle, source: 'brain' } });
       p.textContent = `${r.mime} · ${r.codec} · ${(r.blob.size / 1e6).toFixed(2)} MB · ${dur} s${r.beats ? ' · ' + r.beats + ' ' + tt('beats', 'إيقاع') : ''}`;
       window.__kaaMotion = { mime: r.mime, bytes: r.blob.size, width: r.width, height: r.height, ms: r.ms };
       dropList('creatives');

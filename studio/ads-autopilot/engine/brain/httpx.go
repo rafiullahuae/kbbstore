@@ -41,6 +41,10 @@ func (e *Engine) ServeBrain(w http.ResponseWriter, r *http.Request, acct string,
 	bad := func(code int, msg string) { writeErr(w, code, errString(msg)) }
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Minute)
 	defer cancel()
+	if r.Method == http.MethodGet && (p == "cycle" || p == "designs" || p == "create") {
+		// every design served carries today's selling price (reprice.go): previews, redraws, saves, render jobs
+		e.RefreshPrices(acct, input().Shop)
+	}
 	switch {
 	case p == "cycle" && r.Method == http.MethodGet:
 		var c CycleOutput

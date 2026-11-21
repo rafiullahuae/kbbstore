@@ -56,14 +56,16 @@ func (s *server) repriceAPI(w http.ResponseWriter, r *http.Request, ac *Acct, p 
 			jsonErr(w, 409, "the shop's products are not loaded yet (Overview → Sync, then try again)")
 			return
 		}
-		have := map[string]bool{}
-		for _, it := range plan.Items {
-			have[it.CreativeID] = true
+		// always recomputed from what each picture shows against today's price (never an older list)
+		plan.Items = eb.Reprice(ac.id, in.Shop, ac.creatives.all())
+		if plan.Items == nil {
+			plan.Items = []brain.RepriceItem{}
 		}
-		for _, it := range eb.Reprice(ac.id, in.Shop, ac.creatives.all()) {
-			if !have[it.CreativeID] {
-				plan.Items = append(plan.Items, it)
-			}
+		if len(plan.Done) > 500 {
+			plan.Done = plan.Done[len(plan.Done)-500:]
+		}
+		if len(plan.Swaps) > 500 {
+			plan.Swaps = plan.Swaps[len(plan.Swaps)-500:]
 		}
 		plan.At = a.now().UTC().Format(time.RFC3339)
 		_ = ac.st.Save("reprice_plan", plan)
@@ -90,19 +92,27 @@ func (s *server) repriceAPI(w http.ResponseWriter, r *http.Request, ac *Acct, p 
 			return
 		}
 		var in struct {
-			PNG   string `json:"png"`
-			Video string `json:"video"`
+			PNG    string `json:"png"`
+			Video  string `json:"video"`
+			Layout int    `json:"layout"`
 		}
 		if err := readJSON(r, &in, 96<<20); err != nil {
 			jsonErr(w, 400, err.Error())
 			return
 		}
-		cr, old, err := ac.creatives.ReplaceMedia(id, in.PNG, in.Video, a.now())
+		it := plan.Items[k]
+		shows := it.NewPrice
+		if shows == "" {
+			shows = brain.PriceNone
+		}
+		if in.Layout < brain.LayoutNoRepeats { // the app that drew it draws each photo once from 0.6.2 on
+			in.Layout = brain.LayoutNoRepeats
+		}
+		cr, old, err := ac.creatives.ReplaceMedia(id, in.PNG, in.Video, shows, in.Layout, a.now())
 		if err != nil {
 			jsonErr(w, 400, err.Error())
 			return
 		}
-		it := plan.Items[k]
 		plan.Items = append(plan.Items[:k], plan.Items[k+1:]...)
 		plan.Done = append(plan.Done, id)
 		var swaps []string
@@ -203,4 +213,6 @@ func (ac *Acct) repriceProposals(in model.CycleInput, j Job, pid func(string) st
 }
 
 // repricePauseID: the proposal id of a reprice job's pause (materialise's pid("pause")).
-func repricePauseID(jobID string) string { return "job-" + jobPID.ReplaceAllString(jobID, "-") + "-pause" }
+func repricePauseID(jobID string) string {
+	return "job-" + jobPID.ReplaceAllString(jobID, "-") + "-pause"
+}

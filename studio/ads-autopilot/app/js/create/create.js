@@ -44,9 +44,10 @@ export async function openCreate(opts = {}) {
   const g = dialog();
   if (opts.session) { st.session = opts.session; st.drawn.clear(); }
   else if (opts.fresh) { st.session = null; }
-  else if (!st.session) {
-    const sid = ls.get(SKEY);
-    if (sid) { const all = await api('/api/brain/x/create').catch(() => []); st.session = (all || []).find((s) => s.id === sid) || null; }
+  else {
+    // always the engine's latest copy: a set kept in memory showed the old price after it was corrected (21 Nov)
+    const sid = (st.session && st.session.id) || ls.get(SKEY);
+    if (sid) { const all = await api('/api/brain/x/create').catch(() => null); if (all) st.session = all.find((s) => s.id === sid) || null; }
   }
   st.request = opts.request || null;
   paint();

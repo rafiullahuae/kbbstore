@@ -156,7 +156,7 @@ func (c *creativeLib) Add(cr model.Creative, now time.Time) (model.Creative, err
 // ReplaceMedia redraws a creative in place (reprice.go): same id, same copy, same place in every package and queue;
 // only the picture / video changes. Meta's ids for the old media are dropped (the next upload sends the new one)
 // and the old Meta creative id is kept, so a live ad still showing it can be swapped. Returns the old Meta id.
-func (c *creativeLib) ReplaceMedia(id, png, video string, now time.Time) (model.Creative, string, error) {
+func (c *creativeLib) ReplaceMedia(id, png, video, price string, layout int, now time.Time) (model.Creative, string, error) {
 	var media []byte
 	kind := ""
 	switch {
@@ -187,9 +187,16 @@ func (c *creativeLib) ReplaceMedia(id, png, video string, now time.Time) (model.
 		if cr.Media != kind {
 			return cr, "", fmt.Errorf("creative %s holds a %q, not a %s", id, cr.Media, kind)
 		}
+		if cur, err := os.ReadFile(c.mediaPath(cr)); err == nil && bytes.Equal(cur, media) {
+			// the same picture (it already showed the right price): nothing on Meta changes, no live ad is swapped
+			cr.Price, cr.Layout = price, layout
+			c.list[i] = cr
+			return cr, "", c.st.Save("creatives/index", c.list)
+		}
 		if err := store.WriteAtomic(c.mediaPath(cr), media, 0o600); err != nil {
 			return cr, "", err
 		}
+		cr.Price, cr.Layout = price, layout
 		old := cr.MetaID
 		if old != "" {
 			cr.OldMetaIDs = append(cr.OldMetaIDs, old)

@@ -124,7 +124,7 @@ export async function shipDesign(d, source, renderSpec, toPNG) {
     qualityLog.push({ id: d.id, lang: d.lang, family: q.family, format: f, ok: q.ok, score: q.score, fails: q.fails });
     if (!q.ok) { out.refused.push({ format: f, fails: q.fails }); continue; }
     const { b64 } = await toPNG(await renderSpec(d, f, null, { assets: A }));
-    await api('/api/creatives', { method: 'POST', body: { lang: d.lang, format: f, png: b64, headline: d.headline, primary_text: d.primary_text || d.sub || '', cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source } });
+    await api('/api/creatives', { method: 'POST', body: { lang: d.lang, format: f, png: b64, price: d.price || 'none', layout: 2, headline: d.headline, primary_text: d.primary_text || d.sub || '', cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source } });
     out.posted++;
   }
   return out;

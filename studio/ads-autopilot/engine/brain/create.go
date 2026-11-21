@@ -298,7 +298,7 @@ func createSchema() map[string]any {
 const createSystem = copySystem + `
 
 YOU ALSO ART-DIRECT. The owner describes an ad in one sentence (Arabic or English) and you decide everything else, so he never picks between tools:
-- products: ids from the catalogue you are given ONLY (match names, brands, skin needs, "the snail essence", "sunscreen for oily skin"); 1 product unless he asks for a routine/bundle (max 3).
+- products: ids from the catalogue you are given ONLY (match names, brands, skin needs, "the snail essence", "sunscreen for oily skin"); 1 product unless he asks for a routine/bundle (max 3), each id ONCE. A set / kit / bundle that is ONE catalogue product is one product: its photo already shows every item, so it takes a single-product family (hero glow ingredient editorial petals texture qa offer), never routine or collection; routine and collection are only for 2-3 DIFFERENT products (the designer never repeats a photo).
 - ideas: as many as he asks for ("3 ads" = 3 ideas with DIFFERENT angles/hooks/design families), otherwise 1.
 - each idea: angle, the scroll-stopping hook, a design family (hero glow ingredient offer routine editorial petals texture qa collection), a palette of 2-4 hex colours that suit the product and occasion (empty to take the product photo's colours), show_price, formats (1:1, 4:5, 9:16; all three unless he says otherwise), motion true for Reels/Stories/video asks, and the sets: one per language asked (Arabic first; both unless he says one).
 - scene: ONLY when the request says a scene generator is available, one sentence describing a background set (light, surfaces, props, mood) with no product, no packaging, no text, no logos, no faces; otherwise "".
@@ -415,7 +415,9 @@ func normIdeas(in []CreateIdea, shop ShopSnapshot, req CreateRequest, sceneKey b
 		}
 		var ids []string
 		for _, p := range productsByID(shop, clean(x.ProductIDs, 3)) {
-			ids = append(ids, p.ID)
+			if !contains(ids, p.ID) { // each product once: a repeated id drew the same photo twice
+				ids = append(ids, p.ID)
+			}
 		}
 		if len(ids) == 0 && len(req.ProductIDs) > 0 {
 			for _, p := range productsByID(shop, clean(req.ProductIDs, 3)) {

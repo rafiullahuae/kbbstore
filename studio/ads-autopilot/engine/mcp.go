@@ -148,7 +148,7 @@ func mcpTools() []any {
 	copySet := o(map[string]any{"headline": s(), "primary_text": s(), "sub": s(), "bullets": arr(s()), "badge": s(), "cta": map[string]any{"type": "string", "enum": []string{"SHOP_NOW", "LEARN_MORE", "ORDER_NOW", "BUY_NOW"}}})
 	fams := []string{"hero", "glow", "ingredient", "offer", "routine", "editorial", "petals", "texture", "qa", "collection"}
 	ideaProps := map[string]any{
-		"product_ids": arr(s()), "angle": s(), "hook": s(), "template": map[string]any{"type": "string", "enum": fams},
+		"product_ids": arr(s()), "angle": s(), "hook": s(), "template": map[string]any{"type": "string", "enum": fams, "description": "routine / collection only for 2-3 DIFFERENT products; a set / kit / bundle is ONE product (its photo shows every item): a single-product family"},
 		"palette":    map[string]any{"type": "array", "items": s(), "description": "2-4 hex colours like #F7C6D9; empty = from the product photo"},
 		"show_price": b(), "formats": arr(map[string]any{"type": "string", "enum": []string{"1:1", "4:5", "9:16"}}), "motion": b(),
 		"scene": map[string]any{"type": "string", "description": "optional AI background prompt: the set only (no product, text, logos or faces)"},
