@@ -235,6 +235,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const sv1 = textOf(await tool('save_to_library', { session_id: c1j.session_id }));
   const sv2 = textOf(await tool('save_to_library', { session_id: c1j.session_id }));
   const libN = (await api('/api/creatives')).j.length;
+  // 21 Nov, the owner's Claude desktop: save_to_library failed 3x with "send session_id" although Claude said it sent
+  // the id. The save must work whatever the argument is called, and with no id at all (= the session just made).
+  const sv3 = textOf(await tool('save_to_library', { sessionId: c1j.session_id }));
+  const sv4 = textOf(await tool('save_to_library', {}));
+  check('save_to_library with sessionId / with no id saves the same session', JSON.stringify(sv3.saved_creative_ids) === JSON.stringify(sv1.saved_creative_ids) && JSON.stringify(sv4.saved_creative_ids) === JSON.stringify(sv1.saved_creative_ids), `${(sv3.saved_creative_ids || []).length} / ${(sv4.saved_creative_ids || []).length}`);
   check('save_to_library twice = the same creatives', sv1.saved_creative_ids.length >= 4 && JSON.stringify(sv1.saved_creative_ids) === JSON.stringify(sv2.saved_creative_ids), `${sv1.saved_creative_ids.length} saved · library ${libN}`);
   const ri = await tool('run_it', { session_id: c1j.session_id, launch_now: true });
   const rij = textOf(ri);

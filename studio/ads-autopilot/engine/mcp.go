@@ -247,7 +247,7 @@ func (c *mcpConn) call(name string, args map[string]any, progress func(int, int,
 		}
 		return c.preview(s, nil, progress)
 	case "revise":
-		sid := str(args["session_id"])
+		sid := c.sessionArg(args)
 		ch, _ := args["changes"].(map[string]any)
 		if sid == "" || len(ch) == 0 {
 			return nil, errors.New("send session_id and changes")
@@ -285,9 +285,9 @@ func (c *mcpConn) call(name string, args map[string]any, progress func(int, int,
 		}
 		return c.preview(s, changed, progress)
 	case "save_to_library":
-		sid := str(args["session_id"])
+		sid := c.sessionArg(args)
 		if sid == "" {
-			return nil, errors.New("send session_id")
+			return nil, errors.New("no ads made yet in this app: call create_ad_set first")
 		}
 		var ss []map[string]any
 		_ = c.get("/api/brain/x/create", &ss)
@@ -306,7 +306,7 @@ func (c *mcpConn) call(name string, args map[string]any, progress func(int, int,
 		_ = c.post("/api/brain/x/create/"+sid, "PUT", map[string]any{"saved": ids}, nil)
 		return []any{text(map[string]any{"saved_creative_ids": ids, "held_back_by_quality_check": res["refused"], "next": "run_it when the owner says so"})}, nil
 	case "run_it":
-		sid := str(args["session_id"])
+		sid := c.sessionArg(args)
 		var ids []any
 		if x, ok := args["creative_ids"].([]any); ok && len(x) > 0 {
 			ids = x
@@ -334,6 +334,33 @@ func (c *mcpConn) call(name string, args map[string]any, progress func(int, int,
 		return []any{text(out)}, nil
 	}
 	return nil, fmt.Errorf("no tool %q", name)
+}
+
+// sessionArg: the session a revise / save / run_it is about. The owner's Claude desktop (21 Nov) had made 4 ideas and
+// then save_to_library failed three times with "send session_id" although Claude said it sent s18e9fdeacb7a2680 --
+// the argument reached the engine under another name or not at all. Accept the usual spellings, and when none is
+// given use the most recent session (the one Claude just made), so a save never fails on the name of a field.
+func (c *mcpConn) sessionArg(args map[string]any) string {
+	for _, k := range []string{"session_id", "sessionId", "session", "sessionID", "id"} {
+		if v := strings.TrimSpace(fmt.Sprint(args[k])); args[k] != nil && v != "" && v != "<nil>" {
+			return v
+		}
+	}
+	var ss []map[string]any
+	if c.get("/api/brain/x/create", &ss) != nil {
+		return ""
+	}
+	best, bestAt := "", ""
+	for _, x := range ss {
+		at := str(x["updated"]) // brain.CreateSession: "updated", else "at" (RFC 3339: sorts as text)
+		if at == "" {
+			at = str(x["at"])
+		}
+		if id := str(x["id"]); id != "" && at >= bestAt {
+			best, bestAt = id, at
+		}
+	}
+	return best
 }
 
 func str(v any) string {
