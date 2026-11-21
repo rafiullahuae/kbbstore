@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.4.2
+- Your keys can no longer disappear after an update: every key is now also kept in a backup in your "KBB Ads Autopilot Data" folder (readable only by your Mac user, never touched by updates). If the Mac's Keychain doesn't give a key back, the backup does, and the Keychain is repaired by itself. Paste your keys once more after this update; from then on they stay.
+
 ## 0.4.1
 - Fixed: with a system-user key, Auto-link said "no business in the portfolio owns this ad account" and showed no Pages or pixels. The app now finds your business, Pages, Instagram and pixels through the ad account itself.
 - Settings → Accounts → Link by hand: choose each ad account's Facebook Page, Instagram, pixel and catalog from a list, or paste the id; each link is checked with Meta when you save.

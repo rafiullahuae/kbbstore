@@ -129,12 +129,10 @@ func TestKeysSurviveFolderReplacement(t *testing.T) {
 				switch {
 				case m == "ok" && (!d.Set || d.Last4 != v[len(v)-4:]):
 					t.Errorf("%s, macOS ok: %s = %+v", when, n, d)
-				case m != "ok" && (d.Set || d.Error == ""):
-					t.Errorf("%s, macOS %s: a key that could not be read shows as %+v (looks not set)", when, m, d)
-				case m == "128" || m == "36":
-					if !strings.Contains(d.Error, "Always Allow") {
-						t.Errorf("%s, macOS %s: %q does not say what to do", when, m, d.Error)
-					}
+				case m != "ok" && (!d.Set || d.Last4 != v[len(v)-4:]):
+					// 21 Nov: the keys "vanished" on his Mac after updates; whatever the Keychain answers, the backup
+					// in the data folder keeps every key readable
+					t.Errorf("%s, macOS %s: the Keychain refused and the backup did not answer: %s = %+v", when, m, n, d)
 				}
 			}
 			mode("ok") // he answers macOS, then Try again: the same store reads the key
@@ -155,14 +153,39 @@ func TestKeysSurviveFolderReplacement(t *testing.T) {
 	check("after a roll back")
 
 	// a key he removed in Keychain Access says so, it does not look never set
-	_ = os.Remove(filepath.Join(kc, "item-"+hexOf(Service+"|shop_token")))
+	// a key gone from the Keychain comes back from the backup, and the Keychain is repaired from it
+	item := filepath.Join(kc, "item-"+hexOf(Service+"|shop_token"))
+	_ = os.Remove(item)
+	if d := Describe(start(), "shop_token"); !d.Set || d.Last4 != "3333" {
+		t.Fatalf("a key removed from the Keychain did not come back from the backup: %+v", d)
+	}
+	if _, err := os.Stat(item); err != nil {
+		t.Fatalf("the Keychain was not repaired from the backup: %v", err)
+	}
+	// both gone: it says so, it never looks never set
+	_ = os.Remove(item)
+	_ = os.Remove(filepath.Join(data, "keys-backup.json"))
 	if d := Describe(start(), "shop_token"); d.Set || !strings.Contains(d.Error, "no longer in the macOS Keychain") {
-		t.Fatalf("a key removed from the Keychain: %+v", d)
+		t.Fatalf("a key removed from the Keychain and the backup: %+v", d)
+	}
+	// the Keychain refuses and the backup is gone: the refusal is said, with what to do
+	mode("128")
+	if d := Describe(start(), "meta_token"); d.Set || !strings.Contains(d.Error, "Always Allow") {
+		t.Fatalf("a refused read with no backup: %+v", d)
 	}
 
 	// `security -i` exiting 0 although the add failed: the save must not say "saved"
 	mode("silent")
-	if err := start().Set("shop_token", "kbbap_new5555"); err == nil || !strings.Contains(err.Error(), "did not reach the macOS Keychain") {
+	// a save that never reached the Keychain is still kept in the backup, and reads back
+	s2 := start()
+	if err := s2.Set("shop_token", "kbbap_new5555"); err != nil {
+		t.Fatalf("the backup did not take the key the Keychain refused: %v", err)
+	}
+	if v, _ := s2.Get("shop_token"); v != "kbbap_new5555" {
+		t.Fatalf("a key kept only in the backup reads back as %q", v)
+	}
+	// the Keychain store on its own still refuses to say "saved" (the read-back in keychain.Set)
+	if err := s2.(*mirror).kc.Set("shop_token", "kbbap_new6666"); err == nil || !strings.Contains(err.Error(), "did not reach the macOS Keychain") {
 		t.Fatalf("a save that never reached the Keychain answered %v", err)
 	}
 }
