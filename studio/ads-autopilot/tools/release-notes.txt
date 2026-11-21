@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.4.4
+- Choose the products yourself: in Approvals, Plan → Upcoming jobs and Approvals → Occasions, every ad shows its products. Change products opens a picker (search, photo, price, stock, new / trending badges); 📌 Pin puts a product first; ⊘ Don't promote this product again removes it everywhere (with Undo).
+- If every product of a planned ad was avoided, it says so and waits for you to choose.
+
 ## 0.4.3
 - Fixed: an update could sit on "Pause the autopilot" while a long sync or cycle was running. Updates now stop it safely after 10 seconds and carry on; the next cycle picks up where it stopped.
 - Includes 0.4.1 (Pages and pixels found with a system-user key, Link by hand) and 0.4.2 (keys kept in a backup so updates can't empty them).
