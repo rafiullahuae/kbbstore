@@ -2,6 +2,11 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.0
+- Ads are made automatically with Claude Code on this Mac (your Max plan): whenever new ads are needed and the app is open, Claude Code makes them in the background — no Start, no Enter. Settings → Connections → Claude Code on this Mac shows Signed in ✓, an Automatic On/Off switch and a Test button. Cards show "Being made by Claude Code on this Mac…" and then "Made: N ads". It never launches ads by itself unless the account is in Auto with limits set.
+- Approving an occasion now clears its reminders at once; every notice has a ✕.
+- Settings → Accounts: Automate is a clear On/Off button.
+
 ## 0.5.2
 - Fixed: Claude desktop made the ads but could not save them ("send session_id"). Saving now works whatever Claude calls the session, and with no session named it saves the ads it just made.
 
