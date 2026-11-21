@@ -29,6 +29,10 @@ type PendingItem struct {
 	Result *executor.Result `json:"result,omitempty"`
 	At     time.Time        `json:"decided_at,omitempty"`
 	By     string           `json:"by,omitempty"` // cycle | owner
+	// picker.go: what the owner changed on it ("products chosen by you"), or why it waits for him ("choose products"),
+	// and the Creation request raised for its new copy ("With me in Claude")
+	Note     string `json:"note,omitempty"`
+	Creation string `json:"creation,omitempty"`
 }
 
 type PendingSet struct {
@@ -139,7 +143,10 @@ func (ac *Acct) Decide(ctx context.Context, id string, approve bool) (map[string
 	if idx < 0 {
 		return nil, 404, fmt.Errorf("no proposal %q in the last plan", id)
 	}
-	if !waiting(ps.Items[idx].Status) {
+	if ps.Items[idx].Status == stChoose && approve { // picker.go: no allowed product left
+		return nil, 409, errors.New(ps.Items[idx].Note)
+	}
+	if !waiting(ps.Items[idx].Status) && ps.Items[idx].Status != stChoose {
 		return nil, 409, fmt.Errorf("%w (it is %s)", errNotWaiting, ps.Items[idx].Status)
 	}
 	now := a.now().UTC()
@@ -230,23 +237,40 @@ func (s *server) proposalsAPI(w http.ResponseWriter, r *http.Request, p string) 
 			jsonErr(w, 405, "GET")
 			return
 		}
-		writeJSON(w, ac.Pending())
+		writeJSON(w, ac.pendingView()) // each waiting proposal with the products it shows (picker.go)
 		return
 	}
 	rest := strings.TrimPrefix(p, "/api/proposals/")
 	i := strings.LastIndex(rest, "/")
 	if r.Method != http.MethodPost || i < 0 {
-		jsonErr(w, 404, "POST /api/proposals/{id}/approve or /reject")
+		jsonErr(w, 404, "POST /api/proposals/{id}/approve, /reject or /products")
 		return
 	}
 	id, verb := rest[:i], rest[i+1:]
-	if !proposalIDRe.MatchString(id) || (verb != "approve" && verb != "reject") {
-		jsonErr(w, 404, "POST /api/proposals/{id}/approve or /reject")
+	if !proposalIDRe.MatchString(id) || (verb != "approve" && verb != "reject" && verb != "products") {
+		jsonErr(w, 404, "POST /api/proposals/{id}/approve, /reject or /products")
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Minute)
 	defer cancel()
-	out, code, err := ac.Decide(ctx, id, verb == "approve")
+	var out map[string]any
+	var code int
+	var err error
+	if verb == "products" { // Approvals → Change products (picker.go)
+		var b struct {
+			ProductIDs []string `json:"product_ids"`
+		}
+		if err := readJSON(r, &b, 16<<10); err != nil {
+			jsonErr(w, 400, err.Error())
+			return
+		}
+		out, code, err = ac.changeProducts(ctx, id, b.ProductIDs)
+		if err == nil {
+			ac.dirty()
+		}
+	} else {
+		out, code, err = ac.Decide(ctx, id, verb == "approve")
+	}
 	if err != nil {
 		jsonErr(w, code, err.Error())
 		return

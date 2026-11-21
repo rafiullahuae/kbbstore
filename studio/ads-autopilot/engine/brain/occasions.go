@@ -31,6 +31,12 @@ func (e *Engine) OccasionCreation(acct, title, titleAR, brief string, productIDs
 	return r.ID
 }
 
+// CreationWithMe: whether new ad copy for this account is made by the owner with Claude (the default, his Max
+// plan) rather than through the API. The engine's product picker asks it before it writes anything new.
+func (e *Engine) CreationWithMe(acct string) bool {
+	return e.settings(acct).CreationMode == CreationWithMe
+}
+
 // Notify: a Mac notification + the creation feed (occasion prep and reminders).
 func (e *Engine) Notify(acct, title, body, bodyAR string) {
 	e.notify(acct, Notice{Kind: "due_soon", Title: title, Body: body, BodyAR: bodyAR})

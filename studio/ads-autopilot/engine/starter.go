@@ -475,6 +475,9 @@ func (ac *Acct) starterPlan(ctx context.Context, in model.CycleInput, brainProps
 			}
 		}
 	}
+	if edit != nil && edit.Edited && (edit.ProductsGone || len(edit.ProductIDs) > 0 && len(allowedOnly(edit.ProductIDs, in.Shop)) == 0) {
+		return nil, ac.starterSkip(msgJobAvoided) // his own picks were all avoided since: say so, never swap them quietly
+	}
 	if edit != nil && edit.Edited && len(edit.ProductIDs) > 0 { // the owner's own product picks first
 		pick(edit.ProductIDs)
 	}

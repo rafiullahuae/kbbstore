@@ -56,7 +56,8 @@ type Job struct {
 	Note          string    `json:"note,omitempty"`
 	Target        string    `json:"target,omitempty"` // refresh: the tiring ad; seasonal: the campaign it raises
 	Edited        bool      `json:"edited,omitempty"`
-	Source        string    `json:"source"` // funnel | planner | season
+	ProductsGone  bool      `json:"products_gone,omitempty"` // every product it had was avoided: it waits for the owner's pick (picker.go)
+	Source        string    `json:"source"`                  // funnel | planner | season
 	ProposalIDs   []string  `json:"proposal_ids,omitempty"`
 	Result        string    `json:"result,omitempty"`
 	// occasions (occasions.go): the prepared ads, the ones the owner rejected, the dates, the reminders sent
@@ -445,6 +446,10 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 		}
 		return ps, ""
 	}
+	// the owner's (or an occasion's) own products all avoided since: it says so instead of quietly changing them
+	if j.ProductsGone || (len(j.ProductIDs) > 0 && (j.Edited || j.Kind == "occasion") && len(allowedOnly(j.ProductIDs, in.Shop)) == 0) {
+		return nil, msgJobAvoided
+	}
 	f := findFunnel(in.Tree, in.Audiences)
 	switch j.Kind {
 	case "test", "refresh", "seasonal":
@@ -814,6 +819,9 @@ func (s *server) jobsAPI(w http.ResponseWriter, r *http.Request, ac *Acct, rest 
 	ac.saveJobs(js)
 	ac.st.Append("config", fmt.Sprintf("job %s: %s", jj.ID, jj.Log[len(jj.Log)-1].Text), jj)
 	out := map[string]any{"account": ac.id, "job": jj}
+	if verb == "" && jj.ID == jobFirstLaunch && len(jj.ProductIDs) > 0 { // the waiting first launch follows at once (picker.go)
+		out["rebuilt"] = ac.starterToProducts(r.Context(), jj.ProductIDs)
+	}
 	// Approve on a job that is due runs it now (both modes), through every executor check
 	if verb == "approve" && !jj.When.After(now) {
 		res, code, err := ac.runJobNow(r.Context(), jj.ID)
@@ -885,6 +893,15 @@ func (ac *Acct) applyEdit(j *Job, e jobEdit, now time.Time) error {
 			}
 		}
 		j.ProductIDs = uniq(e.ProductIDs)
+		j.ProductsGone = false
+		if j.Waiting == msgJobAvoided {
+			j.Waiting = ""
+		}
+		if j.Kind == "occasion" && len(j.ProductIDs) > 0 { // its prepared ads follow the products (picker.go)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+			ac.occasionToProducts(ctx, j)
+			cancel()
+		}
 		what = append(what, fmt.Sprintf("products → %s", strings.Join(j.ProductIDs, ", ")))
 	}
 	if e.Lang != nil {
