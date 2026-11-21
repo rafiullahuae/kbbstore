@@ -2,6 +2,13 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.5.0
+- More ads, planned every day: Strategy → Rules → Activity level (Steady / Active, the default / Aggressive). Active keeps 8–12 live ads, adds 4–6 new ones every Monday and Thursday, replaces losers the same day and gives winners new hooks within 48 hours. A 2nd campaign only when your budget can feed it (the screen says why).
+- Overview → Today's plan (Arabic + English): yesterday's results from your real orders, what changed, today's jobs with times, and "Today's ads: N to create — Start creating".
+- Overview → Watching now: every live and new ad checked every hour (click rate, cost per click, add-to-carts), spend pacing and problems; early stops only on strong evidence; rejected ads reworded and replaced.
+- Approved occasion packages go live whole; if your Max active ads is too low, it says so with "Raise to N and go live".
+- Cloud creation on your Max plan while you're away: Settings → Connections → Cloud creation (GitHub) — paste your GitHub key, Save & test. Jobs go to your private repo kbb-ad-exchange, a scheduled Claude task on your Max plan makes the ads every 2 hours, and the Mac pulls them in and re-checks them when it opens ("Made in the cloud on your Max plan").
+
 ## 0.4.6
 - Occasions now come with 5 products picked for the season (winter: barrier and rich creams, lip care, masks; summer: sunscreen, oil control), ranked by your real sales in the last 90 days, new arrivals and trends. Each shows units sold, New/Trending and why it fits.
 - ✕ removes a product from that occasion and the next-best one takes its place at once (it won't come back there); ⊘ never promotes it anywhere.
