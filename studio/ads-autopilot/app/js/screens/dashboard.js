@@ -24,6 +24,21 @@ const dataAge = (st) => {
   return `<span class="stale-age" id="data-age">${esc(tt('Numbers from', 'أرقام من'))} ${esc(ago(ls))}</span> · `;
 };
 
+// Last cycle — every step of what the autopilot did, kept (the owner, 22 Nov: "i need every steps to see what
+// happend"). The newest run open, the earlier ones folded underneath (engine runreport.go).
+const STEP_ICON = { ok: ['✓', 'acc'], warn: ['!', 'warn'], fail: ['✕', 'bad'], info: ['•', ''] };
+function runReportsCard(st) {
+  const rs = ((st.raw || {}).run_reports || []);
+  if (!rs.length) return '';
+  const when = (t) => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }); };
+  const steps = (r) => `<ol class="list small" style="margin:8px 0 0;padding:0;list-style:none">${(r.steps || []).map((s) => { const [ic, cls] = STEP_ICON[s.status] || STEP_ICON.info;
+    return `<li style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line)"><span class="chip ${cls}" style="min-width:22px;justify-content:center">${ic}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(s.title)}</b>${s.detail ? `<br><span class="muted">${esc(s.detail)}</span>` : ''}</span></li>`; }).join('')}</ol>`;
+  const head = (r) => `${esc(r.title === 'Cycle' ? tt('Cycle', 'دورة') : r.title)} · ${esc(when(r.at))} · ${esc(tt(`${Math.max(1, Math.round((r.ms || 0) / 1000))} s · ${r.done || 0} done on Meta${r.bad ? ` · ${r.bad} not done` : ''}`, `${Math.max(1, Math.round((r.ms || 0) / 1000))} ث · ${r.done || 0} تم على Meta${r.bad ? ` · ${r.bad} لم يتم` : ''}`))}`;
+  const [last, ...older] = rs;
+  return `<div class="card" data-runreports><header><h2>${esc(tt('Last cycle — every step', 'آخر دورة — كل خطوة'))}</h2><span class="small muted">${head(last)}</span></header>${steps(last)}
+    ${older.length ? `<details style="margin-top:10px"><summary class="small">${esc(tt(`Earlier runs (${older.length})`, `تشغيلات سابقة (${older.length})`))}</summary>${older.map((r) => `<div style="margin-top:10px"><b class="small">${head(r)}</b>${steps(r)}</div>`).join('')}</details>` : ''}</div>`;
+}
+
 export function render(S, el) {
   const st = S.state;
   const win = S.range;
@@ -37,7 +52,7 @@ export function render(S, el) {
   const doing = tt(st.autopilot.doing, st.autopilot.doing_ar) || tt('The autopilot is off for this account. Pick Practice or Auto at the top once your limits are set.', 'الطيار الآلي متوقف لهذا الحساب. اختاري «تدريب» أو «تلقائي» في الأعلى بعد تحديد الحدود.');
   const today = new Date().toISOString().slice(0, 10);
   const steps = [['sync', tt('Read Meta', 'قراءة ميتا'), !!st.raw.last_sync], ['judge', tt('Judge every ad', 'تقييم كل إعلان'), !!st.autopilot.last_cycle_at], ['plan', tt('Plan', 'التخطيط'), !!st.plan], ['act', tt(mode === 'auto' ? 'Act' : 'Log (practice)', mode === 'auto' ? 'التنفيذ' : 'التسجيل (تدريب)'), !!st.autopilot.last_cycle_at && String(st.autopilot.last_cycle_at).slice(0, 10) === today], ['report', tt('Daily report', 'التقرير اليومي'), !!st.report]];
-  const dayPct = L.daily_aed ? Math.min(1, (st.today_spend_app ?? st.kpis.today.spend) / L.daily_aed) : 0; // the app's own ads (22 Nov)
+  const dayPct = L.daily_aed ? Math.min(1, ((st.raw || {}).today_spend_app ?? st.kpis.today.spend) / L.daily_aed) : 0; // the app's own ads (22 Nov)
   const monPct = L.monthly_aed ? Math.min(1, st.month_spend / L.monthly_aed) : 0;
   const tile = (key, label, ar, val, fmt, lowerBetter, series2) => {
     const d = prev && prev[key] ? (k[key] - prev[key] / 30 * 7) / (prev[key] / 30 * 7 || 1) : null;
@@ -64,13 +79,14 @@ export function render(S, el) {
         <button type="button" class="onhero" id="cyc"${window.__kaaCycling ? ' disabled' : ''}>${esc(window.__kaaCycling ? tt('Running… (reading Meta)', 'تعمل… (قراءة Meta)') : tt('Run a cycle', 'تشغيل دورة'))}</button></div>
     </div>
     <div class="card"><header><h2>${esc(tt('Your limits', 'حدودك'))}</h2><a href="#/settings">${esc(tt('Change limits', 'تغيير الحدود'))}</a></header>
-      ${st.limits_set ? `<div class="spread small"><span>${esc(tt('Today', 'اليوم'))}</span><span class="num">${aed(st.today_spend_app ?? st.kpis.today.spend)} / ${aed(L.daily_aed)}</span></div><div class="meter ${dayPct > 0.9 ? 'hot' : ''}"><i style="width:${(dayPct * 100).toFixed(1)}%"></i></div>
+      ${st.limits_set ? `<div class="spread small"><span>${esc(tt('Today', 'اليوم'))}</span><span class="num">${aed((st.raw || {}).today_spend_app ?? st.kpis.today.spend)} / ${aed(L.daily_aed)}</span></div><div class="meter ${dayPct > 0.9 ? 'hot' : ''}"><i style="width:${(dayPct * 100).toFixed(1)}%"></i></div>
       <div class="spread small" style="margin-top:12px"><span>${esc(tt('This month', 'هذا الشهر'))}</span><span class="num">${aed(st.month_spend)} / ${aed(L.monthly_aed)}</span></div><div class="meter ${monPct > 0.9 ? 'hot' : ''}"><i style="width:${(monPct * 100).toFixed(1)}%"></i></div><p class="small muted" style="margin:8px 0 0">${esc(tt('Your limits are for the autopilot\'s own ads only; your own campaigns are not counted. Meta\'s account spending limit adds both, so your ads are never stopped by it.', 'حدودكِ لإعلانات الطيار الآلي فقط؛ حملاتكِ الخاصة لا تُحتسب. حد الإنفاق في حساب Meta يجمع الاثنين فلا تتوقف إعلاناتكِ بسببه.'))}</p>
       <p class="small muted" style="margin-top:8px">${esc(tt('While your Mac is closed, Meta itself holds the autopilot\'s ads to these limits (KAA: daily and monthly rules).', 'وجهازكِ مغلق، تُبقي Meta إعلانات الطيار الآلي ضمن هذه الحدود (قواعد KAA اليومية والشهرية).'))}</p>
       <p class="small muted">${esc(tt('Step', 'خطوة'))} ±${num(L.max_budget_step_pct)}% · ${esc(tt('cooldown', 'انتظار'))} ${num(L.cooldown_hours)} h · ${esc(tt('max ads', 'أقصى إعلانات'))} ${num(L.max_active_ads)}</p>`
       : `<div class="alert warn">${esc(tt('No limits yet: nothing will launch until you set a daily and a monthly limit.', 'لا توجد حدود: لن يُطلق شيء حتى تحدّدي الحد اليومي والشهري.'))}</div><p><a href="#/settings"><button type="button">${esc(tt('Set limits', 'تحديد الحدود'))}</button></a></p>`}
     </div>
   </section>
+  ${runReportsCard(st)}
   <section class="grid g2">${dailyPlanCard(S)}${watchingCard(S)}</section>
   <section class="kpis">
     ${tile('spend', 'Spend', 'الإنفاق', k.spend, (v) => aed(v))}

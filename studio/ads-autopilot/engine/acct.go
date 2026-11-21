@@ -613,6 +613,7 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 	if newDay && co.Report != "" {
 		ac.alert("info", "Daily summary for "+day+" is ready.")
 	}
+	out["_props"] = co.Proposals
 	ac.finishCycle(t0, out)
 	return out, nil
 }
@@ -625,6 +626,9 @@ func (ac *Acct) finishCycle(t0 time.Time, out map[string]any) {
 	ac.mu.Unlock()
 	_ = ac.st.Save("cycle", map[string]any{"LastCycle": now})
 	out["ms"] = now.Sub(t0).Milliseconds()
+	props, _ := out["_props"].([]model.Proposal)
+	delete(out, "_props")
+	ac.saveRunReport(ac.cycleReport(t0, out, props)) // Overview → Last cycle: every step (runreport.go)
 	ac.st.Append("cycle", "cycle end", out)
 	ac.publish("cycle.end", out)
 }
@@ -845,6 +849,7 @@ func (ac *Acct) stateBytes() []byte {
 	ac.mu.RUnlock()
 	st["creatives"] = len(ac.creatives.all())
 	st["month_spend"] = math.Round(ac.monthSpend()*100) / 100
+	st["run_reports"] = ac.runReports()                              // Overview → Last cycle (runreport.go)
 	st["today_spend_app"] = math.Round(ac.todaySpendApp()*100) / 100 // the daily limit is for the app's own ads (22 Nov)
 	b, _ := json.Marshal(st)
 	ac.mu.Lock()

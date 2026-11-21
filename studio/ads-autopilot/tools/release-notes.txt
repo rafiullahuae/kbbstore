@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.7
+- Overview → "Last cycle — every step": every cycle (and every Run it / Approve that runs at once) keeps a report — when, how long, and each step in order: reading Meta, the plan, the first launch, every change made on Meta (new campaign, ad set, ad, picture sent, switched on) with its result or the exact reason it was not done, and the safety net. The newest is open; earlier runs are folded underneath.
+- Fixed: Overview → Your limits → Today showed the whole account's spend, not only the autopilot's.
+
 ## 0.6.6
 - "Run a cycle" now says at once that it started (and the button shows "Running…" until it ends), then what it did: how many changes were made on Meta, what waits for your approval, the first launch, and any error. A full cycle can take a few minutes; before, nothing showed until it was over.
 - Longer messages stay on screen long enough to read.

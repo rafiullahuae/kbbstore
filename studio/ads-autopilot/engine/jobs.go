@@ -1105,8 +1105,20 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 	ac.mu.RLock()
 	ex := ac.exec
 	ac.mu.RUnlock()
+	t0 := ac.app.now()
 	res := ex.Run(ctx, env, ps)
 	ac.noteJobs(res, model.AutopilotAuto)
+	{ // a job run at once (Run it, Approve) leaves its own report beside the cycles' (runreport.go)
+		rr := RunReport{Title: firstNonEmpty(j.Title, "Job"), At: t0.UTC(), Mode: model.AutopilotAuto, Ms: ac.app.now().Sub(t0).Milliseconds(), Steps: resultSteps(ps, res)}
+		for _, s := range rr.Steps {
+			if s.Status == "ok" {
+				rr.Done++
+			} else if s.Status == "warn" || s.Status == "fail" {
+				rr.Bad++
+			}
+		}
+		ac.saveRunReport(rr)
+	}
 	ac.st.Append("approval", fmt.Sprintf("owner ran job %s: %d steps", id, len(res)), res)
 	ac.dirty()
 	counts := map[string]int{}
