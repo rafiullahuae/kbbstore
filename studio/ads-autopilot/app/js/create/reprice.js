@@ -20,7 +20,7 @@ export async function runReprice(onStep = () => {}, plan0 = null) {
   const plan = plan0 || await api('/api/reprice', { method: 'POST', body: {} });
   const items = (plan.items || []);
   const todo = items.filter((x) => !x.skip);
-  const out = { fixed: 0, failed: [], skipped: items.filter((x) => x.skip), swaps: [], swapErrors: [] };
+  const out = { fixed: 0, text: plan.text_now || 0, failed: [], skipped: items.filter((x) => x.skip), swaps: [...(plan.text_swaps || [])], swapErrors: [] };
   for (let i = 0; i < todo.length; i++) {
     const it = todo[i], d = it.design;
     onStep(it.old_price === it.new_price ? tt(`Redrawing ${i + 1} of ${todo.length}: each photo once`, `إعادة رسم ${i + 1} من ${todo.length}: كل صورة مرة واحدة`) : tt(`Redrawing ${i + 1} of ${todo.length}: ${it.old_price} → ${it.new_price}`, `إعادة رسم ${i + 1} من ${todo.length}: ${it.old_price} ← ${it.new_price}`));
@@ -59,10 +59,12 @@ export async function runReprice(onStep = () => {}, plan0 = null) {
 
 export function repriceSummary(o) {
   const lines = [];
+  if (o.text) lines.push(tt(`${o.text} ad text(s): the written price corrected to the sale price.`, `${o.text} نص إعلان: صُحّح السعر المكتوب إلى سعر التخفيض.`));
   lines.push(o.fixed ? tt(`${o.fixed} picture(s)/video(s) redrawn: the sale price, each product photo once. Everything else in the designs is unchanged.`, `أُعيد رسم ${o.fixed} صورة/فيديو: سعر التخفيض، وكل صورة منتج مرة واحدة. باقي التصاميم كما هي.`) : tt('Nothing to fix: every ad shows the shop’s current price and each product photo once.', 'لا شيء للتصحيح: كل الإعلانات بسعر المتجر الحالي وكل صورة منتج مرة واحدة.'));
   if (o.swaps.length) lines.push(o.swapErrors.length ? tt(`Live ads: ${o.swaps.length - o.swapErrors.length} of ${o.swaps.length} replaced; the rest wait in Plan → Upcoming jobs (${o.swapErrors[0]}).`, `الإعلانات العاملة: استُبدل ${o.swaps.length - o.swapErrors.length} من ${o.swaps.length}؛ الباقي في الخطة ← المهام القادمة.`) : tt(`${o.swaps.length} live ad(s) replaced with the corrected version (same ad set; Meta reviews them first).`, `استُبدل ${o.swaps.length} إعلان عامل بالنسخة المصحّحة (المجموعة نفسها؛ تراجعها Meta أولاً).`));
   if (o.failed.length) lines.push(tt(`${o.failed.length} could not be redrawn and keep the old picture: `, `${o.failed.length} لم تُعد رسمها وتبقى بالصورة القديمة: `) + o.failed.map((f) => `${f.id} (${f.why})`).join('; '));
   if (o.skipped.length) lines.push(tt(`${o.skipped.length} were made with your own photo: open that set in Create, attach the photo again and save.`, `${o.skipped.length} صُنعت بصورتكِ الخاصة: افتحي المجموعة في «أنشئي»، أرفقي الصورة مجدداً واحفظي.`));
+  if (o.text && !o.fixed) lines.splice(1, 1); // the words were corrected: not "nothing to fix"
   return lines;
 }
 
@@ -91,7 +93,7 @@ export async function autoFix(after) {
   RP.busy = true; paintCard();
   try {
     const plan = await api('/api/reprice', { method: 'POST', body: {} });
-    if (!(plan.items || []).some((x) => !x.skip)) return null;
+    if (!(plan.items || []).some((x) => !x.skip) && !plan.text_now) return null;
     const r = await runReprice((t) => { RP.lines = [t]; paintCard(); }, plan);
     RP.lines = repriceSummary(r);
     if (after) after(r);

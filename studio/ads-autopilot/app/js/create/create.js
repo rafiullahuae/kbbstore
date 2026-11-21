@@ -15,7 +15,7 @@ import { tt, getLang } from '../i18n.js';
 import { esc, toast, txt, confirmBox } from '../ui.js';
 import { api, apiStream, getAccount } from '../api.js';
 import { renderVideo } from '../creative/motion.js';
-import { thumb, specHash, withPhoto, saveDesign, saveVideo } from './draw.js';
+import { thumb, specHash, withPhoto, saveDesign, saveVideo, redrawSave, redrawVideo } from './draw.js';
 
 const OCCASIONS = [['', 'Any time', 'أي وقت'], ['ramadan', 'Ramadan', 'رمضان'], ['eid', 'Eid', 'العيد'], ['white_friday', 'White Friday', 'الجمعة البيضاء'], ['national_day', 'UAE National Day', 'اليوم الوطني'], ['mothers_day', "Mother's Day", 'عيد الأم'], ['summer', 'Summer', 'الصيف']];
 const FORMATS = [['', 'All sizes', 'كل المقاسات'], ['post', 'Post 1:1 · 4:5', 'منشور'], ['reel', 'Reel / Story 9:16', 'ريلز / ستوري']];
@@ -55,7 +55,7 @@ export async function openCreate(opts = {}) {
   const ta = g.querySelector('#cc-in');
   if (opts.prompt && ta) ta.value = opts.prompt;
   if (ta) ta.focus();
-  if (!st.products) api('/api/brain/x/products').then((p) => { st.products = p || []; if (g.open && !st.busy) paintChips(); }).catch(() => {});
+  if (!st.products) api('/api/brain/x/products').then((p) => { st.products = p || []; if (g.open && !st.busy) { paintChips(); paintProds(); } }).catch(() => {});
   if (!st.gen1) api('/api/brain/x/gen/settings', { noAccount: true }).then((g1) => { st.gen1 = g1; if (g.open && !st.busy) paintNote(); }).catch(() => {});
   // a submit the tab never saw answered: resend the same key (the engine answers with the same session)
   const pend = ls.get(PKEY);
@@ -223,25 +223,91 @@ function results(s) {
   const ideas = [...new Set(ds.map((d) => d.idea))];
   const last = s.turns[s.turns.length - 1] || {};
   return `<div class="cc-said">${txt(last.said || s.prompt)}${last.changed && last.changed.length ? ` <span class="chip">${esc(tt('changed', 'تغيّر'))}: ${esc(last.changed.join(', '))}</span>` : ''}</div>
+  <datalist id="cc-plist">${(st.products || []).map((p) => `<option value="${esc(p.title)}"></option>`).join('')}</datalist>
   <div class="cc-ideas">${ideas.map((n) => { const d = ds.find((x) => x.idea === n); const rtl = d.lang === 'ar';
     return `<section class="cc-idea" data-idea="${n}"><header><b>${esc(tt('Idea', 'الفكرة'))} ${n}</b> <span class="chip">${esc(d.template)}</span> <span class="muted small">${txt(d.angle)}</span></header>
+    ${prodRow(n, d.product_ids || [])}
     <div class="cc-phones">
       <div><p class="small muted">${esc(tt('Feed 4:5', 'الخلاصة ٤:٥'))}</p><div class="phone"><div class="scr"><div class="post"><header><i></i><b>kbeautybliss</b><span class="muted">· ${esc(tt('Sponsored', 'مُموَّل'))}</span></header>
         <div class="txt" ${rtl ? 'dir="rtl" lang="ar"' : ''}>${esc(d.primary_text || d.sub || '')}</div><div class="cc-slot" data-slot="${esc(d.id)}|4:5"><div class="sk"></div></div>
         <div class="bar" ${rtl ? 'dir="rtl"' : ''}><span>kbeautybliss.com<br><b>${esc(d.headline)}</b></span><span class="chip">${esc(rtl ? 'تسوّقي الآن' : 'Shop now')}</span></div></div></div></div></div>
       <div><p class="small muted">${esc(tt('Story / Reel 9:16', 'ستوري / ريلز ٩:١٦'))}</p><div class="phone"><div class="scr"><div class="story cc-story" data-slot="${esc(d.id)}|9:16"><div class="sk"></div></div></div></div></div>
       <div class="cc-side"><p class="small muted">1:1</p><div class="cc-sq" data-slot="${esc(d.id)}|1:1"><div class="sk"></div></div><div class="cc-q" data-q="${esc(d.id)}"></div>
-        <div class="cc-acts"><button type="button" class="small" data-use="${n}">${esc(tt('Use', 'استخدمي'))}</button><button type="button" class="small ghost" data-edit="${n}">${esc(tt('Edit', 'عدّلي'))}</button><button type="button" class="small ghost" data-regen="${n}">${esc(tt('Regenerate', 'أعيدي الإنشاء'))}</button></div></div>
+        <div class="cc-acts"><button type="button" class="small" data-use="${n}">${esc(tt('Use', 'استخدمي'))}</button><button type="button" class="small ghost" data-edit="${n}">${esc(tt('Edit', 'عدّلي'))}</button><button type="button" class="small ghost" data-regen="${n}" title="${esc(tt('A NEW design from Claude (angle, hook, family change)', 'تصميم جديد من Claude (تتغيّر الزاوية والتصميم)'))}">${esc(tt('Regenerate', 'أعيدي الإنشاء'))}</button>
+          <button type="button" class="small ghost" data-redraw="${n}" title="${esc(tt('The SAME design drawn again in every size and the video, and saved to the library', 'التصميم نفسه يُرسم من جديد بكل المقاسات والفيديو ويُحفظ في المكتبة'))}">↻ ${esc(tt('Redraw & save', 'أعيدي الرسم واحفظي'))}</button></div></div>
     </div></section>`; }).join('')}</div>
   <div class="cc-bar"><span class="small muted" id="cc-drawn"></span><span class="spacer"></span>
+    <button type="button" class="ghost" id="cc-redraw" title="${esc(tt('Every idea of this set: the same designs drawn again in every size and the videos, all saved to the library', 'كل أفكار المجموعة: التصاميم نفسها تُرسم من جديد بكل المقاسات والفيديو وتُحفظ'))}">↻ ${esc(tt('Redraw all & save', 'أعيدي رسم الكل واحفظي'))}</button>
     <button type="button" class="ghost" id="cc-dl">⬇ ${esc(tt('Download', 'تنزيل'))}</button>
     <button type="button" class="ghost" id="cc-save">${esc(tt('Save to library', 'حفظ في المكتبة'))}</button>
     <button type="button" class="ghost" id="cc-launch" title="${esc(tt('A small test ad set now, through every check, inside your limits', 'مجموعة اختبار صغيرة الآن، عبر كل الفحوص وضمن حدودكِ'))}">${esc(tt('Launch now (test)', 'أطلقي الآن (اختبار)'))}</button>
     <button type="button" id="cc-run" title="${esc(tt('The autopilot tests it in its next cycle, inside your limits', 'يختبره الطيار الآلي في دورته القادمة ضمن حدودكِ'))}">▶ ${esc(tt('Run it', 'شغّليه'))}</button></div>`;
 }
 
+// the products of one idea: ✕ takes one out (an idea keeps at least one), "+ Add or swap" puts one in (max 3). The
+// owner's own edit: no Claude call, the words and design stay, the photos and price follow (engine create.go).
+function prodRow(n, ids) {
+  const name = (id) => { const p = (st.products || []).find((x) => x.id === id); return p ? p.title : `#${id}`; };
+  return `<div class="cc-prods row small" data-prods="${n}" style="gap:6px;flex-wrap:wrap;margin:6px 0 10px"><span class="muted">${esc(tt('Products', 'المنتجات'))}:</span>
+    ${ids.map((id) => `<span class="chip">${txt(name(id).slice(0, 48))}${ids.length > 1 ? ` <button type="button" class="link" data-rmprod="${n}|${esc(id)}" aria-label="${esc(tt('Take out', 'إزالة'))}" title="${esc(tt('Take this product out of the idea', 'إزالة المنتج من الفكرة'))}">✕</button>` : ''}</span>`).join('')}
+    ${ids.length < 3 ? `<input list="cc-plist" data-addprod="${n}" placeholder="${esc(tt('+ Add or swap a product…', '+ أضيفي أو بدّلي منتجاً…'))}" style="min-width:220px;max-width:100%">` : ''}
+    ${ids.length === 1 ? `<span class="muted">${esc(tt('To swap: add the new one, then ✕ the old one.', 'للتبديل: أضيفي الجديد ثم ✕ القديم.'))}</span>` : ''}</div>`;
+}
+
+// the product names arrive after the box opens: only the product rows (and the search list) are painted again
+function paintProds() {
+  if (!st.session || !dlg) return;
+  const dl = dlg.querySelector('#cc-plist'); if (dl) dl.innerHTML = (st.products || []).map((p) => `<option value="${esc(p.title)}"></option>`).join('');
+  dlg.querySelectorAll('[data-prods]').forEach((el) => { const n = +el.dataset.prods; const d = (st.session.designs || []).find((x) => x.idea === n); if (d) el.outerHTML = prodRow(n, d.product_ids || []); });
+  wireResults();
+}
+
+async function setProducts(n, ids, removed) {
+  try {
+    const s = await api(`/api/brain/x/create/${st.session.id}/idea/${n}`, { method: 'PUT', body: { product_ids: ids } });
+    st.session = s; paint(); drawAll();
+    const p = removed && (st.products || []).find((x) => x.id === removed);
+    const words = (s.designs || []).filter((d) => d.idea === n).map((d) => `${d.headline} ${d.primary_text || ''} ${d.sub || ''}`).join(' ').toLowerCase();
+    const still = p && p.brand && words.includes(p.brand.toLowerCase()) && !ids.some((id) => ((st.products || []).find((x) => x.id === id) || {}).brand === p.brand);
+    toast(still ? tt(`Products changed. The words still name ${p.brand}: press Edit to rewrite them.`, `تغيّرت المنتجات. النص ما زال يذكر ${p.brand}: اضغطي «عدّلي» لإعادة كتابته.`) : tt('Products changed: the words and design stay, the photos follow.', 'تغيّرت المنتجات: النص والتصميم كما هما، والصور تتبع المنتجات.'));
+  } catch (e) { toast(e.message); }
+}
+
+// Redraw & save: the same designs of the chosen ideas (all when none), every size + the video, saved
+async function redrawIdeas(only) {
+  const s = st.session;
+  if (!s || st.redrawing) return;
+  st.redrawing = true;
+  const ds = designsOf(s).filter((d) => !only || only.includes(d.idea));
+  const el = () => dlg && dlg.querySelector('#cc-drawn');
+  const out = { ids: [], weak: [], videos: 0 };
+  try {
+    for (let i = 0; i < ds.length; i++) {
+      const d = ds[i];
+      if (el()) el().textContent = tt(`Redrawing ${i + 1} of ${ds.length} (idea ${d.idea}, ${d.lang.toUpperCase()})…`, `إعادة رسم ${i + 1} من ${ds.length}…`);
+      const r = await redrawSave(d); out.ids.push(...r.ids); out.weak.push(...r.weak);
+      if (d.motion) {
+        const v = await renderVideo(d, '9:16', 6, null, () => {});
+        if (v.mime === 'video/mp4') { out.ids.push(await redrawVideo(d, v.blob)); out.videos++; }
+        const old = st.videos.get(d.id); if (old) URL.revokeObjectURL(old.url);
+        st.videos.set(d.id, { h: specHash(d), url: URL.createObjectURL(v.blob), blob: v.blob, bytes: v.blob.size });
+      }
+      for (const f of d.formats || []) st.drawn.delete(`${d.id}|${f}`);
+    }
+    await api(`/api/brain/x/create/${s.id}`, { method: 'PUT', body: { saved: out.ids, used: ds.map((d) => d.id) } });
+    st.session.saved = [...new Set([...(st.session.saved || []), ...out.ids])];
+    window.__kaaRedraw = out;
+    toast(tt(`${only ? 'Idea ' + only.join(', ') : 'The whole set'}: ${out.ids.length - out.videos} pictures + ${out.videos} video(s) drawn again and saved — same design, every size.${out.weak.length ? ` ${out.weak.length} size(s) are below the quality check and were saved anyway: ${out.weak.map((w) => w.format).join(', ')}.` : ''}`,
+      `${only ? 'الفكرة ' + only.join('، ') : 'المجموعة كلها'}: أُعيد رسم ${out.ids.length - out.videos} صورة و${out.videos} فيديو وحُفظت — التصميم نفسه بكل المقاسات.${out.weak.length ? ` ${out.weak.length} مقاس تحت فحص الجودة وحُفظ رغم ذلك.` : ''}`));
+  } catch (e) { toast(e.message); window.__kaaRedraw = { error: String(e.message || e) }; } finally { st.redrawing = false; drawAll(); }
+}
+
 function wireResults() {
   if (!st.session) return;
+  dlg.querySelectorAll('[data-redraw]').forEach((b) => { b.onclick = () => redrawIdeas([+b.dataset.redraw]); });
+  const ra = dlg.querySelector('#cc-redraw'); if (ra) ra.onclick = () => redrawIdeas(null);
+  dlg.querySelectorAll('[data-rmprod]').forEach((b) => { b.onclick = () => { const [n, id] = b.dataset.rmprod.split('|'); const d = (st.session.designs || []).find((x) => x.idea === +n); setProducts(+n, (d.product_ids || []).filter((x) => x !== id), id); }; });
+  dlg.querySelectorAll('[data-addprod]').forEach((inp) => { inp.onchange = () => { const p = (st.products || []).find((x) => x.title === inp.value.trim()); if (!p) { toast(tt('Pick a product from the list.', 'اختاري منتجاً من القائمة.')); return; } const n = +inp.dataset.addprod; const d = (st.session.designs || []).find((x) => x.idea === n); setProducts(n, [...new Set([...(d.product_ids || []), p.id])].slice(0, 3)); }; });
   dlg.querySelectorAll('[data-edit]').forEach((b) => { b.onclick = () => { st.target = +b.dataset.edit; const ta = dlg.querySelector('#cc-in'); ta.placeholder = tt(`What should change in idea ${b.dataset.edit}?`, `ما الذي يتغيّر في الفكرة ${b.dataset.edit}؟`); ta.focus(); }; });
   dlg.querySelectorAll('[data-regen]').forEach((b) => { b.onclick = () => run({ session_id: st.session.id, edit: `Make idea ${b.dataset.regen} again with a different angle, hook and design family; keep the product.`, target: +b.dataset.regen, key: uid() }); });
   dlg.querySelectorAll('[data-use]').forEach((b) => { b.onclick = () => saveIdeas([+b.dataset.use]).then((r) => r && toast(tt(`Idea ${b.dataset.use} saved to the library (${r.ids.length} pictures).`, `حُفظت الفكرة ${b.dataset.use} في المكتبة (${r.ids.length} صور).`))); });

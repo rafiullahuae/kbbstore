@@ -34,6 +34,24 @@ function slotCards(j, picks, n) {
   return `<div class="slots" data-slots="${esc(j.id)}">${cards.join('')}</div>`;
 }
 
+// Regenerate (ad copy / creatives / complete) and Reschedule, on a package that has not gone live (engine regen.go).
+// Every regenerate puts the package back to "waiting for your approval".
+function regenRow(j) {
+  if (!['planned', 'approved', 'waiting'].includes(j.status)) return '';
+  const when = j.when ? new Date(j.when) : null;
+  const day = when ? `${when.getFullYear()}-${String(when.getMonth() + 1).padStart(2, '0')}-${String(when.getDate()).padStart(2, '0')}` : '';
+  return `<div class="row small" data-occregen-box="${esc(j.id)}" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center">
+    ${j.creation_req ? `<span class="chip acc">${esc(tt('New designs being made by Claude on your Max plan — they replace these ads when saved', 'تصاميم جديدة يصنعها Claude على باقتكِ Max — تحلّ محل هذه الإعلانات عند حفظها'))}</span>` : ''}
+    <label>${esc(tt('Regenerate', 'أعيدي الإنشاء'))} <select data-occregen-what="${esc(j.id)}">
+      <option value="copy">${esc(tt('Ad copy now (today\'s prices; template wording unless API copy is on), same pictures', 'نص الإعلان الآن (أسعار اليوم؛ صياغة القالب ما لم يكن نص API مفعّلاً)، الصور نفسها'))}</option>
+      <option value="creatives">${esc(tt('Creatives (new designs by Claude, same words)', 'التصاميم (جديدة من Claude، الكلمات نفسها)'))}</option>
+      <option value="all">${esc(tt('Complete (Claude\'s new words and new designs)', 'كاملة (كلمات وتصاميم جديدة من Claude)'))}</option></select></label>
+    <button type="button" class="ghost small" data-occregen="${esc(j.id)}">↻ ${esc(tt('Regenerate', 'أعيدي الإنشاء'))}</button>
+    <span class="spacer"></span>
+    <label>${esc(tt('Goes live on', 'يُنشر في'))} <input type="date" data-occwhen="${esc(j.id)}" value="${esc(day)}"></label>
+    <button type="button" class="ghost small" data-occresched="${esc(j.id)}">${esc(tt('Reschedule', 'إعادة الجدولة'))}</button></div>`;
+}
+
 export function occasionsCard() {
   const o = cache.get(getAccount());
   if (!o) return '';
@@ -48,9 +66,10 @@ export function occasionsCard() {
       ${j.products_gone ? `<p class="small pk-wait">${esc(tt(j.waiting || '', 'كل منتجات هذه المهمة مستبعدة — اختاري المنتجات'))}</p>` : ''}
       ${(() => { const picks = (o.picks || {})[j.id] || (j.product_ids || []).map((id) => ({ id, title: (o.titles || {})[id] || id })); const n = Math.max(j.slots || o.slots || 5, picks.length);
         return `<div class="row" style="justify-content:space-between"><b class="small">${esc(tt(`Products ${picks.length} of ${n}`, `المنتجات ${picks.length} من ${n}`))}</b><span class="row"><button type="button" class="small" data-occfind="${esc(j.id)}" title="${esc(tt('Reads the shop again (sales, stock, new arrivals) and fills every empty slot; your pinned and kept products stay', 'يقرأ المتجر من جديد (المبيعات، المخزون، الجديد) ويملأ كل خانة فارغة؛ منتجاتك المثبتة والمحتفظ بها تبقى'))}">${esc(tt('Find products', 'ابحث عن منتجات'))}</button><button type="button" class="ghost small" data-occpick="${esc(j.id)}">${esc(tt('Change products', 'تغيير المنتجات'))}</button></span></div>${slotCards(j, picks, n)}`; })()}
-      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${ads.map((a) => `<div class="card" style="padding:10px;${rej.has(a.id) ? 'opacity:.45' : ''}"><img data-src="${esc(img(a.image_url || ''))}" alt="" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:var(--surface3)">
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${ads.map((a) => `<div class="card" style="padding:10px;${rej.has(a.id) ? 'opacity:.45' : ''}"><img data-src="${esc(a.media === 'png' ? `/api/creatives/${encodeURIComponent(a.id)}/file?v=${a.media_rev || 0}` : img(a.image_url || ''))}" alt="" loading="lazy" style="width:100%;aspect-ratio:${a.format === '4:5' ? '4/5' : '1'};object-fit:cover;border-radius:8px;background:var(--surface3)">
         <span class="chip">${esc((a.lang || '').toUpperCase())}</span><p class="small" dir="auto"><b>${esc(a.headline)}</b><br>${esc(a.primary_text)}</p>
         <button type="button" class="ghost small" data-occad="${rej.has(a.id) ? 'restore-ad' : 'reject-ad'}" data-job="${esc(j.id)}" data-cr="${esc(a.id)}">${esc(rej.has(a.id) ? tt('Put back', 'إرجاع') : tt('Reject this ad', 'رفض هذا الإعلان'))}</button></div>`).join('')}</div>
+      ${regenRow(j)}
       <div class="row" style="margin-top:8px">${j.status !== 'approved' ? `<button type="button" data-occok="${esc(j.id)}">${esc(tt('Approve all', 'الموافقة على الكل'))}</button>` : ''}<a class="small" href="#/plan">${esc(tt('Edit products, copy direction or dates on the Plan', 'تعديل المنتجات أو النص أو التواريخ من الخطة'))}</a></div></div>`; }).join('')
     : `<p class="muted small">${esc(tt('No occasion package waiting. Next:', 'لا حزم مناسبات بانتظارك. القادمة:'))} ${next.map((u) => `${esc(tt(u.name, u.name_ar))} ${esc(u.start)}${u.estimated ? '*' : ''} (${esc(tt('prepared from', 'تُحضّر من'))} ${esc(u.prep_from)})`).join(' · ') || '—'}</p>`}</div>`;
 }
@@ -58,6 +77,23 @@ export function occasionsCard() {
 export function wireOccasions(el, rerender) {
   hydrate(el); // the pictures come with the session token (blob: URLs)
   const after = async (msg) => { await loadOccasions(true); if (msg) toast(msg); rerender(); };
+  el.querySelectorAll('[data-occregen]').forEach((b) => { b.onclick = async () => {
+    const id = b.dataset.occregen, what = (el.querySelector(`[data-occregen-what="${CSS.escape(id)}"]`) || {}).value || 'copy';
+    b.disabled = true;
+    try {
+      await api(`/api/jobs/${encodeURIComponent(id)}/regenerate`, { method: 'POST', body: { what } });
+      await after({ copy: tt('New ad copy with today\'s prices. The package waits for your approval again.', 'نص جديد بأسعار اليوم. الحزمة تنتظر موافقتكِ مجدداً.'), creatives: tt('New designs are being made by Claude on your Max plan; they replace these ads when saved. The package waits for your approval again.', 'يصنع Claude تصاميم جديدة على باقتكِ Max وتحلّ محل هذه الإعلانات عند حفظها. الحزمة تنتظر موافقتكِ مجدداً.'), all: tt('New words now, new designs on the way from Claude. The package waits for your approval again.', 'كلمات جديدة الآن، وتصاميم جديدة في الطريق من Claude. الحزمة تنتظر موافقتكِ مجدداً.') }[what]);
+    } catch (e) { b.disabled = false; toast(e.message); }
+  }; });
+  el.querySelectorAll('[data-occresched]').forEach((b) => { b.onclick = async () => {
+    const id = b.dataset.occresched, v = (el.querySelector(`[data-occwhen="${CSS.escape(id)}"]`) || {}).value;
+    if (!v) { toast(tt('Pick a day.', 'اختاري يوماً.')); return; }
+    const [y, m, d] = v.split('-').map(Number);
+    let when = new Date(y, m - 1, d, 9, 0, 0); // 9:00 on that day, the Mac's time
+    if (when < new Date()) when = new Date(Date.now() + 60e3);
+    b.disabled = true;
+    try { await api(`/api/jobs/${encodeURIComponent(id)}`, { method: 'PUT', body: { when: when.toISOString() } }); await after(tt('Rescheduled.', 'أُعيدت الجدولة.')); } catch (e) { b.disabled = false; toast(e.message); }
+  }; });
   el.querySelectorAll('[data-occad]').forEach((b) => { b.onclick = async () => { try { await api(`/api/jobs/${encodeURIComponent(b.dataset.job)}/${b.dataset.occad}`, { method: 'POST', body: { creative_id: b.dataset.cr } }); await after(); } catch (e) { toast(e.message); } }; });
   wireChips(el.querySelector('[data-occasions]') || el, async () => { await loadOccasions(true); rerender(); });
   el.querySelectorAll('[data-occpick]').forEach((b) => { b.onclick = async () => {

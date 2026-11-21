@@ -73,6 +73,7 @@ func (c *creativeLib) Put(cr model.Creative) error {
 			if cur := c.list[i]; cur.MediaRev > cr.MediaRev { // redrawn since this copy was read: its upload ids are stale
 				cr.Media, cr.MediaRev, cr.OldMetaIDs, cr.RepricedAt = cur.Media, cur.MediaRev, cur.OldMetaIDs, cur.RepricedAt
 				cr.ImageHash, cr.VideoID, cr.MetaID = cur.ImageHash, cur.VideoID, cur.MetaID
+				cr.Headline, cr.PrimaryText, cr.Price, cr.Layout = cur.Headline, cur.PrimaryText, cur.Price, cur.Layout
 			}
 			c.list[i] = cr
 			return c.st.Save("creatives/index", c.list)
@@ -204,6 +205,35 @@ func (c *creativeLib) ReplaceMedia(id, png, video, price string, layout int, now
 		cr.ImageHash, cr.VideoID, cr.MetaID = "", "", ""
 		cr.MediaRev++
 		cr.RepricedAt = now.UTC().Format(time.RFC3339)
+		c.list[i] = cr
+		return cr, old, c.st.Save("creatives/index", c.list)
+	}
+	return model.Creative{}, "", fmt.Errorf("no creative %q in the library", id)
+}
+
+// SetCopy gives a creative new words in place (the owner's "Regenerate → Ad copy"): same id, same picture; the Meta
+// creative is made again at its next upload (the picture's upload hash stays) and the old one is returned, so a
+// live ad still showing the old words can be swapped.
+func (c *creativeLib) SetCopy(id, headline, text string) (model.Creative, string, error) {
+	if strings.TrimSpace(headline) == "" || strings.TrimSpace(text) == "" || len(headline) > 255 || len(text) > 2200 {
+		return model.Creative{}, "", errors.New("headline (≤255) and text (≤2200) are both needed")
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for i := range c.list {
+		cr := c.list[i]
+		if cr.ID != id {
+			continue
+		}
+		if cr.Headline == headline && cr.PrimaryText == text {
+			return cr, "", nil
+		}
+		old := cr.MetaID
+		if old != "" {
+			cr.OldMetaIDs = append(cr.OldMetaIDs, old)
+		}
+		cr.Headline, cr.PrimaryText, cr.MetaID = headline, text, ""
+		cr.MediaRev++ // a stale copy read before this edit never writes the old words back (Put)
 		c.list[i] = cr
 		return cr, old, c.st.Save("creatives/index", c.list)
 	}

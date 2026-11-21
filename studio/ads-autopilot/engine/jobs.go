@@ -76,6 +76,8 @@ type Job struct {
 	// the runs that failed (a swap is retried at the next cycles: Meta's 30 s edit rule, a busy moment)
 	Swapped bool `json:"swapped,omitempty"`
 	Tries   int  `json:"tries,omitempty"`
+	// regenerate (regen.go): the creation request making this package's new designs, until they are attached
+	CreationReq string `json:"creation_req,omitempty"`
 }
 
 type JobSet struct {
@@ -178,6 +180,7 @@ func upsert(js *JobSet, j Job, now time.Time) {
 
 // refreshJobs: the queue from this cycle's plan, the first launch and the funnel's missing pieces.
 func (ac *Acct) refreshJobs(ctx context.Context, in model.CycleInput, plan model.Plan, starter []model.Proposal, stWhy string, env executor.Env) {
+	ac.attachRegen() // regen.go: saved designs join their package before the queue is read
 	now := env.Now
 	loc := ac.loc()
 	js := ac.jobSet()
@@ -793,6 +796,20 @@ func (s *server) jobsAPI(w http.ResponseWriter, r *http.Request, ac *Acct, rest 
 		verb = parts[1]
 	}
 	switch {
+	case verb == "regenerate" && r.Method == http.MethodPost: // regen.go: copy | creatives | all
+		var b struct {
+			What string `json:"what"`
+		}
+		if err := readJSON(r, &b, 4096); err != nil {
+			jsonErr(w, 400, "send {what: copy | creatives | all}")
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
+		defer cancel()
+		if err := ac.regenerate(ctx, j, b.What, now); err != nil {
+			jsonErr(w, 409, err.Error())
+			return
+		}
 	case (verb == "reject-ad" || verb == "restore-ad") && r.Method == http.MethodPost:
 		var b struct {
 			CreativeID string `json:"creative_id"`

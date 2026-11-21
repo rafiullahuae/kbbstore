@@ -373,6 +373,10 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 		}
 	case p == "/api/proposals" || strings.HasPrefix(p, "/api/proposals/"):
 		s.proposalsAPI(w, r, p)
+	case strings.HasPrefix(p, "/api/creatives/") && strings.HasSuffix(p, "/media") && r.Method == http.MethodPut: // Redraw & save (reprice.go)
+		if ac := s.acct(w, r); ac != nil {
+			s.creativeMediaAPI(w, r, ac, strings.TrimSuffix(strings.TrimPrefix(p, "/api/creatives/"), "/media"))
+		}
 	case p == "/api/reprice" || strings.HasPrefix(p, "/api/reprice/"): // correct every ad's price (reprice.go)
 		if ac := s.acct(w, r); ac != nil {
 			s.repriceAPI(w, r, ac, p)

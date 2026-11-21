@@ -804,6 +804,75 @@ func (e *Engine) serveCreate(w http.ResponseWriter, r *http.Request, p, acct str
 			return
 		}
 		step(map[string]any{"step": "done", "session": s})
+	case strings.HasPrefix(p, "create/") && strings.Contains(p, "/idea/") && r.Method == http.MethodPut:
+		// the owner's own product edit (21 Nov: "give facility to edit the products if any product i don't need in
+		// the creatives set"): {product_ids} for one idea. No Claude call: the words, design family and colours stay;
+		// the photos (and the price chip) follow the products. 1-3 different in-stock products with a photo.
+		parts := strings.Split(strings.TrimPrefix(p, "create/"), "/")
+		n := 0
+		if len(parts) == 3 {
+			fmt.Sscanf(parts[2], "%d", &n)
+		}
+		if len(parts) != 3 || !sessionIDRe.MatchString(parts[0]) || n < 1 {
+			bad(404, "PUT create/{session}/idea/{n}")
+			return
+		}
+		var in struct {
+			ProductIDs []string `json:"product_ids"`
+		}
+		if decodeSmall(r, &in) != nil {
+			bad(400, "send {product_ids: [1-3 ids]}")
+			return
+		}
+		shop := input().Shop
+		var ids []string
+		for _, pr := range productsByID(shop, clean(in.ProductIDs, 6)) {
+			if !contains(ids, pr.ID) && len(ids) < 3 {
+				ids = append(ids, pr.ID)
+			}
+		}
+		if len(ids) == 0 {
+			bad(400, "pick at least one product that is in stock and has a photo")
+			return
+		}
+		e.mu.Lock()
+		all := e.sessions(acct)
+		var out *CreateSession
+		for i := range all {
+			if all[i].ID != parts[0] {
+				continue
+			}
+			if n > len(all[i].Ideas) {
+				break
+			}
+			was := all[i].Ideas[n-1].ProductIDs
+			all[i].Ideas[n-1].ProductIDs = ids
+			var keep []DesignSpec // only this idea's designs are drawn again; every other idea stays exactly as it is
+			for _, d := range all[i].Designs {
+				if d.Idea != n {
+					keep = append(keep, d)
+				}
+			}
+			for _, d := range designsFor(all[i].ID, all[i].Ideas, shop, all[i].Photo) {
+				if d.Idea == n {
+					keep = append(keep, d)
+				}
+			}
+			sort.SliceStable(keep, func(a, b int) bool { return keep[a].Idea < keep[b].Idea })
+			all[i].Designs = keep
+			all[i].Turns = append(all[i].Turns, CreateTurn{At: time.Now().UTC(), Text: fmt.Sprintf("idea %d products: %s -> %s", n, strings.Join(was, ","), strings.Join(ids, ",")), Kind: "edit", Changed: []string{"products"}, Said: "Products changed by you; the words and design stay."})
+			all[i].Updated = time.Now().UTC()
+			out = &all[i]
+		}
+		if out != nil {
+			e.save(acct, "create_sessions", all)
+		}
+		e.mu.Unlock()
+		if out == nil {
+			bad(404, "no such session or idea")
+			return
+		}
+		js(out)
 	case strings.HasPrefix(p, "create/") && r.Method == http.MethodPut:
 		id := strings.TrimPrefix(p, "create/")
 		if !sessionIDRe.MatchString(id) {

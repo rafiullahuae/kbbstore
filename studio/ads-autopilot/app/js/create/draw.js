@@ -50,3 +50,31 @@ export async function saveVideo(d, blob, account) {
   const r = await api('/api/creatives', { method: 'POST', account, body: { id: creativeID(d, 'mp4'), lang: d.lang, format: '9:16', video: b64, price: d.price || 'none', layout: 2, headline: d.headline, primary_text: d.primary_text || d.sub || d.headline, cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source: 'owner' } });
   return r.id;
 }
+
+// redrawSave: the owner's "Redraw & save" (21 Nov: "give me option to re-generate everything for specific idea ...
+// few ads are now missing as i didn't want to change the design"). The SAME design drawn again in every size and
+// saved — including a size the quality check would hold back (he chose it; it is reported as weak, never dropped),
+// which is how sizes went missing before. A picture already in the library is replaced under its own id (live ads
+// follow it); an identical picture changes nothing. Returns {ids, weak[]}.
+export async function redrawSave(d, account) {
+  const out = { ids: [], weak: [] };
+  const A = await assets(d);
+  for (const f of d.formats || ['1:1', '4:5', '9:16']) {
+    const q = await score(d, f, A);
+    if (!q.ok) out.weak.push({ design: d.id, format: f, fails: q.fails });
+    const { b64 } = await toPNG(await renderSpec(d, f, null, { assets: A }));
+    const id = creativeID(d, f), price = d.price || 'none';
+    const r = await api('/api/creatives', { method: 'POST', account, body: { id, lang: d.lang, format: f, png: b64, price, layout: 2, headline: d.headline, primary_text: d.primary_text || d.sub || d.headline, cta: d.cta || 'SHOP_NOW', link: 'https://kbeautybliss.com/', product_ids: d.product_ids || [], angle: d.angle || '', source: 'owner' } });
+    await api(`/api/creatives/${encodeURIComponent(r.id)}/media`, { method: 'PUT', account, body: { png: b64, price, layout: 2 } });
+    out.ids.push(r.id);
+  }
+  return out;
+}
+
+// redrawVideo: the design's motion version made again and saved under its own id (replaced in place when it exists).
+export async function redrawVideo(d, blob, account) {
+  const id = await saveVideo(d, blob, account);
+  const b64 = await new Promise((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.readAsDataURL(blob); });
+  await api(`/api/creatives/${encodeURIComponent(id)}/media`, { method: 'PUT', account, body: { video: b64, price: d.price || 'none', layout: 2 } });
+  return id;
+}

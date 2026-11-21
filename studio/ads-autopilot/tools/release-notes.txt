@@ -2,6 +2,12 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.3
+- Create window: every idea shows its products. ✕ takes a product out, "+ Add or swap a product" puts one in — the words and the design stay, the photos and price follow (no Claude call).
+- Create window: "↻ Redraw & save" on each idea and "↻ Redraw all & save" for the whole set: the SAME design drawn again in every size and the video, and saved to the library — including sizes the quality check used to hold back (they were the "missing" ones; now they are saved and you are told). "Regenerate" still means a NEW design from Claude.
+- Approvals → Occasions: Regenerate with three choices — Ad copy (new words now, today's prices, same pictures), Creatives (new designs made by Claude on your Max plan; they replace the package's ads when saved) or Complete. Every regenerate puts the package back to waiting for your approval. "Goes live on" + Reschedule moves the date.
+- Prices written in ad words (e.g. "AED 138" when the shop sells it at 108) are corrected automatically too, like the pictures.
+
 ## 0.6.2
 - Prices, permanent fix: every saved picture and video now records the price printed on it. Whenever the app opens, and after it reads the shop again (a sale starting or ending), it compares that with the shop's price and redraws, by itself, any ad that is different. Ads running on Meta are replaced by the corrected version in the same ad set. Nothing else in the designs changes.
 - Fixed: after "Correct prices" some ads still showed the old price. The Create window kept an old copy of the set (it now always shows the latest); the library kept showing the old picture until the app restarted (it now shows the new one at once); some pictures were missed (a headline edited after saving, or a design corrected earlier); and a few were skipped by the quality check ("product 39% of the frame") — a price correction is never skipped now.

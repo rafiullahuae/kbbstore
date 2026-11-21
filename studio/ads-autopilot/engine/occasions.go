@@ -292,6 +292,7 @@ func (s *server) occasionsAPI(w http.ResponseWriter, r *http.Request, ac *Acct) 
 		jsonErr(w, 405, "GET")
 		return
 	}
+	ac.attachRegen() // designs saved for a Regenerate join their package before it is shown (regen.go)
 	pb := ac.playbook()
 	st := ac.Settings()
 	now := s.app.now()
