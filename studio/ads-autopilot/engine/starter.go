@@ -71,7 +71,7 @@ func (ac *Acct) starterNeeded(in model.CycleInput, brainProps []model.Proposal, 
 	}
 	managed := map[string]bool{}
 	for _, c := range in.Tree {
-		if c.Managed {
+		if c.Managed && c.Status != "ARCHIVED" && c.Status != "DELETED" { // gone campaigns (he deleted them) never hold it
 			managed[c.ID] = true
 			if c.Status == "ACTIVE" && (c.EffectiveStatus == "" || c.EffectiveStatus == "ACTIVE") {
 				return false, "the app's campaigns are running"

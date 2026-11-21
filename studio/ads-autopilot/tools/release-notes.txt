@@ -2,6 +2,12 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.12
+- Preview before anything runs: Overview → Run a cycle (Auto) first shows "What will run now" — every ad that would go live with its picture, words, product, ad set, campaign budget, landing page and Page, and what the checks said. Nothing is sent to Meta. Per ad: ✕ Remove, ↻ Other product (the next product takes its place), ⊘ Never promote. "Run now" sends only what is left; Cancel sends nothing.
+- Fixed: the first launch said "the app's campaigns spent in the last 7 days" after you deleted the KAA campaign. Deleted / archived campaigns no longer hold it.
+- Fixed: a catch-up in 0.6.4 queued every ad ever approved (six "Run your 12 ads" jobs, 71 ads). Those jobs are cancelled; only what you press Run on now runs — and a Run it ad whose product is not on the super-sale page is left out.
+- The catalog retargeting ad links to the super-sale page too, in the language of its words.
+
 ## 0.6.11
 - Page & Instagram: every campaign and ad the autopilot makes now runs from the same Facebook Page and Instagram as your own ads (K-Beauty Bliss · kbeauty.bliss), read from your running ads at every cycle and before every launch. It no longer guesses from names (which put the ads on the wrong Page). Anything Meta made with the old Page is never reused. Settings → Accounts: "Page & Instagram: the same as my own ads" (on), or pick them by hand.
 - Landing page: every ad goes to the super-sale page in its language — English https://kbeautybliss.com/super-sale/, Arabic https://kbeautybliss.com/ar/super-sale/, an ad mixing Arabic and English → the English page. Settings → Accounts → "Landing page for every ad" changes it. Ads you edit by hand in Ads Manager are never touched.

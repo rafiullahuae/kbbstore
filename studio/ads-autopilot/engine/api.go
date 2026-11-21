@@ -249,15 +249,24 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		var in struct {
-			Mode string `json:"mode"`
+			Mode          string   `json:"mode"`
+			SkipCreatives []string `json:"skip_creatives"`
+			SkipProducts  []string `json:"skip_products"`
 		}
 		_ = readJSON(r, &in, maxBody)
+		preview := in.Mode == "preview" // preview.go: the whole cycle, nothing written
 		if in.Mode != model.AutopilotAuto {
 			in.Mode = model.AutopilotShadow
 		}
-		ac.manualCycle.Store(true) // his own Run a cycle: a first launch waiting on a Meta setting is tried at once
-		out, err := ac.Cycle(context.Background(), in.Mode)
-		ac.manualCycle.Store(false)
+		if preview {
+			in.Mode = model.AutopilotAuto // planned exactly as the run he would confirm (it writes nothing)
+		}
+		if len(in.SkipCreatives) > 200 || len(in.SkipProducts) > 200 {
+			jsonErr(w, 400, "too many items to leave out")
+			return
+		}
+		// his own Run a cycle: a first launch waiting on a Meta setting is tried at once
+		out, err := ac.CycleOpts(context.Background(), in.Mode, cycleOpts{Manual: true, Preview: preview, SkipCreatives: in.SkipCreatives, SkipPr: in.SkipProducts})
 		if errors.Is(err, errBusy) || errors.Is(err, errUpdating) {
 			jsonErr(w, 409, err.Error())
 			return

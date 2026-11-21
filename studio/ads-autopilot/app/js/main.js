@@ -25,6 +25,7 @@ import { onRenderRequest } from './create/remote.js';
 import { creationBanner, wireBanner, loadCreation, setCreation, CS } from './create/banner.js';
 import { claudeCodeEvent } from './create/claudecode.js';
 import { startupNote } from './screens/updates.js';
+import { openPreview } from './screens/preview-ui.js';
 
 const I = {
   overview: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>', portfolio: '<path d="M3 7h18v13H3zM8 7V4h8v3"/>',
@@ -252,6 +253,12 @@ document.addEventListener('keydown', (e) => {
 // button busy so a second click does not queue a second cycle, and ends with what it did and anything that failed.
 let cycling = false;
 export async function runCycle() {
+  // Auto: first the preview — what would run, nothing sent — and only what he confirms runs (preview-ui.js)
+  if (!cycling && S.state?.autopilot.mode === 'auto') {
+    cycling = true; window.__kaaCycling = true;
+    try { await openPreview(() => { cycling = false; window.__kaaCycling = false; refreshState().catch(() => {}); }); } catch (e) { toast(e.message); cycling = false; window.__kaaCycling = false; }
+    return;
+  }
   if (cycling) { toast(tt('A cycle is already running — it finishes by itself; Activity shows each step.', 'الدورة تعمل الآن وتنتهي وحدها؛ النشاط يُظهر كل خطوة.')); return; }
   cycling = true; window.__kaaCycling = true; // the Overview redraws itself meanwhile: the button stays "Running…"
   const btns = [...document.querySelectorAll('#cyc')];

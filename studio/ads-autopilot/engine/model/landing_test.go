@@ -26,3 +26,15 @@ func TestLandingFollowsTheAdLanguage(t *testing.T) {
 		}
 	}
 }
+
+func TestTextLang(t *testing.T) {
+	for s, want := range map[string]string{
+		"منتجات كورية أصلية رأيتِها على K-Beauty Bliss — ما زالت متوفرة": "ar", // a brand name in Latin letters stays Arabic
+		"Authentic Korean skincare, delivered across the UAE":            "en",
+		"عناية كورية أصلية — Authentic Korean skincare for every day":    "mixed",
+	} {
+		if got := TextLang(s); got != want {
+			t.Errorf("%q: %s, want %s", s, got, want)
+		}
+	}
+}

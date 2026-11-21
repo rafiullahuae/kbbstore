@@ -438,7 +438,8 @@ func (x *Executor) createCreative(ctx context.Context, act string, p model.Propo
 		steps = append(steps, fmt.Sprintf("flexible: %d images, %d videos", len(images), len(videos)))
 	case "catalog": // template_data + product_set_id (META-FACTS §14)
 		t := p.Params["template"].(map[string]any)
-		td := map[string]any{"message": str(t, "primary_text"), "name": str(t, "headline"), "link": str(t, "link"), "description": "{{product.price}}"}
+		// the catalog ad too goes to his landing page, in the language of its words (22 Nov)
+		td := map[string]any{"message": str(t, "primary_text"), "name": str(t, "headline"), "link": land(str(t, "link"), model.TextLang(str(t, "primary_text"))), "description": "{{product.price}}"}
 		if str(t, "headline") == "" {
 			td["name"] = "{{product.name}}"
 		}

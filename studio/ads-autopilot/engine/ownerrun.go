@@ -82,10 +82,14 @@ func (ac *Acct) ownerRunProposals(in model.CycleInput, j Job, pid func(string) s
 		rej[r] = true
 	}
 	lib := ac.creatives.all()
+	allowed := model.Allowed(in.Shop) // the products on his source pages (super-sale), 22 Nov
 	var ps []model.Proposal
 	for i, cid := range j.Creatives {
 		if rej[cid] {
 			continue
+		}
+		if c, _, err := ac.creatives.Get(cid); err == nil && len(c.ProductIDs) > 0 && !allowed[c.ProductIDs[0]] {
+			continue // its product is not on the super-sale page (or another page he listed)
 		}
 		c, _, err := ac.creatives.Get(cid)
 		if err != nil || (c.MetaID != "" && live[c.MetaID]) {
@@ -173,4 +177,24 @@ func (ac *Acct) runOwnerJobNow(id string) {
 			time.Sleep(15 * time.Second)
 		}
 	}()
+}
+
+// dropBacklogRuns: the catch-up of 0.6.4–0.6.11 queued every creative ever approved (the owner's account: six jobs,
+// 71 ads) — not what he meant ("I pressed Run on two routines"). Those jobs are skipped; what he presses Run it on
+// now (after seeing it) runs.
+func (ac *Acct) dropBacklogRuns() {
+	js := ac.jobSet()
+	now := ac.app.now()
+	ch := false
+	for i := range js.Jobs {
+		j := &js.Jobs[i]
+		if j.Kind == "owner_run" && open(j.Status) && strings.HasPrefix(j.Why, "You pressed Run it on these: they go live now (before this version") {
+			j.Status, j.Waiting, j.Result = "skipped", "", "not run: queued by a catch-up that took every approved ad; press Run it on the sets you want"
+			j.logf(now, "%s", j.Result)
+			ch = true
+		}
+	}
+	if ch {
+		ac.saveJobs(js)
+	}
 }

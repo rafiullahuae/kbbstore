@@ -95,13 +95,14 @@ func TestWarmUpAfterNineHourSleep(t *testing.T) {
 		t.Fatalf("no sync after the wake (%v → %v)", beforeSleep, after)
 	}
 	var line string // the catch-up sync (the executor re-reads the account again after any write the cycle makes)
-	since := beforeSleep.AddDate(0, 0, -2).Format("2006-01-02")
+	// the account's own day (Asia/Dubai), as the sync counts it: in UTC this test failed every night 20:00–24:00 UTC
+	since := beforeSleep.In(ac.loc()).AddDate(0, 0, -2).Format("2006-01-02")
 	for _, e := range ac.st.Recent(50, "snapshot") {
 		if strings.HasPrefix(e.Summary, "sync ") && (line == "" || strings.Contains(e.Summary, "sync "+since+"..")) {
 			line = e.Summary
 		}
 	}
-	if !strings.Contains(line, "sync "+since+".."+after.Format("2006-01-02")) {
+	if !strings.Contains(line, "sync "+since+".."+after.In(ac.loc()).Format("2006-01-02")) {
 		t.Fatalf("the catch-up sync did not cover %s..today: %q", since, line)
 	}
 }

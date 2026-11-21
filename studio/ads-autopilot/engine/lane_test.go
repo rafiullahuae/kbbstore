@@ -517,3 +517,16 @@ func TestOnlySuperSaleProducts(t *testing.T) {
 		}
 	}
 }
+
+// The owner's account, 22 Nov 02:47: "First launch — not started: the app's campaigns spent in the last 7 days" after
+// he DELETED the KAA campaign (and the app archived another). Gone campaigns never hold the first launch.
+func TestGoneAppCampaignsDoNotHoldTheFirstLaunch(t *testing.T) {
+	ac, _ := testApp(t)
+	env := ac.env(model.AutopilotAuto)
+	day := env.Now.In(ac.loc()).AddDate(0, 0, -1).Format("2006-01-02")
+	in := model.CycleInput{Tree: []model.Campaign{{ID: "k1", Managed: true, Status: "ARCHIVED"}, {ID: "k2", Managed: true, Status: "DELETED"}, {ID: "o", Status: "ACTIVE"}},
+		Metrics: []model.MetricRow{{Level: "campaign", ObjectID: "k1", Date: day, SpendAED: 120}, {Level: "campaign", ObjectID: "k2", Date: day, SpendAED: 80}}}
+	if ok, why := ac.starterNeeded(in, nil, env); !ok {
+		t.Fatalf("deleted / archived app campaigns held the first launch: %q", why)
+	}
+}

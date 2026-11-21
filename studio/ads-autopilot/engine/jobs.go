@@ -180,8 +180,8 @@ func upsert(js *JobSet, j Job, now time.Time) {
 
 // refreshJobs: the queue from this cycle's plan, the first launch and the funnel's missing pieces.
 func (ac *Acct) refreshJobs(ctx context.Context, in model.CycleInput, plan model.Plan, starter []model.Proposal, stWhy string, env executor.Env) {
-	ac.attachRegen()    // regen.go: saved designs join their package before the queue is read
-	ac.ownerBacklog(in) // ownerrun.go: ads approved with Run it before 0.6.4 get their run job
+	ac.attachRegen()     // regen.go: saved designs join their package before the queue is read
+	ac.dropBacklogRuns() // ownerrun.go: 0.6.4's catch-up queued EVERY approved ad (71); only what he runs now runs
 	now := env.Now
 	loc := ac.loc()
 	js := ac.jobSet()

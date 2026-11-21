@@ -131,3 +131,30 @@ func ShopLang(u, lang string) string {
 	}
 	return u
 }
+
+// TextLang: "ar" for Arabic words only, "en" for Latin only, "mixed" for both (the landing-page rule, 22 Nov). Brand
+// names in Latin letters inside Arabic copy ("COSRX", "K-Beauty Bliss", "Beauty of Joseon") do not make it mixed:
+// it is mixed only with more than 4 Latin words (an English sentence).
+func TextLang(s string) string {
+	ar, latinWords, inWord := false, 0, false
+	for _, r := range s {
+		switch {
+		case r >= 0x0600 && r <= 0x06FF:
+			ar, inWord = true, false
+		case (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'):
+			if !inWord {
+				latinWords++
+			}
+			inWord = true
+		default:
+			inWord = false
+		}
+	}
+	switch {
+	case ar && latinWords > 4:
+		return "mixed"
+	case ar:
+		return "ar"
+	}
+	return "en"
+}

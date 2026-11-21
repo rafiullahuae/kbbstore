@@ -9,68 +9,40 @@ import (
 	"kaa/model"
 )
 
-// The owner, 21 Nov: "I pressed Run on two routines ... in the ad account i can not see any those ads". Run it
-// (0.6.3 and before) only set Creative.Approved and told the planner; nothing put them live. Creatives left in that
-// state get a run job at the next cycle and go live in the prospecting ad set. Remove ownerBacklog from refreshJobs
-// and this is red (0 ads with those creatives).
-func TestOldRunItApprovalsGoLive(t *testing.T) {
+// The owner, 22 Nov: the catch-up of 0.6.4–0.6.11 queued EVERY approved creative (six jobs, 71 ads) though he
+// meant two routines. Now nothing approved long ago launches by itself, and those catch-up jobs are skipped; what
+// he presses Run it on (after seeing it) runs. MUTATION: call ownerBacklog in refreshJobs again → red.
+func TestOldApprovalsDoNotLaunchBySelf(t *testing.T) {
 	ac, _ := testApp(t)
 	ac.app.brain = quietBrain{}
 	ctx := context.Background()
-	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil { // the first launch: the prospecting campaign
-		t.Fatal(err)
-	}
-	var ids []string
-	for _, x := range []struct{ id, lang string }{{"cc-aaaaaaaa1ar-4x5", "ar"}, {"cc-aaaaaaaa1en-4x5", "en"}} {
-		c, err := ac.creatives.Add(model.Creative{ID: x.id, Lang: x.lang, Format: "4:5", PNG: tinyPNG, Headline: "Routine " + x.lang, PrimaryText: "Korean skincare", Link: "https://kbeautybliss.com/p/", Source: "owner"}, time.Now())
-		if err != nil {
-			t.Fatal(err)
-		}
-		c.Approved = true // what the old Run it left behind
-		if err := ac.creatives.Put(c); err != nil {
-			t.Fatal(err)
-		}
-		ids = append(ids, c.ID)
-	}
 	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil {
 		t.Fatal(err)
 	}
-	// with every slot taken the job WAITS and says why (never pauses a running ad for them)
+	c, err := ac.creatives.Add(model.Creative{ID: "cc-aaaaaaaa1ar-4x5", Lang: "ar", Format: "4:5", PNG: tinyPNG, Headline: "Routine", PrimaryText: "Korean skincare", Link: "https://kbeautybliss.com/p/", Source: "owner"}, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Approved = true
+	_ = ac.creatives.Put(c)
+	js := ac.jobSet()
+	js.Jobs = append(js.Jobs, Job{ID: "run-legacy", Kind: "owner_run", Status: "approved", When: time.Now().Add(-time.Hour), Creatives: []string{"cc-x"},
+		Why: "You pressed Run it on these: they go live now (before this version Run it only marked them for the planner)."})
+	ac.saveJobs(js)
+	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil {
+		t.Fatal(err)
+	}
 	for _, j := range ac.jobSet().Jobs {
-		if j.Kind == "owner_run" && (j.Status != "approved" || !strings.Contains(j.Waiting, "no free ad slot")) {
-			t.Fatalf("a full account: the run job must wait and say so: %s / %q", j.Status, j.Waiting)
+		if j.Kind == "owner_run" && j.ID != "run-legacy" {
+			t.Fatalf("an old approval was queued by itself: %+v", j)
+		}
+		if j.ID == "run-legacy" && j.Status != "skipped" {
+			t.Fatalf("the catch-up job was not skipped: %s", j.Status)
 		}
 	}
-	l := ac.settings.Limits
-	l.MaxActiveAds = 20 // he raises Max active ads
-	ac.settings.Limits = l
-	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil {
-		t.Fatal(err)
+	got, _, _ := ac.creatives.Get(c.ID)
+	if got.MetaID != "" {
+		t.Fatal("an old approval went to Meta by itself")
 	}
-	live := liveMeta(ac.input().Tree)
-	n := 0
-	for _, id := range ids {
-		c, _, _ := ac.creatives.Get(id)
-		if c.MetaID != "" && live[c.MetaID] {
-			n++
-		}
-	}
-	var job *Job
-	for _, j := range ac.jobSet().Jobs {
-		if j.Kind == "owner_run" {
-			j := j
-			job = &j
-		}
-	}
-	if n != 2 || job == nil || job.Status != "done" {
-		t.Fatalf("%d of 2 approved creatives live; run job %+v", n, job)
-	}
-	// a second cycle: nothing new
-	before := len(liveMeta(ac.input().Tree))
-	if _, err := ac.Cycle(ctx, model.AutopilotAuto); err != nil {
-		t.Fatal(err)
-	}
-	if after := len(liveMeta(ac.input().Tree)); after != before {
-		t.Fatalf("a second cycle changed the live creatives %d -> %d", before, after)
-	}
+	_ = strings.Contains
 }

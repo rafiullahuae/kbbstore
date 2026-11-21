@@ -67,6 +67,11 @@ type Acct struct {
 	work        sync.Mutex  // sync / cycle / kill on this account: one at a time
 	repriceMu   sync.Mutex  // the price-correction plan (reprice.go)
 	manualCycle atomic.Bool // the running cycle is the owner's own "Run a cycle" (starter.go: Meta-setting wait)
+	// preview.go: a preview cycle writes nothing; a run after it leaves out what he removed in the preview
+	previewOnly atomic.Bool
+	skipMu      sync.Mutex
+	skipCr      map[string]bool // creative ids (library or the plan's tmp:) he removed
+	skipProd    map[string]bool // products he took out for this run
 	cycleCancel context.CancelFunc
 	bfOn        bool
 
@@ -481,6 +486,17 @@ func (ac *Acct) others() (committed, monthProjected float64) {
 // Cycle: sync → brain → executor → safety net → daily summary, for this account only. mode "shadow" never writes;
 // "auto" writes only when this account's own setting is auto too and the account is automated.
 func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, error) {
+	return ac.CycleOpts(parent, mode, cycleOpts{})
+}
+
+// cycleOpts: his own Run a cycle (manual), its preview (nothing written), and what he removed in the preview. Set
+// only while this cycle holds the account, so an hourly cycle never sees them (preview.go).
+type cycleOpts struct {
+	Manual, Preview       bool
+	SkipCreatives, SkipPr []string
+}
+
+func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map[string]any, error) {
 	if ac.app.updating.Load() {
 		return nil, errUpdating
 	}
@@ -488,6 +504,24 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		return nil, errBusy
 	}
 	defer ac.work.Unlock()
+	ac.manualCycle.Store(o.Manual)
+	ac.previewOnly.Store(o.Preview)
+	ac.skipMu.Lock()
+	ac.skipCr, ac.skipProd = map[string]bool{}, map[string]bool{}
+	for _, x := range o.SkipCreatives {
+		ac.skipCr[x] = true
+	}
+	for _, x := range o.SkipPr {
+		ac.skipProd[x] = true
+	}
+	ac.skipMu.Unlock()
+	defer func() {
+		ac.manualCycle.Store(false)
+		ac.previewOnly.Store(false)
+		ac.skipMu.Lock()
+		ac.skipCr, ac.skipProd = nil, nil
+		ac.skipMu.Unlock()
+	}()
 	a := ac.app
 	ctx, cancel := context.WithTimeout(parent, 20*time.Minute)
 	ac.mu.Lock()
@@ -523,6 +557,7 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 	}
 	// the owner's Playbook, in code, before the brain or the funnel builder sees one product (playbook.go)
 	fshop, pb, excluded := ac.filteredShop(shopSnap)
+	fshop = ac.withoutSkipped(fshop) // products he took out in the preview (preview.go)
 	in.Shop, in.Playbook, in.JobNotes = fshop, &pb, ac.jobNotes()
 	if len(excluded) > 0 {
 		out["playbook_excluded"] = len(excluded)
@@ -569,10 +604,19 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 		co.Proposals = rest
 	}
 	co.Proposals = holdRetargeting(co.Proposals, in, ac.loc())
-	co.Proposals = oneEditPerAd(co.Proposals) // volume.go
+	co.Proposals = oneEditPerAd(co.Proposals)                                           // volume.go
+	co.Proposals, ownerProps = ac.dropSkipped(co.Proposals), ac.dropSkipped(ownerProps) // removed in the preview
+	if ac.previewOnly.Load() {                                                          // the preview: every check runs, nothing is written (preview.go)
+		env = ac.env(model.AutopilotShadow)
+		co.Proposals = append(co.Proposals, ownerProps...)
+		ownerProps = nil
+	}
 	var results []executor.Result
 	if len(co.Proposals) > 0 {
 		results = ex.Run(ctx, env, co.Proposals)
+	}
+	if ac.previewOnly.Load() {
+		out["preview"] = ac.previewItems(co.Proposals, results)
 	}
 	if len(ownerProps) > 0 && st.Automated && st.Limits.Set() && st.Limits.Autopilot != model.AutopilotOff {
 		results = append(results, ex.Run(ctx, ac.env(model.AutopilotAuto), ownerProps)...)
@@ -591,15 +635,17 @@ func (ac *Acct) Cycle(parent context.Context, mode string) (map[string]any, erro
 			rl.RecordLaunches(ac.id, a.now(), ac.creatives.all(), in.Shop, co.Proposals, done)
 		}
 	}
-	ac.keepProposals(t0, env.Limits.Autopilot, co.Proposals, results)
-	ac.noteStarter(co.Proposals, results, env.Limits.Autopilot, stWhy)
-	ac.noteJobs(results, env.Limits.Autopilot)
+	if !ac.previewOnly.Load() { // a preview changes no record: approvals, the first launch's state, the jobs
+		ac.keepProposals(t0, env.Limits.Autopilot, co.Proposals, results)
+		ac.noteStarter(co.Proposals, results, env.Limits.Autopilot, stWhy)
+		ac.noteJobs(results, env.Limits.Autopilot)
+	}
 	counts := map[string]int{}
 	for _, r := range results {
 		counts[r.Status]++
 	}
 	out["proposals"], out["results"], out["counts"] = len(co.Proposals), results, counts
-	if counts["done"] == 0 && st.Automated && st.Limits.Set() { // after writes the executor already re-synced and re-checked the net
+	if counts["done"] == 0 && st.Automated && st.Limits.Set() && !ac.previewOnly.Load() { // after writes the executor already re-synced and re-checked the net (a preview writes nothing)
 		if _, err := ac.ensureSafety(ctx); err != nil {
 			out["safety_error"] = err.Error()
 		}
@@ -635,6 +681,9 @@ func (ac *Acct) finishCycle(t0 time.Time, out map[string]any) {
 	props, _ := out["_props"].([]model.Proposal)
 	delete(out, "_props")
 	rr := ac.cycleReport(t0, out, props)
+	if ac.previewOnly.Load() {
+		rr.Title = "Preview (nothing was sent to Meta)"
+	}
 	ac.saveRunReport(rr) // Overview → Last cycle: every step (runreport.go)
 	ac.alertMetaFixes(rr)
 	ac.st.Append("cycle", "cycle end", out)
