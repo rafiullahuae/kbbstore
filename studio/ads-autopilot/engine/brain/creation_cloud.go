@@ -118,7 +118,7 @@ func (e *Engine) CloudBrief(acct string, min model.CycleInput, r CreationRequest
 		trend[id] = true
 	}
 	b := exchange.Brief{Version: 1, JobID: r.ID, Account: acct, At: time.Now().UTC(), Title: r.Title, TitleAR: r.TitleAR, Count: max(1, r.Count),
-		Langs: []string{"ar", "en"}, Formats: []string{"1:1", "4:5", "9:16"}, Motion: r.Format == "Reels", Angle: r.Angle, Extra: r.Brief,
+		Langs: []string{"ar", "en"}, Formats: []string{"1:1", "4:5", "9:16"}, Motion: r.Format == "Reels", Angle: r.Angle,
 		DesignFamilies: []string{"hero", "glow", "ingredient", "offer", "routine", "editorial", "petals", "texture", "qa", "collection"},
 		BrandColours:   BrandColours, Output: cloudOutput, Offers: []string{}}
 	if r.Lang == "ar" || r.Lang == "en" {

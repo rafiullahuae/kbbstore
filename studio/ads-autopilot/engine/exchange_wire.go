@@ -290,13 +290,17 @@ func (a *App) exchangeRun(r exchange.Remote, eb *brain.Engine, x *exchangeSync, 
 				bb := exchange.MustJSON(b)
 				put[exchange.JobDir(ac.id, req.ID)+"/brief.json"] = bb
 				put[exchange.JobDir(ac.id, req.ID)+"/status.json"] = exchange.MustJSON(exchange.Status{State: "queued", At: now})
+				x.mu.Lock()
 				j.Brief, j.Pushed, j.State = hashBytes(bb), now, "waiting"
+				x.mu.Unlock()
 				pushed++
 				eb.SetCloud(ac.id, req.ID, "queued", "")
 			case !open && there && req.Cloud != "imported" && rj.Status.State != "withdrawn" && j != nil && j.Imported.IsZero():
 				// made here first, dismissed, or written by the API: the cloud does not make it (again)
 				put[exchange.JobDir(ac.id, req.ID)+"/status.json"] = exchange.MustJSON(exchange.Status{State: "withdrawn", At: now, Note: "the owner's app closed this request (" + req.Status + ")"})
+				x.mu.Lock()
 				j.Withdrawn, j.State = true, "withdrawn"
+				x.mu.Unlock()
 				withdrawn++
 				eb.SetCloud(ac.id, req.ID, "withdrawn", "")
 			case open && there:
@@ -306,7 +310,9 @@ func (a *App) exchangeRun(r exchange.Remote, eb *brain.Engine, x *exchangeSync, 
 					by = rj.Claim.Worker
 				}
 				if j != nil {
+					x.mu.Lock()
 					j.State, j.Worker = st, by
+					x.mu.Unlock()
 				}
 				switch st {
 				case "waiting":
@@ -393,6 +399,18 @@ func (a *App) exchangeRun(r exchange.Remote, eb *brain.Engine, x *exchangeSync, 
 	if err := commitRetry(r, fmt.Sprintf("KBB Ads Autopilot: feedback on %d job(s)", len(fput)), fput); err != nil {
 		return fmt.Errorf("feedback: %w", err)
 	}
+	// forget finished bookkeeping after 60 days (the repository keeps the files)
+	x.mu.Lock()
+	for k, j := range cfg.Jobs {
+		last := j.Pushed
+		if j.Imported.After(last) {
+			last = j.Imported
+		}
+		if (j.State == "imported" || j.State == "withdrawn" || j.State == "ignored") && now.Sub(last) > 60*24*time.Hour {
+			delete(cfg.Jobs, k)
+		}
+	}
+	x.mu.Unlock()
 	// counts, from a fresh look
 	counts := map[string]int{"waiting": 0, "working": 0, "finished": 0, "failed": 0, "withdrawn": 0}
 	if s2, err := r.Snapshot(); err == nil {

@@ -272,7 +272,8 @@ dialog.cc { max-width: 1180px; width: 94vw; max-height: 92vh; }
 .cc-req { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: var(--radius-s); background: linear-gradient(120deg, var(--accent-soft), var(--surface)); border: 1px solid var(--line2); flex-wrap: wrap; }
 .cc-req.soon { background: var(--warn-soft); }
 .cc-req-t { flex: 1; min-width: 240px; }
-.cc-req.cloud > div:nth-child(2) { flex: 1; min-width: 220px; }
+.cc-req.cloud > div:nth-child(2) { flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
+.cc-req.cloud .chip { white-space: normal; }
 .cc-ico { font-size: 20px; }
 .cc-brief { white-space: pre-wrap; max-height: 260px; overflow: auto; font-size: 12px; }
 .cc-hist { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }

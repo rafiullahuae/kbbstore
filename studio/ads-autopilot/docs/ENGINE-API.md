@@ -113,3 +113,6 @@ Check: `NODE_PATH=… node tools/create-check.cjs [--shots]`.
 | GET /api/state | + `readiness[{key, what, what_ar, fix, label, step}]` — why nothing can run yet, with the fix |
 | GET /api/brain/x/strategy | economics with the math, the funnel split, rules (value, default, source yours\|self-tuned\|default, knob), ranked products with the why, `agency` (Our playbook), seasons |
 | GET /api/brain/x/learning | weekly reports (AR + EN), health (prediction error by week), lessons, tuned thresholds, changes; POST `learning/reset-tuning`, `learning/apply-proposal` |
+| GET /api/exchange | cloud creation (exchange_wire.go): `{owner, repo, token{set,last4}, connected, expires, last_push, last_pull, last_sync, last_error, counts{waiting,working,finished,failed,withdrawn}, jobs[], token_url}` |
+| PUT /api/exchange | `{owner, repo, token?}`: the GitHub key is checked live (private repo, reads + writes, reaches no other private repo) BEFORE it is kept in the Keychain |
+| DELETE /api/exchange, POST /api/exchange/sync | forget the key; push / withdraw / pull + import now (also on start, on wake = warm-up step `cloud`, every 15 min) |
