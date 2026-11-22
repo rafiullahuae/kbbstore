@@ -5,10 +5,10 @@ package main
 // or higher)". Every ad Meta builds is a post of the Page, so the token the app uses needs the Page's ADVERTISE task.
 //
 // Before anything is sent, the app now checks that, for the Page its ads run from (identity.go):
+// The app NEVER assigns the Page or changes its roles (the owner: "i don't want to assign my pages, bcz it's already
+// in another business portfolio, and i don't to disturb those"). The fix is connecting with his own login.
 //   1. me/accounts lists the Page with ADVERTISE (or MANAGE)  → go.
-//   2. it is missing → the app gives itself the role: POST /{page}/assigned_users (user = this token's user,
-//      tasks ADVERTISE + ANALYZE + CREATE_CONTENT, business = the business that holds the Page) and checks again.
-//   3. still missing → NOTHING is sent (no empty campaign, no half launch); the run says exactly what to switch on.
+//   2. it is missing → NOTHING is sent (no empty campaign, no half launch); the run says exactly what to switch on.
 // A check that cannot be made (Meta did not answer) does not block: the executor still reports Meta's own refusal.
 
 import (
@@ -99,56 +99,9 @@ func (ac *Acct) pageRole(ctx context.Context) (fixed bool, err error) {
 			name = p.Name
 		}
 	}
-	// 2. give itself the role, through the business that holds the Page (then every business it knows)
-	var me struct {
-		ID string `json:"id"`
-	}
-	var tried []string
-	var lastErr error
-	if mc.Get(ctx, "me", url.Values{"fields": {"id"}}, &me) == nil && me.ID != "" {
-		for _, biz := range ac.pageBusinesses(page) {
-			form := url.Values{"user": {me.ID}, "tasks": {`["ADVERTISE","ANALYZE","CREATE_CONTENT"]`}, "business": {biz}}
-			var out map[string]any
-			tried = append(tried, biz)
-			if lastErr = mc.Post(ctx, page+"/assigned_users", form, "", &out); lastErr == nil {
-				if ok, _ := has(); ok {
-					pageRoleCache.Store(ac.roleKey(), pageRoleOK{page, ac.app.now()})
-					msg := fmt.Sprintf("The app gave itself permission to advertise for your Page %s (Meta had refused its ads: no Advertiser role). Nothing for you to do.", name)
-					ac.st.Append("config", msg, map[string]string{"page": page, "business": biz})
-					return true, nil
-				}
-			}
-		}
-	}
-	why := ""
-	if lastErr != nil {
-		why = " (Meta refused the app giving it to itself: " + lastErr.Error() + ")"
-	}
-	return false, errNoPageRole{Msg: fmt.Sprintf("Meta does not let the app advertise for your Page %s yet, so nothing was sent (no campaign, no ad)%s. "+
-		"FIX, once: business.facebook.com → Settings → Users → System users (or People, if you connected with your own Facebook login) → the user the app uses → Assign assets → Pages → %s → switch on \"Ads\" (Create ads) or Full control → Save. "+
-		"Then press Run a cycle: the app checks it again before anything goes.", name, why, name)}
-}
-
-// pageBusinesses: the business that lists the Page first, then every other business the token sees.
-func (ac *Acct) pageBusinesses(page string) []string {
-	ac.app.mu.RLock()
-	p := ac.app.portfolio
-	ac.app.mu.RUnlock()
-	var first, rest []string
-	for _, b := range p.Businesses {
-		holds := false
-		for _, x := range b.Pages {
-			if x.ID == page {
-				holds = true
-			}
-		}
-		if holds {
-			first = append(first, b.ID)
-		} else {
-			rest = append(rest, b.ID)
-		}
-	}
-	return append(first, rest...)
+	return false, errNoPageRole{Msg: fmt.Sprintf("The app's Meta login cannot advertise for your Page %s (it sits in another business portfolio), so nothing was sent (no campaign, no ad). "+
+		"FIX, once, without touching the Page or its portfolio: connect the app with YOUR OWN Facebook login, which already advertises for %s — Settings → Connections → Meta → way \"My user token\" (docs/META-SETUP.md Path B; permissions ads_management, ads_read, business_management, pages_show_list, pages_read_engagement, pages_manage_ads). "+
+		"Then press Run a cycle: the app checks it again before anything goes.", name, name)}
 }
 
 // needsPage: proposals that make Page posts (an ad's creative) — what a missing Page role blocks.

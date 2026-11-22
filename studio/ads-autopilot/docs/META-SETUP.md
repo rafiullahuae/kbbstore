@@ -50,7 +50,7 @@ held back by Meta), use Path B — it works with no verification at all.
 1. Go to **developers.facebook.com/tools/explorer** (Graph API Explorer).
 2. Top right: **Meta App** = your app from Step 1; **User or Page** = **User Token**.
 3. **Permissions:** add `ads_management`, `ads_read`, `business_management`, `pages_show_list`,
-   `pages_read_engagement` (and `catalog_management` for catalog ads) → **Generate Access Token** → allow in the
+   `pages_read_engagement`, `pages_manage_ads` (and `catalog_management` for catalog ads) → **Generate Access Token** → allow in the
    pop-up → copy the token.
 4. In KBB Ads Autopilot → **Settings → Connections → Meta**: way = **My user token**, paste the token, the
    **App ID** and **App Secret** → **Save & test**. Within the same hour (the Explorer token is short-lived) the app

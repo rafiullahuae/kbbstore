@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.16
+- The app never assigns your Page or changes its roles (it stays in its own business portfolio). When the app's Meta login cannot advertise for the Page, nothing is sent and Overview tells you to connect with your own Facebook login (Settings → Connections → Meta → "My user token"), which already advertises for it.
+
 ## 0.6.15
 - Page permission checked before anything is sent: Meta refused your ads ("Application does not have permission … Advertiser role") because the app had no Advertiser role on K-Beauty Bliss. The app now checks this first and gives itself the role when Meta allows it. If Meta does not allow it, NOTHING new is sent (no empty campaign, no half launch) and Overview says the one setting to switch on.
 - Page & Instagram show their names, not numbers.
