@@ -179,6 +179,12 @@ func (ac *Acct) Decide(ctx context.Context, id string, approve bool) (map[string
 	for _, i := range order {
 		props = append(props, ps.Items[i].Proposal)
 	}
+	if approve && needsPage(props) {
+		if _, err := ac.pageRole(ctx); err != nil { // pagerole.go: nothing new goes half-way
+			ac.alertOnce(err.Error())
+			return nil, 409, err
+		}
+	}
 	env := ac.env(model.AutopilotAuto)
 	ac.mu.RLock()
 	ex := ac.exec

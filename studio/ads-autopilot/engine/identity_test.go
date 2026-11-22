@@ -19,6 +19,7 @@ func TestAdsRunFromTheOwnersPage(t *testing.T) {
 	ac, m := testApp(t)
 	ac.app.brain = quietBrain{}
 	ctx := context.Background()
+	m.AddPage("200000000009", "K-Beauty Bliss", false) // the app may advertise for it (pagerole.go)
 	for _, o := range m.Objects("ads") { // his own ad
 		if n, _ := o["name"].(string); strings.HasPrefix(n, "Owner") {
 			cr, _ := o["creative"].(map[string]any)

@@ -147,6 +147,9 @@ func (ac *Acct) assetName(id string) string {
 	if id == "" {
 		return "—"
 	}
+	if v, ok := assetNames.Load(id); ok { // read from Meta (pagerole.go)
+		return v.(string)
+	}
 	ac.app.mu.RLock()
 	p := ac.app.portfolio
 	ac.app.mu.RUnlock()
@@ -160,4 +163,12 @@ func (ac *Acct) assetName(id string) string {
 		}
 	}
 	return id
+}
+
+// identityLine: "K-Beauty Bliss · kbeauty.bliss" — names, not ids.
+func (ac *Acct) identityLine() string {
+	ac.mu.RLock()
+	l := ac.settings.Links
+	ac.mu.RUnlock()
+	return ac.assetName(l.PageID) + " · " + ac.assetName(l.InstagramUserID)
 }

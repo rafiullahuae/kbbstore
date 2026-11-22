@@ -44,7 +44,7 @@ function paint(d) {
   const ads = (pv.ads || []).filter((a) => !P.skipCr.has(a.creative_id));
   const ok = ads.filter((a) => a.check === 'ok').length;
   const first = (pv.ads || [])[0] || {};
-  const errs = ['sync_error', 'error', 'safety_error'].map((k) => r[k]).filter(Boolean);
+  const errs = ['page_error', 'sync_error', 'error', 'safety_error'].map((k) => r[k]).filter(Boolean);
   d.innerHTML = `<div class="dl" style="max-height:88vh;overflow:auto">
     <header class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">${esc(tt('What will run now', 'ما سيُنشر الآن'))}</h2>
       <span class="small muted">${esc(first.page ? tt(`From ${first.page} · ${first.instagram}`, `من ${first.page} · ${first.instagram}`) : '')}</span></header>

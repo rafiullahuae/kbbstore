@@ -88,6 +88,10 @@ type Server struct {
 	calls      int
 	srv        *http.Server
 	URL        string
+	// Page roles (pagerole.go in the engine): pages this token may NOT advertise for; a creative for one is refused
+	// the way Meta refused the owner's (10/3858749). AssignRefused: POST /{page}/assigned_users is refused too.
+	NoPageRole    map[string]bool
+	AssignRefused bool
 }
 
 type idemRec struct {
@@ -131,6 +135,20 @@ func (s *Server) Seed() {
 // OwnerPageID / OwnerInstagramID: the Page and Instagram account the owner's own seeded ad runs from (the app takes
 // its identity from them, engine/identity.go). The same as the engine's MockLinks, so other checks see no change.
 var OwnerPageID, OwnerInstagramID = "200000000001", "500000000001"
+
+// AddPage: a Page the token may advertise for (tests); noRole: one it may NOT (pagerole.go in the engine).
+func (s *Server) AddPage(id, name string, noRole bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.assets[id] = obj{"id": id, "name": name, "_kind": "page"}
+	if s.NoPageRole == nil {
+		s.NoPageRole = map[string]bool{}
+	}
+	s.NoPageRole[id] = noRole
+}
+
+// SetAssignRefused: POST /{page}/assigned_users is refused (tests).
+func (s *Server) SetAssignRefused(v bool) { s.mu.Lock(); s.AssignRefused = v; s.mu.Unlock() }
 
 // SetCreativeIdentity: the Page / Instagram an existing creative shows (tests).
 func (s *Server) SetCreativeIdentity(id, page, ig string) {
@@ -304,6 +322,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			in.Status = 400
 		}
 		s.injects = append(s.injects, in)
+		s.ok(w, obj{"ok": true})
+		return
+	}
+	if r.URL.Path == "/__mock/pagerole" && r.Method == http.MethodPost { // {"page": id, "no_role": true, "assign_refused": true}
+		var in struct {
+			Page          string `json:"page"`
+			NoRole        bool   `json:"no_role"`
+			AssignRefused bool   `json:"assign_refused"`
+		}
+		_ = json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&in)
+		if s.NoPageRole == nil {
+			s.NoPageRole = map[string]bool{}
+		}
+		s.NoPageRole[in.Page] = in.NoRole
+		s.AssignRefused = in.AssignRefused
 		s.ok(w, obj{"ok": true})
 		return
 	}
@@ -618,6 +651,12 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, edge string, for
 		if !strings.Contains(form.Get("object_story_spec"), "page_id") {
 			s.fail(w, 400, 100, 0, "object_story_spec.page_id is required", false)
 			return
+		}
+		for pg := range s.NoPageRole {
+			if s.NoPageRole[pg] && strings.Contains(form.Get("object_story_spec"), pg) {
+				s.fail(w, 400, 10, 3858749, "Application does not have permission for this action (To create posts for Page "+pg+", contact an admin to get permission for Advertiser role or higher.)", false)
+				return
+			}
 		}
 		id = s.id()
 		s.creatives[id] = obj{"id": id, "name": form.Get("name"), "object_story_spec": form.Get("object_story_spec")}
@@ -1055,6 +1094,39 @@ func (s *Server) portfolio(w http.ResponseWriter, r *http.Request, segs []string
 			o = append(o, s.accounts[id])
 		}
 		return o
+	}
+	if r.Method == http.MethodGet && len(segs) == 1 && segs[0] == "me" {
+		s.ok(w, obj{"id": "100000000000001", "name": "KAA system user"})
+		return true
+	}
+	if r.Method == http.MethodPost && len(segs) == 2 && segs[1] == "assigned_users" {
+		if a := s.assets[segs[0]]; a == nil || a["_kind"] != "page" {
+			return false
+		}
+		if s.AssignRefused {
+			s.fail(w, 403, 200, 1752041, "(#200) You do not have permission to assign this Page.", false)
+			return true
+		}
+		if !strings.Contains(form.Get("tasks"), "ADVERTISE") {
+			s.fail(w, 400, 100, 0, "tasks must name ADVERTISE", false)
+			return true
+		}
+		delete(s.NoPageRole, segs[0])
+		s.ok(w, obj{"success": true})
+		return true
+	}
+	if r.Method == http.MethodGet && len(segs) == 2 && segs[0] == "me" && segs[1] == "accounts" {
+		var rows []obj
+		for _, a := range kind("page") {
+			id, _ := a["id"].(string)
+			tasks := []string{"ADVERTISE", "ANALYZE", "CREATE_CONTENT", "MODERATE", "MANAGE"}
+			if s.NoPageRole[id] {
+				tasks = []string{"ANALYZE"}
+			}
+			rows = append(rows, obj{"id": id, "name": a["name"], "tasks": tasks})
+		}
+		list(rows)
+		return true
 	}
 	if r.Method == http.MethodGet && len(segs) == 2 && segs[0] == "me" {
 		switch segs[1] {

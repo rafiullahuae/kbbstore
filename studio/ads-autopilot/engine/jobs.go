@@ -1082,6 +1082,21 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 	}
 	ac.liveStep("sync", "", "ok", "")
 	ac.syncIdentity(ctx) // every ad is made with the Page / Instagram of his own ads (identity.go)
+	ac.liveStep("role", "Permission to advertise for the Page "+ac.identityLine(), "run", "")
+	if _, err := ac.pageRole(ctx); err != nil { // pagerole.go: nothing new goes half-way
+		ac.liveStep("role", "", "fail", err.Error())
+		js := ac.jobSet()
+		for i := range js.Jobs {
+			if js.Jobs[i].ID == id {
+				js.Jobs[i].Waiting = err.Error()
+				js.Jobs[i].logf(ac.app.now(), "waiting: %s", err.Error())
+			}
+		}
+		ac.saveJobs(js)
+		ac.alertOnce(err.Error())
+		return nil, 409, err
+	}
+	ac.liveStep("role", "", "ok", "")
 	in := ac.input()
 	env := ac.env(model.AutopilotAuto)
 	j := ac.jobByID(id)

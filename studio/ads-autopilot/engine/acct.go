@@ -548,6 +548,7 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 	ac.publish("cycle.start", map[string]any{"at": t0, "mode": mode})
 	ac.st.Append("cycle", "cycle start ("+mode+")", map[string]any{"mode": mode})
 	out := map[string]any{"mode": mode, "account": ac.id}
+	var pageErr error // pagerole.go
 	ac.liveStep("sync", "Reading Meta (campaigns, ads, spend)", "run", "")
 	if err := ac.Sync(ctx); err != nil {
 		ac.alertOnce("Sync with Meta failed: " + err.Error())
@@ -560,7 +561,21 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 			out["identity_changed"] = msg
 			ac.liveStep("id", "", "warn", msg)
 		} else {
-			ac.liveStep("id", "", "ok", "")
+			ac.liveStep("id", "", "ok", ac.identityLine())
+		}
+		// pagerole.go: the app may advertise for that Page, or it gives itself the role, or nothing new is sent
+		ac.liveStep("role", "Permission to advertise for the Page", "run", "")
+		if fixed, err := ac.pageRole(ctx); err != nil {
+			pageErr = err
+			out["page_error"] = err.Error()
+			ac.liveStep("role", "", "fail", err.Error())
+			if !ac.previewOnly.Load() {
+				ac.alertOnce(err.Error())
+			}
+		} else if fixed {
+			ac.liveStep("role", "", "ok", "the app gave itself the Advertiser role on the Page")
+		} else {
+			ac.liveStep("role", "", "ok", "")
 		}
 	}
 	a.mu.RLock()
@@ -635,7 +650,15 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 	co.Proposals = holdRetargeting(co.Proposals, in, ac.loc())
 	co.Proposals = oneEditPerAd(co.Proposals)                                           // volume.go
 	co.Proposals, ownerProps = ac.dropSkipped(co.Proposals), ac.dropSkipped(ownerProps) // removed in the preview
-	if ac.previewOnly.Load() {                                                          // the preview: every check runs, nothing is written (preview.go)
+	if pageErr != nil && !ac.previewOnly.Load() {                                       // no Page role: nothing new goes half-way (pagerole.go)
+		var h1, h2 int
+		co.Proposals, h1 = withoutNew(co.Proposals)
+		ownerProps, h2 = withoutNew(ownerProps)
+		if h1+h2 > 0 {
+			ac.liveStep("held", "New campaigns and ads held", "warn", fmt.Sprintf("%d change(s) wait until the Page lets the app advertise", h1+h2))
+		}
+	}
+	if ac.previewOnly.Load() { // the preview: every check runs, nothing is written (preview.go)
 		env = ac.env(model.AutopilotShadow)
 		co.Proposals = append(co.Proposals, ownerProps...)
 		ownerProps = nil
