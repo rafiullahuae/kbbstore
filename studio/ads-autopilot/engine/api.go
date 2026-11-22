@@ -266,7 +266,21 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		// his own Run a cycle: a first launch waiting on a Meta setting is tried at once
-		out, err := ac.CycleOpts(context.Background(), in.Mode, cycleOpts{Manual: true, Preview: preview, SkipCreatives: in.SkipCreatives, SkipPr: in.SkipProducts})
+		// something else holds the account (an hourly cycle, a Run it job): his Run a cycle / preview WAITS for it
+		// (Overview → Running now shows it live) instead of answering "a cycle is already running" (22 Nov)
+		var out map[string]any
+		var err error
+		for i := 0; i < 240; i++ {
+			out, err = ac.CycleOpts(context.Background(), in.Mode, cycleOpts{Manual: true, Preview: preview, SkipCreatives: in.SkipCreatives, SkipPr: in.SkipProducts})
+			if !errors.Is(err, errBusy) {
+				break
+			}
+			select {
+			case <-r.Context().Done():
+				return
+			case <-time.After(5 * time.Second):
+			}
+		}
 		if errors.Is(err, errBusy) || errors.Is(err, errUpdating) {
 			jsonErr(w, 409, err.Error())
 			return

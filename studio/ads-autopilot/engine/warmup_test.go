@@ -45,6 +45,16 @@ func TestWarmUpAfterNineHourSleep(t *testing.T) {
 	a := ac.app
 	automate(ac)
 	t.Cleanup(func() { mockOffset.Store(0) })
+	// registered after testApp's TempDir, so it runs FIRST: the background warm-up / cycle finishes writing into
+	// the data folder before the folder is removed ("TempDir RemoveAll cleanup: directory not empty")
+	t.Cleanup(func() {
+		for i := 0; i < 200 && a.WarmState().Running; i++ {
+			time.Sleep(10 * time.Millisecond)
+		}
+		ac.work.Lock()
+		ac.work.Unlock() //nolint:staticcheck // waits for a cycle still holding the account
+		time.Sleep(50 * time.Millisecond)
+	})
 	ctx := context.Background()
 
 	if !a.warmUp(ctx, "start") {

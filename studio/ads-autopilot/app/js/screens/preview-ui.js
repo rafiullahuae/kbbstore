@@ -7,6 +7,7 @@
 import { api, hydrate, img } from '../api.js';
 import { tt } from '../i18n.js';
 import { esc, toast, aed } from '../ui.js';
+import { liveSteps } from './live-ui.js';
 
 const P = { skipCr: new Set(), skipPr: new Set(), data: null, busy: false };
 export const previewState = P; // for checks
@@ -24,11 +25,14 @@ function dlg() {
 
 async function load(d) {
   P.busy = true;
-  d.innerHTML = `<div class="dl"><h2>${esc(tt('Preparing what will run…', 'تجهيز ما سيُنشر…'))}</h2><p class="ink2">${esc(tt('Reading Meta and your shop, planning and checking every change. Nothing is sent to Meta. This can take a few minutes.', 'قراءة Meta ومتجرك والتخطيط وفحص كل تغيير. لا يُرسل شيء إلى Meta. قد يستغرق بضع دقائق.'))}</p><div class="sk" style="height:160px"></div></div>`;
+  d.innerHTML = `<div class="dl" style="max-height:88vh;overflow:auto"><h2>${esc(tt('Preparing what will run…', 'تجهيز ما سيُنشر…'))}</h2><p class="ink2">${esc(tt('Reading Meta and your shop, planning and checking every change. Nothing is sent to Meta. If something else is running (a Run it, the hourly cycle), the preview waits for it — you see it below, live.', 'قراءة Meta ومتجرك والتخطيط وفحص كل تغيير. لا يُرسل شيء إلى Meta. إن كان شيء آخر يعمل فإن المعاينة تنتظره — تجدينه أدناه مباشرة.'))}</p><div id="pv-live">${liveSteps(window.__kaaLive || {})}</div></div>`;
+  const onLive = (e) => { const el = document.getElementById('pv-live'); if (el && P.busy) el.innerHTML = `<p class="small"><b>${esc(e.detail.running ? tt('Running now', 'يعمل الآن') : tt('Finished', 'انتهى'))}: ${esc(e.detail.kind || '')}</b></p>` + liveSteps(e.detail, 40); };
+  window.addEventListener('kaa-live', onLive);
   try {
     P.data = await api('/api/cycle', { method: 'POST', body: { mode: 'preview', skip_creatives: [...P.skipCr], skip_products: [...P.skipPr] } });
   } catch (e) { P.data = { error: String(e.message || e) }; }
   P.busy = false;
+  window.removeEventListener('kaa-live', onLive);
   paint(d);
 }
 

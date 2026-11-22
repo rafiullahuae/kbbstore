@@ -69,6 +69,7 @@ type Acct struct {
 	manualCycle atomic.Bool // the running cycle is the owner's own "Run a cycle" (starter.go: Meta-setting wait)
 	// preview.go: a preview cycle writes nothing; a run after it leaves out what he removed in the preview
 	previewOnly atomic.Bool
+	live        liveBox // live.go: what is running now, step by step
 	skipMu      sync.Mutex
 	skipCr      map[string]bool // creative ids (library or the plan's tmp:) he removed
 	skipProd    map[string]bool // products he took out for this run
@@ -205,6 +206,7 @@ func (ac *Acct) publish(name string, v any) {
 }
 
 func (ac *Acct) logf(kind, summary string, data any) {
+	ac.liveFromLog(kind, summary, data) // the live list (live.go)
 	e := ac.st.Append(kind, summary, data)
 	if kind == "execution" || kind == "alert" || kind == "safety" || kind == "kill" {
 		ac.publish("action."+kind, e)
@@ -515,6 +517,15 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 		ac.skipProd[x] = true
 	}
 	ac.skipMu.Unlock()
+	kind := "Cycle (every hour)"
+	switch {
+	case o.Preview:
+		kind = "Preview (nothing is sent to Meta)"
+	case o.Manual:
+		kind = "Your Run a cycle"
+	}
+	ac.liveStart(kind)
+	defer ac.liveEnd()
 	defer func() {
 		ac.manualCycle.Store(false)
 		ac.previewOnly.Store(false)
@@ -537,11 +548,20 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 	ac.publish("cycle.start", map[string]any{"at": t0, "mode": mode})
 	ac.st.Append("cycle", "cycle start ("+mode+")", map[string]any{"mode": mode})
 	out := map[string]any{"mode": mode, "account": ac.id}
+	ac.liveStep("sync", "Reading Meta (campaigns, ads, spend)", "run", "")
 	if err := ac.Sync(ctx); err != nil {
 		ac.alertOnce("Sync with Meta failed: " + err.Error())
 		out["sync_error"] = err.Error()
-	} else if msg := ac.syncIdentity(ctx); msg != "" { // the Page / Instagram of his own ads (identity.go)
-		out["identity_changed"] = msg
+		ac.liveStep("sync", "", "fail", err.Error())
+	} else {
+		ac.liveStep("sync", "", "ok", "")
+		ac.liveStep("id", "Page & Instagram: the same as your own ads", "run", "")
+		if msg := ac.syncIdentity(ctx); msg != "" { // the Page / Instagram of his own ads (identity.go)
+			out["identity_changed"] = msg
+			ac.liveStep("id", "", "warn", msg)
+		} else {
+			ac.liveStep("id", "", "ok", "")
+		}
 	}
 	a.mu.RLock()
 	shopSnap, research, learnings, br := a.shopSnap, a.research, a.learnings, a.brain
@@ -566,8 +586,10 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 	in.Creatives = ac.creatives.all()
 	in.History = ac.st.Recent(200, "execution", "check", "cycle", "kill", "alert", "safety")
 	in.LongHistory, in.Creatives37 = ac.longHistory()
+	ac.liveStep("plan", "Planning inside your limits", "run", "")
 	co, err := br.Cycle(ctx, in)
 	if err != nil {
+		ac.liveStep("plan", "", "fail", err.Error())
 		ac.alert("error", "The planner failed: "+err.Error()+" (nothing was changed)")
 		out["error"] = err.Error()
 		ac.finishCycle(t0, out)
@@ -580,8 +602,15 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 		cycleMode = model.AutopilotAuto
 	}
 	env := ac.env(cycleMode)
+	ac.liveStep("plan", "", "ok", fmt.Sprintf("%d change(s) planned", len(co.Proposals)))
 	// the first launch does not wait for the weekly batch day (starter.go)
+	ac.liveStep("starter", "First launch", "run", "")
 	sp, stWhy := ac.starterPlan(ctx, in, co.Proposals, env)
+	if len(sp) > 0 {
+		ac.liveStep("starter", "", "ok", stWhy)
+	} else {
+		ac.liveStep("starter", "", "info", "not needed now: "+stWhy)
+	}
 	if len(sp) > 0 {
 		co.Proposals = append(dropCreates(co.Proposals), sp...)
 		out["starter"] = map[string]any{"proposals": len(sp), "why": stWhy, "mode": env.Limits.Autopilot}
@@ -906,6 +935,7 @@ func (ac *Acct) stateBytes() []byte {
 	ac.mu.RUnlock()
 	st["creatives"] = len(ac.creatives.all())
 	st["month_spend"] = math.Round(ac.monthSpend()*100) / 100
+	st["live"] = ac.liveSnap()                                       // Overview → Running now (live.go)
 	st["run_reports"] = ac.runReports()                              // Overview → Last cycle (runreport.go)
 	st["today_spend_app"] = math.Round(ac.todaySpendApp()*100) / 100 // the daily limit is for the app's own ads (22 Nov)
 	b, _ := json.Marshal(st)

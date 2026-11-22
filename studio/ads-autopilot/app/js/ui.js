@@ -58,7 +58,9 @@ export function toast(msg, undo) {
     b.onclick = () => { el.remove(); undo(); };
     el.append(b);
   }
-  document.getElementById('toasts').append(el);
+  const box = document.getElementById('toasts');
+  box.append(el);
+  while (box.children.length > 4) box.firstElementChild.remove(); // never a wall of notices: the newest 4 stay
   // long enough to read: 4 s, longer for a long message (a cycle's result), at most 15 s
   setTimeout(() => el.remove(), undo ? 8000 : Math.min(15000, Math.max(4000, String(msg).length * 55)));
 }

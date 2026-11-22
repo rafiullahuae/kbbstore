@@ -52,6 +52,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.waitForSelector('#cyc', { timeout: 30000 });
   const H = (fn, ...a) => page.evaluate(fn, ...a);
 
+  // 0 ─ something is already running (the owner's case: his Run it jobs): the preview WAITS, live steps arrive
+  await H(() => { window.__kaaLiveSeen = []; window.addEventListener('kaa-live', (e) => window.__kaaLiveSeen.push({ kind: e.detail.kind, running: e.detail.running, n: (e.detail.steps || []).length })); });
+  const busy = fetch(base + '/api/cycle', { method: 'POST', headers: { 'X-KAA': info.token, 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'shadow' }) });
+  await sleep(150);
   // 1 ─ the preview
   await page.click('#cyc');
   await page.waitForFunction(() => document.querySelector('#pv[open] [data-pv-run]'), null, { timeout: 300000 });
@@ -59,6 +63,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const onMeta0 = (await kaa()).length;
   const ads = pv.ads || [];
   const linksOk = ads.filter((a) => a.lang).every((a) => a.link === (a.lang === 'ar' ? 'https://kbeautybliss.com/ar/super-sale/' : 'https://kbeautybliss.com/super-sale/'));
+  await busy;
+  const seen = await H(() => window.__kaaLiveSeen);
+  const pvErr = await H(() => (window.__kaaPreview.data || {}).error || '');
+  check('While something runs, the preview waits (no "already running") and the live steps arrive', !/already running/.test(pvErr) && seen.some((x) => x.running && x.n > 0) && seen.some((x) => /Preview/.test(x.kind)),
+    `${seen.length} live updates (${[...new Set(seen.map((x) => x.kind))].join(' → ')}) · preview error: ${pvErr || 'none'}`);
   check('Run a cycle opens the preview; nothing is on Meta', ads.length >= 3 && onMeta0 === 0 && ads.every((a) => a.headline && a.page && a.adset) && linksOk,
     `${ads.length} ads (${ads.map((a) => `${a.lang}:${(a.titles || [])[0] || a.name}`).join(' | ')}) · KAA campaigns on Meta: ${onMeta0} · links ${linksOk ? 'super-sale by language' : JSON.stringify(ads.map((a) => a.link))} · Page ${ads[0] && ads[0].page}`);
   if (SHOT) for (const w of [1280, 390]) { await page.setViewportSize({ width: w, height: 900 }); await sleep(500); await page.screenshot({ path: path.join(SHOTS, `preview-${w}.png`) }); }
@@ -88,6 +97,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   check('Run sends exactly what is left, switched on', meta.length >= 2 && !rmOn && !swOn && meta.some((a) => a.status === 'ACTIVE'),
     `${meta.length} KAA ads on Meta (${meta.filter((a) => a.status === 'ACTIVE').length} active) · removed ad on Meta: ${rmOn} · swapped-out product on Meta: ${swOn}`);
 
+  // 3b ─ the Overview card shows what ran, every step
+  await page.goto(base + '/app/#/overview'); await page.waitForSelector('#live-card', { timeout: 20000 });
+  const card = await H(() => (document.querySelector('#live-card') || {}).innerText || '');
+  check('Overview → Running now / Just finished lists every step', /Just finished|Running now/.test(card) && /Reading Meta/.test(card) && /New ad/.test(card), card.replace(/\n/g, ' | ').slice(0, 220));
+  if (SHOT) { const c = await page.$('#live-card'); if (c) { await c.scrollIntoViewIfNeeded(); await c.screenshot({ path: path.join(SHOTS, 'live-1280.png') }); } }
   // 4 ─ Cancel sends nothing
   const before = (await kaaAds()).length;
   await page.click('#cyc');

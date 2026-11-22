@@ -2,6 +2,11 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.13
+- Running now, live: Overview shows what the autopilot is doing this moment — a cycle, your Run a cycle, the preview, or a Run it job — step by step as it happens: reading Meta, the Page check, planning, the first launch, and every campaign, ad set, picture and ad being sent, with ✓, ✕ and the reason. A "● Running" button at the bottom left shows it on every page; click it to jump there. After it ends the card says "Just finished" for 10 minutes, and "Last cycle — every step" keeps it.
+- Fixed: pressing Run a cycle while a Run it job or the hourly cycle was working said "a cycle is already running". It now waits for it (you see it live) and then prepares the preview.
+- At most 4 notices on screen at once.
+
 ## 0.6.12
 - Preview before anything runs: Overview → Run a cycle (Auto) first shows "What will run now" — every ad that would go live with its picture, words, product, ad set, campaign budget, landing page and Page, and what the checks said. Nothing is sent to Meta. Per ad: ✕ Remove, ↻ Other product (the next product takes its place), ⊘ Never promote. "Run now" sends only what is left; Cancel sends nothing.
 - Fixed: the first launch said "the app's campaigns spent in the last 7 days" after you deleted the KAA campaign. Deleted / archived campaigns no longer hold it.

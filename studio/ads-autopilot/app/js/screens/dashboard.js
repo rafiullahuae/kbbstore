@@ -2,6 +2,7 @@
 // spend vs sales + who is buying, creatives + trending now, plan / needs you / accounts.
 import { readinessCard } from './funnel-ui.js';
 import { dailyPlanCard, watchingCard, wireToday, loadToday } from './today-ui.js';
+import { liveCard } from './live-ui.js';
 import { tt, getLang } from '../i18n.js';
 import { esc, aed, num, pct, ago, lineChart, spark, txt, tip, verdictChip, toast } from '../ui.js';
 import { api, getAccount, authed } from '../api.js';
@@ -86,6 +87,7 @@ export function render(S, el) {
       : `<div class="alert warn">${esc(tt('No limits yet: nothing will launch until you set a daily and a monthly limit.', 'لا توجد حدود: لن يُطلق شيء حتى تحدّدي الحد اليومي والشهري.'))}</div><p><a href="#/settings"><button type="button">${esc(tt('Set limits', 'تحديد الحدود'))}</button></a></p>`}
     </div>
   </section>
+  ${liveCard(window.__kaaLive || (st.raw || {}).live)}
   ${runReportsCard(st)}
   <section class="grid g2">${dailyPlanCard(S)}${watchingCard(S)}</section>
   <section class="kpis">

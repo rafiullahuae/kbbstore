@@ -26,6 +26,7 @@ import { creationBanner, wireBanner, loadCreation, setCreation, CS } from './cre
 import { claudeCodeEvent } from './create/claudecode.js';
 import { startupNote } from './screens/updates.js';
 import { openPreview } from './screens/preview-ui.js';
+import { liveCard, paintPill } from './screens/live-ui.js';
 
 const I = {
   overview: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>', portfolio: '<path d="M3 7h18v13H3zM8 7V4h8v3"/>',
@@ -62,6 +63,7 @@ export function dropList(...keys) { for (const k of keys) S.cache.delete(`${getA
 export async function refreshState(id = getAccount()) {
   const st = await loadState(id);
   S.states.set(id, st);
+  if (id === getAccount() && st.raw && st.raw.live) { window.__kaaLive = st.raw.live; paintPill(st.raw.live); }
   if (id === getAccount()) { paintTop(); paintNav(); rerender(); schedulePending(); }
   return st;
 }
@@ -412,6 +414,16 @@ window.addEventListener('online', () => warmNow('online'));
       return;
     }
     if (type === 'alert' || type === 'action.alert') toast((d.data && d.data.text) || d.text || 'Alert');
+    if (type === 'live') { // live.go: what is running now, step by step — repainted in place, never the whole page
+      if (acct === getAccount()) {
+        window.__kaaLive = d.data;
+        paintPill(d.data);
+        const c = document.getElementById('live-card');
+        if (c) c.outerHTML = liveCard(d.data);
+        window.dispatchEvent(new CustomEvent('kaa-live', { detail: d.data }));
+      }
+      return;
+    }
     if (type === 'dailyplan' || type === 'watch') { // today-ui.js: the daily plan / watching now, read again once
       if (acct) S.cache.delete(`${acct}|today`);
       if (acct === getAccount() && ['overview', 'plan'].includes(S.route)) rerender();

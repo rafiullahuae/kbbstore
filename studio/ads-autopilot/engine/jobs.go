@@ -1064,9 +1064,18 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 		return nil, 409, errBusy
 	}
 	defer ac.work.Unlock()
+	title := id
+	if jj := ac.jobByID(id); jj != nil {
+		title = jj.Title
+	}
+	ac.liveStart(title) // live.go: Overview → Running now
+	defer ac.liveEnd()
+	ac.liveStep("sync", "Reading Meta", "run", "")
 	if err := ac.Sync(ctx); err != nil {
+		ac.liveStep("sync", "", "fail", err.Error())
 		return nil, 502, fmt.Errorf("cannot read the account before acting: %w", err)
 	}
+	ac.liveStep("sync", "", "ok", "")
 	ac.syncIdentity(ctx) // every ad is made with the Page / Instagram of his own ads (identity.go)
 	in := ac.input()
 	env := ac.env(model.AutopilotAuto)
@@ -1082,6 +1091,7 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 		ps = append(room, ps...)
 	}
 	if why != "" {
+		ac.liveStep("", "Waiting", "warn", why)
 		js := ac.jobSet()
 		for i := range js.Jobs {
 			if js.Jobs[i].ID == id {
