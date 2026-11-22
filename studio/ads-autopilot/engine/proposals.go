@@ -128,10 +128,15 @@ var errNotWaiting = errors.New("this proposal is not waiting for a decision")
 
 // Decide: approve (run it now through the executor) or reject one proposal of the last cycle.
 func (ac *Acct) Decide(ctx context.Context, id string, approve bool) (map[string]any, int, error) {
+	if ac.app.updating.Load() {
+		return nil, 409, errUpdating
+	}
 	if !ac.work.TryLock() {
 		return nil, 409, errBusy
 	}
 	defer ac.work.Unlock()
+	ctx, stop := ac.app.stoppable(ctx) // an update installing stops it (update_flow.go)
+	defer stop()
 	a := ac.app
 	ps := ac.Pending()
 	idx := -1

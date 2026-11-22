@@ -128,6 +128,49 @@ type App struct {
 	cc             *ccRunner   // Claude Code on this Mac: auto-creation on the Max plan (claudecode.go)
 	firstTest      atomic.Bool // ConnectionsView started a first test (connectAll may also run from the warm-up)
 	updating       atomic.Bool // an update is being installed / checked: no sync or cycle starts (update_flow.go)
+	stopMu         sync.Mutex
+	stopCh         chan struct{} // closed when an install stops the running work (stoppable, stopWork)
+}
+
+// stoppable: ctx that ends when an update stops the running work (update_flow.go pauseAutopilot). The owner, 22 Nov:
+// an install stuck behind his Run it jobs ("no ANY patch is accepting") -- they held the account for minutes and
+// nothing could stop them. Every long piece of account work (a job run at once, an approval) runs under this.
+func (a *App) stoppable(parent context.Context) (context.Context, context.CancelFunc) {
+	a.stopMu.Lock()
+	if a.stopCh == nil {
+		a.stopCh = make(chan struct{})
+	}
+	ch := a.stopCh
+	a.stopMu.Unlock()
+	ctx, cancel := context.WithCancel(parent)
+	go func() {
+		select {
+		case <-ch:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+	return ctx, cancel
+}
+
+// stopWork: every stoppable ctx ends now; later ones start fresh (resumeWork).
+func (a *App) stopWork() {
+	a.stopMu.Lock()
+	if a.stopCh == nil {
+		a.stopCh = make(chan struct{})
+	}
+	select {
+	case <-a.stopCh:
+	default:
+		close(a.stopCh)
+	}
+	a.stopMu.Unlock()
+}
+
+func (a *App) resumeWork() {
+	a.stopMu.Lock()
+	a.stopCh = make(chan struct{})
+	a.stopMu.Unlock()
 }
 
 func newApp(st *store.Store, now func() time.Time, publish func(string, any)) *App {

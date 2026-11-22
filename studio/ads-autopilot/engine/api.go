@@ -299,6 +299,8 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Minute)
+		ctx, stop := ac.app.stoppable(ctx)
+		defer stop()
 		err := ac.Sync(ctx)
 		cancel()
 		ac.work.Unlock()

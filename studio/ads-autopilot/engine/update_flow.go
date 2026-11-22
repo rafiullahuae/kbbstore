@@ -156,6 +156,7 @@ func (s *server) pauseAutopilot(wait time.Duration) bool {
 	for _, ac := range s.app.Accounts() {
 		for !ac.work.TryLock() {
 			if !cancelled && time.Now().After(grace) {
+				s.app.stopWork() // a Run it / Approve / sync running at once stops too (app.go stoppable)
 				for _, x := range s.app.Accounts() {
 					x.mu.Lock()
 					if x.cycleCancel != nil {
@@ -178,6 +179,7 @@ func (s *server) pauseAutopilot(wait time.Duration) bool {
 func (s *server) resumeAutopilot() {
 	if s.app != nil {
 		s.app.updating.Store(false)
+		s.app.resumeWork()
 	}
 }
 

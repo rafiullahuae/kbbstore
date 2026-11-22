@@ -14,6 +14,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -169,7 +170,7 @@ func (ac *Acct) runOwnerJobNow(id string) {
 		for i := 0; i < 20; i++ { // a cycle may hold the account: wait for it, then run
 			_, code, err := ac.runJobNow(ctx, id)
 			if err == nil || code != 409 || err != errBusy {
-				if err != nil {
+				if err != nil && !errors.Is(err, errUpdating) { // an update stops it: the next cycle runs it
 					ac.st.Append("alert", "Run your ads: "+err.Error(), map[string]string{"job": id})
 				}
 				return

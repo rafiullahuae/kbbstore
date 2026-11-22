@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.14
+- Fixed: an update could get stuck behind a Run it job ("An update is already being installed" for every file). Installing now stops whatever is running within about 10 seconds — a cycle, a Run it, an approval — and installs; a stopped Run it is not lost, it runs again by itself at the next cycle. Nothing new starts while an update installs.
+
 ## 0.6.13
 - Running now, live: Overview shows what the autopilot is doing this moment — a cycle, your Run a cycle, the preview, or a Run it job — step by step as it happens: reading Meta, the Page check, planning, the first launch, and every campaign, ad set, picture and ad being sent, with ✓, ✕ and the reason. A "● Running" button at the bottom left shows it on every page; click it to jump there. After it ends the card says "Just finished" for 10 minutes, and "Last cycle — every step" keeps it.
 - Fixed: pressing Run a cycle while a Run it job or the hourly cycle was working said "a cycle is already running". It now waits for it (you see it live) and then prepares the preview.

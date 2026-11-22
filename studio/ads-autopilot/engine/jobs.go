@@ -1024,6 +1024,9 @@ func (ac *Acct) applyEdit(j *Job, e jobEdit, now time.Time) error {
 // runJobNow: the owner's Approve on a due job: materialise and run it through the executor now (as Approvals does
 // for one proposal), whatever the mode, with every check.
 func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, error) {
+	if ac.app.updating.Load() { // an install is running: nothing new starts (update_flow.go)
+		return nil, 409, errUpdating
+	}
 	st := ac.Settings()
 	switch {
 	case !st.Automated:
@@ -1064,6 +1067,8 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 		return nil, 409, errBusy
 	}
 	defer ac.work.Unlock()
+	ctx, stop := ac.app.stoppable(ctx) // an update installing stops it (it runs again after: the job stays open)
+	defer stop()
 	title := id
 	if jj := ac.jobByID(id); jj != nil {
 		title = jj.Title
@@ -1118,6 +1123,18 @@ func (ac *Acct) runJobNow(ctx context.Context, id string) (map[string]any, int, 
 	ac.mu.RUnlock()
 	t0 := ac.app.now()
 	res := ex.Run(ctx, env, ps)
+	if ctx.Err() != nil && ac.app.updating.Load() { // stopped for an update: not a failure; it runs again after
+		js := ac.jobSet()
+		for i := range js.Jobs {
+			if js.Jobs[i].ID == id {
+				js.Jobs[i].Waiting = "stopped while an update installed; it runs again by itself at the next cycle"
+				js.Jobs[i].logf(ac.app.now(), "%s", js.Jobs[i].Waiting)
+			}
+		}
+		ac.saveJobs(js)
+		ac.liveStep("", "Stopped for the update", "warn", "it runs again by itself at the next cycle")
+		return nil, 409, errUpdating
+	}
 	ac.noteJobs(res, model.AutopilotAuto)
 	{ // a job run at once (Run it, Approve) leaves its own report beside the cycles' (runreport.go)
 		rr := RunReport{Title: firstNonEmpty(j.Title, "Job"), At: t0.UTC(), Mode: model.AutopilotAuto, Ms: ac.app.now().Sub(t0).Milliseconds(), Steps: resultSteps(ps, res)}
