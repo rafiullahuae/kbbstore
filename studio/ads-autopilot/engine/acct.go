@@ -974,3 +974,10 @@ func cloneTree(t []model.Campaign) []model.Campaign {
 	_ = json.Unmarshal(b, &out)
 	return out
 }
+
+// cycleRunning: a cycle (not a job or a sync) holds the account now.
+func (ac *Acct) cycleRunning() bool {
+	ac.mu.RLock()
+	defer ac.mu.RUnlock()
+	return ac.cycleOn
+}

@@ -437,3 +437,22 @@ func TestBackfill(t *testing.T) {
 		t.Fatalf("learnings %+v", ac.app.learnings)
 	}
 }
+
+// The owner, 23 Nov: the Meta card had no "my own login" choice and always sent auth system_user, so a user token
+// from Graph API Explorer was saved as it was (never made a 60-day one: dead within the hour). Meta says what the
+// token is; a USER token is exchanged whatever the card said.
+// MUTATION: drop the DebugToken detection in saveMetaToken → the short token is kept, red.
+func TestUserTokenRecognisedUnderSystemUser(t *testing.T) {
+	ac, m := testApp(t)
+	a := ac.app
+	m.AddUserToken("EAASHORTLIVED000000000000009", time.Hour)
+	s := &server{app: a, token: "t", addr: "127.0.0.1:1"}
+	body := `{"auth":"system_user","app_id":"1234567890123","app_secret":"mockappsecret0000","token":"EAASHORTLIVED000000000000009"}`
+	w := httptest.NewRecorder()
+	s.putConnection(w, httptest.NewRequest("PUT", "/api/connections/meta", strings.NewReader(body)), "meta")
+	var c connMeta
+	_ = json.Unmarshal(w.Body.Bytes(), &c)
+	if tok, _ := a.sec.Get("meta_token"); !strings.HasPrefix(tok, "EAALONG") || c.Auth != AuthUserToken || !c.OK {
+		t.Fatalf("a user token saved as a system-user one was not exchanged: auth %q ok %v (%d %s)", c.Auth, c.OK, w.Code, w.Body)
+	}
+}

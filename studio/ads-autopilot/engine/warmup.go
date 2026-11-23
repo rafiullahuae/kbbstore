@@ -253,7 +253,13 @@ func (a *App) warmUp(ctx context.Context, reason string) bool {
 		failed := []string{}
 		for _, ac := range cycleDue {
 			out, err := ac.Cycle(ctx, "auto")
-			if err == errBusy { // the owner's own Run a cycle is on it
+			// a job, an approval or a sync holds the account (not a cycle): wait for it rather than skip the cycle
+			// that fell due while the Mac slept (it was skipped and the step still said "ok")
+			for i := 0; err == errBusy && !ac.cycleRunning() && i < 300 && ctx.Err() == nil; i++ {
+				time.Sleep(time.Second)
+				out, err = ac.Cycle(ctx, "auto")
+			}
+			if err == errBusy { // a cycle (the owner's own Run a cycle, the hourly one) is on it
 				continue
 			}
 			if err != nil {

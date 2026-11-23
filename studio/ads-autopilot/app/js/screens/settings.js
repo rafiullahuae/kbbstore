@@ -57,7 +57,9 @@ function connCard(name, title, c, fields) {
   const ok = c && c.ok;
   return `<div class="card" data-conn="${name}"><header><h2>${esc(title)}</h2><span class="row small"><span class="dot ${ok ? 'ok' : CHECKING ? 'warn' : 'bad'}"></span>${esc(ok ? tt('Connected', 'متصل') : CHECKING ? tt('Checking…', 'جارٍ التحقق…') : tt('Not connected', 'غير متصل'))}</span></header>
     ${c && c.error ? `<p class="alert danger small">${esc(c.error)}</p>` : ''}${c && c.warning ? `<p class="alert warn small">${esc(c.warning)}</p>` : ''}
-    <div class="grid" style="gap:10px">${fields.map(([k, label, secret, val, ph]) => `<label class="f"><span>${esc(label)}</span><input name="${k}" ${secret ? 'type="password" autocomplete="off"' : ''} value="${secret ? '' : esc(val || '')}" placeholder="${esc(secret && val && val.set ? '•••• ' + val.last4 + ' ' + tt('(saved — type to replace)', '(محفوظ — اكتبي للاستبدال)') : secret && val && val.error ? tt('saved, but could not be read: see above', 'محفوظ لكن تعذّرت قراءته: انظري أعلاه') : ph || '')}"></label>`).join('')}</div>
+    <div class="grid" style="gap:10px">${fields.map(([k, label, secret, val, ph]) => secret === 'select' ? `<label class="f"><span>${esc(label)}</span><select name="${k}" style="width:100%;min-width:0;max-width:100%">
+        <option value="user_token" ${val === 'user_token' ? 'selected' : ''}>${esc(tt('My own Facebook login (user token)', 'حسابي على فيسبوك (رمز مستخدم)'))}</option>
+        <option value="system_user" ${val !== 'user_token' ? 'selected' : ''}>${esc(tt('A system user', 'مستخدم النظام'))}</option></select></label>` : `<label class="f"><span>${esc(label)}</span><input name="${k}" ${secret ? 'type="password" autocomplete="off"' : ''} value="${secret ? '' : esc(val || '')}" placeholder="${esc(secret && val && val.set ? '•••• ' + val.last4 + ' ' + tt('(saved — type to replace)', '(محفوظ — اكتبي للاستبدال)') : secret && val && val.error ? tt('saved, but could not be read: see above', 'محفوظ لكن تعذّرت قراءته: انظري أعلاه') : ph || '')}"></label>`).join('')}</div>
     <div class="row" style="margin-top:10px"><button type="button" data-save="${name}">${esc(tt('Save & test', 'حفظ واختبار'))}</button></div></div>`;
 }
 
@@ -88,7 +90,7 @@ export function render(S, el) {
     CHECKING = !!c.checking;
     const unread = ['meta', 'claude', 'shop'].some((k) => c[k] && /could not be read/.test(c[k].error || ''));
     v.innerHTML = `<div class="row"><p class="small muted">${esc(tt('Keys are stored in the macOS Keychain and never shown again; only the last 4 characters.', 'تُحفظ المفاتيح في سلسلة مفاتيح macOS ولا تظهر مرة أخرى؛ فقط آخر ٤ أحرف.'))}</p><button type="button" class="${unread ? '' : 'ghost '}small" id="conn-retest" style="margin-inline-start:auto">${esc(tt('Try again: read the keys and test', 'حاولي مرة أخرى: قراءة المفاتيح والاختبار'))}</button></div>${unread ? `<p class="alert warn small" id="conn-unread">${esc(tt('Your keys are still saved, but macOS did not let the app read them. Click “Always Allow” when macOS asks (your Mac login password), then Try again.', 'مفاتيحك ما زالت محفوظة، لكن macOS لم يسمح للتطبيق بقراءتها. اضغطي «السماح دائماً» عندما يسأل macOS (كلمة مرور جهازك)، ثم حاولي مرة أخرى.'))}</p>` : ''}<div class="grid g3">
-      ${connCard('meta', 'Meta', c.meta, [['token', tt('System-user token', 'رمز مستخدم النظام'), true, c.meta?.token], ['app_id', tt('App ID', 'معرّف التطبيق'), false, c.meta?.app_id], ['app_secret', tt('App secret', 'سر التطبيق'), true, c.meta?.app_secret]])}
+      ${connCard('meta', 'Meta', c.meta, [['auth', tt('Connect with', 'الاتصال عبر'), 'select', c.meta?.auth || 'system_user'], ['token', c.meta?.auth === 'user_token' ? tt('Your user token (Graph API Explorer)', 'رمز المستخدم الخاص بك') : tt('Token (system user, or your own user token)', 'الرمز'), true, c.meta?.token], ['app_id', tt('App ID', 'معرّف التطبيق'), false, c.meta?.app_id], ['app_secret', tt('App secret', 'سر التطبيق'), true, c.meta?.app_secret]])}
       ${connCard('claude', 'Claude', c.claude, [['api_key', tt('Anthropic API key', 'مفتاح Anthropic'), true, c.claude?.key]])}
       ${connCard('shop', tt('Shop', 'المتجر'), c.shop, [['feed_url', tt('Product feed', 'كتالوج المنتجات'), false, c.shop?.feed_url, 'https://kbeautybliss.com/feeds/meta-catalog.xml'], ['token', tt('Shop connection key', 'مفتاح ربط المتجر'), true, c.shop?.token]])}</div>
       <p class="small muted">${c.meta ? esc(tt('Ad accounts', 'الحسابات')) + ': ' + num(c.meta.ad_accounts) + ' · ' + esc(tt('token days left', 'أيام صلاحية الرمز')) + ': ' + (c.meta.token_days_left < 0 ? '∞' : num(c.meta.token_days_left)) + ' · ' : ''}${esc(tt('Shop products', 'منتجات المتجر'))}: ${num(c.shop?.products)} · ${esc(tt('orders source', 'مصدر الطلبات'))}: ${esc(c.shop?.orders_source || '—')}</p><div class="grid g2" style="margin-top:16px"><div id="mcp-mount"></div><div id="ok-mount"></div></div><div id="ccode-mount" style="margin-top:16px"></div><div id="cloud-mount" style="margin-top:16px"></div>`;
@@ -103,8 +105,8 @@ export function render(S, el) {
     mountCloud(v.querySelector('#cloud-mount')); // cloud creation through the GitHub exchange (create/cloud.js)
     v.querySelectorAll('[data-save]').forEach((b) => {
       b.onclick = async () => {
-        const card = b.closest('[data-conn]'), body = b.dataset.save === 'meta' ? { auth: 'system_user' } : {};
-        card.querySelectorAll('input').forEach((i) => { if (i.value) body[i.name] = i.value; });
+        const card = b.closest('[data-conn]'), body = {};
+        card.querySelectorAll('input, select[name]').forEach((i) => { if (i.value) body[i.name] = i.value; });
         try { S.conn[b.dataset.save] = await api(`/api/connections/${b.dataset.save}`, { method: 'PUT', body, noAccount: true }); const r = S.conn[b.dataset.save]; toast(r.ok ? tt('Saved and connected.', 'تم الحفظ والاتصال.') : r.error || 'not connected'); render(S, el); } catch (e) { toast(e.message); }
       };
     });

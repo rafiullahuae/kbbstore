@@ -72,6 +72,21 @@ func (a *App) inspectToken(ctx context.Context) error {
 // the app id and secret are there.
 func (a *App) saveMetaToken(ctx context.Context, auth, tok string) error {
 	tok = strings.TrimSpace(tok)
+	// the owner, 23 Nov: the Meta card had no way to say "my own login", so a user token pasted there was saved as a
+	// system-user token: never exchanged, dead within the hour. Meta says what the token is: a USER token is one.
+	if auth != AuthUserToken {
+		if as := a.appToken(); as != "" {
+			a.mu.RLock()
+			mc := a.meta
+			a.mu.RUnlock()
+			if ti, err := mc.DebugToken(ctx, tok, as); err == nil && strings.EqualFold(ti.Type, "USER") {
+				auth = AuthUserToken
+				a.mu.Lock()
+				a.cfg.MetaAuth = AuthUserToken
+				a.mu.Unlock()
+			}
+		}
+	}
 	if auth == AuthUserToken {
 		a.mu.RLock()
 		id, mc := a.cfg.MetaAppID, a.meta

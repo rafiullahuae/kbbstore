@@ -2,6 +2,10 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.18
+- Settings → Connections → Meta: "Connect with" — My own Facebook login (user token) or A system user. A user token is turned into a 60-day one (App ID and App secret needed) and renewed by itself. A user token pasted under "system user" is recognised as one too.
+- Fixed: after the Mac slept, the catch-up cycle was skipped when a job was running (and still said "ok"); it now waits for the job.
+
 ## 0.6.17
 - Run it now opens a window that stays open: the ads sent, every step live (picture sent, ad made) with ✓ / ✕ and the reason, then "Done" or what was not done. Closing it does not stop anything.
 - Run a cycle → "What will run now" starts with the batch: every campaign → ad set, its daily budget and how many ads; the ads follow under their campaign.

@@ -28,10 +28,6 @@ type pageRoleOK struct {
 	at   time.Time
 }
 
-var pageRoleCache sync.Map // app+account → pageRoleOK (a passed check is trusted for 6 hours)
-
-func (ac *Acct) roleKey() string { return fmt.Sprintf("%p|%s", ac.app, ac.id) }
-
 // errNoPageRole: the Page refuses this app's ads; Msg says what to switch on.
 type errNoPageRole struct{ Msg string }
 
@@ -50,7 +46,7 @@ func (ac *Acct) pageRole(ctx context.Context) (fixed bool, err error) {
 	if page == "" {
 		return false, nil
 	}
-	if v, ok := pageRoleCache.Load(ac.roleKey()); ok {
+	if v, ok := ac.app.roleOK.Load(ac.id); ok {
 		if c := v.(pageRoleOK); c.page == page && ac.app.now().Sub(c.at) < 6*time.Hour {
 			return false, nil
 		}
@@ -86,7 +82,7 @@ func (ac *Acct) pageRole(ctx context.Context) (fixed bool, err error) {
 		return false, nil
 	}
 	if ok {
-		pageRoleCache.Store(ac.roleKey(), pageRoleOK{page, ac.app.now()})
+		ac.app.roleOK.Store(ac.id, pageRoleOK{page, ac.app.now()})
 		return false, nil
 	}
 	name := ac.assetName(page)

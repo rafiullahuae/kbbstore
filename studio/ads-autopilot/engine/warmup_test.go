@@ -90,7 +90,7 @@ func TestWarmUpAfterNineHourSleep(t *testing.T) {
 		t.Fatalf("expected exactly one warm-up after the wake, got %+v", w)
 	}
 	if n := cyclesStarted(ac); n != 2 {
-		t.Fatalf("cycles after the 9-hour sleep: %d (want exactly 1 more)", n-1)
+		t.Fatalf("cycles after the 9-hour sleep: %d (want exactly 1 more); steps %+v", n-1, w.Steps)
 	}
 	for _, st := range w.Steps {
 		if st.State != "ok" && st.State != "skipped" {

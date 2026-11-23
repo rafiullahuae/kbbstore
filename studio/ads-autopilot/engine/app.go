@@ -129,6 +129,7 @@ type App struct {
 	firstTest      atomic.Bool // ConnectionsView started a first test (connectAll may also run from the warm-up)
 	updating       atomic.Bool // an update is being installed / checked: no sync or cycle starts (update_flow.go)
 	stopMu         sync.Mutex
+	roleOK         sync.Map      // account → pageRoleOK: the Page role check passed (pagerole.go), trusted 6 hours
 	stopCh         chan struct{} // closed when an install stops the running work (stoppable, stopWork)
 }
 
