@@ -20,9 +20,22 @@ export const SCRIPTS = [
 const URDU_RE = /[؀-ۿ]/;
 export const scriptOfText = (s) => (DEVA_RE.test(s) ? 'deva' : URDU_RE.test(s) ? 'urdu' : 'latin');
 export const isHindustani = (cap) => !!cap && (cap.lang === 'hi' || cap.lang === 'ur' || cap.lang === 'hinglish');
-/** the script the captions show now: cap.script, else what the words are written in */
+/**
+ * a speech word written in a script other than `script` (Roman captions with a Devanagari / Urdu word in them, …).
+ * The owner, 23 Nov: Roman was chosen, Auto captions added the next clip's words in Devanagari, and the switch still
+ * read "Roman" (cap.script was trusted), so they were never converted and clicking Roman did nothing.
+ */
+export function offScript(cap, script) {
+  for (const w of cap?.words || []) {
+    if (w.tag || w.lang === 'en') continue;
+    const s = scriptOfText(w.w);
+    if (script === 'roman' ? s !== 'latin' : script === 'deva' ? s === 'urdu' : script === 'urdu' ? s === 'deva' : false) return true;
+  }
+  return false;
+}
+/** the script the captions show now: cap.script when every word is in it, else what the words are written in */
 export function currentScript(cap) {
-  if (cap?.script) return cap.script;
+  if (cap?.script && !offScript(cap, cap.script)) return cap.script;
   const n = { deva: 0, urdu: 0, latin: 0 };
   for (const w of (cap?.words || []).slice(0, 200)) if (!w.tag) n[scriptOfText(w.w)]++;
   return n.deva >= n.urdu && n.deva >= n.latin * 0.5 ? 'deva' : n.urdu > n.latin * 0.5 ? 'urdu' : 'roman';
@@ -132,7 +145,8 @@ export function withHeardLanguage(cap, r, chosen, project) {
   if ((!pref || pref === 'auto') && prev?.script && isHindustani(prev) && prev.words?.length) pref = prev.script;
   const info = captionLangInfo(r, chosen, pref);
   if (!info.script) return { detect: info.detect };
-  if (info.script === currentScript(cap)) return { detect: info.detect, script: info.script };
+  // every word is checked, not cap.script: merged captions carry the old script while the new words are as heard
+  if (info.script === currentScript(cap) && !offScript(cap, info.script)) return { detect: info.detect, script: info.script };
   const c = withScript(cap, info.script, project?.canvas);
   return { detect: info.detect, script: c.script, words: c.words, lines: c.lines };
 }

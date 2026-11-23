@@ -128,6 +128,16 @@ async function units() {
   ok(nat.words.map((w) => w.w).join(' ') === words.map((w) => w.w).join(' '), 'translation source of Roman captions = the original Devanagari (+ the English word as is)');
   const ured = S.withScript({ ...cap, lang: 'ur', words: ['میں', 'آج', 'خوش', 'ہوں۔', 'کینیڈا', 'میں', 'جاب'].map((w, i) => ({ w, t0: i, t1: i + 0.5 })) }, 'roman', canvas);
   ok(ured.words.map((w) => w.w).join(' ') === 'Main aaj khush hoon. Canada mein job', `Urdu captions in Roman Urdu: "${ured.words.map((w) => w.w).join(' ')}" (میں = main at a sentence start, mein after a word)`);
+  // the owner, 23 Nov: "I have selected the roman, why the system is generating hindi language script?" Auto captions on
+  // more clips merged their Devanagari words into Roman captions (cap.script 'roman' was trusted, nothing converted)
+  {
+    const more = { ...roman, words: [...roman.words, ...words.map((w) => ({ ...w, t0: w.t0 + 100, t1: w.t1 + 100 }))] };
+    const heardR = { lang: 'hi', hinglish: true, detect: { conf: 0.99 } };
+    const fixed = { ...more, ...S.withHeardLanguage(more, heardR, 'auto', { meta: {}, captions: roman, canvas }) };
+    const deva = fixed.words.filter((w) => !w.tag && /[\u0900-\u097F]/.test(w.w)).length;
+    ok(S.currentScript(more) === 'deva' && deva === 0 && fixed.script === 'roman',
+      `new clips' words merged into Roman captions are written in Roman too (${deva} Devanagari word(s) left; the switch read "${S.currentScript(more)}" before, not a false "Roman")`);
+  }
   // Hinglish from the words alone: English loanwords as Whisper misspells them on a Hindi voice (सकिन, विजा) still count
   const share = (s) => S.englishShare(s.split(' ').map((w) => ({ w })));
   const hg = share('कनामे जब किलिए अप्राई करो ये सीरम आपकी सकिन को गलोएन बनाता है विजा प्रोसेस बहुत एजी है'), hd = share('मेरा नाम राहुल है और मैं दिल्ली में रहता हूँ। मुझे खाना बनाना बहुत पसंद है। कल हम बाजार गए थे'),

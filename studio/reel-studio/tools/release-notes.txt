@@ -2,6 +2,9 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.3
+- Fixed: with Roman chosen, Auto captions on more clips wrote the new clips' captions in Hindi script (हिंदी) while the switch still said Roman. New words now always come in the script you chose, and captions already made this way are put back in Roman by themselves when you open the Captions panel (Undo brings them back).
+
 ## 1.4.2
 - Fixed: Auto captions finished but wrote nothing on some Macs. When the Mac's graphics chip writes no words, the studio now writes the captions on the processor instead (slower the first time), and remembers to do that on this Mac.
 - Captions can never sit on "Writing captions…" for ever: a stuck run stops with a message and ↻ Try again.

@@ -5,7 +5,7 @@
 //     हिंदी · Roman · اردو (undoable, lossless — hinglish/script.js).
 // Mounted by panel.js; never mutates the project (commands through `apply`).
 
-import { SCRIPTS, setScript, currentScript, isHindustani, langLabel } from './script.js';
+import { SCRIPTS, setScript, currentScript, isHindustani, langLabel, offScript } from './script.js';
 
 const h = (tag, attrs = {}, ...kids) => {
   const el = document.createElement(tag);
@@ -36,6 +36,9 @@ export function mountLangNotice(opts) {
         onclick: () => opts.relisten(d.alt) }, `It's ${NAME[d.alt]}`));
     }
     if (hu) {
+      // captions already made with words in another script than the one chosen (Auto captions before 1.4.3 added a
+      // clip's Devanagari words to Roman captions): put them in the chosen script, once (undoable)
+      if (c.script && offScript(c, c.script)) queueMicrotask(() => { const cc = opts.cap(); if (cc?.script && offScript(cc, cc.script)) opts.apply(setScript(cc.script, opts.canvas?.())); });
       const now = currentScript(c);
       kids.push(h('span', { class: 'rs-cap-scriptsw', role: 'group', 'aria-label': 'Caption script' },
         SCRIPTS.map((s) => h('button', { class: 'rs-cap-scriptbtn' + (s.id === now ? ' on' : ''), 'data-script': s.id, title: s.title, 'aria-pressed': String(s.id === now),
