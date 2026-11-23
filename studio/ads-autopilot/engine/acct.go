@@ -502,6 +502,12 @@ func (ac *Acct) CycleOpts(parent context.Context, mode string, o cycleOpts) (map
 	if ac.app.updating.Load() {
 		return nil, errUpdating
 	}
+	if !ac.app.metaOK() { // the owner, 23 Nov: the preview sat on "Reading Meta" with Meta not connected
+		ac.app.mu.RLock()
+		why := ac.app.conns.Meta.Error
+		ac.app.mu.RUnlock()
+		return nil, &errNotConnected{firstNonEmpty(why, "check Settings → Connections → Meta")}
+	}
 	if !ac.work.TryLock() {
 		return nil, errBusy
 	}
@@ -980,4 +986,11 @@ func (ac *Acct) cycleRunning() bool {
 	ac.mu.RLock()
 	defer ac.mu.RUnlock()
 	return ac.cycleOn
+}
+
+// errNotConnected: Meta is not connected; nothing is read or planned until it is.
+type errNotConnected struct{ why string }
+
+func (e *errNotConnected) Error() string {
+	return "Meta is not connected, so nothing was read or sent: " + e.why + " (Settings → Connections → Meta → Save & test)"
 }

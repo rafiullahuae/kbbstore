@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -246,6 +247,13 @@ func (a *App) wire() {
 		mc.Sleep = func(ctx context.Context, d time.Duration) error { return nil } // checks do not wait out backoffs
 		meta.RuploadBase = a.testMetaBase + "/video-ads-upload"
 	}
+	mc.OnWait = func(d time.Duration, tier string) { // the owner, 23 Nov: "loading n loading, nothing happening"
+		for _, ac := range a.Accounts() {
+			if ac.liveSnap().Running {
+				ac.liveStep("pace", "Waiting for Meta's request limit", "warn", fmt.Sprintf("about %d s, then it continues by itself: Meta lets this app make only a few requests every 5 minutes (access tier %q; Standard access raises it)", int(d.Seconds())+1, firstNonEmpty(tier, "not reported yet")))
+			}
+		}
+	}
 	mc.OnCall = func(c meta.Call) {
 		if c.Method != "GET" || c.Err != nil {
 			s := fmt.Sprintf("%s %s → %d", c.Method, c.Path, c.Status)
@@ -427,6 +435,9 @@ func (a *App) testMeta(ctx context.Context) connMeta {
 		c.Error = err.Error()
 		if me, ok := meta.AsError(err); ok && me.TokenInvalid() {
 			c.Error = "Meta refused the token (expired or revoked): paste a new one. Meta's own rules and spending limits keep protecting the ads meanwhile. " + err.Error()
+		} else if strings.Contains(strings.ToLower(err.Error()), "appsecret_proof") {
+			// the owner, 23 Nov: the App ID / secret of one Meta app with a token made for another
+			c.Error = "The App secret is not the one of the Meta app this token was made with, so Meta refuses every request. Use the App ID and App secret of the SAME app you picked in Graph API Explorer (developers.facebook.com → that app → App settings → Basic), or make the token with this app. " + err.Error()
 		}
 	} else {
 		a.mu.Lock()

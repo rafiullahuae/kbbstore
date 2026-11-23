@@ -2,6 +2,11 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.21
+- Run a cycle with Meta not connected stops at once and says why (it used to sit on "Reading Meta").
+- When Meta's request limit makes the app wait, the live list says so and for how long ("Waiting for Meta's request limit · about 90 s"), instead of looking stuck.
+- An App secret from a different Meta app than the token now says exactly that in Settings → Connections.
+
 ## 0.6.20
 - "Permission to advertise for the Page" now says who the app is connected as (your own login or a system user), what Meta shows that login (how many Pages, whether K-Beauty Bliss is one of them), and the one fix that fits.
 

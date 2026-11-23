@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"kaa/model"
 )
@@ -36,5 +37,21 @@ func TestNoPageRoleSendsNothingNew(t *testing.T) {
 				t.Fatalf("something new was sent although the Page refuses the app: %s", w.Path)
 			}
 		}
+	}
+}
+
+// The owner, 23 Nov: Run a cycle sat on "Reading Meta" for ever while Overview said "Meta is not connected". A cycle
+// (and its preview) now stops at once with the connection's own reason, and the API answers it.
+// MUTATION: drop the metaOK check in CycleOpts → it reads Meta (writes appear / no error), red.
+func TestCycleStopsAtOnceWhenMetaIsNotConnected(t *testing.T) {
+	ac, _ := testApp(t)
+	a := ac.app
+	a.mu.Lock()
+	a.conns.Meta.OK, a.conns.Meta.Error = false, "The App secret is not the one of the Meta app this token was made with"
+	a.mu.Unlock()
+	t0 := time.Now()
+	_, err := ac.CycleOpts(context.Background(), model.AutopilotAuto, cycleOpts{Manual: true, Preview: true})
+	if err == nil || !strings.Contains(err.Error(), "not connected") || !strings.Contains(err.Error(), "App secret") || time.Since(t0) > 2*time.Second {
+		t.Fatalf("a cycle with Meta not connected: %v after %s", err, time.Since(t0))
 	}
 }

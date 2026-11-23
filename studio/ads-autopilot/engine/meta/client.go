@@ -115,8 +115,9 @@ type Client struct {
 	Base       string
 	Version    string
 	Token      func() string
-	TokenErr   func() error  // optional: why Token() was "" although a token may be saved (the Keychain refused the read)
-	AppSecret  func() string // optional: adds appsecret_proof
+	TokenErr   func() error                       // optional: why Token() was "" although a token may be saved (the Keychain refused the read)
+	AppSecret  func() string                      // optional: adds appsecret_proof
+	OnWait     func(d time.Duration, tier string) // optional: told before the client waits out Meta's request limit
 	HTTP       *http.Client
 	MaxRetries int
 	Sleep      func(ctx context.Context, d time.Duration) error
@@ -167,7 +168,11 @@ func (c *Client) pace(ctx context.Context, cost int) error {
 			return nil
 		}
 		wait := scoreWindow - now.Sub(c.spent[0].at) + 100*time.Millisecond
+		tier := c.usage.Tier
 		c.mu.Unlock()
+		if c.OnWait != nil {
+			c.OnWait(wait, tier)
+		}
 		if err := c.sleep(ctx, wait); err != nil {
 			return err
 		}

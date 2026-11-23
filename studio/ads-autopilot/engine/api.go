@@ -286,6 +286,9 @@ func (s *server) api(w http.ResponseWriter, r *http.Request, p string) {
 			return
 		}
 		if err != nil {
+			if out == nil {
+				out = map[string]any{"error": err.Error()}
+			}
 			w.WriteHeader(502)
 		}
 		writeJSON(w, out)
