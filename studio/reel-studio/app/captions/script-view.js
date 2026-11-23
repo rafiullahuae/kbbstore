@@ -184,6 +184,28 @@ export function mountScript(el, ctx, apply) {
     const v = para.textContent.replace(/\s+/g, ' ').trim();
     if (v === (para.dataset.orig || '').replace(/\s+/g, ' ').trim()) return;
     apply(editParagraphCmd(cap(), +para.dataset.a, +para.dataset.b, v));
+    resync();
+  }
+
+  // the owner, 23 Nov: "one simple button also to sync the script and the system should auto sync instantly without
+  // touching word by word". An edited paragraph only spreads the old timing over the new words; the voice is listened
+  // to again straight after (sync/index.js syncWords: only the times move, its own undo step). Several edits in a
+  // row are synced once.
+  let syncT = 0, syncing = false;
+  function resync() {
+    clearTimeout(syncT);
+    syncT = setTimeout(async () => {
+      if (syncing) { resync(); return; }
+      syncing = true;
+      try {
+        const S = await import('../sync/index.js');
+        const ed = typeof window !== 'undefined' && window.kbbEditor ? window.kbbEditor.context() : ctx;
+        ctx.toast?.('Syncing your script to the voice…', 'info');
+        const r = await S.syncWords(ed);
+        ctx.toast?.(`Script synced to the voice: ${r.words} words${r.model ? '' : ' (sound only — the ⏱ Sync tab downloads the model for word-perfect timing)'}`, 'ok');
+      } catch (e) { if (!e?.denied) ctx.toast?.('Sync: ' + (e.message || e) + ' — press ⏱ Sync to voice to try again', 'warn'); }
+      finally { syncing = false; }
+    }, 700);
   }
 
   render();

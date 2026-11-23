@@ -149,6 +149,20 @@ const pct = (xs, p) => { const s = xs.slice().sort((a, b) => a - b); return s[Ma
   const back = await ev((gt) => { const got = window.words(); const e = gt.map((g, i) => Math.abs(got[i].t0 - g.t0) * 1000).sort((a, b) => a - b); return { median: e[Math.floor(e.length / 2)], p95: e[Math.floor(e.length * 0.95)], hint: !document.querySelector('[data-x="sync-hint"]').hidden }; }, gtSet.gt);
   ok(!hint0 && hint1 && offBy >= 300 && back.median <= 30 && back.p95 <= 80 && !back.hint, `Captions → ⏱ Sync to voice after an edit: the panel says the captions were edited (${hint1}), words ${offBy.toFixed(0)} ms off → median ${back.median.toFixed(0)} ms, p95 ${back.p95.toFixed(0)} ms after one click; the note goes away (${!back.hint})`);
   await shot('s-00b-sync-button-done');
+  // ... and a Script-tab edit syncs BY ITSELF (the owner: "the system should auto sync instantly without touching word
+  // by word"): timing 0.45 s off, one paragraph edited + Enter → every word back on the voice, no other click
+  await ev(() => window.kbbEditor.apply(CC.shiftAll(0.45)));
+  await page.click('[data-tab="script"]'); await page.waitForSelector('.rs-cap-para[data-a]', { timeout: 10000 });
+  const off2 = await ev((gt) => { const got = window.words(); return gt.map((g, i) => Math.abs(got[i].t0 - g.t0) * 1000).sort((a, b) => a - b)[Math.floor(gt.length / 2)]; }, gtSet.gt);
+  const before2 = await ev(() => window.kbbEditor.history.undoLabel);
+  await ev(() => { const p = document.querySelector('.rs-cap-para[data-a]'); p.focus(); const ws = p.textContent.split(' '); ws[1] = ws[1].toUpperCase() + 'X'; p.textContent = ws.join(' '); p.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+  await page.waitForFunction(() => window.kbbEditor.history.undoLabel !== 'Shift all captions', null, { timeout: 5000 }).catch(() => {});
+  const edLabel = await ev(() => window.kbbEditor.history.undoLabel);
+  await page.waitForFunction(() => window.kbbEditor.history.undoLabel === 'Sync words to the voice', null, { timeout: 240000 }).catch(() => {});
+  const back2 = await ev((gt) => { const got = window.words(); const e = gt.map((g, i) => Math.abs(got[i].t0 - g.t0) * 1000).sort((a, b) => a - b); return { median: e[Math.floor(e.length / 2)], p95: e[Math.floor(e.length * 0.95)], label: window.kbbEditor.history.undoLabel, n: got.length }; }, gtSet.gt);
+  ok(before2 === 'Shift all captions' && off2 >= 300 && back2.label === 'Sync words to the voice' && back2.median <= 30 && back2.p95 <= 80, `Script tab: an edited paragraph syncs to the voice by itself on Enter — ${off2.toFixed(0)} ms off → median ${back2.median.toFixed(0)} ms, p95 ${back2.p95.toFixed(0)} ms ("${edLabel}" then "${back2.label}", ${back2.n} words)`);
+  await shot('s-00c-script-edit-synced');
+  await page.click('[data-tab="transcript"]').catch(() => {});
   await ev(() => window.kbbEditor.showSide('mod:sync')); await seekDraw(4.2); await page.waitForTimeout(800);
   await shot('s-01-sync-tab');
   await ev(() => document.querySelector('.sy-wave')?.scrollIntoView({ block: 'center' })); await page.waitForTimeout(400);

@@ -2,6 +2,9 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.5
+- Edit the script, and it syncs by itself: in Captions → Script, change or paste a clip's words and press Enter — the studio listens again and puts every word on the voice straight away (no word-by-word timing). Undo works step by step.
+
 ## 1.4.4
 - ⏱ Sync to voice, right in the Captions panel (beside Translate): after you edit the captions, one click listens again and puts every word back exactly on the voice. Only the timing moves — your words, styles and lines stay — and Undo brings the old timing back.
 - After an edit the panel says "Captions edited — press ⏱ Sync to voice", and the note goes away once they are synced.
