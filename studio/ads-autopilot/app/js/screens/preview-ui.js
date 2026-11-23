@@ -51,7 +51,7 @@ function paint(d) {
     ${r.error && !r.preview ? `<p class="alert warn">${esc(r.error)}</p>` : ''}
     ${errs.map((e) => `<p class="alert warn small">${esc(e)}</p>`).join('')}
     <p class="small ink2">${esc(tt(`${ads.length} ad(s) would go live${ads.length !== ok ? ` (${ads.length - ok} would be refused or wait: the reason is on each)` : ''}. Nothing has been sent to Meta yet.`, `${ads.length} إعلان سيُنشر. لم يُرسل شيء إلى Meta بعد.`))}</p>
-    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">${ads.map((a) => card(a)).join('') || `<p class="muted">${esc(tt('No new ad this time.', 'لا إعلان جديد هذه المرة.'))}</p>`}</div>
+    ${batch(ads)}
     ${(pv.others || []).length ? `<details style="margin-top:12px" open><summary class="small"><b>${esc(tt(`Other changes (${pv.others.length})`, `تغييرات أخرى (${pv.others.length})`))}</b></summary><ul class="small" style="margin:6px 0 0;padding-inline-start:18px">${pv.others.map((o) => `<li>${esc(o.title)} — <span class="${o.check === 'ok' ? '' : 'muted'}">${esc(o.check === 'ok' ? tt('ready', 'جاهز') : (o.reason || o.check))}</span></li>`).join('')}</ul></details>` : ''}
     ${P.skipCr.size || P.skipPr.size ? `<p class="small muted">${esc(tt(`Left out: ${P.skipCr.size} ad(s), ${P.skipPr.size} product(s) for this run.`, `مستبعد: ${P.skipCr.size} إعلان، ${P.skipPr.size} منتج لهذا التشغيل.`))} <button type="button" class="link" data-pv-reset>${esc(tt('Put them back', 'إرجاعها'))}</button></p>` : ''}
     <div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap">
@@ -74,6 +74,25 @@ function paint(d) {
       load(d);
     } catch (e) { toast(e.message); }
   }; });
+}
+
+// The owner, 23 Nov: "it should show proper list of campaigns that will run in current batch". The ads, grouped by the
+// campaign and ad set they go into: one line per campaign (name, daily budget, how many ads), then its ads.
+function batch(ads) {
+  if (!ads.length) return `<p class="muted">${esc(tt('No new ad this time.', 'لا إعلان جديد هذه المرة.'))}</p>`;
+  const groups = new Map();
+  for (const a of ads) {
+    const k = (a.campaign || '') + '\u0000' + (a.adset || '');
+    if (!groups.has(k)) groups.set(k, { campaign: a.campaign, adset: a.adset, budget: a.budget_aed, ads: [] });
+    groups.get(k).ads.push(a);
+  }
+  const camps = new Set(ads.map((a) => a.campaign || a.adset));
+  const list = [...groups.values()];
+  return `<div class="card" style="padding:10px;margin:8px 0" data-pv-batch><b class="small">${esc(tt(`This batch: ${camps.size} campaign(s), ${list.length} ad set(s), ${ads.length} ad(s)`, `هذه الدفعة: ${camps.size} حملة، ${list.length} مجموعة، ${ads.length} إعلان`))}</b>
+    <ol class="small" style="margin:6px 0 0;padding-inline-start:20px">${list.map((g) => `<li><b>${esc(g.campaign || tt('(existing campaign)', '(حملة قائمة)'))}</b> → ${esc(g.adset || '')}${g.budget ? ` · ${esc(aed(g.budget))}/${esc(tt('day', 'يوم'))}` : ''} · ${esc(tt(`${g.ads.length} ad(s)`, `${g.ads.length} إعلان`))}</li>`).join('')}</ol></div>
+    ${list.map((g) => `<section data-pv-group style="margin-top:12px"><h3 style="margin:0 0 6px;font-size:15px">${esc(tt('Campaign', 'الحملة'))}: ${esc(g.campaign || tt('(existing campaign)', '(حملة قائمة)'))}${g.budget ? ` <span class="chip">${esc(aed(g.budget))}/${esc(tt('day', 'يوم'))}</span>` : ''}</h3>
+      <p class="small muted" style="margin:0 0 8px">${esc(tt('Ad set', 'المجموعة'))}: ${esc(g.adset || '')}</p>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">${g.ads.map((a) => card(a)).join('')}</div></section>`).join('')}`;
 }
 
 function card(a) {

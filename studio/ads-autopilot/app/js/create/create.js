@@ -13,9 +13,10 @@
 // engine; reopening the box shows the last one.
 import { tt, getLang } from '../i18n.js';
 import { esc, toast, txt, confirmBox } from '../ui.js';
+import { openRunDialog } from '../screens/live-ui.js';
 import { api, apiStream, getAccount } from '../api.js';
 import { renderVideo } from '../creative/motion.js';
-import { thumb, specHash, withPhoto, saveDesign, saveVideo, redrawSave, redrawVideo } from './draw.js';
+import { thumb, specHash, creativeID, withPhoto, saveDesign, saveVideo, redrawSave, redrawVideo } from './draw.js';
 
 const OCCASIONS = [['', 'Any time', 'أي وقت'], ['ramadan', 'Ramadan', 'رمضان'], ['eid', 'Eid', 'العيد'], ['white_friday', 'White Friday', 'الجمعة البيضاء'], ['national_day', 'UAE National Day', 'اليوم الوطني'], ['mothers_day', "Mother's Day", 'عيد الأم'], ['summer', 'Summer', 'الصيف']];
 const FORMATS = [['', 'All sizes', 'كل المقاسات'], ['post', 'Post 1:1 · 4:5', 'منشور'], ['reel', 'Reel / Story 9:16', 'ريلز / ستوري']];
@@ -409,11 +410,12 @@ async function runIt(launch) {
     const r = await api('/api/launch', { method: 'POST', body: { creative_ids: ids.slice(0, 12), launch, key: s.id + (launch ? '-launch' : '-run') } });
     await api(`/api/brain/x/create/${s.id}`, { method: 'PUT', body: { ran: ids, proposals: r.proposals || [] } });
     window.__kaaLaunch = Object.assign({ ids }, r);
-    if (!launch && r.waiting) toast(tt(`Saved and queued, but they wait: ${r.note}.`, `حُفظت ووُضعت في الطابور لكنها تنتظر: لا توجد خانة إعلان فارغة. ارفعي الإعدادات ← الحدود ← الحد الأقصى للإعلانات النشطة إلى ${r.raise_to}.`));
-    else if (!launch) toast(r.starting ? tt(`${ids.length} ads are going live now in your prospecting ad set, inside your limits. Plan → Upcoming jobs → "Run your ads made with Claude" shows each step; Campaigns shows them once Meta has them.`, `${ids.length} إعلانات تُنشر الآن في مجموعة الاستكشاف ضمن حدودكِ. الخطة ← المهام القادمة ← «تشغيل إعلاناتكِ» تُظهر كل خطوة.`) : tt(`Saved and approved — ${r.note || ''}.`, `حُفظت ووُوفق عليها — ${r.note || ''}.`));
-    else toast(tt(`Launched: ${(r.counts || {}).done || 0} steps done, ${(r.counts || {}).refused || 0} refused by the checks.`, `أُطلق: ${(r.counts || {}).done || 0} خطوات، ورُفضت ${(r.counts || {}).refused || 0}.`));
+    // Run it: a window that stays, with what was sent, every step live and the outcome (screens/live-ui.js)
+    const nameOf = (id) => { const d = ds.find((x) => id.startsWith(creativeID(x, 'x').slice(0, -2) + '-')); return d ? `${d.headline || d.idea || id} · ${(d.lang || '').toUpperCase()} · ${/-mp4$/.test(id) ? tt('video', 'فيديو') : tt('picture 4:5', 'صورة 4:5')}` : id; };
+    if (!launch) { openRunDialog(r, ids.slice(0, 12).map((id) => ({ name: nameOf(id) }))); return; }
+    toast(tt(`Launched: ${(r.counts || {}).done || 0} steps done, ${(r.counts || {}).refused || 0} refused by the checks.`, `أُطلق: ${(r.counts || {}).done || 0} خطوات، ورُفضت ${(r.counts || {}).refused || 0}.`));
     void ds;
-  } catch (e) { toast(e.message); }
+  } catch (e) { if (launch) toast(e.message); else openRunDialog({ note: tt('Not sent: ', 'لم يُرسل: ') + e.message }, ids.map((id) => ({ name: id }))); }
 }
 
 async function download() {

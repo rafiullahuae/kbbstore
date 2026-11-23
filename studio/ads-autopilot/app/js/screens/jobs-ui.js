@@ -22,6 +22,28 @@ export async function loadJobs(force) {
 
 const when = (t) => { const d = new Date(t); return d.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
 
+// The owner, 23 Nov: "the upcoming page is not clear, i need the proper list of upcoming campaigns along with clear date
+// time". Jobs in time order, under a heading per day (Today / Tomorrow / the date), each with its clock time and how
+// long until it runs; one due already says when it runs (the next cycle), one running now says so.
+const dayKey = (t) => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+function dayLabel(t) {
+  const d = new Date(t), now = new Date(), tm = new Date(now); tm.setDate(now.getDate() + 1);
+  const date = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  if (dayKey(d) === dayKey(now)) return tt(`Today · ${date}`, `اليوم · ${date}`);
+  if (dayKey(d) === dayKey(tm)) return tt(`Tomorrow · ${date}`, `غداً · ${date}`);
+  return date;
+}
+const clock = (t) => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+function until(t) {
+  const m = Math.round((new Date(t).getTime() - Date.now()) / 60e3);
+  if (m <= 0) return tt('due now: runs at the next cycle (within the hour)', 'مستحقة: تعمل في الدورة القادمة (خلال ساعة)');
+  if (m < 60) return tt(`in ${m} min`, `بعد ${m} دقيقة`);
+  const h = Math.floor(m / 60);
+  if (h < 48) return tt(`in ${h} h${m % 60 ? ` ${m % 60} min` : ''}`, `بعد ${h} ساعة`);
+  return tt(`in ${Math.round(h / 24)} days`, `بعد ${Math.round(h / 24)} أيام`);
+}
+const running = (x) => { const l = window.__kaaLive; return !!(l && l.running && l.kind && (l.kind === x.title || l.kind === x.id)); };
+
 const nameOf = (c, id) => (c.j.titles && c.j.titles[id]) || ((c.ranked || []).find((r) => r.id === id) || {}).title || id;
 
 function editor(job, c) {
@@ -42,12 +64,12 @@ export function jobsCard(S) {
   const c = cache.get(getAccount());
   if (!c) return '<div class="card"><div class="sk" style="height:180px"></div></div>';
   const { j } = c;
-  const open = (j.jobs || []).filter((x) => ['planned', 'approved', 'waiting'].includes(x.status));
+  const open = (j.jobs || []).filter((x) => ['planned', 'approved', 'waiting'].includes(x.status)).sort((a, b) => new Date(a.when) - new Date(b.when));
   const past = (j.jobs || []).filter((x) => !['planned', 'approved', 'waiting'].includes(x.status)).slice(-6).reverse();
   const practice = j.mode !== 'auto';
   const row = (x) => `<div data-job="${esc(x.id)}"><span class="chip ${x.status === 'approved' ? 'acc' : x.status === 'waiting' || x.status === 'failed' ? 'warn' : ''}">${esc(tt(...(STATUS[x.status] || [x.status, x.status])))}</span>
     <span style="flex:1"><b>${esc(tt(x.title, x.title_ar || x.title))}</b> <span class="chip">${esc(tt(...(KIND[x.kind] || [x.kind, x.kind])))}</span><br>
-    <span class="small">${esc(when(x.when))}${x.budget_aed ? ` · ${aed(x.budget_aed)}/${esc(tt('day', 'يوم'))}` : ''}${x.lang ? ` · ${esc(x.lang.toUpperCase())}` : ''}${x.format ? ` · ${esc(x.format)}` : ''}${(x.product_ids || []).length ? ` · ${esc(tt('products', 'منتجات'))}: ${esc(x.product_ids.map((id) => nameOf(c, id)).join(' · '))}` : ''}</span><br>
+    <span class="small"><b>${esc(clock(x.when))}</b> · ${esc(running(x) ? tt('● running now (Overview → Running now)', '● يعمل الآن') : until(x.when))}${x.budget_aed ? ` · ${aed(x.budget_aed)}/${esc(tt('day', 'يوم'))}` : ''}${x.lang ? ` · ${esc(x.lang.toUpperCase())}` : ''}${x.format ? ` · ${esc(x.format)}` : ''}${(x.product_ids || []).length ? ` · ${esc(tt('products', 'منتجات'))}: ${esc(x.product_ids.map((id) => nameOf(c, id)).join(' · '))}` : ''}</span><br>
     <span class="small ink2">${esc(x.why || '')}</span>${x.audience ? `<br><span class="small muted">${esc(tt('Audience', 'الجمهور'))}: ${esc(x.audience)}</span>` : ''}
     ${x.waiting ? `<br><span class="small" style="color:var(--warn)">${esc(tt('Waiting', 'ينتظر'))}: ${esc(x.products_gone ? tt(x.waiting, 'كل منتجات هذه المهمة مستبعدة — اختاري المنتجات') : x.waiting)}</span>` : ''}${x.products_gone ? ` <button type="button" class="small" data-jpick="${esc(x.id)}">${esc(tt('Choose products', 'اختاري المنتجات'))}</button>` : ''}${x.note ? `<br><span class="small">✎ ${esc(x.note)}</span>` : ''}${x.result ? `<br><span class="small muted">${esc(x.result)}</span>` : ''}
     ${editing === x.id ? editor(x, c) : ''}${brief && brief.job === x.id ? briefBox(brief) : ''}</span>
@@ -59,7 +81,9 @@ export function jobsCard(S) {
       <button type="button" class="ghost small" data-move="24" data-id="${esc(x.id)}" title="${esc(tt('a day later', 'بعد يوم'))}">${esc(tt('Later', 'لاحقاً'))} ▶</button>
       <button type="button" class="ghost small" data-brief="${esc(x.id)}">${esc(tt('Show the brief', 'عرض الموجز'))}</button></span></div>`;
   return `<div class="card" data-jobs><header><h2>${esc(tt('Upcoming jobs — yours to change', 'المهام القادمة — يمكنك تغييرها'))}</h2><span class="sub">${esc(practice ? tt('Practice: due jobs wait for your Approve', 'التدريب: المهام المستحقة تنتظر موافقتك') : tt('Auto: each runs at its time unless you skip it', 'تلقائي: تُنفّذ كل مهمة في وقتها ما لم تتجاوزيها'))}</span></header>
-    ${open.length ? `<div class="list">${open.map(row).join('')}</div>` : `<p class="muted">${esc(tt('No upcoming jobs. Run a cycle to build the plan.', 'لا مهام قادمة. شغّلي دورة لبناء الخطة.'))}</p>`}
+    ${open.length ? `<p class="small" data-jnext style="margin:0 0 8px"><b>${esc(tt('Next', 'التالي'))}:</b> ${esc(tt(open[0].title, open[0].title_ar || open[0].title))} — ${esc(dayLabel(open[0].when))}, ${esc(clock(open[0].when))} (${esc(until(open[0].when))}) · ${esc(tt(`${open.length} job(s) planned`, `${open.length} مهمة مخططة`))}</p>
+      ${[...new Set(open.map((x) => dayKey(x.when)))].map((k) => { const xs = open.filter((x) => dayKey(x.when) === k);
+        return `<h3 data-jday style="margin:14px 0 4px;font-size:14px">${esc(dayLabel(xs[0].when))} <span class="small muted">· ${esc(tt(`${xs.length} job(s)`, `${xs.length} مهمة`))}</span></h3><div class="list">${xs.map(row).join('')}</div>`; }).join('')}` : `<p class="muted">${esc(tt('No upcoming jobs. Run a cycle to build the plan.', 'لا مهام قادمة. شغّلي دورة لبناء الخطة.'))}</p>`}
     <div class="row" style="margin-top:12px"><textarea data-replan rows="2" placeholder="${esc(tt('Tell Claude what to change, e.g. "more sunscreen, less toner, test a carousel"', 'أخبري Claude بما يجب تغييره'))}" dir="auto" style="flex:1">${esc(j.replan_note || '')}</textarea><button type="button" data-replango ${busy ? 'disabled' : ''}>${esc(tt('Ask Claude to replan', 'اطلبي من Claude إعادة التخطيط'))}</button></div>
     ${past.length ? `<details style="margin-top:10px"><summary class="small">${esc(tt('Recent jobs', 'المهام الأخيرة'))}</summary><div class="list">${past.map((x) => `<div><span class="chip">${esc(x.status)}</span><span class="small"><b>${esc(x.title)}</b> · ${esc(when(x.updated_at || x.when))}<br>${esc(x.result || (x.log || []).slice(-1).map((l) => l.text).join(''))}</span></div>`).join('')}</div></details>` : ''}</div>`;
 }

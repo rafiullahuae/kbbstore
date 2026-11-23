@@ -91,25 +91,31 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.click('#cc-run');
   await page.waitForFunction(() => window.__kaaLaunch, null, { timeout: 180000 });
   const L = await H(() => window.__kaaLaunch);
-  const toastTxt = await page.waitForFunction(() => [...document.querySelectorAll('.toast')].map((x) => x.innerText).find((t) => /going live now|queued/.test(t)), null, { timeout: 15000 }).then((h) => h.jsonValue()).catch(() => '');
+  // the owner, 23 Nov: "when i click Run on any routine, i'm not seeing any message". Run it opens a window that stays,
+  // lists what was sent, shows every step live, and ends with the outcome in words
+  const toastTxt = await page.waitForFunction(() => { const d = document.querySelector('#rundlg[open]'); return d && /Done: \d+ step/.test(d.innerText) && /New ad/.test(d.innerText) ? d.innerText : null; }, null, { timeout: 180000 }).then((h) => h.jsonValue()).catch(async () => 'NO RUN WINDOW: ' + await H(() => (document.querySelector('#rundlg') || {}).innerText || ''));
   let job = null;
   for (let i = 0; i < 60; i++) { await sleep(1000); job = ((await api('/api/jobs')).j.jobs || []).find((j) => j.id === L.job); if (job && !['planned', 'approved', 'waiting'].includes(job.status)) break; }
   const lib = (await api('/api/creatives')).j;
   const metas = new Set(lib.filter((c) => L.ids.includes(c.id)).map((c) => c.meta_creative_id).filter(Boolean));
   const ads1 = await adsOf();
   const mine = ads1.filter((a) => metas.has(a.creative_id));
-  check('Run it → a job starts at once and the ads go live on Meta', L.starting === true && job && job.status === 'done' && mine.length === L.ids.length && mine.every((a) => a.status === 'ACTIVE' && /Made with Claude/.test(a.name)),
-    `job ${L.job} ${job && job.status} (${job && job.result}) · ${mine.length}/${L.ids.length} ads ACTIVE: ${mine.map((a) => a.name).slice(0, 2).join(' | ')} · toast “${String(toastTxt).slice(0, 90)}”`);
-  if (SHOT) { await page.screenshot({ path: path.join(SHOTS, 'run-toast-1280.png') }); }
+  check('Run it → a job starts at once and the ads go live on Meta; its window shows every step and "Done"', L.starting === true && /Done: \d+ step/.test(toastTxt) && job && job.status === 'done' && mine.length === L.ids.length && mine.every((a) => a.status === 'ACTIVE' && /Made with Claude/.test(a.name)),
+    `job ${L.job} ${job && job.status} (${job && job.result}) · ${mine.length}/${L.ids.length} ads ACTIVE: ${mine.map((a) => a.name).slice(0, 2).join(' | ')} · window “${String(toastTxt).replace(/\n/g, ' | ').slice(0, 160)}”`);
+  if (SHOT) for (const w of [1280, 390]) { await page.setViewportSize({ width: w, height: 900 }); await sleep(300); await page.screenshot({ path: path.join(SHOTS, `run-window-${w}.png`) }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
 
   // 3 ─ Plan shows it
-  await H(() => { const d = document.querySelector('dialog.cc[open]'); if (d) d.close(); });
+  await H(() => document.querySelectorAll('dialog[open]').forEach((d) => d.close()));
   await page.goto(base + '/app/#/plan');
-  await page.waitForFunction(() => /Run your \d+ ad/.test(document.body.textContent), null, { timeout: 30000 }).catch(() => {}); // the job list loads after the page
+  await page.waitForFunction(() => /Run your \d+ ad/.test((document.querySelector('[data-jobs]') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {}); // the job list loads after the page
   await H(() => document.querySelectorAll('details').forEach((d) => { d.open = true; }));
   const planTxt = await H(() => { const e = [...document.querySelectorAll('.list > div, [data-job]')].find((x) => /Run your \d+ ad/.test(x.textContent)); return e ? e.textContent : ''; });
   if (!planTxt) console.log('PLAN', await H(() => [...document.querySelectorAll('details')].map((d) => d.textContent.slice(0, 600)).join(' || ')));
   check('Plan shows the run job with its result', /Run your \d+ ad/.test(planTxt) && /done|تم/.test(planTxt), planTxt.replace(/\n/g, ' ').slice(0, 160));
+  // upcoming jobs by day, each with its clock time and how long until it runs
+  const up = await H(() => ({ days: [...document.querySelectorAll('[data-jday]')].map((x) => x.textContent.trim()), next: (document.querySelector('[data-jnext]') || {}).textContent || '' }));
+  check('Plan → Upcoming jobs: grouped by day, with time and "in …"', up.days.length > 0 && /Next:/.test(up.next) && /\d{1,2}:\d{2}/.test(up.next), `${up.days.join(' / ')} · ${up.next.slice(0, 140)}`);
   if (SHOT) for (const w of [1280, 390]) { await page.setViewportSize({ width: w, height: 900 }); await sleep(300); const e = await page.$('details'); if (e) await e.scrollIntoViewIfNeeded(); await page.screenshot({ path: path.join(SHOTS, `run-plan-${w}.png`) }); }
   await page.setViewportSize({ width: 1280, height: 900 });
   const sw = await H(() => document.documentElement.scrollWidth);

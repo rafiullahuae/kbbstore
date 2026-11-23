@@ -39,3 +39,42 @@ export function paintPill(l) {
   p.hidden = !(l && l.running);
   if (l && l.running) p.textContent = `● ${tt('Running', 'يعمل')}: ${l.kind}${l.now ? ' — ' + l.now : ''}`;
 }
+
+// The Run it window (the owner, 23 Nov: "when i click Run on any routine, i'm not seeing any message or something").
+// Pressing Run it opens this and it STAYS: what was sent, then every step live (engine/live.go) until the job ends,
+// then the outcome in words, with where to look next. A Run it that has to wait says why, here, not in a toast.
+// r = the /api/launch answer; ads = [{ name }] what was sent.
+export function openRunDialog(r, ads) {
+  let d = document.getElementById('rundlg');
+  if (!d) { d = document.createElement('dialog'); d.id = 'rundlg'; d.className = 'cc'; document.body.appendChild(d); }
+  const opened = Date.now() - 5000;
+  const mine = (l) => l && l.kind && new Date(l.started).getTime() >= opened && !/^Cycle|Preview|Your Run a cycle/.test(l.kind);
+  let last = mine(window.__kaaLive) ? window.__kaaLive : null;
+  const head = () => {
+    if (r.waiting) return `<p class="alert warn">${esc(tt('Not sent yet: ', 'لم يُرسل بعد: '))}${esc(r.note || '')}</p><p class="small">${esc(tt('They are saved on Plan → Upcoming jobs and go live as soon as there is room.', 'محفوظة في الخطة ← المهام القادمة وتُنشر حين يتوفر مكان.'))}</p>`;
+    if (!r.starting) return `<p class="alert warn">${esc(r.note || tt('Saved.', 'حُفظ.'))}</p>`;
+    if (!last) return `<p class="small ink2">${esc(tt('Starting… If a cycle is running, this waits for it, then runs (up to a few minutes).', 'يبدأ… إن كانت دورة تعمل ينتظرها ثم يعمل.'))}</p>`;
+    const steps = last.steps || [], ok = steps.filter((s) => s.status === 'ok').length, bad = steps.filter((s) => s.status === 'fail' || s.status === 'warn');
+    if (last.running) return `<p class="small"><b>● ${esc(tt('Running now', 'يعمل الآن'))}:</b> ${esc(last.now || '')}</p>`;
+    return bad.length
+      ? `<p class="alert warn"><b>${esc(tt(`Finished: ${ok} step(s) done, ${bad.length} not done.`, `انتهى: ${ok} تم، ${bad.length} لم يتم.`))}</b> ${esc(tt('The reason is on each ✕ below.', 'السبب مذكور عند كل ✕ أدناه.'))}</p>`
+      : `<p class="alert" style="border-color:var(--accent)"><b>✓ ${esc(tt(`Done: ${ok} step(s) on Meta.`, `تم: ${ok} خطوة على Meta.`))}</b> ${esc(tt('Meta reviews new ads (usually minutes) before they show as Active in Ads Manager.', 'تراجع Meta الإعلانات الجديدة قبل أن تظهر نشطة.'))}</p>`;
+  };
+  const paint = () => {
+    d.innerHTML = `<div class="dl" style="max-height:88vh;overflow:auto"><h2 style="margin:0 0 6px">${esc(tt(`Run it: ${ads.length} ad(s)`, `تشغيل: ${ads.length} إعلان`))}</h2>${head()}
+      <details ${last ? '' : 'open'}><summary class="small"><b>${esc(tt('What was sent', 'ما أُرسل'))}</b></summary><ol class="small" style="margin:6px 0;padding-inline-start:20px">${ads.map((a) => `<li dir="auto">${esc(a.name)}</li>`).join('')}</ol></details>
+      ${last ? `<p class="small" style="margin:10px 0 0"><b>${esc(last.kind)}</b> — ${esc(tt('every step, live', 'كل خطوة مباشرة'))}</p>${liveSteps(last, 80)}` : ''}
+      <div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button type="button" class="ghost" data-rd-go="#/plan">${esc(tt('Plan → Upcoming jobs', 'الخطة ← المهام القادمة'))}</button>
+        <button type="button" class="ghost" data-rd-go="#/campaigns">${esc(tt('Campaigns', 'الحملات'))}</button>
+        <button type="button" data-rd-close>${esc(last && !last.running ? tt('Close', 'إغلاق') : tt('Close (it keeps running)', 'إغلاق (يستمر العمل)'))}</button></div></div>`;
+    d.querySelectorAll('[data-rd-close]').forEach((b) => { b.onclick = () => d.close(); });
+    d.querySelectorAll('[data-rd-go]').forEach((b) => { b.onclick = () => { d.close(); location.hash = b.dataset.rdGo; }; });
+  };
+  const on = (e) => { if (mine(e.detail)) { last = e.detail; if (d.open) paint(); } };
+  window.addEventListener('kaa-live', on);
+  d.onclose = () => window.removeEventListener('kaa-live', on);
+  paint();
+  if (!d.open) d.showModal();
+  return d;
+}

@@ -2,6 +2,11 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.17
+- Run it now opens a window that stays open: the ads sent, every step live (picture sent, ad made) with ✓ / ✕ and the reason, then "Done" or what was not done. Closing it does not stop anything.
+- Run a cycle → "What will run now" starts with the batch: every campaign → ad set, its daily budget and how many ads; the ads follow under their campaign.
+- Plan → Upcoming jobs: in time order under Today / Tomorrow / the date, each with its clock time and "in 3 h" (or "due now: runs at the next cycle"), and the next one at the top.
+
 ## 0.6.16
 - The app never assigns your Page or changes its roles (it stays in its own business portfolio). When the app's Meta login cannot advertise for the Page, nothing is sent and Overview tells you to connect with your own Facebook login (Settings → Connections → Meta → "My user token"), which already advertises for it.
 
