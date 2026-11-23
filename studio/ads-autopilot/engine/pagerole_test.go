@@ -55,3 +55,35 @@ func TestCycleStopsAtOnceWhenMetaIsNotConnected(t *testing.T) {
 		t.Fatalf("a cycle with Meta not connected: %v after %s", err, time.Since(t0))
 	}
 }
+
+// The owner, 23 Nov: Plan → "Already launched (which actually run in meta)". Every campaign / ad set / ad Meta made
+// is logged with its Meta id; a preview logs nothing.
+// MUTATION: drop noteLaunched in liveFromLog → empty, red.
+func TestLaunchedLogsWhatMetaMade(t *testing.T) {
+	ac, _ := testApp(t)
+	ac.app.brain = quietBrain{}
+	if _, err := ac.CycleOpts(context.Background(), model.AutopilotAuto, cycleOpts{Manual: true, Preview: true}); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(ac.launched()); n != 0 {
+		t.Fatalf("a preview logged %d launched items", n)
+	}
+	if _, err := ac.Cycle(context.Background(), model.AutopilotAuto); err != nil {
+		t.Fatal(err)
+	}
+	ads, camps := 0, 0
+	for _, l := range ac.launched() {
+		if l.MetaID == "" || l.Title == "" {
+			t.Fatalf("a launched item without id / title: %+v", l)
+		}
+		switch l.Kind {
+		case model.KindCreateAd:
+			ads++
+		case model.KindCreateCampaign:
+			camps++
+		}
+	}
+	if ads == 0 || camps == 0 {
+		t.Fatalf("launched: %d ads, %d campaigns", ads, camps)
+	}
+}

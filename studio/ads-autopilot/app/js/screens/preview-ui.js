@@ -7,7 +7,7 @@
 import { api, hydrate, img } from '../api.js';
 import { tt } from '../i18n.js';
 import { esc, toast, aed } from '../ui.js';
-import { liveSteps } from './live-ui.js';
+import { liveSteps, showResult } from './live-ui.js';
 
 const P = { skipCr: new Set(), skipPr: new Set(), data: null, busy: false };
 export const previewState = P; // for checks
@@ -115,19 +115,26 @@ function card(a) {
       <button type="button" class="ghost small" data-pv-never="${esc(pid)}" data-title="${esc(title)}" title="${esc(tt('Never promote this product again', 'لا تروّجي لهذا المنتج مجدداً'))}">⊘ ${esc(tt('Never promote', 'لا تروّجي'))}</button>` : ''}</div></div>`;
 }
 
-async function run(d) {
-  const btn = d.querySelector('[data-pv-run]');
-  btn.disabled = true; btn.textContent = tt('Running… (sending to Meta)', 'يُنشر… (إرسال إلى Meta)');
-  try {
-    const r = await api('/api/cycle', { method: 'POST', body: { mode: 'auto', skip_creatives: [...P.skipCr], skip_products: [...P.skipPr] } });
-    d.close();
-    const c = (r && r.counts) || {};
-    const bad = (c.failed || 0) + (c.refused || 0);
-    toast(tt(`Done: ${(c.done || 0) + (c.duplicate || 0)} change(s) made on Meta${bad ? `, ${bad} not done (Overview → Last cycle says why)` : ''}. Meta reviews new ads before they show as Active.`, `تم: ${(c.done || 0) + (c.duplicate || 0)} تغيير على Meta${bad ? `، ${bad} لم يتم` : ''}.`));
-    P.skipCr.clear(); P.skipPr.clear();
+// Run now: the window closes at once and the run goes on in the background — the top bar shows it live on every page,
+// and when it ends a result bar stays until it is closed (live-ui.js). The owner, 23 Nov: the window used to wait for
+// the whole run and, when the answer came back with an error, offered "Run now" again although the ads were made.
+function run(d) {
+  const body = { mode: 'auto', skip_creatives: [...P.skipCr], skip_products: [...P.skipPr] };
+  const n = (((P.data || {}).preview || {}).ads || []).filter((a) => !P.skipCr.has(a.creative_id)).length;
+  P.skipCr.clear(); P.skipPr.clear();
+  d.close();
+  toast(tt(`Sending ${n} ad(s) to Meta — follow it in the bar at the top.`, `إرسال ${n} إعلان إلى Meta — تابعيه في الشريط أعلاه.`));
+  P.running = api('/api/cycle', { method: 'POST', body }).then((r) => {
+    const c = (r && r.counts) || {}, done = (c.done || 0) + (c.duplicate || 0), bad = (c.failed || 0) + (c.refused || 0);
+    showResult(bad
+      ? tt(`Finished: ${done} change(s) made on Meta, ${bad} not done (the reason is on each, under Every step).`, `انتهى: ${done} تغيير على Meta، ${bad} لم يتم.`)
+      : tt(`Done: ${done} change(s) made on Meta. Meta reviews new ads (usually minutes) before they show as Active in Ads Manager.`, `تم: ${done} تغيير على Meta. تراجع Meta الإعلانات الجديدة أولاً.`), !bad);
     return r;
-  } catch (e) { btn.disabled = false; btn.textContent = tt('Run now', 'انشري الآن'); toast(tt('Not run: ', 'لم يُنشر: ') + e.message); }
-  return null;
+  }).catch((e) => {
+    showResult(tt(`The run ended with a problem: ${e.message}. What was made is listed under Launched on Meta; every step is under Every step.`, `انتهى التشغيل بمشكلة: ${e.message}.`), false);
+    return null;
+  });
+  return P.running;
 }
 
 // openPreview: the window, prepared fresh. Resolves when it closes.

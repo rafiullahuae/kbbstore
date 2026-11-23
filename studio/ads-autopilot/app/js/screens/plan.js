@@ -8,11 +8,52 @@ export const load = async (S) => { const a = await loadJobs(false); const b = aw
 const FORMAT = { single_image: 'Single image', single_video: 'Single video', reels_stories: 'Reels & Stories', carousel: 'Carousel', collection: 'Collection', catalog: 'Advantage+ catalog', flexible: 'Flexible format', click_to_whatsapp: 'Click to WhatsApp', click_to_messenger: 'Click to Messenger', whatsapp_status: 'WhatsApp Status', partnership: 'Partnership' };
 const AUD = { women_gcc_ar: 'Arabic-speaking women 18-45, GCC', women_uae_en: 'English-speaking women 18-45, UAE', broad: 'Broad (Advantage+)', retarget_viewers: 'Product viewers 14d', retarget_cart: 'Cart abandoners 7d', retarget_engagers: 'Video viewers & engagers', lookalike_buyers: 'Lookalike of buyers', existing_customers: 'Existing customers' };
 
+// Plan, in three tabs (the owner, 23 Nov: "The plan page is super confusing. There should be two tabs, Upcoming /
+// Already Launched (which actually run in meta), and proper date wise"):
+//   Upcoming          every job still to run, by day, with its time (jobs-ui.js), and today's plan
+//   Launched on Meta  everything the app really made on Meta (engine live.go Launched), newest day first, each with its
+//                     time, what it is, the run it came from, its Meta id and its status on Meta now
+//   Weekly plan       the strategy pages that were here before
+let tab = 'upcoming';
 export function render(S, el) {
-  inner(S, el);
+  try { const t0 = sessionStorage.getItem('kaa.plantab'); if (t0) { tab = t0; sessionStorage.removeItem('kaa.plantab'); } } catch {}
+  const launched = (((S.state || {}).raw || {}).launched || []);
+  const tabs = `<div class="tabs" data-plantabs style="margin-bottom:12px">${[['upcoming', tt('Upcoming', 'القادم')], ['launched', tt(`Launched on Meta (${launched.length})`, `أُطلق على Meta (${launched.length})`)], ['weekly', tt('Weekly plan', 'الخطة الأسبوعية')]].map(([k, l]) => `<button type="button" data-ptab="${k}" class="${tab === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>`;
+  if (tab === 'weekly') inner(S, el);
+  else el.innerHTML = '<div class="page"></div>';
   const pg = el.querySelector('.page');
-  if (pg) { pg.insertAdjacentHTML('afterbegin', jobsCard(S)); wireJobs(S, el, () => render(S, el)); }
-  if (pg) { pg.insertAdjacentHTML('afterbegin', dailyPlanCard(S)); wireToday(S, el, () => render(S, el)); } // the Daily Plan first
+  if (!pg) return;
+  if (tab === 'upcoming') {
+    pg.insertAdjacentHTML('afterbegin', jobsCard(S)); wireJobs(S, el, () => render(S, el));
+    pg.insertAdjacentHTML('afterbegin', dailyPlanCard(S)); wireToday(S, el, () => render(S, el));
+  } else if (tab === 'launched') pg.insertAdjacentHTML('afterbegin', launchedCard(S, launched));
+  pg.insertAdjacentHTML('afterbegin', `<div class="page-h"><div><h1>${esc(tt('Plan', 'الخطة'))}</h1></div></div>${tabs}`);
+  pg.querySelectorAll('[data-ptab]').forEach((b) => { b.onclick = () => { tab = b.dataset.ptab; render(S, el); }; });
+}
+
+const KINDL = { create_campaign: ['Campaign', 'حملة'], create_adset: ['Ad set', 'مجموعة'], create_ad: ['Ad', 'إعلان'] };
+function statusOn(S, id) {
+  for (const c of (((S.state || {}).raw || {}).campaigns || [])) {
+    if (c.id === id) return c.status;
+    for (const s of c.adsets || []) {
+      if (s.id === id) return s.status;
+      for (const a of s.ads || []) if (a.id === id) return a.effective_status || a.status;
+    }
+  }
+  return '';
+}
+function launchedCard(S, items) {
+  if (!items.length) return `<div class="card">${empty(tt('Nothing launched yet', 'لم يُطلق شيء بعد'), tt('What the autopilot makes on Meta (campaigns, ad sets, ads) shows here by day, with its time and its status on Meta.', 'ما يصنعه الطيار الآلي على Meta يظهر هنا حسب اليوم.'))}</div>`;
+  const xs = [...items].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const key = (t) => new Date(t).toDateString();
+  const day = (t) => { const d = new Date(t), now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1); const s = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); return key(d) === key(now) ? tt(`Today · ${s}`, `اليوم · ${s}`) : key(d) === key(y) ? tt(`Yesterday · ${s}`, `أمس · ${s}`) : s; };
+  const days = [...new Set(xs.map((x) => key(x.at)))];
+  const ads = xs.filter((x) => x.kind === 'create_ad').length, camps = xs.filter((x) => x.kind === 'create_campaign').length;
+  return `<div class="card" data-launched><header><h2>${esc(tt('Launched on Meta', 'ما أُطلق على Meta'))}</h2><span class="sub">${esc(tt(`${camps} campaign(s), ${ads} ad(s) made by the autopilot · status = on Meta now`, `${camps} حملة، ${ads} إعلان · الحالة الآن على Meta`))}</span></header>
+    ${days.map((k) => { const ds = xs.filter((x) => key(x.at) === k);
+      return `<h3 data-lday style="margin:14px 0 4px;font-size:14px">${esc(day(ds[0].at))} <span class="small muted">· ${esc(tt(`${ds.filter((x) => x.kind === 'create_ad').length} ad(s)`, `${ds.filter((x) => x.kind === 'create_ad').length} إعلان`))}</span></h3>
+        <div class="list">${ds.map((x) => { const st = statusOn(S, x.meta_id);
+          return `<div data-litem><span class="chip">${esc(new Date(x.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))}</span><span style="flex:1;min-width:0"><span class="chip">${esc(tt(...(KINDL[x.kind] || [x.kind, x.kind])))}</span> <b dir="auto">${esc(x.title)}</b><br><span class="small muted">${esc(tt('from', 'من'))}: ${esc(x.run || '—')} · Meta id ${esc(x.meta_id)}</span></span><span class="chip ${/ACTIVE/.test(st) ? 'acc' : /PAUSED|ARCHIVED|DELETED|DISAPPROVED|WITH_ISSUES/.test(st) ? 'warn' : ''}" title="${esc(tt('Status on Meta now', 'الحالة على Meta الآن'))}">${esc(st ? st.replace(/_/g, ' ').toLowerCase() : tt('in review / not read yet', 'قيد المراجعة'))}</span></div>`; }).join('')}</div>`; }).join('')}</div>`;
 }
 
 function inner(S, el) {

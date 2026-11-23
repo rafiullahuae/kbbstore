@@ -87,8 +87,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     `${ads.length} → ${shown} after remove · product ${swapped} out, ${(pv2.ads || []).length} ads prepared again (${(pv2.ads || []).map((a) => (a.titles || [])[0]).join(' | ')})`);
 
   // 3 ─ Run: exactly what is left
+  await H(() => { window.__barSeen = false; new MutationObserver(() => { const p = document.getElementById('livepill'); if (p && !p.hidden && /Running/.test(p.textContent)) window.__barSeen = true; }).observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true }); });
   await page.click('#pv [data-pv-run]');
-  await page.waitForFunction(() => !document.querySelector('#pv[open]'), null, { timeout: 300000 });
+  // the owner, 23 Nov: the window closes at once, the run goes on in the background with the bar at the top, and a
+  // result bar stays until closed
+  const closedAtOnce = await page.waitForFunction(() => !document.querySelector('#pv[open]'), null, { timeout: 3000 }).then(() => true).catch(() => false);
+  await page.evaluate(() => window.__kaaPreview.running);
+  const barSeen = await H(() => window.__barSeen);
+  const result = await H(() => { const b = document.getElementById('kaaresult'); return b && !b.hidden ? b.innerText : ''; });
+  if (SHOT) for (const w of [1280, 390]) { await page.setViewportSize({ width: w, height: 900 }); await sleep(300); await page.screenshot({ path: path.join(SHOTS, `run-result-${w}.png`) }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  check('Run now: the window closes at once, the top bar shows it running, a result bar stays with Close', closedAtOnce && barSeen && /Done: \d+ change|Finished: \d+/.test(result) && /Close/.test(result), `closed at once ${closedAtOnce} · top bar ${barSeen} · result “${result.replace(/\n/g, ' | ').slice(0, 160)}”`);
+  await page.click('#kaaresult [data-r-launched]');
+  await page.waitForSelector('[data-launched]', { timeout: 20000 }).catch(() => {});
+  const L = await H(() => ({ days: [...document.querySelectorAll('[data-lday]')].map((x) => x.textContent.trim()), items: [...document.querySelectorAll('[data-litem]')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()) }));
+  check('Plan → Launched on Meta lists what was made, by day, with time, Meta id and status', L.days.length >= 1 && /Today/.test(L.days[0]) && L.items.some((t) => /Ad .*Meta id \d+/.test(t)) && L.items.some((t) => /Campaign/.test(t)), `${L.days.join(' / ')} · ${L.items.length} items · ${L.items.slice(0, 2).join(' || ').slice(0, 220)}`);
+  if (SHOT) for (const w of [1280, 390]) { await page.setViewportSize({ width: w, height: 900 }); await sleep(300); await page.screenshot({ path: path.join(SHOTS, `plan-launched-${w}.png`) }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await H(() => { const b = document.getElementById('kaaresult'); if (b) b.hidden = true; });
   const lib = (await api('/api/creatives')).j;
   const meta = await kaaAds();
   const byMeta = new Map(lib.filter((c) => c.meta_creative_id).map((c) => [c.meta_creative_id, c]));

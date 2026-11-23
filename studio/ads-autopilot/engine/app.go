@@ -250,7 +250,7 @@ func (a *App) wire() {
 	mc.OnWait = func(d time.Duration, tier string) { // the owner, 23 Nov: "loading n loading, nothing happening"
 		for _, ac := range a.Accounts() {
 			if ac.liveSnap().Running {
-				ac.liveStep("pace", "Waiting for Meta's request limit", "warn", fmt.Sprintf("about %d s, then it continues by itself: Meta lets this app make only a few requests every 5 minutes (access tier %q; Standard access raises it)", int(d.Seconds())+1, firstNonEmpty(tier, "not reported yet")))
+				ac.liveStep("pace", "Waiting for Meta's request limit", "info", fmt.Sprintf("about %d s, then it continues by itself: Meta lets this app make only a few requests every 5 minutes (access tier %q; Standard access raises it)", int(d.Seconds())+1, firstNonEmpty(tier, "not reported yet")))
 			}
 		}
 	}

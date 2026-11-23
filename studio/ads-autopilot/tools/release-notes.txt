@@ -2,6 +2,11 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.22
+- Run now (in "What will run now") closes the window at once; the run goes on in the background with a bar at the very top of every page (what it is doing, how many steps done — click it for every step). When it ends, a result bar stays at the top until you close it: what was made on Meta, what was not, and buttons to Every step and Launched on Meta.
+- Plan has tabs: Upcoming (every job still to run, by day, with its time) · Launched on Meta (every campaign, ad set and ad the app really made, by day, newest first, with time, the run it came from, its Meta id and its status on Meta now) · Weekly plan.
+- Fixed: Run now used to come back with "Run now" again after the ads were made when the run ended with any problem.
+
 ## 0.6.21
 - Run a cycle with Meta not connected stops at once and says why (it used to sit on "Reading Meta").
 - When Meta's request limit makes the app wait, the live list says so and for how long ("Waiting for Meta's request limit · about 90 s"), instead of looking stuck.

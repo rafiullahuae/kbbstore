@@ -69,7 +69,8 @@ type Acct struct {
 	manualCycle atomic.Bool // the running cycle is the owner's own "Run a cycle" (starter.go: Meta-setting wait)
 	// preview.go: a preview cycle writes nothing; a run after it leaves out what he removed in the preview
 	previewOnly atomic.Bool
-	live        liveBox // live.go: what is running now, step by step
+	live        liveBox    // live.go: what is running now, step by step
+	launchMu    sync.Mutex // the launched log (live.go)
 	skipMu      sync.Mutex
 	skipCr      map[string]bool // creative ids (library or the plan's tmp:) he removed
 	skipProd    map[string]bool // products he took out for this run
@@ -964,7 +965,8 @@ func (ac *Acct) stateBytes() []byte {
 	ac.mu.RUnlock()
 	st["creatives"] = len(ac.creatives.all())
 	st["month_spend"] = math.Round(ac.monthSpend()*100) / 100
-	st["live"] = ac.liveSnap()                                       // Overview → Running now (live.go)
+	st["live"] = ac.liveSnap() // Overview → Running now (live.go)
+	st["launched"] = ac.launched()
 	st["run_reports"] = ac.runReports()                              // Overview → Last cycle (runreport.go)
 	st["today_spend_app"] = math.Round(ac.todaySpendApp()*100) / 100 // the daily limit is for the app's own ads (22 Nov)
 	b, _ := json.Marshal(st)

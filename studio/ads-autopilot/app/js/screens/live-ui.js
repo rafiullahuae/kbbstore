@@ -26,18 +26,54 @@ export function liveCard(l) {
     ${l.running && l.now ? `<p class="small" style="margin:4px 0 0"><b>${esc(tt('Now', 'الآن'))}:</b> ${esc(l.now)}</p>` : ''}${liveSteps(l)}</div>`;
 }
 
-// the pill: visible on every page while something runs
+// The top bar (the owner, 23 Nov: "while running we can close this popup and it should run in the background with live
+// progress bar something on the very top of the app"): on every page while something runs — what runs, what it does
+// this moment, how many steps are done, a moving bar — and a click opens Overview → Running now.
 export function paintPill(l) {
   let p = document.getElementById('livepill');
   if (!p) {
     p = document.createElement('button');
     p.id = 'livepill'; p.type = 'button';
-    p.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:60;max-width:min(520px,calc(100vw - 32px));border-radius:999px;padding:8px 14px;box-shadow:0 6px 20px rgba(0,0,0,.25);text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    p.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:70;border:0;border-radius:0;padding:6px 16px 8px;text-align:start;background:var(--accent);color:var(--on-accent,#fff);font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25);overflow:hidden;white-space:nowrap;text-overflow:ellipsis';
+    p.innerHTML = '<span data-t></span><i style="position:absolute;left:0;bottom:0;height:3px;width:30%;background:rgba(255,255,255,.85);animation:kaabar 1.4s linear infinite"></i>';
+    if (!document.getElementById('kaabar-css')) { const st = document.createElement('style'); st.id = 'kaabar-css'; st.textContent = '@keyframes kaabar{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}@media (prefers-reduced-motion:reduce){#livepill i{animation:none;width:100%;opacity:.5}}'; document.head.appendChild(st); }
     p.onclick = () => { location.hash = '#/overview'; setTimeout(() => { const c = document.getElementById('live-card'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); };
     document.body.appendChild(p);
   }
   p.hidden = !(l && l.running);
-  if (l && l.running) p.textContent = `● ${tt('Running', 'يعمل')}: ${l.kind}${l.now ? ' — ' + l.now : ''}`;
+  pad();
+  if (l && l.running) {
+    const steps = l.steps || [], ok = steps.filter((x) => x.status === 'ok').length, bad = steps.filter((x) => x.status === 'fail').length;
+    p.querySelector('[data-t]').textContent = `● ${tt('Running', 'يعمل')}: ${l.kind}${l.now ? ' — ' + l.now : ''} · ${tt(`${ok} done${bad ? `, ${bad} not done` : ''}`, `${ok} تم${bad ? `، ${bad} لم يتم` : ''}`)} · ${tt('click for every step', 'اضغطي لكل خطوة')}`;
+  }
+}
+
+// the page moves down while a bar is at the top, so the bar never covers the app's own top controls
+function pad() {
+  const on = [document.getElementById('kaaresult'), document.getElementById('livepill')].some((x) => x && !x.hidden);
+  const r = document.getElementById('kaaresult'), p = document.getElementById('livepill');
+  // the bar's own height (it wraps to 3 lines on a phone): this is the app, not a shop page
+  const h = r && !r.hidden ? r.offsetHeight : p && !p.hidden ? p.offsetHeight : 0;
+  document.body.style.paddingTop = on ? `${h}px` : '';
+  if (r && p) p.style.top = r.hidden ? '0' : 'auto', p.style.bottom = r.hidden ? 'auto' : '0';
+}
+
+// The result bar: when a run he started ends, it STAYS at the top until he closes it — what was done, what was not,
+// and where every step is (the owner: "after run it should give success message etc. and option to close").
+export function showResult(text, ok) {
+  let b = document.getElementById('kaaresult');
+  if (!b) { b = document.createElement('div'); b.id = 'kaaresult'; b.setAttribute('role', 'status'); document.body.appendChild(b); }
+  b.style.cssText = `position:fixed;top:0;left:0;right:0;z-index:71;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 16px;background:${ok ? 'var(--accent)' : 'var(--warn)'};color:${ok ? 'var(--on-accent,#fff)' : '#1a1400'};font-size:14px;box-shadow:0 2px 12px rgba(0,0,0,.3)`;
+  const bs = 'background:rgba(255,255,255,.18);color:inherit;border:1px solid currentColor;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer';
+  b.innerHTML = `<span style="flex:1 1 260px;min-width:0;overflow-wrap:break-word">${ok ? '✓ ' : '! '}${esc(text)}</span>
+    <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" data-r-see style="${bs}">${esc(tt('Every step', 'كل خطوة'))}</button>
+    <button type="button" data-r-launched style="${bs}">${esc(tt('Launched on Meta', 'ما أُطلق'))}</button>
+    <button type="button" data-r-x style="${bs};font-weight:600" aria-label="${esc(tt('Close', 'إغلاق'))}">✕ ${esc(tt('Close', 'إغلاق'))}</button></span>`;
+  b.hidden = false;
+  pad();
+  b.querySelector('[data-r-x]').onclick = () => { b.hidden = true; pad(); };
+  b.querySelector('[data-r-see]').onclick = () => { location.hash = '#/overview'; setTimeout(() => { const c = document.getElementById('live-card'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); };
+  b.querySelector('[data-r-launched]').onclick = () => { try { sessionStorage.setItem('kaa.plantab', 'launched'); } catch {} location.hash = '#/plan'; };
 }
 
 // The Run it window (the owner, 23 Nov: "when i click Run on any routine, i'm not seeing any message or something").

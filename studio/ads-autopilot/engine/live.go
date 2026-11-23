@@ -26,8 +26,42 @@ type LiveRun struct {
 }
 
 type liveBox struct {
-	mu  sync.Mutex
-	run LiveRun
+	mu    sync.Mutex
+	run   LiveRun
+	props map[string]model.Proposal // the proposals of this run, by id (for the launched log)
+}
+
+// Launched: one thing the app really made on Meta (the owner, 23 Nov: Plan → "Already launched (which actually run
+// in meta)", date-wise). Written when Meta answered with the new object's id; previews never write here.
+type Launched struct {
+	At       time.Time `json:"at"`
+	Kind     string    `json:"kind"` // create_campaign | create_adset | create_ad
+	Title    string    `json:"title"`
+	MetaID   string    `json:"meta_id"`
+	Creative string    `json:"creative_id,omitempty"`
+	Run      string    `json:"run"` // what it ran in: a cycle, a Run it job
+}
+
+const maxLaunched = 1000
+
+func (ac *Acct) noteLaunched(l Launched) {
+	ac.launchMu.Lock()
+	defer ac.launchMu.Unlock()
+	var all []Launched
+	_ = ac.st.Load("launched", &all)
+	all = append(all, l)
+	if len(all) > maxLaunched {
+		all = all[len(all)-maxLaunched:]
+	}
+	_ = ac.st.Save("launched", all)
+}
+
+func (ac *Acct) launched() []Launched {
+	ac.launchMu.Lock()
+	defer ac.launchMu.Unlock()
+	var all []Launched
+	_ = ac.st.Load("launched", &all)
+	return all
 }
 
 func (ac *Acct) liveSnap() LiveRun {
@@ -106,6 +140,12 @@ func (ac *Acct) liveFromLog(kind, summary string, data any) {
 	switch kind {
 	case "proposal":
 		if p, ok := data.(model.Proposal); ok {
+			ac.live.mu.Lock()
+			if ac.live.props == nil || len(ac.live.props) > 2000 {
+				ac.live.props = map[string]model.Proposal{}
+			}
+			ac.live.props[p.ID] = p
+			ac.live.mu.Unlock()
 			ac.liveStep(p.ID, proposalTitle(p), "run", "sending to Meta…")
 		}
 	case "check":
@@ -123,6 +163,17 @@ func (ac *Acct) liveFromLog(kind, summary string, data any) {
 		if r, ok := data.(executor.Result); ok {
 			if r.Status == "done" {
 				ac.liveStep(r.ProposalID, "", "ok", joinSteps(r.Steps))
+				switch r.Kind {
+				case model.KindCreateCampaign, model.KindCreateAdSet, model.KindCreateAd:
+					ac.live.mu.Lock()
+					p, run := ac.live.props[r.ProposalID], ac.live.run.Kind
+					ac.live.mu.Unlock()
+					title := proposalTitle(p)
+					if p.ID == "" {
+						title = kindLabel[r.Kind] + ": " + r.Target
+					}
+					ac.noteLaunched(Launched{At: ac.app.now().UTC(), Kind: r.Kind, Title: title, MetaID: r.MetaID, Creative: pstr(p.Params, "creative_id"), Run: run})
+				}
 			} else {
 				d := "failed: " + r.Error
 				if h := metaFixHint(d); h != "" {
