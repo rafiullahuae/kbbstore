@@ -22,9 +22,31 @@ PASS lines split by hand are kept as they are when the script changes
 PASS save / reload (JSON) of Roman captions, then back to Devanagari: identical
 PASS translation source of Roman captions = the original Devanagari (+ the English word as is)
 PASS Urdu captions in Roman Urdu: "Main aaj khush hoon. Canada mein job" (میں = main at a sentence start, mein after a word)
+PASS new clips' words merged into Roman captions are written in Roman too (0 Devanagari word(s) left; the switch read "deva" before, not a false "Roman")
 PASS Hinglish by its words: English share 33 % in a misspelt Hinglish transcript (≥ 12 % = Hinglish), 0 % / 5 % in plain Hindi
 PASS Noto Sans Devanagari (OFL-1.1, bundled) has every one of the 70 Devanagari characters the captions use (cmap read from the woff2)
 PASS noto-nastaliq-urdu has all 34 Urdu letters used
 PASS noto-naskh has all 34 Urdu letters used
+PASS detect · Hindi speech -> Hindi 99% (Hindi+Urdu), not Hinglish, written in Devanagari, CER 14.1% on the MMS voice: "आप के से हैं? नै आज बहुत खूष हूं हमारी किम आपकी मदद करेगी ये सीम आपकी तोचा को मुलायम बनाता है"
+PASS detect · hinglishHindiVoice -> Hinglish (Hindi + English) 98%: "कना में जब किल आप्राइ को ये सीरम आपकी सकिन को गलोईन बनाता है वीजा प्रोसेस बहुत एजी है"
+PASS detect · hinglishMixed -> Hinglish (Hindi + English) 98%: "तो आज में आपको बताओंगा How to a play for a work phaser? अद बहुत आसान है Just book a free consultation. कीम आपकी मदद करेगी"
+PASS Hinglish · English stretches stay English (not translated, not dropped): "How to a play for a work phaser? Just book a free consultation."; Hindi stays Hindi (CER 29.6%)
+PASS detect · English speech -> English 98% ("Today I am unboxing the new Vitamins serum. Look a free consultation with our team today.")
+PASS word sync on Roman captions = on Devanagari, word for word (28 words, "Yeh serum aapki twacha ko naram aur chamakdar banata hai hum…")
+PASS Roman captions synced to the voice (MMS Hindi voice, true transcript): word starts median 8.5 ms (s-check: ≤ 30) / p95 387 ms (the s-check UR baseline on this voice is 346 ms); Devanagari 8.5 / 387 ms; aligning the Roman letters instead would give 10.9 / 447 ms
+PASS Devanagari and Roman captions draw (ink 8461 / 5098 px samples), Noto Sans Devanagari loaded and shaping (width 340 px vs 343 px fallback)
+PASS karaoke: the highlighted word at every sampled time is the same word in Devanagari and in Roman
+PASS translation from Roman Hindi captions = from Devanagari (opus-mt-hi-en): "Our team will help you. Please only manage for the job in Canada."
+PASS harness: no console / page errors
+PASS Captions → ⚙ Settings: language Auto-detect / English / العربية Arabic / اردو Urdu / हिन्दी Hindi / Hinglish (Hindi + English); "Hindi / Urdu in" Auto (Roman for Hinglish) / Devanagari (हिंदी) / Roman Hindi / Hinglish (Aap kaise ho?) / Urdu script (اردو)
+PASS Auto captions on a Hinglish MP4 (67 s): notice "🎧 Heard: Hinglish (Urdu + English) 97%It's HindiहिंदीRomanاردو", captions in Roman by default: "Doston aaj mein aap ko bataunga How to play for a work is a... Yeh bahut aasaan hai Just book a free consultation. Hamare ki keem aap ki madad kare gi kana mein jab ke le aparai karo"
+PASS "It's Hindi" → listened again as hi, still Roman: "To aaj main aapko bataunga How to play for a work is a... Yeh bahut aasaan hai Just book a free consultation. Ap keem aapki madad karengi kana mein jab ke le aprai karo" (notice "🎧 Captions in: Hinglish (Hindi + English)It's UrduहिंदीRomanاردو")
+PASS script switch → हिंदी, one undo step "Caption script": "तो आज मैं आपको बताुंगा How to play for a work is a... यह बहुत आसान है Just book a free consultation. अप कीम आपकी मदद करेंगी कना में जब के ले अप्राई करो"
+PASS undo, undo → back to the Roman captions exactly
+PASS redo → Devanagari again
+PASS save + reload: Roman captions, their native text and the detection come back identical
+PASS after reload: Roman → हिंदी → Roman is lossless
+PASS editor: no console errors
+PASS editor: nothing left 127.0.0.1
 
-ALL PASS (0 s)
+ALL PASS (462 s)
