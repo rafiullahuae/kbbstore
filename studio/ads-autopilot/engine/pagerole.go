@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -51,7 +52,8 @@ func (ac *Acct) pageRole(ctx context.Context) (fixed bool, err error) {
 			return false, nil
 		}
 	}
-	has := func() (bool, bool) { // (may advertise, check made)
+	seen, listed, tasks := 0, false, []string(nil) // what me/accounts showed, for the message
+	has := func() (bool, bool) {                   // (may advertise, check made)
 		var r struct {
 			Data []struct {
 				ID    string   `json:"id"`
@@ -62,10 +64,12 @@ func (ac *Acct) pageRole(ctx context.Context) (fixed bool, err error) {
 		if err := mc.Get(ctx, "me/accounts", url.Values{"fields": {"id,name,tasks"}, "limit": {"500"}}, &r); err != nil {
 			return false, false
 		}
+		seen = len(r.Data)
 		for _, p := range r.Data {
 			if p.ID != page {
 				continue
 			}
+			listed, tasks = true, p.Tasks
 			if p.Name != "" {
 				assetNames.Store(p.ID, p.Name)
 			}
@@ -95,9 +99,27 @@ func (ac *Acct) pageRole(ctx context.Context) (fixed bool, err error) {
 			name = p.Name
 		}
 	}
-	return false, errNoPageRole{Msg: fmt.Sprintf("The app's Meta login cannot advertise for your Page %s (it sits in another business portfolio), so nothing was sent (no campaign, no ad). "+
-		"FIX, once, without touching the Page or its portfolio: connect the app with YOUR OWN Facebook login, which already advertises for %s — Settings → Connections → Meta → way \"My user token\" (docs/META-SETUP.md Path B; permissions ads_management, ads_read, business_management, pages_show_list, pages_read_engagement, pages_manage_ads). "+
-		"Then press Run a cycle: the app checks it again before anything goes.", name, name)}
+	// who the app is connected as, and what Meta showed it: so the fix is read, not guessed
+	var me struct {
+		Name string `json:"name"`
+	}
+	_ = mc.Get(ctx, "me", url.Values{"fields": {"name"}}, &me)
+	ac.app.mu.RLock()
+	kind := ac.app.cfg.TokenType
+	ac.app.mu.RUnlock()
+	who := firstNonEmpty(me.Name, "unknown")
+	if kind != "" {
+		who += " (" + strings.ToLower(strings.ReplaceAll(kind, "_", " ")) + " token)"
+	}
+	what := fmt.Sprintf("Meta shows this login %d Page(s), and %s is not one of them", seen, name)
+	if listed {
+		what = fmt.Sprintf("Meta shows this login %s, but only with %s (no Advertise)", name, strings.Join(tasks, ", "))
+	}
+	fix := "connect with YOUR OWN Facebook login, which already advertises for " + name + ": Settings → Connections → Meta → Connect with \"My own Facebook login (user token)\" + the App ID and App secret of the same app"
+	if strings.EqualFold(kind, "USER") {
+		fix = "make a new token in Graph API Explorer (Get User Access Token) and, in the Facebook window that opens, choose \"Edit settings\" / \"Opt in to current Pages only\" and TICK " + name + " (and its Instagram and the KBB23 ad account); permissions ads_management, ads_read, business_management, pages_show_list, pages_read_engagement, pages_manage_ads. Paste it in Settings → Connections → Meta → Save & test"
+	}
+	return false, errNoPageRole{Msg: fmt.Sprintf("The app cannot advertise for your Page %s yet, so nothing was sent (no campaign, no ad). Connected as: %s. %s. FIX, once, without touching the Page or its portfolio: %s. Then press Run a cycle: the app checks it again before anything goes.", name, who, what, fix)}
 }
 
 // needsPage: proposals that make Page posts (an ad's creative) — what a missing Page role blocks.

@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.20
+- "Permission to advertise for the Page" now says who the app is connected as (your own login or a system user), what Meta shows that login (how many Pages, whether K-Beauty Bliss is one of them), and the one fix that fits.
+
 ## 0.6.19
 - Your own user token is no longer saved without the App ID and App secret (it stayed the 1-hour token and said "expires in 0 days"). Save & test now says to fill both in, and keeps the working token meanwhile.
 

@@ -24,7 +24,7 @@ func TestNoPageRoleSendsNothingNew(t *testing.T) {
 		t.Fatal(err)
 	}
 	pe, _ := out["page_error"].(string)
-	if !strings.Contains(pe, "K-Beauty Bliss") || !strings.Contains(pe, "My user token") {
+	if !strings.Contains(pe, "K-Beauty Bliss") || !strings.Contains(pe, "My own Facebook login") {
 		t.Fatalf("page_error %q: it must name the Page and the fix", pe)
 	}
 	for _, w := range m.Writes() {
