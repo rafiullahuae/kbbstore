@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.19
+- Your own user token is no longer saved without the App ID and App secret (it stayed the 1-hour token and said "expires in 0 days"). Save & test now says to fill both in, and keeps the working token meanwhile.
+
 ## 0.6.18
 - Settings → Connections → Meta: "Connect with" — My own Facebook login (user token) or A system user. A user token is turned into a 60-day one (App ID and App secret needed) and renewed by itself. A user token pasted under "system user" is recognised as one too.
 - Fixed: after the Mac slept, the catch-up cycle was skipped when a job was running (and still said "ok"); it now waits for the job.

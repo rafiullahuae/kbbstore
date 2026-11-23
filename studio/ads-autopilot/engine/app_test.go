@@ -456,3 +456,20 @@ func TestUserTokenRecognisedUnderSystemUser(t *testing.T) {
 		t.Fatalf("a user token saved as a system-user one was not exchanged: auth %q ok %v (%d %s)", c.Auth, c.OK, w.Code, w.Body)
 	}
 }
+
+// The owner, 23 Nov: "The Meta token expires on 23 Nov 2026 (in 0 days)" — his user token was saved without the App
+// ID / secret, so it stayed the 1-hour one. Now it is refused with what to fill in, and the old token is kept.
+// MUTATION: drop the id/secret refusal in saveMetaToken → the short token is saved, red.
+func TestUserTokenWithoutAppSecretIsRefused(t *testing.T) {
+	ac, m := testApp(t)
+	a := ac.app
+	m.AddUserToken("EAASHORTLIVED000000000000011", time.Hour)
+	before, _ := a.sec.Get("meta_token")
+	s := &server{app: a, token: "t", addr: "127.0.0.1:1"}
+	w := httptest.NewRecorder()
+	s.putConnection(w, httptest.NewRequest("PUT", "/api/connections/meta", strings.NewReader(`{"auth":"user_token","token":"EAASHORTLIVED000000000000011"}`)), "meta")
+	after, _ := a.sec.Get("meta_token")
+	if w.Code != 400 || !strings.Contains(w.Body.String(), "App secret") || after != before {
+		t.Fatalf("a 1-hour user token was saved without the app's id / secret: %d %s", w.Code, w.Body)
+	}
+}

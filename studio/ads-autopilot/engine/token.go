@@ -75,7 +75,11 @@ func (a *App) saveMetaToken(ctx context.Context, auth, tok string) error {
 	// the owner, 23 Nov: the Meta card had no way to say "my own login", so a user token pasted there was saved as a
 	// system-user token: never exchanged, dead within the hour. Meta says what the token is: a USER token is one.
 	if auth != AuthUserToken {
-		if as := a.appToken(); as != "" {
+		as := a.appToken()
+		if as == "" {
+			as = tok // Meta lets a token inspect itself
+		}
+		{
 			a.mu.RLock()
 			mc := a.meta
 			a.mu.RUnlock()
@@ -92,7 +96,11 @@ func (a *App) saveMetaToken(ctx context.Context, auth, tok string) error {
 		id, mc := a.cfg.MetaAppID, a.meta
 		a.mu.RUnlock()
 		sec, _ := a.sec.Get("meta_app_secret")
-		if id != "" && sec != "" {
+		// the owner, 23 Nov: a user token saved without the App ID / secret stayed the 1-hour one ("expires in 0 days")
+		if id == "" || sec == "" {
+			return fmt.Errorf("this is your own user token: it lasts about an hour unless the app makes it a 60-day one, and that needs the App ID and App secret of the same Meta app (developers.facebook.com → your app → App settings → Basic). Fill in both and press Save & test again")
+		}
+		{
 			long, life, err := mc.ExchangeToken(ctx, id, sec, tok)
 			if err != nil {
 				return fmt.Errorf("Meta would not turn this token into a 60-day one: %v. Make a fresh token in Graph API Explorer and paste it within the hour", err)
