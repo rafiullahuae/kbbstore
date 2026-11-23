@@ -133,6 +133,22 @@ const pct = (xs, p) => { const s = xs.slice().sort((a, b) => a - b); return s[Ma
   numbers.inEditor = { startMedian: +pct(inEd.err, 0.5).toFixed(1), startP95: +pct(inEd.err, 0.95).toFixed(1), bias: +pct(inEd.signed, 0.5).toFixed(1), whisperMedian: +pct(inEd.before, 0.5).toFixed(1), whisperP95: +pct(inEd.before, 0.95).toFixed(1), stats: inEd.last, secs: (Date.now() - t) / 1000 };
   ok(inEd.label === 'Sync words to the voice' && inEd.anchored === inEd.n, `Auto captions → sync runs by itself as one undo step "${inEd.label}" (${inEd.last?.aligned} placed by the model, ${inEd.last?.snapped} snapped), every word anchored to its media time (${inEd.anchored}/${inEd.n}) in ${numbers.inEditor.secs.toFixed(1)} s`);
   ok(numbers.inEditor.startMedian <= 30 && numbers.inEditor.startP95 <= 80 && Math.abs(numbers.inEditor.bias) <= 10, `in the editor, from an MP4 with AAC audio (container offset + encoder priming in the path): word starts median ${numbers.inEditor.startMedian} ms, p95 ${numbers.inEditor.startP95} ms, median signed ${numbers.inEditor.bias} ms (Whisper-like input ${numbers.inEditor.whisperMedian}/${numbers.inEditor.whisperP95} ms)`);
+  // the owner, 23 Nov: "the captions are not syncing well when i edit the captions. there must be sync button, which
+  // analyse and sync the captions with the voice". Edit a word and knock the timing 0.45 s off, as a hand edit can;
+  // the Captions panel says so and its ⏱ Sync to voice puts every word back on the voice (one undo step).
+  await ev(() => window.kbbEditor.showSide('captions')); await page.waitForSelector('[data-x="sync-voice"]', { timeout: 20000 });
+  const hint0 = await ev(() => !document.querySelector('[data-x="sync-hint"]').hidden);
+  await ev(() => { const ed = window.kbbEditor; ed.apply(CC.editWord(3, window.words()[3].w.toUpperCase() + 'x')); ed.apply(CC.shiftAll(0.45)); });
+  await page.waitForFunction(() => !document.querySelector('[data-x="sync-hint"]').hidden, null, { timeout: 10000 }).catch(() => {});
+  const hint1 = await ev(() => !document.querySelector('[data-x="sync-hint"]').hidden && document.querySelector('[data-x="sync-voice"]').classList.contains('on'));
+  await shot('s-00-sync-button-after-edit');
+  const offBy = await ev((gt) => { const got = window.words(); return gt.map((g, i) => Math.abs(got[i].t0 - g.t0) * 1000).sort((a, b) => a - b)[Math.floor(gt.length / 2)]; }, gtSet.gt);
+  await page.click('[data-x="sync-voice"]');
+  await page.waitForFunction(() => window.kbbEditor.history.undoLabel === 'Sync words to the voice' && !document.querySelector('[data-x="sync-voice"]').disabled, null, { timeout: 240000 });
+  await page.waitForFunction(() => document.querySelector('[data-x="sync-hint"]').hidden, null, { timeout: 5000 }).catch(() => {});
+  const back = await ev((gt) => { const got = window.words(); const e = gt.map((g, i) => Math.abs(got[i].t0 - g.t0) * 1000).sort((a, b) => a - b); return { median: e[Math.floor(e.length / 2)], p95: e[Math.floor(e.length * 0.95)], hint: !document.querySelector('[data-x="sync-hint"]').hidden }; }, gtSet.gt);
+  ok(!hint0 && hint1 && offBy >= 300 && back.median <= 30 && back.p95 <= 80 && !back.hint, `Captions → ⏱ Sync to voice after an edit: the panel says the captions were edited (${hint1}), words ${offBy.toFixed(0)} ms off → median ${back.median.toFixed(0)} ms, p95 ${back.p95.toFixed(0)} ms after one click; the note goes away (${!back.hint})`);
+  await shot('s-00b-sync-button-done');
   await ev(() => window.kbbEditor.showSide('mod:sync')); await seekDraw(4.2); await page.waitForTimeout(800);
   await shot('s-01-sync-tab');
   await ev(() => document.querySelector('.sy-wave')?.scrollIntoView({ block: 'center' })); await page.waitForTimeout(400);

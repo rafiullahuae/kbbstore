@@ -455,10 +455,31 @@ export function mountCaptionPanel(el, ctx) {
     h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Music & sound tags'), tagSel),
     h('div', { class: 'rs-cap-row' }, h('span', { class: 'rs-cap-muted' }, 'Something wrong?'), h('button', { class: 'rs-cap-btn ghost', 'data-x': 'cap-diag-settings', onclick: copyDiag }, '📋 Copy diagnostics')),
     vocabBox);
+  // ⏱ Sync to voice, beside the captions he edits: re-times every word to the voice (sync/index.js syncWords: forced
+  // alignment + onset snapping; only the times move, one undo step). After an edit it lights up and says so.
+  const syncHint = h('p', { class: 'rs-cap-muted', 'data-x': 'sync-hint', hidden: true, style: 'margin:4px 0 0;color:var(--accent,#e33)' }, 'Captions edited — press ⏱ Sync to voice to put every word back on the voice.');
+  const syncBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'sync-voice', title: 'Listen again and put every caption word exactly on the voice (after you edit the words). Undo puts the old timing back.', onclick: async () => {
+    if (!cap().words?.length) { ctx.toast?.('Make captions first (Auto captions)', 'warn'); return; }
+    syncBtn.disabled = true; const was = syncBtn.textContent; syncBtn.textContent = '⏱ Syncing…';
+    try {
+      const S = await import('../sync/index.js');
+      const ed = typeof window !== 'undefined' && window.kbbEditor ? window.kbbEditor.context() : ctx;
+      const s = await S.syncWords(ed);
+      ctx.toast?.(`Synced to the voice: ${s.words} words${s.model ? '' : ' (sound only — download the sync model in the ⏱ Sync tab for word-perfect timing)'}`, 'ok');
+    } catch (e) { if (!e?.denied) ctx.toast?.(`Sync: ${e.message || e}`, 'error'); }
+    finally { syncBtn.disabled = false; syncBtn.textContent = was; refresh(); }
+  } }, '⏱ Sync to voice');
+  const syncState = async () => {
+    const c = cap(), last = P().meta?.sync?.last;
+    if (!c?.words?.length) { syncHint.hidden = true; syncBtn.classList.remove('on'); return; }
+    const { wordsSig } = await import('../sync/index.js');
+    const edited = !!last?.sig && last.sig !== wordsSig(c.words);
+    syncHint.hidden = !edited; syncBtn.classList.toggle('on', edited);
+  };
   const trBtn = h('button', { class: 'rs-cap-btn', 'data-x': 'open-translate', title: 'Translate the captions (Urdu, Arabic, English, Hindi …)', onclick: () => show('translate') }, '🌐 Translate');
   // what Whisper heard + the Hindi / Urdu script switch (hinglish/notice.js)
   const notice = mountLangNotice({ cap, apply, canvas: () => P().canvas, relisten: (l) => { langSel.value = l; saveMeta(); runAuto(null, 'all'); } });
-  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, scopeSel, trBtn, settings), newRow, progress, failBox, notice.el),
+  el.append(h('div', { class: 'rs-cap-head' }, h('div', { class: 'rs-cap-row' }, goBtn, scopeSel, syncBtn, trBtn, settings), syncHint, newRow, progress, failBox, notice.el),
     tabs, transcriptPane, scriptPane, stylePane, translatePane);
 
   let queued = false;
@@ -471,6 +492,7 @@ export function mountCaptionPanel(el, ctx) {
       tagSel.value = cap().soundTags || DEFAULT_TAG_MODE;
       tagChip.textContent = '· ♪ ' + (TAG_MODES.find((m) => m.id === tagSel.value)?.label || '');
       notice.render();
+      syncState();
       if (tab === 'transcript') renderList();
       else if (tab === 'script') { if (!scriptPane.contains(document.activeElement)) script?.render(); }
       else if (tab === 'translate') { if (!translatePane.contains(document.activeElement) || document.activeElement.tagName !== 'DIV') trView?.render(); }

@@ -75,6 +75,14 @@ export async function ensureSyncModel(ctx, onProgress = () => {}) {
  * Re-time every caption word to the voice: forced alignment (when the model is installed) + onset snapping.
  * ONE undo step ('Sync words to the voice'). opts: { signal, onProgress(label, f), model: false (snapping only) }.
  */
+/** the words' text, as a short fingerprint: captions edited since the last sync read a different one (the owner, 23 Nov:
+ *  "the captions are not syncing well when i edit the captions. there must be sync button" — captions/panel.js) */
+export function wordsSig(words) {
+  let h = 2166136261;
+  for (const w of words || []) for (const ch of (w.w || '') + '|') h = Math.imul(h ^ ch.codePointAt(0), 16777619) >>> 0;
+  return `${(words || []).length}:${h.toString(36)}`;
+}
+
 export async function syncWords(ctx, opts = {}) {
   const p = ctx.project, cap = p.captions;
   if (!cap?.words?.length) throw new Error('Make captions first (Auto captions)');
@@ -90,7 +98,7 @@ export async function syncWords(ctx, opts = {}) {
     const { finishTimes } = await import('../captions/model.js'), { resolveStyle } = await import('../captions/styles.js');
     const next = { ...p.captions, words: p.captions.words.map((w, i) => ({ ...w, t0: r.words[i].t0, t1: r.words[i].t1 })), lines: p.captions.lines.map((L) => ({ ...L, wordIdx: [...L.wordIdx] })) };
     finishTimes(next.lines, next.words, resolveStyle(next.style).minDur);
-    const stats = { ...r.stats, at: new Date().toISOString() };
+    const stats = { ...r.stats, at: new Date().toISOString(), sig: wordsSig(next.words) };
     ctx.history.apply(ctx.ops.batch('Sync words to the voice', [captionsSwap('Sync words to the voice', p.captions, next), ctx.ops.setProject({ meta: { ...p.meta, sync: { ...syncMeta(p), last: stats } } })]));
     return stats;
   } finally { report(null, null); }

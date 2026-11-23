@@ -2,6 +2,10 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.4
+- ⏱ Sync to voice, right in the Captions panel (beside Translate): after you edit the captions, one click listens again and puts every word back exactly on the voice. Only the timing moves — your words, styles and lines stay — and Undo brings the old timing back.
+- After an edit the panel says "Captions edited — press ⏱ Sync to voice", and the note goes away once they are synced.
+
 ## 1.4.3
 - Fixed: with Roman chosen, Auto captions on more clips wrote the new clips' captions in Hindi script (हिंदी) while the switch still said Roman. New words now always come in the script you chose, and captions already made this way are put back in Roman by themselves when you open the Captions panel (Undo brings them back).
 
