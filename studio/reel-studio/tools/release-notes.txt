@@ -2,6 +2,13 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.6
+- 🏢 Office tour, in the Do it for me bar: a template for a walkthrough made of many clips (15+). One click makes the whole tour: a little room to move at every join, a transition on every join in a style (Signature, Calm, Energetic, Minimal, Cinematic), your room names, one colour across the clips and an end card. Then change it clip by clip: each join has its own transition, length and ▶ to watch it.
+- Transitions now keep BOTH clips moving: the next clip plays its own footage leading into the cut instead of a frozen frame (when the clip has footage before its start point; Office tour's "room to move" makes sure it does).
+- New transitions: Lens blur (out of focus, into focus) and Dip to white.
+- Room names: small white text, no box, one per clip.
+- Fixed: when a video frame could not be copied, the preview asked for it again and again until the browser ran out of memory.
+
 ## 1.4.5
 - Edit the script, and it syncs by itself: in Captions → Script, change or paste a clip's words and press Enter — the studio listens again and puts every word on the voice straight away (no word-by-word timing). Undo works step by step.
 
