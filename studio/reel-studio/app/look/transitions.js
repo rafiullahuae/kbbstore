@@ -6,7 +6,7 @@
 // Drawn as a layer: the side that is on screen (A before the cut, B after) is what the frame already holds; the other
 // side is that clip drawn by core/render.js's drawItem at its edge (A's last frame / B's first frame, "freeze handles")
 // with the clip's own crop, zoom and look — then both go through gl.js's `trans` shader. Same path for preview and export.
-import { registerLayer, drawItem } from '../core/render.js';
+import { registerLayer, drawItem, registerHandles } from '../core/render.js';
 import { findItem, itemEnd, srcTime, findMedia, createItem, uid } from '../core/project.js';
 import { MediaStore } from '../core/media.js';
 import { ops } from '../core/history.js';
@@ -18,8 +18,21 @@ export const KINDS = {
   glitch: { label: 'Glitch', dur: 0.4 }, slide: { label: 'Slide', dur: 0.45 }, spin: { label: 'Spin', dur: 0.5 },
   luma: { label: 'Luma fade', dur: 0.8 }, burn: { label: 'Film burn', dur: 0.7 }, cover: { label: 'Object cover', dur: 0.6 },
   dissolve: { label: 'Dissolve', dur: 0.5 },
+  lens: { label: 'Lens blur', dur: 1.0 }, white: { label: 'Dip to white', dur: 1.2 },
 };
 const FREEZE_LONG = 1280;
+/** a decoded frame as an ImageBitmap at most `long` px; through a canvas when the browser cannot copy that frame type
+ *  directly (some decoders hand back frames createImageBitmap refuses: "Unsupported VideoFrame") */
+async function toBitmap(f, long, quality = 'high') {
+  const sw = f.displayWidth || f.videoWidth || f.naturalWidth || f.width, sh = f.displayHeight || f.videoHeight || f.naturalHeight || f.height;
+  const k = Math.min(1, long / Math.max(sw, sh)), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
+  try { return await createImageBitmap(f, { resizeWidth: w, resizeHeight: h, resizeQuality: quality }); }
+  catch {
+    const c = typeof OffscreenCanvas === 'function' ? new OffscreenCanvas(w, h) : Object.assign(document.createElement('canvas'), { width: w, height: h });
+    c.getContext('2d').drawImage(f, 0, 0, w, h);
+    return createImageBitmap(c);
+  }
+}
 const FROZEN = new Map();   // `${mediaId}@${t}` -> ImageBitmap
 const fkey = (mediaId, t) => `${mediaId}@${t.toFixed(3)}`;
 
@@ -58,13 +71,54 @@ async function decodeFreezeFrames(project) {
     try {
       for (const t of [...new Set(ts)].sort((a, b) => a - b)) {
         const f = await r.frame(m.kind === 'image' ? 0 : t);
-        const sw = f.displayWidth || f.videoWidth || f.naturalWidth || f.width, sh = f.displayHeight || f.videoHeight || f.naturalHeight || f.height;
-        const k = Math.min(1, FREEZE_LONG / Math.max(sw, sh));
-        FROZEN.set(fkey(id, t), await createImageBitmap(f, { resizeWidth: Math.round(sw * k), resizeHeight: Math.round(sh * k), resizeQuality: 'high' }));
+        FROZEN.set(fkey(id, t), await toBitmap(f, FREEZE_LONG));
       }
     } finally { r?.close(); }
   }
   return true;
+}
+
+// ── live handles (the owner, 24 Nov: office tour, "super professional") ──
+// Through a transition BOTH clips keep moving: before the cut the incoming clip plays the footage just before its
+// in-point, after the cut the outgoing clip plays the footage just after its out-point — the "handles" every editing
+// suite uses. Where a clip has no footage there (it starts at 0 s, or ends at its file's end), that side holds its edge
+// frame as before. The export decodes handles exactly (registerHandles); the preview decodes them a frame behind.
+export function handleTime(project, it, t, cut, incoming) {
+  if (!it?.media || it.reverse || it.freeze || it.curve) return null;
+  const m = findMedia(project, it.media); if (!m || m.kind !== 'video' || !(m.dur > 0)) return null;
+  const sp = it.speed || 1;
+  const s = incoming ? it.in - (cut - t) * sp : it.out + (t - cut) * sp;
+  return s >= 0 && s <= m.dur - 0.04 ? +s.toFixed(4) : null;
+}
+const hKey = (item) => item.id + '~handle';
+registerHandles('look.transition', (project, item, t) => {
+  const e = edges(project, item); if (!e) return [];
+  const before = t < e.cut, other = before ? e.B : e.A, s = handleTime(project, other, t, e.cut, before);
+  return s == null ? [] : [{ key: hKey(item), media: other.media, srcT: s }];
+});
+// preview: decoded a frame behind, at preview size, a few dozen kept
+const HANDLES = new Map(), hReaders = new Map(), hBusy = new Set(), hFail = new Map();
+const hq = (mediaId, s) => `${mediaId}@${(Math.round(s * 30) / 30).toFixed(3)}`;
+function previewHandle(project, mediaId, s) {
+  const k = hq(mediaId, s);
+  if (HANDLES.has(k)) return HANDLES.get(k);
+  if (!hBusy.has(mediaId) && !(performance.now() - (hFail.get(mediaId) || -1e9) < 5000)) {
+    hBusy.add(mediaId);
+    (async () => {
+      try {
+        if (!hReaders.has(mediaId)) hReaders.set(mediaId, await new MediaStore({ getProject: () => project, engine: null }).openReader(mediaId));
+        const f = await hReaders.get(mediaId).frame(Math.round(s * 30) / 30);
+        HANDLES.set(k, await toBitmap(f, FREEZE_LONG, 'medium'));
+        while (HANDLES.size > 48) { const o = HANDLES.keys().next().value; HANDLES.get(o)?.close?.(); HANDLES.delete(o); }
+        window.kbbEditor?.preview?.draw?.();
+      } catch (err) { hFail.set(mediaId, performance.now()); console.warn('[look] handle frame:', err.message); }
+      finally { hBusy.delete(mediaId); }
+    })();
+  }
+  // the nearest decoded frame of this media meanwhile, else nothing (the edge frame is used)
+  let best = null, bd = 0.2;
+  for (const [key, bm] of HANDLES) { const [id, ts] = key.split('@'); if (id === mediaId && Math.abs(+ts - s) < bd) { bd = Math.abs(+ts - s); best = bm; } }
+  return best;
 }
 
 let off = null;
@@ -75,7 +129,9 @@ registerLayer('look.transition', (ctx, item, t, project, env) => {
   const dur = Math.max(0.05, item.out - item.in), p = Math.max(0, Math.min(1, 0.5 + (t - e.cut) / dur));
   const kind = Math.max(0, TRANSITION_KINDS.indexOf(item.style.kind));
   const before = t < e.cut, other = before ? e.B : e.A, oT = before ? e.tB : e.tA, oS = before ? e.sB : e.sA;
-  const frozen = other.media ? FROZEN.get(fkey(other.media, oS)) : null;
+  const hs = handleTime(project, other, t, e.cut, before);
+  const live2 = hs == null ? null : env.preview ? previewHandle(project, other.media, hs) : env.source?.({ id: hKey(item) });
+  const frozen = live2 || (other.media ? FROZEN.get(fkey(other.media, oS)) : null);
   const cv = ctx.canvas, CW = cv.width, CH = cv.height;
   if (!off) off = document.createElement('canvas');
   if (off.width !== CW || off.height !== CH) { off.width = CW; off.height = CH; }
@@ -111,10 +167,15 @@ function maskCentre(m) {
   const c = s ? [sx / s / m.w, sy / s / m.h, s / (m.w * m.h)] : [0.5, 0.5, 0]; centres.set(m.data, c); return c;
 }
 
-let pendingFreeze = null;
+let pendingFreeze = null, freezeFailedAt = 0;
 export function requestFreeze(project) {
-  if (pendingFreeze) return;
-  pendingFreeze = ensureFreezeFrames(project).catch((err) => console.warn('[look] freeze frames:', err.message)).finally(() => { pendingFreeze = null; window.kbbEditor?.preview?.draw(); });
+  // a decode that failed is not asked for again on every redraw (that loop exhausted the browser: the preview drew,
+  // asked, failed, redrew and asked again): it waits 5 s, and only a decode that worked redraws
+  if (pendingFreeze || performance.now() - freezeFailedAt < 5000) return;
+  pendingFreeze = ensureFreezeFrames(project)
+    .then((changed) => { if (changed) window.kbbEditor?.preview?.draw(); })
+    .catch((err) => { freezeFailedAt = performance.now(); console.warn('[look] freeze frames:', err.message); })
+    .finally(() => { pendingFreeze = null; });
 }
 
 // ── commands ──
@@ -141,6 +202,45 @@ export function transitionsCommand(project, kind, { at = null, dur = null, color
     return createItem('look.transition', { t0: +(c.t - half).toFixed(4), in: 0, out: +(half * 2).toFixed(4), x: 0, y: 0, w: project.canvas.w, h: project.canvas.h, name: 'Transition · ' + (KINDS[kind]?.label || kind), style: { kind, a: c.a.id, b: c.b.id, color: color || '#ffffff' } });
   });
   return ops.batch(`${KINDS[kind]?.label || kind} transition${items.length > 1 ? 's' : ''}`, [old.length ? ops.removeItems(old) : null, ops.addItems(items.map((item) => ({ trackId: ot.id, item })))]);
+}
+
+// ── Office tour: one template over every join, then join by join (the owner, 24 Nov: "15+ clips ... one super
+// template, which will apply [to every] clip, and can be edit clip by clip also") ──
+// The pattern pros use on a walkthrough: arrive with a zoom-through, keep most joins calm (lens blur), one energetic
+// whip or push now and then, and close on a dip to white. With a few clips it is just the calm joins.
+export const TOUR_KINDS = ['zoom', 'lens', 'whip', 'dissolve', 'slide', 'white'];
+export function tourKinds(n) {
+  if (n <= 0) return [];
+  if (n === 1) return ['lens'];
+  if (n === 2) return ['zoom', 'white'];
+  const mid = ['lens', 'whip', 'lens', 'slide', 'lens', 'zoom'];
+  return ['zoom', ...Array.from({ length: n - 2 }, (_, i) => mid[i % mid.length]), 'white'];
+}
+/** transitions on the cuts, one kind per cut in order (null = a plain cut); replaces what those cuts had. One undo step. */
+export function planCommand(project, kinds, label = 'Office tour') {
+  const cuts = cutsOf(project); if (!cuts.length) return null;
+  const ot = project.tracks.find((tr) => tr.kind === 'overlay') || project.tracks[0];
+  const old = [];
+  for (const tr of project.tracks) for (const it of tr.items) if (it.type === 'look.transition' && cuts.some((c) => it.style?.a === c.a.id && it.style?.b === c.b.id)) old.push(it.id);
+  const items = [];
+  cuts.forEach((c, i) => {
+    const kind = kinds[i]; if (!kind || !KINDS[kind]) return;
+    const d = KINDS[kind].dur;
+    const half = Math.min(d / 2, Math.max(0.05, (itemEnd(c.a) - c.a.t0) / 2), Math.max(0.05, (itemEnd(c.b) - c.b.t0) / 2));
+    items.push(createItem('look.transition', { t0: +(c.t - half).toFixed(4), in: 0, out: +(half * 2).toFixed(4), x: 0, y: 0, w: project.canvas.w, h: project.canvas.h, name: 'Transition · ' + KINDS[kind].label, style: { kind, a: c.a.id, b: c.b.id, color: '#ffffff' } }));
+  });
+  return ops.batch(label, [old.length ? ops.removeItems(old) : null, items.length ? ops.addItems(items.map((item) => ({ trackId: ot.id, item }))) : null]);
+}
+/** what each cut has now: [{ i, a, b, t, kind (null = cut) }] */
+export function joins(project) {
+  const all = project.tracks.flatMap((tr) => tr.items).filter((it) => it.type === 'look.transition');
+  return cutsOf(project).map((c, i) => ({ i, a: c.a, b: c.b, t: c.t, kind: all.find((it) => it.style?.a === c.a.id && it.style?.b === c.b.id)?.style?.kind || null }));
+}
+/** one join changed, the others kept */
+export function joinCommand(project, i, kind) {
+  const ks = joins(project).map((j) => j.kind); if (i < 0 || i >= ks.length) return null;
+  ks[i] = kind || null;
+  return planCommand(project, ks, `Join ${i + 1}: ${kind ? KINDS[kind]?.label : 'Cut'}`);
 }
 
 /** match-cut helper: move B's in-point (±1 s) to the frame that looks most like A's last frame; returns a command */

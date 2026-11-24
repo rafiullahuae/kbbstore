@@ -33,6 +33,13 @@ export function registerLayer(kind, drawFn) { layers.set(kind, drawFn); }
  * editor runs it when a project opens, so a reloaded project draws exactly like the one that was saved.
  */
 export function registerPrepare(id, fn) { prepares.set(id, fn); }
+/**
+ * Extra source pictures an item needs at time t beyond the active clips' own frames — a transition's live handle: the
+ * other clip's frame from beyond its edit point, so both sides keep moving through the transition. fn(project, item, t)
+ * returns [{ key, media, srcT }]; the export decodes each and serves it as env.source({ id: key }).
+ */
+export const handleNeeds = new Map();
+export function registerHandles(type, fn) { handleNeeds.set(type, fn); }
 export async function prepareRender(project) {
   for (const [id, fn] of prepares) { try { await fn(project); } catch (e) { warnOnce('prepare:' + id, e); } }
 }

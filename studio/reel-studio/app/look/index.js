@@ -16,7 +16,7 @@ import { findItem, itemEnd } from '../core/project.js';
 import { LOOKS, gradeFx, lookById } from './looks.js';
 import { LOOK_FX, loadBackground, processLook, bgReady } from './fx.js';
 import { ensureAnalysis, coverageAt, facesAt, hasFace, maskAt, maskCoverageAt, hasMask } from './vision.js';
-import { ensureFreezeFrames, transitionsCommand, matchCutCommand, cutsOf, KINDS } from './transitions.js';
+import { ensureFreezeFrames, transitionsCommand, matchCutCommand, cutsOf, KINDS, tourKinds, planCommand, joinCommand, joins } from './transitions.js';
 import { rampCommand, CURVES, EASES } from './ramp.js';
 import { PRESETS, textItem } from './text.js';
 import { samplePixels, autoCorrect, stats, matchTransfer } from './analyze.js';
@@ -91,7 +91,7 @@ export function clearFx(ctx, type, { ids } = {}) { return applyFx(ctx, clipTarge
 
 // ── transitions, ramps, text ──
 export async function addTransitions(ctx, kind, { at = null, dur = null } = {}) {
-  const cmd = transitionsCommand(ctx.project, kind, { at, dur, color: kind === 'flash' ? '#ffffff' : ctx.workspace?.colors?.primary });
+  const cmd = transitionsCommand(ctx.project, kind, { at, dur, color: kind === 'flash' || kind === 'white' ? '#ffffff' : ctx.workspace?.colors?.primary });
   if (!cmd) throw new Error('There is no cut yet: split a clip (S) or add a second clip');
   ctx.history.apply(cmd);
   if (kind === 'cover') await ensureAnalysis(ctx.project, { onProgress: progress(ctx) });
@@ -99,6 +99,21 @@ export async function addTransitions(ctx, kind, { at = null, dur = null } = {}) 
   redraw();
   return ctx.project.tracks.flatMap((t) => t.items).filter((i) => i.type === 'look.transition').length;
 }
+/** Office tour: a transition on every join in the walkthrough pattern (transitions.js tourKinds), one undo step */
+export async function officeTour(ctx) {
+  const n = cutsOf(ctx.project).length;
+  if (!n) throw new Error('Put your clips on the timeline one after another first');
+  ctx.history.apply(planCommand(ctx.project, tourKinds(n), 'Office tour'));
+  await ensureFreezeFrames(ctx.project); redraw();
+  return n;
+}
+/** one join to another transition (null = a plain cut) */
+export async function setJoin(ctx, i, kind) {
+  const cmd = joinCommand(ctx.project, i, kind); if (!cmd) return;
+  ctx.history.apply(cmd); await ensureFreezeFrames(ctx.project); redraw();
+}
+export { joins };
+
 export async function matchCut(ctx, { at = ctx.playhead?.() ?? 0 } = {}) {
   const cuts = cutsOf(ctx.project); if (!cuts.length) throw new Error('There is no cut yet');
   const c = cuts.reduce((b, x) => (Math.abs(x.t - at) < Math.abs(b.t - at) ? x : b));
@@ -145,7 +160,7 @@ bus.on('project:change', () => {
 registerModule({
   id: 'look', label: 'Look', icon: '🎨',
   tab: { label: '🎨 Look', order: 10 },
-  panel: (el, ctx) => lookPanel(el, ctx, { applyLook, autoColour, matchTo, touchUp, removeBackground, clearFx, addTransitions, matchCut, speedRamp, addText, clipTargets, enhanceVideo, toggleCompare }),
+  panel: (el, ctx) => lookPanel(el, ctx, { officeTour, setJoin, joins, applyLook, autoColour, matchTo, touchUp, removeBackground, clearFx, addTransitions, matchCut, speedRamp, addText, clipTargets, enhanceVideo, toggleCompare }),
 });
 
 export { ensureAnalysis, ensureFreezeFrames, hasFace, itemEnd };

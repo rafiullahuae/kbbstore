@@ -305,6 +305,16 @@ void main(){
     float cov = smoothstep(.35, .65, m) * step(.02, peak);
     vec3 dark = mix(a(mq), b(mq), step(.5, p)) * .35;
     c = mix(p < .5 ? a(q) : b(q), dark, cov);
+  } else if (kind == 10) {             // lens blur: A goes out of focus, B comes into focus (bokeh-weighted disc)
+    float r = .028 * sin(3.14159 * p); vec2 asp = vec2(res.y / res.x, 1.); float mx = smoothstep(.3, .7, p);
+    vec3 sa = mix(a(q), b(q), mx); float n = 1.;
+    for (int i = 0; i < 36; i++) { float an = float(i) * 2.39996; float rr = r * sqrt((float(i) + .5) / 36.);
+      vec2 d = vec2(cos(an), sin(an)) * rr * asp; vec3 s2 = mix(a(q + d), b(q + d), mx); float w = 1. + luma(s2) * 2.;
+      sa += s2 * w; n += w; }
+    c = sa / n;
+  } else if (kind == 11) {             // dip to white: A fades to white, B (or the logo) fades up from it
+    float w = smoothstep(0., .45, p) * (1. - smoothstep(.55, 1., p));
+    c = mix(p < .5 ? a(q) : b(q), col, w);
   } else {                             // dissolve
     c = mix(a(q), b(q), e);
   }
@@ -312,7 +322,7 @@ void main(){
 }`,
 };
 
-export const TRANSITION_KINDS = ['whip', 'zoom', 'flash', 'glitch', 'slide', 'spin', 'luma', 'burn', 'cover', 'dissolve'];
+export const TRANSITION_KINDS = ['whip', 'zoom', 'flash', 'glitch', 'slide', 'spin', 'luma', 'burn', 'cover', 'dissolve', 'lens', 'white'];
 
 class GL {
   constructor() {

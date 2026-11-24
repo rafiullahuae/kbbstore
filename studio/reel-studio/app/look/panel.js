@@ -27,6 +27,8 @@ export function css() {
 .lk-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .lk-btns .btn { justify-content: center; padding: 7px 8px; font-size: 12.5px; }
 .lk-btns .btn.wide { grid-column: span 2; }
+.lk-joins { display: grid; gap: 4px; margin-top: 8px; max-height: 340px; overflow: auto; }
+.lk-join .lbl { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lk-txt { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .lk-txt .btn { justify-content: flex-start; font-size: 12px; padding: 7px 8px; white-space: normal; text-align: left; }
 .lk textarea { width: 100%; min-height: 52px; resize: vertical; }`;
@@ -43,6 +45,22 @@ export function lookPanel(el, ctx, A) {
     finally { ctx.progress?.(null, null); }
   };
   const sec = (title, ...kids) => h('details.sec', { open: true }, h('summary', title), h('div.sec-body', kids));
+  // every join of the edit, each with its own transition (Office tour, then change any one)
+  const joinsBox = h('div.lk-joins', { dataset: { x: 'joins' } });
+  const short = (it) => String(it.name || 'clip').replace(/\.[a-z0-9]{2,4}$/i, '').slice(0, 18);
+  function renderJoins() {
+    const js = A.joins(ctx.project);
+    clear(joinsBox);
+    if (!js.length) { joinsBox.append(h('p.lk-note', 'Put two or more clips one after another on the timeline: each join gets a row here.')); return; }
+    for (const j of js) {
+      const sel = select([['', 'Cut'], ...Object.entries(KINDS).map(([k, v]) => [k, v.label])], j.kind || '', (v) => run('Join', async () => { await A.setJoin(ctx, j.i, v || null); return `Join ${j.i + 1}: ${v ? KINDS[v].label : 'Cut'}`; }));
+      sel.dataset.join = String(j.i);
+      joinsBox.append(h('label.row.lk-join', { title: `${j.a.name || ''} → ${j.b.name || ''} at ${j.t.toFixed(2)} s` },
+        h('span.lbl', `${j.i + 1}. ${short(j.a)} → ${short(j.b)}`), sel));
+    }
+  }
+  const offJ = bus.on('project:change', () => { if (!root.isConnected) { offJ?.(); return; } renderJoins(); });
+  renderJoins();
   const targetNote = h('p.lk-note');
   const tiles = h('div.lk-tiles');
   const textEdit = h('div');
@@ -130,6 +148,10 @@ export function lookPanel(el, ctx, A) {
     sec('Background',
       h('p.lk-note', 'Cuts out the person, the main subject (a product) or a green screen, offline, with clean steady edges — then puts a new background behind, or nothing (transparent).'),
       bgControls(ctx, { chipCls: '.lk-chips', ids: () => undefined })),
+    sec('Office tour',
+      h('p.lk-note', 'One template over every join of your walkthrough: arrive with a zoom-through, calm lens-blur joins, a whip or push now and then, and a dip to white at the end. Both clips keep moving through each transition. Change any join below.'),
+      h('div.lk-btns', h('button.btn.primary.wide', { dataset: { act: 'office-tour' }, on: { click: () => run('Office tour', async () => { const n = await A.officeTour(ctx); renderJoins(); return `Office tour on ${n} join${n === 1 ? '' : 's'}`; }) } }, '🏢 Office tour — every join')),
+      joinsBox),
     sec('Transitions',
       h('div.lk-chips', ...Object.entries(KINDS).map(([k, v]) => { const c = h('button.chip' + (k === st.trans ? '.on' : ''), { dataset: { trans: k }, on: { click: () => { st.trans = k; for (const x of c.parentNode.children) x.classList.toggle('on', x === c); } } }, v.label); return hoverPreview(c, transitionSpec(k, v.label)); })),
       slider({ label: 'Length', min: 0, max: 1.2, step: 0.05, value: 0, fmt: (v) => (v ? v.toFixed(2) + ' s' : 'auto'), onInput: (v) => { st.tdur = v; } }),

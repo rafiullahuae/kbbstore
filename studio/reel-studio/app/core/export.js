@@ -8,7 +8,7 @@
 // OfflineAudioContext (volume, track volume, speed, fades).
 
 import { Muxer, ArrayBufferTarget } from '../../vendor/mp4-muxer-5.2.2.mjs';
-import { renderFrame, activeItems, prepareRender, evalProp } from './render.js';
+import { renderFrame, activeItems, prepareRender, evalProp, handleNeeds } from './render.js';
 import { projectDuration, findMedia, itemDur, srcTime } from './project.js';
 import { retimedSound, needsRetimedSound } from './retime-audio.js';
 import { usesFrameStream, blendWeight, speedAt } from './retime.js';
@@ -234,7 +234,7 @@ export async function exportMp4(project, media, opts = {}) {
  *   const f = await openFrames(project, media, scale); await f.load(t); renderFrame(ctx, project, t, { source: f.source }); f.close();
  */
 export async function openFrames(project, media, scale) {
-  const readers = new Map(), streams = new Map(), frames = new Map();
+  const readers = new Map(), streams = new Map(), frames = new Map(), hReaders = new Map();
   const source = (item) => frames.get(item.id) || null;
   const readerFor = async (id) => { if (!readers.has(id)) readers.set(id, await media.openReader(id)); return readers.get(id); };
   // one decoder stream per media for the retimed items, its frames as large as the export draws them (≤ the source)
@@ -276,6 +276,16 @@ export async function openFrames(project, media, scale) {
       const r = await readerFor(m.id);
       if (r) frames.set(item.id, await r.frame(m.kind === 'image' ? 0 : srcTime(item, t)));
     }
+    // live transition handles: the other clip's frame from beyond its edit point (registerHandles)
+    for (const { item } of activeItems(project, t)) {
+      const fn = handleNeeds.get(item.type); if (!fn) continue;
+      for (const n of fn(project, item, t) || []) {
+        // a reader of its own: one reader may hand back the same picture object for every frame (a <video> element)
+        if (!hReaders.has(n.media)) hReaders.set(n.media, await media.openReader(n.media));
+        const r = hReaders.get(n.media);
+        if (r) { const f = await r.frame(n.srcT); if (f) frames.set(n.key, f); }
+      }
+    }
   }
-  return { load, source, close() { for (const r of readers.values()) r?.close(); for (const s of streams.values()) s?.close(); } };
+  return { load, source, close() { for (const r of readers.values()) r?.close(); for (const r of hReaders.values()) r?.close(); for (const s of streams.values()) s?.close(); } };
 }
