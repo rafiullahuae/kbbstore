@@ -183,21 +183,31 @@ export function tourPanel(el, ctx) {
   import('../look/looks.js').then((L) => { const opts = L.LOOKS.map((x) => [x.id, x.label]); clear(lookSel); for (const [v, t] of opts) lookSel.append(h('option', { value: v }, t)); lookSel.value = st.look; }).catch(() => {});
 
   const names = () => [...rooms.querySelectorAll('input[data-room]')].map((i) => i.value);
+  // re-entrant safe: removing a focused length box fires its change (blur) while the list is being rebuilt, and that
+  // change applies an edit that renders again — the nested render is folded into one after this one
+  let rendering = false, again = false;
   function render() {
+    if (rendering) { again = true; return; }
+    rendering = true;
+    try { do { again = false; draw(); } while (again); } finally { rendering = false; }
+  }
+  function draw() {
     const p = ctx.project, cl = clipsOf(p), js = joins(p);
     const dur = cl.length ? itemEnd(cl[cl.length - 1]) - cl[0].t0 : 0;
     head.textContent = `${cl.length} clip${cl.length === 1 ? '' : 's'} · ${js.length} join${js.length === 1 ? '' : 's'} · ${dur.toFixed(1)} s`;
-    clear(list);
-    if (!js.length) list.append(h('p.tour-note', 'Put your clips one after another on the timeline (drag them in, in walking order). Each join gets a row here.'));
+    const rows = [];
+    if (!js.length) rows.push(h('p.tour-note', 'Put your clips one after another on the timeline (drag them in, in walking order). Each join gets a row here.'));
     for (const j of js) {
       const sel = select([['', 'Cut'], ...Object.entries(KINDS).map(([k, v]) => [k, v.label])], j.kind || '', (v) => run('Join', async () => { await setJoin(ctx, j.i, v || null); return `Join ${j.i + 1}: ${v ? KINDS[v].label : 'Cut'}`; }));
       sel.dataset.join = String(j.i);
       const len = h('input', { type: 'number', min: '0.2', max: '2', step: '0.1', value: j.dur ? j.dur.toFixed(1) : '', placeholder: '—', disabled: !j.kind, title: 'Length in seconds', dataset: { len: String(j.i) } });
       len.addEventListener('change', () => { const v = Math.max(0.2, Math.min(2, +len.value || 0)); if (v) run('Join', async () => { await setJoin(ctx, j.i, undefined, v); }); });
-      list.append(h('div.tour-join', { title: `${j.a.name || ''} → ${j.b.name || ''} at ${j.t.toFixed(2)} s` },
+      rows.push(h('div.tour-join', { title: `${j.a.name || ''} → ${j.b.name || ''} at ${j.t.toFixed(2)} s` },
         h('span.nm', `${j.i + 1}. ${plain(j.a)} → ${plain(j.b)}`), sel, len,
         h('button.btn.play', { title: 'Watch this join', dataset: { watch: String(j.i) }, on: { click: () => watchJoin(ctx, j.i) } }, '▶')));
     }
+    if (list.contains(document.activeElement)) document.activeElement.blur();   // its change runs now, folded in
+    list.replaceChildren(...rows);
     if (!rooms.contains(document.activeElement)) {
       const have = roomNames(p); clear(rooms);
       cl.forEach((c, i) => rooms.append(h('label.tour-room', h('span', String(i + 1)), h('input', { value: have[i] || '', placeholder: plain(c) === 'Room' ? `Room ${i + 1} name` : plain(c), dataset: { room: String(i) } }))));
