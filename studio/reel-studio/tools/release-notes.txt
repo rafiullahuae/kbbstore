@@ -2,6 +2,9 @@
 # (update.json "notes"), and Configure → Updates shows them before he installs. One short line per change, his words,
 # no jargon. A package is not built without a block for its version. Newest first.
 
+## 1.4.7
+- The "Do it for me" bar is one row now, with ‹ › arrows (or scroll it with the mouse wheel / trackpad). The preview gets the space back: about 46 px taller on every screen.
+
 ## 1.4.6
 - 🏢 Office tour, in the Do it for me bar: a template for a walkthrough made of many clips (15+). One click makes the whole tour: a little room to move at every join, a transition on every join in a style (Signature, Calm, Energetic, Minimal, Cinematic), your room names, one colour across the clips and an end card. Then change it clip by clip: each join has its own transition, length and ▶ to watch it.
 - Transitions now keep BOTH clips moving: the next clip plays its own footage leading into the cut instead of a frozen frame (when the clip has footage before its start point; Office tour's "room to move" makes sure it does).

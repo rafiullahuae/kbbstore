@@ -126,7 +126,18 @@ export class Editor {
     this.inspEl = h('aside.inspector.side', this.sideTabs, this.inspBody, this.capBody);
     this.renderSideTabs();
     this.tlEl = h('section.timeline');
-    this.root.appendChild(h('div.editor', top, h('div.doit-row', h('span.doit-lbl', 'Do it for me'), this.doit, this.progressLine),
+    // one row that scrolls sideways, with ‹ › arrows (the owner, 24 Nov: "I don't want two rows for the top options,
+    // i need slider left right arrows, i want to give the maximum space to the editor frame")
+    const step = (dir) => this.doit.scrollBy({ left: dir * Math.max(160, this.doit.clientWidth * 0.7), behavior: 'smooth' });
+    this.doitL = h('button.doit-arrow', { title: 'More on the left', 'aria-label': 'Scroll left', dataset: { dir: 'left' }, on: { click: () => step(-1) } }, '‹');
+    this.doitR = h('button.doit-arrow', { title: 'More on the right', 'aria-label': 'Scroll right', dataset: { dir: 'right' }, on: { click: () => step(1) } }, '›');
+    const arrows = () => { const d = this.doit, max = d.scrollWidth - d.clientWidth - 1;
+      this.doitL.disabled = d.scrollLeft <= 4; this.doitR.disabled = d.scrollLeft >= max - 3; this.doitL.hidden = this.doitR.hidden = max <= 0; };
+    this.doit.addEventListener('scroll', arrows, { passive: true });
+    this.doit.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { this.doit.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
+    if (typeof ResizeObserver === 'function') new ResizeObserver(arrows).observe(this.doit);
+    this.doitArrows = arrows;
+    this.root.appendChild(h('div.editor', top, h('div.doit-row', h('span.doit-lbl', 'Do it for me'), this.doitL, this.doit, this.doitR, this.progressLine),
       h('div.work', this.binEl, this.previewEl, this.inspEl), this.tlEl));
     this.bin = new Bin(this, this.binEl);
     this.preview = new Preview(this, this.previewEl);
@@ -146,6 +157,7 @@ export class Editor {
         on: { click: () => this.runModule(s.id, s.label) },
       }, h('span.ic', mod?.icon || s.icon || '★'), h('span', mod?.label || s.label)));
     }
+    requestAnimationFrame(() => this.doitArrows?.());
   }
 
   async runModule(id, label) {
