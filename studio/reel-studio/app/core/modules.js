@@ -119,4 +119,4 @@ export function registerInspectorSection(s) { inspSecs.set(s.id, s); }
 export const inspectorSections = (item, track, media) => [...inspSecs.values()].filter((s) => { try { return !!s.when(item, track, media); } catch { return false; } });
 
 /** module entry files the editor tries to import at start (missing files are fine) */
-export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js', '../stock/index.js', '../designs/index.js', '../themes/index.js', '../sync/index.js', '../cutaways/index.js'];
+export const MODULE_ENTRIES = ['../captions/index.js', '../auto/index.js', '../look/index.js', '../audio/index.js', '../viral/index.js', '../content/index.js', '../stock/index.js', '../designs/index.js', '../themes/index.js', '../sync/index.js', '../cutaways/index.js', '../tour/index.js'];

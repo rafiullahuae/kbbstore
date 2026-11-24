@@ -217,7 +217,7 @@ export function tourKinds(n) {
   return ['zoom', ...Array.from({ length: n - 2 }, (_, i) => mid[i % mid.length]), 'white'];
 }
 /** transitions on the cuts, one kind per cut in order (null = a plain cut); replaces what those cuts had. One undo step. */
-export function planCommand(project, kinds, label = 'Office tour') {
+export function planCommand(project, kinds, label = 'Office tour', durs = []) {
   const cuts = cutsOf(project); if (!cuts.length) return null;
   const ot = project.tracks.find((tr) => tr.kind === 'overlay') || project.tracks[0];
   const old = [];
@@ -225,7 +225,7 @@ export function planCommand(project, kinds, label = 'Office tour') {
   const items = [];
   cuts.forEach((c, i) => {
     const kind = kinds[i]; if (!kind || !KINDS[kind]) return;
-    const d = KINDS[kind].dur;
+    const d = durs[i] > 0 ? durs[i] : KINDS[kind].dur;
     const half = Math.min(d / 2, Math.max(0.05, (itemEnd(c.a) - c.a.t0) / 2), Math.max(0.05, (itemEnd(c.b) - c.b.t0) / 2));
     items.push(createItem('look.transition', { t0: +(c.t - half).toFixed(4), in: 0, out: +(half * 2).toFixed(4), x: 0, y: 0, w: project.canvas.w, h: project.canvas.h, name: 'Transition · ' + KINDS[kind].label, style: { kind, a: c.a.id, b: c.b.id, color: '#ffffff' } }));
   });
@@ -234,13 +234,15 @@ export function planCommand(project, kinds, label = 'Office tour') {
 /** what each cut has now: [{ i, a, b, t, kind (null = cut) }] */
 export function joins(project) {
   const all = project.tracks.flatMap((tr) => tr.items).filter((it) => it.type === 'look.transition');
-  return cutsOf(project).map((c, i) => ({ i, a: c.a, b: c.b, t: c.t, kind: all.find((it) => it.style?.a === c.a.id && it.style?.b === c.b.id)?.style?.kind || null }));
+  return cutsOf(project).map((c, i) => { const it = all.find((x) => x.style?.a === c.a.id && x.style?.b === c.b.id);
+    return { i, a: c.a, b: c.b, t: c.t, kind: it?.style?.kind || null, dur: it ? +(it.out - it.in).toFixed(3) : null }; });
 }
 /** one join changed, the others kept */
-export function joinCommand(project, i, kind) {
-  const ks = joins(project).map((j) => j.kind); if (i < 0 || i >= ks.length) return null;
-  ks[i] = kind || null;
-  return planCommand(project, ks, `Join ${i + 1}: ${kind ? KINDS[kind]?.label : 'Cut'}`);
+export function joinCommand(project, i, kind, dur) {
+  const js = joins(project), ks = js.map((j) => j.kind), ds = js.map((j) => j.dur); if (i < 0 || i >= ks.length) return null;
+  if (kind !== undefined) { ks[i] = kind || null; if (kind && dur == null) ds[i] = null; }
+  if (dur != null) ds[i] = dur;
+  return planCommand(project, ks, kind !== undefined ? `Join ${i + 1}: ${kind ? KINDS[kind]?.label : 'Cut'}` : `Join ${i + 1}: ${dur.toFixed(2)} s`, ds);
 }
 
 /** match-cut helper: move B's in-point (±1 s) to the frame that looks most like A's last frame; returns a command */

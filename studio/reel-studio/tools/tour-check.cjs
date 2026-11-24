@@ -127,6 +127,38 @@ function shapeDiff(a, b) {
   const undo = await ev(() => { const ed = window.kbbEditor; ed.history.undo(); ed.history.undo(); ed.history.undo(); return ed.project.tracks.flatMap((t) => t.items).filter((i) => i.type === 'look.transition').length; });
   ok(undo === 0, `undo: the two join changes, then the Office tour, are one step each (${undo} transitions left)`);
 
+  // ── the standalone template: 🏢 Office tour in the "Do it for me" bar opens its own tab ──
+  await page.click('.doit-btn[data-mod="office-tour"]');
+  await page.waitForSelector('[data-x="tour"] [data-act="make-tour"]', { timeout: 20000 });
+  const tp = await ev(() => ({ joins: document.querySelectorAll('[data-x="tour-joins"] select[data-join]').length, rooms: document.querySelectorAll('[data-x="tour-rooms"] input[data-room]').length, head: document.querySelector('[data-x="tour"] .tour-head')?.textContent }));
+  ok(tp.joins === 2 && tp.rooms === 3, `🏢 Office tour (top bar) opens its own tab: ${tp.head}; ${tp.joins} join rows, ${tp.rooms} room-name lines`);
+  await page.fill('[data-x="tour-rooms"] input[data-room="0"]', 'Entrance');
+  await page.fill('[data-x="tour-rooms"] input[data-room="1"]', 'Reception');
+  await page.fill('[data-x="tour-rooms"] input[data-room="2"]', 'Consultation rooms');
+  await page.fill('[data-x="end-title"]', 'Planet Careers');
+  await page.click('.tour-styles [data-style="calm"]');
+  await page.click('[data-act="make-tour"]');
+  await page.waitForFunction(() => window.kbbEditor.project.tracks.flatMap((t) => t.items).some((i) => i.tour === 'end'), null, { timeout: 120000 });
+  await page.waitForTimeout(600);
+  const made = await ev(async () => {
+    const T = await import('/app/tour/index.js'), p = window.kbbEditor.project, all = p.tracks.flatMap((t) => t.items);
+    const cl = T.clipsOf(p), end = all.find((i) => i.tour === 'end');
+    return { kinds: window.LK.joins(p).map((j) => j.kind), rooms: all.filter((i) => i.tour === 'room').map((i) => i.text), firstIn: cl[0].in, firstOut: cl[0].out,
+      endAt: end && +end.t0.toFixed(3), lastEnd: +(cl[cl.length - 1].t0 + (cl[cl.length - 1].out - cl[cl.length - 1].in) / (cl[cl.length - 1].speed || 1)).toFixed(3), title: end?.style?.title,
+      dur: (await import('/app/core/project.js')).projectDuration(p) };
+  });
+  ok(JSON.stringify(made.kinds) === JSON.stringify(['lens', 'white']) && made.rooms.join('|') === 'Entrance|Reception|Consultation rooms' && made.firstIn >= 0.39 && made.firstOut <= 3.61
+    && made.endAt === made.lastEnd && made.title === 'Planet Careers' && made.dur >= made.lastEnd + 3,
+    `🏢 Make the office tour (Calm): joins ${made.kinds.join(' → ')}; room names ${made.rooms.join(', ')}; clip 1 trimmed to ${made.firstIn}–${made.firstOut} s for room to move; end card "${made.title}" from ${made.endAt} s (video ${made.dur.toFixed(2)} s)`);
+  await page.fill('[data-x="tour-joins"] input[data-len="0"]', '1.4'); await page.dispatchEvent('[data-x="tour-joins"] input[data-len="0"]', 'change');
+  await page.waitForFunction(() => Math.abs((window.LK.joins(window.kbbEditor.project)[0].dur || 0) - 1.4) < 0.02, null, { timeout: 10000 }).catch(() => {});
+  const lens = await ev(() => window.LK.joins(window.kbbEditor.project).map((j) => [j.kind, j.dur]));
+  ok(Math.abs(lens[0][1] - 1.4) < 0.02 && lens[0][0] === 'lens' && lens[1][0] === 'white', `a join's length changed by itself: ${JSON.stringify(lens)}`);
+  await page.click('[data-x="tour-joins"] [data-watch="0"]'); await page.waitForTimeout(500);
+  const playing = await ev(() => window.kbbEditor.playing);
+  ok(playing, '▶ plays the join in the preview');
+  if (process.env.TOUR_SHOTS) await shot('tour-02-office-tour-tab');
+
   ok(!errors.length, `no console errors${errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''}`);
   ok(!outside.length, `nothing left 127.0.0.1${outside.length ? ': ' + outside.slice(0, 3).join(' ') : ''}`);
   await browser.close();

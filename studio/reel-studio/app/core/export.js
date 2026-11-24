@@ -234,7 +234,7 @@ export async function exportMp4(project, media, opts = {}) {
  *   const f = await openFrames(project, media, scale); await f.load(t); renderFrame(ctx, project, t, { source: f.source }); f.close();
  */
 export async function openFrames(project, media, scale) {
-  const readers = new Map(), streams = new Map(), frames = new Map(), hReaders = new Map();
+  const readers = new Map(), streams = new Map(), frames = new Map(), hReaders = new Map(), hBroken = new Set();
   const source = (item) => frames.get(item.id) || null;
   const readerFor = async (id) => { if (!readers.has(id)) readers.set(id, await media.openReader(id)); return readers.get(id); };
   // one decoder stream per media for the retimed items, its frames as large as the export draws them (≤ the source)
@@ -281,9 +281,17 @@ export async function openFrames(project, media, scale) {
       const fn = handleNeeds.get(item.type); if (!fn) continue;
       for (const n of fn(project, item, t) || []) {
         // a reader of its own: one reader may hand back the same picture object for every frame (a <video> element)
-        if (!hReaders.has(n.media)) hReaders.set(n.media, await media.openReader(n.media));
-        const r = hReaders.get(n.media);
-        if (r) { const f = await r.frame(n.srcT); if (f) frames.set(n.key, f); }
+        // never allowed to stall the export: a handle that does not decode in 4 s is dropped for that media (the
+        // transition then holds the clip's edge frame, as it always did)
+        if (hBroken.has(n.media)) continue;
+        const to = (ms) => new Promise((res) => setTimeout(() => res('timeout'), ms));
+        try {
+          if (!hReaders.has(n.media)) { const r0 = await Promise.race([media.openReader(n.media), to(8000)]); if (r0 === 'timeout') throw new Error('open timed out'); hReaders.set(n.media, r0); }
+          const r = hReaders.get(n.media);
+          const f = r ? await Promise.race([r.frame(n.srcT), to(4000)]) : null;
+          if (f === 'timeout') throw new Error('frame timed out');
+          if (f) frames.set(n.key, f);
+        } catch (e) { hBroken.add(n.media); console.warn('[export] transition handle off for', n.media, e.message); }
       }
     }
   }

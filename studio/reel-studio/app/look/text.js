@@ -15,6 +15,7 @@ export const PRESETS = {
   price: { label: 'Price slam', text: 'AED 99', sub: 'AED 149', box: [0.12, 0.36, 0.76, 0.22], dur: 2.6 },
   countdown: { label: 'Countdown', text: 'Sale ends in', value: 3, box: [0.25, 0.32, 0.5, 0.3], dur: 3 },
   checklist: { label: 'Checklist ticks', text: 'What you need', items: ['Passport', 'Bank statement', 'Offer letter'], box: [0.1, 0.3, 0.8, 0.36], dur: 3.6 },
+  room: { label: 'Room name (minimal)', text: 'Reception', box: [0.05, 0.84, 0.6, 0.07], dur: 3 },
   lowerthird: { label: 'Lower third', text: 'Dr. Sara Khan', sub: 'Skin specialist', box: [0.06, 0.72, 0.72, 0.1], dur: 4 },
   counter: { label: 'Number counter', text: 'happy students', value: 10000, suffix: '+', box: [0.1, 0.36, 0.8, 0.22], dur: 2.6 },
   'rtl-kinetic': { label: 'Arabic kinetic (RTL)', text: 'بشرة نضرة في سبعة أيام', box: [0.08, 0.38, 0.84, 0.18], dur: 3, ar: true },
@@ -127,6 +128,16 @@ const DRAW = {
       ctx.fillText(it, ar ? w - size * 1.5 - (1 - f) * size : size * 1.5 + (1 - f) * size, y, w - size * 1.6);
       ctx.globalAlpha /= f; y += lh;
     });
+  },
+  // the Office tour's room name: small, white, spaced capitals, no box; it drifts in and fades (exitK fades it out)
+  room(ctx, s, w, h, lt, dur, text) {
+    const f = easeOut(lt / 0.7), ar = isAr(text), size = h * 0.42;
+    ctx.globalAlpha *= f; ctx.textBaseline = 'middle'; ctx.direction = ar ? 'rtl' : 'ltr'; ctx.textAlign = ar ? 'right' : 'left';
+    ctx.font = font(s, 500, size, text); if ('letterSpacing' in ctx && !ar) ctx.letterSpacing = `${(size * 0.22).toFixed(1)}px`;
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = size * 0.6; ctx.fillStyle = s.colors?.text || '#ffffff';
+    const label = ar ? text : text.toUpperCase();
+    ctx.fillText(label, ar ? w - (1 - f) * size : (1 - f) * size, h / 2, w);
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'; ctx.shadowBlur = 0;
   },
   lowerthird(ctx, s, w, h, lt, dur, text) {
     const c = C(s), f = easeOut(lt / 0.45), bw = w * f;
