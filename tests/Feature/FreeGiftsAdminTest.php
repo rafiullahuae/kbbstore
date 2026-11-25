@@ -194,7 +194,8 @@ it('creates a gift-only product with its photo, price and stock, and validates e
         ->and($r->json('created.brand'))->toBe('Isntree')
         // The row the screen draws is the allowlist, never the model.
         // gift_kind: Lane FG4's remembered gift type, admin-only, added on purpose.
-        ->and(array_keys($r->json('created')))->toBe(['id', 'name', 'brand', 'image', 'thumb', 'type', 'status', 'in_stock', 'stock', 'gift_only', 'gift_kind', 'price']);
+        // gift_stock: Lane GST's own gift stock (null = shared with the shop), admin-only, added on purpose.
+        ->and(array_keys($r->json('created')))->toBe(['id', 'name', 'brand', 'image', 'thumb', 'type', 'status', 'in_stock', 'stock', 'gift_only', 'gift_stock', 'gift_kind', 'price']);
 });
 
 it('refuses product create to a role without freegifts.manage', function () {

@@ -687,7 +687,6 @@ class FreeGiftsController extends Controller
                 'id' => (int) $p->id,
                 'name' => (string) $p->name,
                 'stock' => ($g = FreeGifts::giftStockOf($p)) !== null ? $g : ($p->manage_stock ? (int) $p->stock : null),
-                'gift_stock' => $g,
                 'level' => ($g !== null ? $g < 1 : ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1))) ? 'out' : 'low',
             ])->values(),
         ]);
