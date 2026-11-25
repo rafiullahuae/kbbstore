@@ -1,0 +1,106 @@
+[
+ {
+  "w": 1280,
+  "product": "Gift stock of Black Rice Hyaluronic Toner Mini (empty: gives from the shop stock)",
+  "placeholder": "Shop 80",
+  "before": {
+   "value": "",
+   "badge": "In stock · 80",
+   "off": false,
+   "note": "Shared with the shop",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 1280
+  },
+  "set6": {
+   "value": "6",
+   "badge": "Gift stock low · 6",
+   "off": true,
+   "note": "",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 1280
+  },
+  "plus": {
+   "value": "7",
+   "badge": "Gift stock low · 7",
+   "off": true,
+   "note": "",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 1280
+  },
+  "minus": {
+   "value": "6",
+   "badge": "Gift stock low · 6",
+   "off": true,
+   "note": "",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 1280
+  },
+  "back": {
+   "value": "",
+   "badge": "In stock · 80",
+   "off": false,
+   "note": "Shared with the shop",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 1280
+  },
+  "writes": 4,
+  "errors": []
+ },
+ {
+  "w": 390,
+  "product": "Gift stock of Black Rice Hyaluronic Toner Mini (empty: gives from the shop stock)",
+  "placeholder": "Shop 80",
+  "before": {
+   "value": "",
+   "badge": "In stock · 80",
+   "off": false,
+   "note": "Shared with the shop",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 390
+  },
+  "set6": {
+   "value": "6",
+   "badge": "Gift stock low · 6",
+   "off": true,
+   "note": "",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 390
+  },
+  "plus": {
+   "value": "7",
+   "badge": "Gift stock low · 7",
+   "off": true,
+   "note": "",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 390
+  },
+  "minus": {
+   "value": "6",
+   "badge": "Gift stock low · 6",
+   "off": true,
+   "note": "",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 390
+  },
+  "back": {
+   "value": "",
+   "badge": "In stock · 80",
+   "off": false,
+   "note": "Shared with the shop",
+   "clickable": true,
+   "h": 30,
+   "scrollW": 390
+  },
+  "writes": 4,
+  "errors": []
+ }
+]

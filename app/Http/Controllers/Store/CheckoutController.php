@@ -967,6 +967,8 @@ class CheckoutController extends Controller
                                 'variant_id' => $kbbGift['variant_id'] ?? null,
                                 'quantity' => $kbbGift['quantity'],
                                 'label' => $kbbGiftName,
+                                // (Lane GS) a gift with its own gift stock takes from that, never the shop's
+                                'gift' => true,
                             ]], (int) $order->id);
 
                             $order->gifts()->create([

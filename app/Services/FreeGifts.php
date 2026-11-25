@@ -326,6 +326,50 @@ final class FreeGifts
 
     private ?array $config = null;
 
+    // ── (Lane GS) a product's own gift stock (product_gift_stocks; no row = gives from its shop stock) ──
+
+    public const GIFT_STOCK_ATTR = 'fg_gift_stock';
+
+    /** the subquery that reads a product's gift stock beside its own columns (NULL when it has none) */
+    public static function giftStockSub(): \Illuminate\Database\Query\Builder
+    {
+        return \Illuminate\Support\Facades\DB::table('product_gift_stocks')->select('stock')->whereColumn('product_gift_stocks.product_id', 'products.id')->limit(1);
+    }
+
+    /** the gift stock this product gives from, or null when it gives from its shop stock */
+    public static function giftStockOf(?Product $p): ?int
+    {
+        if ($p === null) {
+            return null;
+        }
+        $v = $p->getAttribute(self::GIFT_STOCK_ATTR);
+
+        return $v === null ? null : (int) $v;
+    }
+
+    /**
+     * Fills the gift stock on products loaded without it, in ONE query, none when every product carries it.
+     *
+     * @param  array<int, Product|null>  $products
+     */
+    public static function primeGiftStock(array $products): void
+    {
+        $missing = [];
+        foreach ($products as $p) {
+            if ($p instanceof Product && ! array_key_exists(self::GIFT_STOCK_ATTR, $p->getAttributes())) {
+                $missing[(int) $p->id] = $p;
+            }
+        }
+        if ($missing === []) {
+            return;
+        }
+        $have = \Illuminate\Support\Facades\DB::table('product_gift_stocks')->whereIn('product_id', array_keys($missing))->pluck('stock', 'product_id');
+        foreach ($missing as $id => $p) {
+            $p->setAttribute(self::GIFT_STOCK_ATTR, isset($have[$id]) ? (int) $have[$id] : null);
+            $p->syncOriginalAttribute(self::GIFT_STOCK_ATTR);
+        }
+    }
+
     public function __construct(private SettingsService $settings) {}
 
     /** The owner's settings, every key present, every select one of its own options. */
@@ -963,6 +1007,9 @@ final class FreeGifts
     public function linesFor(array $range, ?array $products = null, ?array $variants = null): array
     {
         $products ??= $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
+        // (Lane GS) products a caller loaded itself (the admin's strip, reports, manual orders, the owner app) get
+        // their gift stock in one query; the shop's own loader already carries it
+        self::primeGiftStock($products);
         // (Lane FGV) The chosen variations: no query unless a gift names one.
         $variants ??= $this->variantsFor([$range]);
         $label = self::rangeLabel($range);
@@ -970,7 +1017,14 @@ final class FreeGifts
         $out = [];
 
         $available = static function (?Product $p): int {
-            if ($p === null || $p->status !== 'publish' || $p->type === 'variable' || $p->stock_status !== 'instock') {
+            if ($p === null || $p->status !== 'publish' || $p->type === 'variable') {
+                return 0;
+            }
+            // (Lane GS) a product with its own gift stock gives from that alone, whatever the shop stock says
+            if (($gift = self::giftStockOf($p)) !== null) {
+                return max(0, $gift);
+            }
+            if ($p->stock_status !== 'instock') {
                 return 0;
             }
 
@@ -1241,6 +1295,9 @@ final class FreeGifts
             if ($p->type === 'variable') {
                 return 'it has options (shades/sizes)';
             }
+            if (($gift = self::giftStockOf($p)) !== null) {
+                return $gift < $want ? ($gift < 1 ? 'its gift stock is 0' : 'only '.$gift.' left in its gift stock') : 'not enough units';
+            }
             if ($p->stock_status !== 'instock') {
                 return 'it is marked out of stock';
             }
@@ -1319,7 +1376,10 @@ final class FreeGifts
         $rows = Product::query()
             ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
             ->whereIn('products.id', $ids)
-            ->get(array_merge(self::PRODUCT_COLUMNS, ['brands.name as fg_brand_name', 'brands.slug as fg_brand_slug']))
+            ->select(array_merge(self::PRODUCT_COLUMNS, ['brands.name as fg_brand_name', 'brands.slug as fg_brand_slug']))
+            // (Lane GS) the gift stock rides in the same statement: still ONE query for the box
+            ->selectSub(self::giftStockSub(), self::GIFT_STOCK_ATTR)
+            ->get()
             ->each(static function (Product $p): void {
                 $brand = null;
 

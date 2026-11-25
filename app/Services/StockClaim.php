@@ -77,7 +77,15 @@ final class StockClaim
      * claimOne() below, so a bad value should be impossible — which is exactly
      * the assumption worth not making about a table name that becomes SQL.
      */
-    public const SHELVES = ['products', 'product_variants'];
+    public const SHELVES = ['products', 'product_variants', 'product_gift_stocks'];
+
+    /**
+     * (Lane GS) A gift's OWN shelf. A free-gift line passed with `'gift' => true` (and no variation) for a product
+     * that has a gift stock row takes its units from that row -- never from the shop stock -- and is not opened
+     * into a set's members (the gift stock counts the gift as it is given). No row: the line is an ordinary line
+     * and takes from the product as it always did.
+     */
+    public const GIFT_SHELF = 'product_gift_stocks';
 
     private const LEDGER = 'order_stock_claims';
 
@@ -149,6 +157,9 @@ final class StockClaim
          * session() both call claim(); a second implementation for the second
          * door is the drift this class was extracted to end.
          */
+        // (Lane GS) gift lines whose product has its own gift stock: claimed from that row, kept out of the rest
+        $lines = $this->claimGiftShelves($lines, $orderId);
+
         $lines = app(StockSetRule::class)->expand($lines);
 
         if ($lines === []) {
@@ -202,6 +213,59 @@ final class StockClaim
      * @param  list<array{product_id:int, variant_id:?int, quantity:int, label:string}>  $lines
      * @return array{products: \Illuminate\Support\Collection, variants: \Illuminate\Support\Collection}
      */
+    /**
+     * (Lane GS) Takes the gift lines that have a gift stock row off THAT row (locked, the same `WHERE stock >= n`
+     * and ledger row as every shelf, so release() puts them back there) and returns the lines left to claim as
+     * before. A gift stock that is out reads as sold out: the caller's StockUnavailable path skips the gift.
+     *
+     * @param  list<array<string, mixed>>  $lines
+     * @return list<array<string, mixed>>
+     */
+    private function claimGiftShelves(array $lines, ?int $orderId): array
+    {
+        $ids = [];
+        foreach ($lines as $line) {
+            if (($line['gift'] ?? false) === true && ($line['variant_id'] ?? null) === null && (int) ($line['product_id'] ?? 0) > 0) {
+                $ids[(int) $line['product_id']] = true;
+            }
+        }
+        if ($ids === []) {
+            return $lines;
+        }
+
+        $rows = DB::table(self::GIFT_SHELF)->whereIn('product_id', array_keys($ids))->orderBy('id')->lockForUpdate()->get()->keyBy('product_id');
+        if ($rows->isEmpty()) {
+            return $lines;
+        }
+
+        $rest = [];
+        $want = [];
+        foreach ($lines as $line) {
+            $row = ($line['gift'] ?? false) === true && ($line['variant_id'] ?? null) === null ? $rows->get((int) ($line['product_id'] ?? 0)) : null;
+            if ($row === null) {
+                $rest[] = $line;
+
+                continue;
+            }
+            $key = (int) $row->id;
+            $want[$key] ??= ['row' => $row, 'quantity' => 0, 'label' => (string) ($line['label'] ?? 'Gift'), 'product_id' => (int) $line['product_id']];
+            $want[$key]['quantity'] += max(0, (int) ($line['quantity'] ?? 0));
+        }
+
+        foreach ($want as $w) {
+            if ($w['quantity'] < 1) {
+                continue;
+            }
+            if ((string) $w['row']->stock_status !== 'instock' || (int) $w['row']->stock < 1) {
+                throw new StockUnavailable($w['label'] . ' is sold out.', $w['label']);
+            }
+            $this->takeFromShelf(self::GIFT_SHELF, (int) $w['row']->id, $w['row']->stock, $w['quantity'], $w['label'], $orderId,
+                ['product_id' => $w['product_id'], 'variant_id' => null, 'quantity' => $w['quantity'], 'label' => $w['label']], false);
+        }
+
+        return $rest;
+    }
+
     private function lockRows(array $lines): array
     {
         $productIds = [];

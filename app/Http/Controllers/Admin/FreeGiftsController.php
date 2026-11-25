@@ -534,6 +534,40 @@ class FreeGiftsController extends Controller
         return response()->json($this->payload());
     }
 
+    /**
+     * POST /admin-api/free-gifts/products/{id}/gift-stock {stock: int|null} -- (Lane GS) the product's OWN gift
+     * stock, set inline on Gift products (the owner, 25 Nov 2026: "edit instantly on the same page with one click
+     * ... it should also count as separate quantity when we set on gifts page"). A number: gifts of this product
+     * give from it alone and checkout takes their units from it (StockClaim::GIFT_SHELF), never from the shop
+     * stock. Empty / null: the row goes and the product gives from its shop stock again, as before.
+     */
+    public function giftStock(Request $request, int $id): JsonResponse
+    {
+        if (! Product::query()->whereKey($id)->exists()) {
+            return response()->json(['error' => 'not_found'], 404);
+        }
+
+        $raw = $request->input('stock');
+
+        if ($raw === null || $raw === '') {
+            DB::table('product_gift_stocks')->where('product_id', $id)->delete();
+
+            return response()->json($this->payload());
+        }
+
+        $data = $request->validate(['stock' => ['required', 'integer', 'min:0', 'max:1000000']]);
+        $stock = (int) $data['stock'];
+        $now = now();
+
+        DB::table('product_gift_stocks')->updateOrInsert(
+            ['product_id' => $id],
+            ['stock' => $stock, 'stock_status' => $stock > 0 ? 'instock' : 'outofstock', 'backorders' => false, 'updated_at' => $now],
+        );
+        DB::table('product_gift_stocks')->where('product_id', $id)->whereNull('created_at')->update(['created_at' => $now]);
+
+        return response()->json($this->payload());
+    }
+
     /** POST /admin-api/free-gifts/products -- a new gift-only product: name, brand, stock. */
     public function createProduct(Request $request): JsonResponse
     {
@@ -631,13 +665,17 @@ class FreeGiftsController extends Controller
         $top = $lines->first();
 
         $usedIds = DB::table('free_gift_range_items')->distinct()->pluck('product_id')->map(fn ($id) => (int) $id)->all();
+        // (Lane GS) a gift with its own gift stock is alerted on THAT number, the others on their shop stock
         $stock = $usedIds === [] ? collect() : Product::query()
             ->whereIn('id', $usedIds)
-            ->where(fn ($q) => $q->where('stock_status', '<>', 'instock')
-                ->orWhere(fn ($w) => $w->where('manage_stock', true)->where('stock', '<=', self::LOW_STOCK)))
-            ->orderBy('stock')
-            ->orderBy('name')
-            ->get(['id', 'name', 'stock_status', 'manage_stock', 'stock']);
+            ->select(['id', 'name', 'stock_status', 'manage_stock', 'stock'])
+            ->selectSub(FreeGifts::giftStockSub(), FreeGifts::GIFT_STOCK_ATTR)
+            ->get()
+            ->filter(fn (Product $p) => ($g = FreeGifts::giftStockOf($p)) !== null
+                ? $g <= self::LOW_STOCK
+                : ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock <= self::LOW_STOCK)))
+            ->sortBy([fn ($a, $b) => (FreeGifts::giftStockOf($a) ?? (int) $a->stock) <=> (FreeGifts::giftStockOf($b) ?? (int) $b->stock), fn ($a, $b) => strcmp((string) $a->name, (string) $b->name)])
+            ->values();
 
         return response()->json([
             'days' => self::STATS_DAYS,
@@ -648,8 +686,9 @@ class FreeGiftsController extends Controller
             'stock_alerts' => $stock->map(fn (Product $p) => [
                 'id' => (int) $p->id,
                 'name' => (string) $p->name,
-                'stock' => $p->manage_stock ? (int) $p->stock : null,
-                'level' => ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1)) ? 'out' : 'low',
+                'stock' => ($g = FreeGifts::giftStockOf($p)) !== null ? $g : ($p->manage_stock ? (int) $p->stock : null),
+                'gift_stock' => $g,
+                'level' => ($g !== null ? $g < 1 : ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1))) ? 'out' : 'low',
             ])->values(),
         ]);
     }
@@ -743,7 +782,9 @@ class FreeGiftsController extends Controller
             ->orderBy('name')
             ->orderBy('id')
             ->limit(200)
-            ->get(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at']);
+            ->select(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at'])
+            ->selectSub(FreeGifts::giftStockSub(), FreeGifts::GIFT_STOCK_ATTR)   // (Lane GS) same statement
+            ->get();
         $byId = $giftProducts->keyBy('id');
         // (Lane FGV) The chosen variations on the ranges, one query, none when none.
         $variants = FreeGifts::variants($items->flatten(1)->pluck('variant_id')->filter()->all());
@@ -816,6 +857,7 @@ class FreeGiftsController extends Controller
             'type' => 'variation',
             'in_stock' => $v->stock_status === 'instock' && ($counted === null || $counted > 0),
             'stock' => $counted,
+            'gift_stock' => null,   // (Lane GS) a chosen variation gives from its own shelf, as before
             'price' => Money::plain(max(0, (int) $v->effectivePrice())),
         ]);
     }
@@ -833,6 +875,8 @@ class FreeGiftsController extends Controller
             'in_stock' => $p->stock_status === 'instock' && (! $p->manage_stock || (int) $p->stock > 0),
             'stock' => $p->manage_stock ? (int) $p->stock : null,
             'gift_only' => (bool) $p->gift_only,
+            // (Lane GS) null = gives from the shop stock; a number = its own gift stock
+            'gift_stock' => FreeGifts::giftStockOf($p),
             'gift_kind' => FreeGifts::kind($p->gift_kind ?? null),
             'price' => Money::plain(max(0, (int) $p->effectivePrice())),
         ];
