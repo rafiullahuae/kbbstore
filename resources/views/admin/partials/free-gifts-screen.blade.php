@@ -659,7 +659,7 @@ select.fg-in{padding-inline-end:28px}
      gifts as listed. */
   function availOf(p) {
     if (!p || p.status !== 'publish' || p.type === 'variable') return 0;
-    /* (Lane GS) a product with its own gift stock gives from that alone */
+    /* (Lane GST) a product with its own gift stock gives from that alone */
     if (hasGs(p)) return Math.max(0, p.gift_stock);
     if (!p.in_stock) return 0;
     return p.stock === null ? Infinity : Math.max(0, p.stock);
@@ -786,7 +786,7 @@ select.fg-in{padding-inline-end:28px}
     /* Lane FGV: a product with options is given as one of its variations; a
        gift row always carries the variation itself (type "variation"). */
     if (p.type === 'variable') return { level: 'in', cls: 'blue', text: 'Has options · gift a variation' };
-    /* (Lane GS) its own gift stock, separate from the shop's: gifts count down only this number */
+    /* (Lane GST) its own gift stock, separate from the shop's: gifts count down only this number */
     if (hasGs(p)) {
       if (p.gift_stock < 1) return { level: 'out', cls: 'red', text: 'Gift stock 0' };
       if (qty && p.gift_stock < qty) return { level: 'low', cls: 'amber', text: 'Only ' + p.gift_stock + ' in gift stock' };
@@ -2032,7 +2032,7 @@ select.fg-in{padding-inline-end:28px}
     kids.push(el('div', { class: 'fg-pt', role: 'list', 'aria-label': 'Gift products', style: 'margin-top:14px' }, rows));
     wrap.appendChild(el('section', { class: 'card fg-card' }, kids));
   }
-  /* (Lane GS) A product's OWN gift stock, edited right here (the owner, 25 Nov 2026: "i need those products to
+  /* (Lane GST) A product's OWN gift stock, edited right here (the owner, 25 Nov 2026: "i need those products to
      edit instantly on the same page with one click and also it should also count as seperate quantity when we set
      on gifts page"). A number: gifts of this product give from it and orders take their units from it, never from
      the shop stock (and shop sales never touch it). Empty: the product gives from its shop stock, as before.

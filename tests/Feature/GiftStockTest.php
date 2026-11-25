@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * A PRODUCT'S OWN GIFT STOCK (Lane GS; the owner, 25 Nov 2026):
+ * A PRODUCT'S OWN GIFT STOCK (Lane GST; the owner, 25 Nov 2026):
  *
  *   "On the backend Gifts product page, when we try to edit any product quantity, it takes us to the shop etc. i need
  *    those products to edit instantly on the same page with one click and also it should also count as seperate

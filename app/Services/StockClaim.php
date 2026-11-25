@@ -80,7 +80,7 @@ final class StockClaim
     public const SHELVES = ['products', 'product_variants', 'product_gift_stocks'];
 
     /**
-     * (Lane GS) A gift's OWN shelf. A free-gift line passed with `'gift' => true` (and no variation) for a product
+     * (Lane GST) A gift's OWN shelf. A free-gift line passed with `'gift' => true` (and no variation) for a product
      * that has a gift stock row takes its units from that row -- never from the shop stock -- and is not opened
      * into a set's members (the gift stock counts the gift as it is given). No row: the line is an ordinary line
      * and takes from the product as it always did.
@@ -157,7 +157,7 @@ final class StockClaim
          * session() both call claim(); a second implementation for the second
          * door is the drift this class was extracted to end.
          */
-        // (Lane GS) gift lines whose product has its own gift stock: claimed from that row, kept out of the rest
+        // (Lane GST) gift lines whose product has its own gift stock: claimed from that row, kept out of the rest
         $lines = $this->claimGiftShelves($lines, $orderId);
 
         $lines = app(StockSetRule::class)->expand($lines);
@@ -214,7 +214,7 @@ final class StockClaim
      * @return array{products: \Illuminate\Support\Collection, variants: \Illuminate\Support\Collection}
      */
     /**
-     * (Lane GS) Takes the gift lines that have a gift stock row off THAT row (locked, the same `WHERE stock >= n`
+     * (Lane GST) Takes the gift lines that have a gift stock row off THAT row (locked, the same `WHERE stock >= n`
      * and ledger row as every shelf, so release() puts them back there) and returns the lines left to claim as
      * before. A gift stock that is out reads as sold out: the caller's StockUnavailable path skips the gift.
      *

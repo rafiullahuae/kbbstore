@@ -535,7 +535,7 @@ class FreeGiftsController extends Controller
     }
 
     /**
-     * POST /admin-api/free-gifts/products/{id}/gift-stock {stock: int|null} -- (Lane GS) the product's OWN gift
+     * POST /admin-api/free-gifts/products/{id}/gift-stock {stock: int|null} -- (Lane GST) the product's OWN gift
      * stock, set inline on Gift products (the owner, 25 Nov 2026: "edit instantly on the same page with one click
      * ... it should also count as separate quantity when we set on gifts page"). A number: gifts of this product
      * give from it alone and checkout takes their units from it (StockClaim::GIFT_SHELF), never from the shop
@@ -665,7 +665,7 @@ class FreeGiftsController extends Controller
         $top = $lines->first();
 
         $usedIds = DB::table('free_gift_range_items')->distinct()->pluck('product_id')->map(fn ($id) => (int) $id)->all();
-        // (Lane GS) a gift with its own gift stock is alerted on THAT number, the others on their shop stock
+        // (Lane GST) a gift with its own gift stock is alerted on THAT number, the others on their shop stock
         $stock = $usedIds === [] ? collect() : Product::query()
             ->whereIn('id', $usedIds)
             ->select(['id', 'name', 'stock_status', 'manage_stock', 'stock'])
@@ -783,7 +783,7 @@ class FreeGiftsController extends Controller
             ->orderBy('id')
             ->limit(200)
             ->select(['id', 'name', 'slug', 'sku', 'brand_id', 'image', 'type', 'status', 'stock_status', 'manage_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'sale_price', 'sale_starts_at', 'sale_ends_at'])
-            ->selectSub(FreeGifts::giftStockSub(), FreeGifts::GIFT_STOCK_ATTR)   // (Lane GS) same statement
+            ->selectSub(FreeGifts::giftStockSub(), FreeGifts::GIFT_STOCK_ATTR)   // (Lane GST) same statement
             ->get();
         $byId = $giftProducts->keyBy('id');
         // (Lane FGV) The chosen variations on the ranges, one query, none when none.
@@ -857,7 +857,7 @@ class FreeGiftsController extends Controller
             'type' => 'variation',
             'in_stock' => $v->stock_status === 'instock' && ($counted === null || $counted > 0),
             'stock' => $counted,
-            'gift_stock' => null,   // (Lane GS) a chosen variation gives from its own shelf, as before
+            'gift_stock' => null,   // (Lane GST) a chosen variation gives from its own shelf, as before
             'price' => Money::plain(max(0, (int) $v->effectivePrice())),
         ]);
     }
@@ -875,7 +875,7 @@ class FreeGiftsController extends Controller
             'in_stock' => $p->stock_status === 'instock' && (! $p->manage_stock || (int) $p->stock > 0),
             'stock' => $p->manage_stock ? (int) $p->stock : null,
             'gift_only' => (bool) $p->gift_only,
-            // (Lane GS) null = gives from the shop stock; a number = its own gift stock
+            // (Lane GST) null = gives from the shop stock; a number = its own gift stock
             'gift_stock' => FreeGifts::giftStockOf($p),
             'gift_kind' => FreeGifts::kind($p->gift_kind ?? null),
             'price' => Money::plain(max(0, (int) $p->effectivePrice())),

@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /*
- * Lane GS: a product's own GIFT STOCK (the owner, 25 Nov 2026: "it should also count as seperate quantity when we
+ * Lane GST: a product's own GIFT STOCK (the owner, 25 Nov 2026: "it should also count as seperate quantity when we
  * set on gifts page" -- chosen: "Own gift stock: gifts use only that number; shop sales use only the shop stock").
  *
  * One row per product that has a gift stock. NO ROW = the product gives from its shop stock exactly as before, so

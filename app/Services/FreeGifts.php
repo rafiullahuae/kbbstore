@@ -326,7 +326,7 @@ final class FreeGifts
 
     private ?array $config = null;
 
-    // ── (Lane GS) a product's own gift stock (product_gift_stocks; no row = gives from its shop stock) ──
+    // ── (Lane GST) a product's own gift stock (product_gift_stocks; no row = gives from its shop stock) ──
 
     public const GIFT_STOCK_ATTR = 'fg_gift_stock';
 
@@ -1007,7 +1007,7 @@ final class FreeGifts
     public function linesFor(array $range, ?array $products = null, ?array $variants = null): array
     {
         $products ??= $this->products(array_map(static fn (array $g) => (int) $g[0], $range['gifts']));
-        // (Lane GS) products a caller loaded itself (the admin's strip, reports, manual orders, the owner app) get
+        // (Lane GST) products a caller loaded itself (the admin's strip, reports, manual orders, the owner app) get
         // their gift stock in one query; the shop's own loader already carries it
         self::primeGiftStock($products);
         // (Lane FGV) The chosen variations: no query unless a gift names one.
@@ -1020,7 +1020,7 @@ final class FreeGifts
             if ($p === null || $p->status !== 'publish' || $p->type === 'variable') {
                 return 0;
             }
-            // (Lane GS) a product with its own gift stock gives from that alone, whatever the shop stock says
+            // (Lane GST) a product with its own gift stock gives from that alone, whatever the shop stock says
             if (($gift = self::giftStockOf($p)) !== null) {
                 return max(0, $gift);
             }
@@ -1377,7 +1377,7 @@ final class FreeGifts
             ->leftJoin('brands', 'brands.id', '=', 'products.brand_id')
             ->whereIn('products.id', $ids)
             ->select(array_merge(self::PRODUCT_COLUMNS, ['brands.name as fg_brand_name', 'brands.slug as fg_brand_slug']))
-            // (Lane GS) the gift stock rides in the same statement: still ONE query for the box
+            // (Lane GST) the gift stock rides in the same statement: still ONE query for the box
             ->selectSub(self::giftStockSub(), self::GIFT_STOCK_ATTR)
             ->get()
             ->each(static function (Product $p): void {
