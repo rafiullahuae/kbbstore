@@ -77,12 +77,56 @@ function stockOf(p, qty) {
   if (!p) return ['out', 'Missing'];
   if (p.status !== 'publish') return ['out', 'Not published'];
   if (p.type === 'variable') return ['info', 'Has options · gift a variation'];
+  // (Lane GST) its own gift stock, separate from the shop's: gifts count down only this number
+  if (hasGs(p)) {
+    if (p.gift_stock < 1) return ['out', 'Gift stock 0'];
+    if (qty && p.gift_stock < qty) return ['low', 'Only ' + p.gift_stock + ' in gift stock'];
+    if (p.gift_stock <= low()) return ['low', 'Gift stock low · ' + p.gift_stock];
+    return ['ok', 'Gift stock · ' + fmt(p.gift_stock)];
+  }
   if (!p.in_stock) return ['out', 'Out of stock'];
   if (p.stock !== null && qty && p.stock < qty) return ['low', 'Only ' + p.stock + ' left'];
   if (p.stock !== null && p.stock <= low()) return ['low', 'Low · ' + p.stock + ' left'];
   if (p.stock === null) return ['low', 'Stock not tracked'];
   return ['ok', 'In stock · ' + fmt(p.stock)];
 }
+const hasGs = (p) => !!p && p.gift_stock !== null && p.gift_stock !== undefined;
+
+/* ------------------------------------------------- gift stock (Lane GST)
+   The owner, 25 Nov 2026: "in owner app, i need the system to manage, in the gifts pages" -- the console's
+   Gift products -> Gift stock, on the phone. A product with a gift stock gives its gifts from that number only
+   (shop sales keep the shop stock); empty = shared with the shop. −, + and typing a number (Enter) save at once
+   through the console's own rule (OwnerApp\GiftsController::giftStock), one request each; the answer repaints. */
+function giftProducts() {
+  const seen = {}, out = [];
+  (G.d ? G.d.ranges : []).forEach((r) => r.gifts.forEach((g) => {
+    if (g.variant_id || !g.product || seen[g.product_id]) return;
+    seen[g.product_id] = 1; out.push(g.product);
+  }));
+  return out.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+}
+const productById = (id) => giftProducts().find((p) => p.id === id) || null;
+function stockRow(p) {
+  const has = hasGs(p), ro = !can() || G.busy, n = has ? p.gift_stock : 0, s = stockOf(p);
+  return '<div class="row g-gs ' + s[0] + '" data-gsrow="' + p.id + '">' + th(p.thumb, 'sm')
+    + '<div class="rm">' + (p.brand ? '<small>' + esc(p.brand) + '</small>' : '') + '<b class="cl2">' + esc(p.name) + '</b>'
+    + '<span class="g-meta">' + spill(s) + (has ? '<button type="button" class="g-gso" data-gso="' + p.id + '"' + (ro ? ' disabled' : '') + '>Use shop stock</button>' : '<small>Shared with the shop</small>') + '</span></div>'
+    + '<span class="g-step sm g-gsstep"><button type="button" data-gsd="' + p.id + '" data-d="-1" aria-label="One fewer in the gift stock of ' + esc(p.name) + '"' + (ro || !has || n <= 0 ? ' disabled' : '') + '>−</button>'
+    + '<input type="number" inputmode="numeric" min="0" max="1000000" step="1" data-gsi="' + p.id + '" value="' + (has ? n : '') + '" placeholder="' + (p.stock === null ? 'Shop' : 'Shop ' + p.stock) + '" aria-label="Gift stock of ' + esc(p.name) + (has ? '' : ' (empty: shared with the shop)') + '"' + (ro ? ' disabled' : '') + '>'
+    + '<button type="button" data-gsd="' + p.id + '" data-d="1" aria-label="One more in the gift stock of ' + esc(p.name) + '"' + (ro ? ' disabled' : '') + '>+</button></span></div>';
+}
+async function setGiftStock(id, v) {
+  const p = productById(id);
+  if (!p || G.busy || !can()) return;
+  G.busy = true; redraw();
+  const res = await api('POST', 'gifts/products/' + id + '/gift-stock', { stock: v });
+  G.busy = false;
+  if (!res.ok) { toast(res.data.message || 'Gift stock not saved.', true); redraw(); return; }
+  take(res.data);
+  redraw();
+  toast(v === null ? p.name + ' gives from the shop stock again.' : p.name + ': gift stock ' + v + '. Shop sales keep their own stock.');
+}
+
 const spill = (s) => '<span class="pill g-' + s[0] + '">' + esc(s[1]) + '</span>';
 const gpill = (cls, t) => '<span class="pill g-' + cls + '">' + esc(t) + '</span>';
 function bands() {
@@ -233,6 +277,11 @@ function paintHome() {
   body += rows.length ? '<div class="list">' + rows.join('') + '</div>' : '<div class="card empty">No ranges yet.' + (can() ? ' <button type="button" class="tbtn" data-gadd>Add the first range</button>' : '') + '</div>';
   const gp = gaps();
   if (gp.length) body += '<p class="hint g-hint">' + gp.map((g) => 'Gap: ' + esc(amount(g.from, g.to)) + ' gives nothing.').join('<br>') + '</p>';
+  const gsp = giftProducts();
+  if (gsp.length) {
+    body += '<div class="gh"><span>Gift stock</span></div><p class="hint g-hint">A number here is this product\'s own gift stock: its gifts use only that, and shop sales keep the shop stock. Empty = shared with the shop. − / + or type a number and press Enter: it saves at once.</p>'
+      + '<div class="list" data-gstock>' + gsp.map(stockRow).join('') + '</div>';
+  }
   body += '<p class="hint g-hint">Whole dirhams: "AED 100 – 299" covers AED 100.00 to AED 299.99. If two ranges share an amount, the basket gets the higher range. A sold-out gift is skipped until it is back; the rest of the range is still given.</p>';
   screen(host, 'gifts', 0, head, body, false);
 }
@@ -602,6 +651,10 @@ export async function giftsClick(e) {
     return true;
   }
   if (t.closest('[data-gadd]')) { addRange(null); return true; }
+  const gsd = t.closest('[data-gsd]');
+  if (gsd) { const id = +gsd.getAttribute('data-gsd'), p = productById(id); if (p) setGiftStock(id, Math.max(0, (hasGs(p) ? p.gift_stock : 0) + (+gsd.getAttribute('data-d')))); return true; }
+  const gso = t.closest('[data-gso]');
+  if (gso) { setGiftStock(+gso.getAttribute('data-gso'), null); return true; }
   if (cur === 0 || !G.d) return false;
   const x = cur === 'new' ? G.drafts.new : (can() ? draft(cur) : null);
   if (!x) return false;
@@ -655,6 +708,19 @@ document.addEventListener('input', (e) => {
   else x[k] = f.value;
   lightPaint();
 });
+/* (Lane GST) A typed gift stock saves when the field is left (Enter leaves it); empty goes back to the shop stock. */
+document.addEventListener('change', (e) => {
+  const f = e.target.closest && e.target.closest('[data-gsi]');
+  if (!f || !onScreen('gifts')) return;
+  const id = +f.getAttribute('data-gsi'), p = productById(id), t = String(f.value).trim();
+  if (!p) return;
+  if (t === '') { if (hasGs(p)) setGiftStock(id, null); return; }
+  const n = Math.floor(Number(t));
+  if (!isFinite(n) || n < 0) { f.value = hasGs(p) ? String(p.gift_stock) : ''; return; }
+  if (hasGs(p) && n === p.gift_stock) return;
+  setGiftStock(id, Math.min(1000000, n));
+});
+document.addEventListener('keydown', (e) => { const f = e.target.closest && e.target.closest('[data-gsi]'); if (f && e.key === 'Enter') { e.preventDefault(); f.blur(); } });
 /* Leaving a field redraws the parts that read it (the title, the pills). */
 document.addEventListener('change', (e) => { if (e.target.closest && e.target.closest('[data-gf]') && onScreen('gifts') && cur !== 0) redraw(); });
 

@@ -39,7 +39,7 @@ class GiftsController extends Controller
     use Concerns;
 
     /** The keys a gift's product carries to the phone. */
-    public const PRODUCT_KEYS = ['id', 'name', 'brand', 'thumb', 'type', 'status', 'in_stock', 'stock', 'gift_only', 'gift_kind', 'price', 'product_name', 'variant_id', 'variant_label'];
+    public const PRODUCT_KEYS = ['id', 'name', 'brand', 'thumb', 'type', 'status', 'in_stock', 'stock', 'gift_stock', 'gift_only', 'gift_kind', 'price', 'product_name', 'variant_id', 'variant_label'];
 
     /** The fields of a range the console's saveRange() reads. */
     private const RANGE_FIELDS = ['min', 'max', 'label_en', 'label_ar', 'enabled', 'starts_on', 'ends_on', 'gifts', 'needs', 'revision'];
@@ -151,6 +151,22 @@ class GiftsController extends Controller
     }
 
     /** GET /{app}/api/gifts/products?q=&filter=&kind= -- the console's picker, its own rules. */
+    /**
+     * POST /{app}/api/gifts/products/{id}/gift-stock {stock: int|null} -- (Lane GST) a product's own gift stock, from
+     * the phone (the owner, 25 Nov 2026: "in owner app, i need the system to manage, in the gifts pages"). The
+     * console's FreeGiftsController::giftStock() decides and stores (one rule); freegifts.manage, like a range save.
+     */
+    public function giftStock(Request $request, int $id): JsonResponse
+    {
+        if ($r = $this->refuse($request, 'freegifts.manage')) {
+            return $r;
+        }
+
+        $sub = $this->sub($request, ['stock' => $request->input('stock')]);
+
+        return $this->answer($this->delegate(fn () => $this->desk()->giftStock($sub, $id)));
+    }
+
     public function products(Request $request): JsonResponse
     {
         if ($r = $this->refuse($request, 'freegifts.view')) {
@@ -264,7 +280,7 @@ class GiftsController extends Controller
     {
         $out = array_intersect_key($p, array_flip(self::PRODUCT_KEYS));
 
-        return array_replace(array_fill_keys(['id', 'name', 'brand', 'thumb', 'type', 'status', 'in_stock', 'stock', 'gift_only', 'gift_kind', 'price'], null), $out);
+        return array_replace(array_fill_keys(['id', 'name', 'brand', 'thumb', 'type', 'status', 'in_stock', 'stock', 'gift_stock', 'gift_only', 'gift_kind', 'price'], null), $out);
     }
 
     /**

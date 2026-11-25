@@ -163,9 +163,13 @@
      main gifts in order, then its backups, most stock first. Without: the main
      gifts as listed. */
   function availOf(p) {
-    if (!p || p.status !== 'publish' || p.type === 'variable' || !p.in_stock) return 0;
+    if (!p || p.status !== 'publish' || p.type === 'variable') return 0;
+    /* (Lane GST) a product with its own gift stock gives from that alone */
+    if (hasGs(p)) return Math.max(0, p.gift_stock);
+    if (!p.in_stock) return 0;
     return p.stock === null ? Infinity : Math.max(0, p.stock);
   }
+  function hasGs(p) { return !!p && p.gift_stock !== null && p.gift_stock !== undefined; }
   function simulate(x) {
     var out = [], needs = needsOf(x), gifts = x.gifts || [];
     function add(g, q, backup) { out.push({ product: g.product, product_id: g.product_id, quantity: q, kind: kindOf(g.kind), backup: backup }); }
@@ -287,6 +291,13 @@
     /* Lane FGV: a product with options is given as one of its variations; a
        gift row always carries the variation itself (type "variation"). */
     if (p.type === 'variable') return { level: 'in', cls: 'blue', text: 'Has options · gift a variation' };
+    /* (Lane GST) its own gift stock, separate from the shop's: gifts count down only this number */
+    if (hasGs(p)) {
+      if (p.gift_stock < 1) return { level: 'out', cls: 'red', text: 'Gift stock 0' };
+      if (qty && p.gift_stock < qty) return { level: 'low', cls: 'amber', text: 'Only ' + p.gift_stock + ' in gift stock' };
+      if (p.gift_stock <= low()) return { level: 'low', cls: 'amber', text: 'Gift stock low · ' + p.gift_stock };
+      return { level: 'in', cls: 'green', text: 'Gift stock · ' + fmt(p.gift_stock) };
+    }
     if (!p.in_stock) return { level: 'out', cls: 'red', text: 'Out of stock' };
     if (p.stock !== null && qty && p.stock < qty) return { level: 'low', cls: 'amber', text: 'Only ' + p.stock + ' left' };
     if (p.stock !== null && p.stock <= low()) return { level: 'low', cls: 'amber', text: 'Low · ' + p.stock + ' left' };
@@ -1500,13 +1511,13 @@
     var d = st.data, byId = {};
     d.ranges.forEach(function (r) { byId[r.id] = r; });
     var head = el('div', { class: 'fg-between' }, [
-      el('div', {}, [el('h3', { class: 'fg-h', text: 'Gift products' }), el('p', { class: 'fg-sub', text: '"Gift only" hides a product from the shop, listings, search, the sitemap, feeds and /api, and it cannot be added to the bag; it can still be a gift. Switching it off puts the product back on sale. Low stock: ' + low() + ' units or fewer.' })]),
+      el('div', {}, [el('h3', { class: 'fg-h', text: 'Gift products' }), el('p', { class: 'fg-sub', text: '"Gift only" hides a product from the shop, listings, search, the sitemap, feeds and /api, and it cannot be added to the bag; it can still be a gift. Switching it off puts the product back on sale. Gift stock: type a number to give a product its own gift stock (gifts use only that; shop sales keep the shop stock); empty = shared with the shop. Low stock: ' + low() + ' units or fewer.' })]),
       can() && !st.create.open ? el('button', { type: 'button', class: 'btn sm', 'data-fk': 'new-gift', onclick: function () { st.create.open = true; st.create.err = null; render(); loadBrands(); var f = document.querySelector('[data-fk="c-name"]'); if (f) f.focus(); } }, [el('span', { html: ICONS.plus, style: 'display:inline-flex;width:16px;height:16px' }), 'New gift-only product']) : null
     ]);
     var kids = [head];
     if (st.create.made) kids.push(el('div', { class: 'fg-msg ok', role: 'status', style: 'margin-top:10px' }, [el('i', { text: '✓' }), el('span', { text: 'Created "' + st.create.made.name + '". Pick it in a range with "Add gift", or ' }), typeof window.peoEdit === 'function' ? el('button', { type: 'button', class: 'fg-link', text: 'edit it in the product editor', onclick: function () { window.peoEdit(st.create.made.id); } }) : null]));
     if (st.create.open && can()) kids.push(el('div', { style: 'margin-top:14px' }, [createForm()]));
-    var rows = [el('div', { class: 'fg-pr hd', 'aria-hidden': 'true' }, [el('span'), el('span', { text: 'Product' }), el('span', { text: 'Brand' }), el('span', { text: 'Used in' }), el('span', { text: 'Gift only' }), el('span')])];
+    var rows = [el('div', { class: 'fg-pr hd', 'aria-hidden': 'true' }, [el('span'), el('span', { text: 'Product' }), el('span', { text: 'Brand' }), el('span', { text: 'Used in' }), el('span', { text: 'Gift stock' }), el('span', { text: 'Gift only' }), el('span')])];
     d.gift_products.forEach(function (p) {
       var s = stockOf(p);
       rows.push(el('div', { class: 'fg-pr', role: 'listitem' }, [
@@ -1514,6 +1525,7 @@
         el('div', {}, [el('b', { text: p.name }), el('span', { class: 'fg-row', style: 'gap:6px;margin-top:3px' }, [pill(s.cls, s.text), kindPill(kindOf(p.gift_kind))])]),
         el('small', { class: 'c-brand', text: p.brand || '—' }),
         el('div', { class: 'c-used fg-pills' }, p.used_in.length ? p.used_in.slice().sort(function (a, b) { return ((byId[a] || {}).min || 0) - ((byId[b] || {}).min || 0); }).map(function (id) { var r = byId[id]; return r ? el('button', { type: 'button', class: 'pill grey', style: 'border:0;cursor:pointer;font:inherit;font-size:11px;font-weight:600', text: r.label, title: 'Open this range', onclick: function () { goRange(id); } }) : null; }) : [el('small', { text: 'Not in a range' })]),
+        giftStockCell(p),
         el('div', { class: 'c-gift' }, [sw(p.gift_only, p.gift_only ? 'Gift only' : 'On sale', function () {
           var to = !p.gift_only;
           run(function () { return api('POST', '/products/' + p.id + '/gift-only', { on: to }); }, 'Not changed.', function () { say('"' + p.name + '" is ' + (to ? 'gift only: hidden from the shop.' : 'back on sale.')); });
@@ -1524,6 +1536,38 @@
     if (!d.gift_products.length) rows.push(el('div', { class: 'fg-empty', style: 'margin-top:8px', text: 'No gift products yet.' }));
     kids.push(el('div', { class: 'fg-pt', role: 'list', 'aria-label': 'Gift products', style: 'margin-top:14px' }, rows));
     wrap.appendChild(el('section', { class: 'card fg-card' }, kids));
+  }
+  /* (Lane GST) A product's OWN gift stock, edited right here (the owner, 25 Nov 2026: "i need those products to
+     edit instantly on the same page with one click and also it should also count as seperate quantity when we set
+     on gifts page"). A number: gifts of this product give from it and orders take their units from it, never from
+     the shop stock (and shop sales never touch it). Empty: the product gives from its shop stock, as before.
+     − / + and Enter save at once; "Use shop stock" goes back. One request per change, the answer repaints. */
+  function giftStockCell(p) {
+    var has = hasGs(p), ro = !can() || st.busy, cur = has ? p.gift_stock : 0;
+    function save(v) {
+      run(function () { return api('POST', '/products/' + p.id + '/gift-stock', { stock: v }); }, 'Gift stock not saved.', function () {
+        say(v === null ? '"' + p.name + '" gives from the shop stock again.' : '"' + p.name + '": gift stock ' + v + '. Gifts use this number; shop sales keep their own stock.');
+      });
+    }
+    var inp = el('input', { type: 'number', class: 'fg-gs-in', min: 0, max: 1000000, step: 1, inputmode: 'numeric', value: has ? String(p.gift_stock) : '', placeholder: p.stock === null ? 'Shop' : 'Shop ' + p.stock,
+      'aria-label': 'Gift stock of ' + p.name + (has ? '' : ' (empty: gives from the shop stock)'), 'data-fk': 'gs-' + p.id, disabled: ro,
+      title: has ? 'Gift stock: gifts give from this number only' : 'Empty: gifts give from the shop stock. Type a number to give this product its own gift stock.' });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } if (e.key === 'Escape') { inp.value = has ? String(p.gift_stock) : ''; inp.blur(); } });
+    inp.addEventListener('change', function () {
+      var t = String(inp.value).trim();
+      if (t === '') { if (has) save(null); return; }
+      var n = Math.floor(Number(t));
+      if (!isFinite(n) || n < 0) { inp.value = has ? String(p.gift_stock) : ''; return; }
+      if (has && n === p.gift_stock) return;
+      save(Math.min(1000000, n));
+    });
+    var minus = el('button', { type: 'button', class: 'fg-gs-b', text: '−', 'aria-label': 'One fewer in the gift stock of ' + p.name, disabled: ro || (has && cur <= 0) || !has, onclick: function () { save(Math.max(0, cur - 1)); } });
+    var plus = el('button', { type: 'button', class: 'fg-gs-b', text: '+', 'aria-label': 'One more in the gift stock of ' + p.name, disabled: ro, onclick: function () { save(cur + 1); } });
+    return el('div', { class: 'c-gstock' }, [
+      el('div', { class: 'fg-gs' }, [minus, inp, plus]),
+      has ? el('button', { type: 'button', class: 'fg-link fg-gs-off', text: 'Use shop stock', disabled: ro, 'data-fk': 'gs-off-' + p.id, onclick: function () { save(null); } })
+        : el('small', { class: 'fg-gs-note', text: 'Shared with the shop' })
+    ]);
   }
   function loadBrands() {
     if (st.create.brands) return;

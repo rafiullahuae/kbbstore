@@ -1,0 +1,76 @@
+[
+ {
+  "w": 390,
+  "before": {
+   "value": "",
+   "placeholder": "Shop 35",
+   "pill": "In stock · 35",
+   "off": false,
+   "clickable": false,
+   "scrollW": 390
+  },
+  "plus": {
+   "value": "1",
+   "placeholder": "Shop 35",
+   "pill": "Gift stock low · 1",
+   "off": true,
+   "clickable": true,
+   "scrollW": 390
+  },
+  "typed": {
+   "value": "12",
+   "placeholder": "Shop 35",
+   "pill": "Gift stock low · 12",
+   "off": true,
+   "clickable": true,
+   "scrollW": 390
+  },
+  "back": {
+   "value": "",
+   "placeholder": "Shop 35",
+   "pill": "In stock · 35",
+   "off": false,
+   "clickable": true,
+   "scrollW": 390
+  },
+  "writes": 3,
+  "errors": []
+ },
+ {
+  "w": 1280,
+  "before": {
+   "value": "",
+   "placeholder": "Shop 35",
+   "pill": "In stock · 35",
+   "off": false,
+   "clickable": false,
+   "scrollW": 1280
+  },
+  "plus": {
+   "value": "1",
+   "placeholder": "Shop 35",
+   "pill": "Gift stock low · 1",
+   "off": true,
+   "clickable": true,
+   "scrollW": 1280
+  },
+  "typed": {
+   "value": "12",
+   "placeholder": "Shop 35",
+   "pill": "Gift stock low · 12",
+   "off": true,
+   "clickable": true,
+   "scrollW": 1280
+  },
+  "back": {
+   "value": "",
+   "placeholder": "Shop 35",
+   "pill": "In stock · 35",
+   "off": false,
+   "clickable": true,
+   "scrollW": 1280
+  },
+  "writes": 3,
+  "errors": []
+ }
+]

@@ -446,3 +446,37 @@ it('opens Free gifts again after going back: the open paints the screen itself, 
     expect($open)->toContain('if (G.d) { if (cur === 0) paintHome(); else paintRange(); }')
         ->not->toContain('if (G.d) redraw();');
 });
+
+/*
+ * (Lane GST) The owner, 25 Nov 2026: "in owner app, i need the system to manage, in the gifts pages" -- a product's own
+ * gift stock, set from the phone through the console's own rule. Before, the app showed only the shop stock and had
+ * no way to change any count.
+ * MUTATION: route gifts/products/{id}/gift-stock anywhere but FreeGiftsController::giftStock -- nothing is stored, red.
+ * MUTATION: drop 'gift_stock' from GiftsController::PRODUCT_KEYS -- the phone never sees the number, red.
+ */
+it('sets, changes and clears a product\'s gift stock from the phone, freegifts.manage only', function () {
+    $mask = oagProduct('Gift Stock Mask', ['stock' => 40]);
+    [$c, $k] = OA::enrol($this);
+    OA::post($this, 'gifts/ranges', oagRange([['product_id' => $mask->id, 'quantity' => 2, 'kind' => 'mask']]), $c, $k)->assertOk();
+    $giftRow = fn ($d) => collect($d['ranges'])->first()['gifts'][0]['product'];
+
+    $d = OA::post($this, 'gifts/products/' . $mask->id . '/gift-stock', ['stock' => 9], $c, $k)->assertOk()->json();
+    expect($giftRow($d)['gift_stock'])->toBe(9)->and($giftRow($d)['stock'])->toBe(40)
+        ->and((int) DB::table('product_gift_stocks')->where('product_id', $mask->id)->value('stock'))->toBe(9)
+        ->and((int) $mask->fresh()->stock)->toBe(40);
+
+    $d = OA::post($this, 'gifts/products/' . $mask->id . '/gift-stock', ['stock' => null], $c, $k)->assertOk()->json();
+    expect($giftRow($d)['gift_stock'])->toBeNull()->and(DB::table('product_gift_stocks')->where('product_id', $mask->id)->exists())->toBeFalse();
+
+    OA::post($this, 'gifts/products/' . $mask->id . '/gift-stock', ['stock' => -1], $c, $k)->assertStatus(422);
+    // the GET carries it too
+    DB::table('product_gift_stocks')->insert(['product_id' => $mask->id, 'stock' => 3, 'stock_status' => 'instock', 'backorders' => false, 'created_at' => now(), 'updated_at' => now()]);
+    expect($giftRow(OA::get($this, 'gifts', $c)->assertOk()->json())['gift_stock'])->toBe(3);
+
+    // a member whose role cannot manage gifts is refused and nothing moves
+    $support = AdminUser::create(['name' => 'Sue', 'email' => 'sue-gs@example.com', 'password' => 'password-long-enough', 'role' => 'support']);
+    OA::member($support);
+    [$c2, $k2] = OA::enrol($this, 'sue-gs@example.com');
+    expect(OA::post($this, 'gifts/products/' . $mask->id . '/gift-stock', ['stock' => 99], $c2, $k2)->status())->toBe(403)
+        ->and((int) DB::table('product_gift_stocks')->where('product_id', $mask->id)->value('stock'))->toBe(3);
+});

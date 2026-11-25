@@ -802,6 +802,12 @@ details summary::-webkit-details-marker { display: none; }
 .g-step button[disabled] { opacity: .35; }
 .g-step b { min-width: 26px; text-align: center; font: 700 16px/1 var(--font); font-variant-numeric: tabular-nums; }
 .g-step.sm { height: 34px; }
+/* (Lane GST) the gift stock stepper: a typed number between − and + */
+.g-gsstep input { width: 56px; height: 100%; border: 0; background: transparent; text-align: center; font: 700 15px/1 var(--font); font-variant-numeric: tabular-nums; color: inherit; -moz-appearance: textfield; appearance: textfield; }
+.g-gsstep input::-webkit-outer-spin-button, .g-gsstep input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.g-gsstep input::placeholder { font: 500 11px/1 var(--font); color: var(--ink-3, #999); }
+.g-gso { font: 600 12px/1 var(--font); color: var(--acc); text-decoration: underline; padding: 2px 0; }
+.g-gso[disabled] { opacity: .4; }
 .g-step.sm button { width: 34px; }
 .g-msgs { margin: 0 0 12px; padding: 12px 14px 12px 30px; font-size: 13px; line-height: 1.4; }
 .card.g-msgs { box-shadow: none; background: #FFF7ED; }

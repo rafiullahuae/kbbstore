@@ -238,7 +238,15 @@ select.fg-in{padding-inline-end:28px}
 .fg-pk-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap}
 /* Products */
 .fg-pt{display:grid;gap:0}
-.fg-pr{display:grid;grid-template-columns:40px minmax(0,2fr) minmax(0,1fr) minmax(0,1.5fr) 130px 80px;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-2,var(--border))}
+.fg-pr{display:grid;grid-template-columns:40px minmax(0,2fr) minmax(0,1fr) minmax(0,1.5fr) 150px 130px 80px;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-2,var(--border))}
+.fg-gs{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.fg-gs-b{width:28px;height:30px;border:0;background:var(--bg-2,transparent);color:var(--ink);font-size:15px;cursor:pointer}
+.fg-gs-b:disabled{opacity:.35;cursor:default}
+.fg-gs-in{width:64px;height:30px;border:0;border-left:1px solid var(--border);border-right:1px solid var(--border);text-align:center;font:inherit;font-size:13px;background:transparent;color:var(--ink);-moz-appearance:textfield}
+.fg-gs-in::-webkit-outer-spin-button,.fg-gs-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.fg-gs-in::placeholder{color:var(--ink-faint);font-size:11.5px}
+.c-gstock{display:grid;gap:3px;justify-items:start}
+.fg-gs-note,.fg-gs-off{font-size:11px}
 .fg-pr.hd{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding-top:4px}
 .fg-pr b{font-size:13px;font-weight:600;overflow-wrap:anywhere;display:block}
 .fg-pr small{font-size:11.5px;color:var(--ink-soft)}
@@ -369,7 +377,7 @@ select.fg-in{padding-inline-end:28px}
   .fg-pr{grid-template-columns:40px minmax(0,1fr) auto;row-gap:6px}
   .fg-pr.hd{display:none}
   .fg-pr>.c-brand{display:none}
-  .fg-pr>.c-stock,.fg-pr>.c-used,.fg-pr>.c-gift{grid-column:2/4}
+  .fg-pr>.c-stock,.fg-pr>.c-used,.fg-pr>.c-gift,.fg-pr>.c-gstock{grid-column:2/4}
   .fg-pr>.c-edit{grid-column:3;grid-row:1}
   .fg-txr{grid-template-columns:minmax(0,1fr)}
   .fg-txr.hd{display:none}
