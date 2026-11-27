@@ -49,8 +49,8 @@ final class OwnerAppUiGate
     // controller refuses them without analytics.view.
     // 'carts' (Lane QK10): likewise; refused without carttracking.view.
     // 'carts.journey' (Lane CJ): the same screen's journey, the same refusal.
-    // 'gifts*' (Lane OAG): Free gifts; refused without freegifts.view / .manage. 'gifts.giftstock' (Lane GST): the same, .manage.
-    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify', 'analytics', 'analytics.live', 'carts', 'carts.journey', 'passkey.new', 'passkey.save', 'passkey.off', 'gifts', 'gifts.clicks', 'gifts.products', 'gifts.mode', 'gifts.create', 'gifts.save', 'gifts.delete', 'gifts.giftstock'];
+    // 'gifts*' (Lane OAG): Free gifts; refused without freegifts.view / .manage. 'gifts.giftstock' (Lane GST), 'gifts.giftdelete' (Lane GSX): the same, .manage.
+    public const ALWAYS = ['lock', 'forget', 'push', 'push.off', 'push.test', 'notify', 'analytics', 'analytics.live', 'carts', 'carts.journey', 'passkey.new', 'passkey.save', 'passkey.off', 'gifts', 'gifts.clicks', 'gifts.products', 'gifts.mode', 'gifts.create', 'gifts.save', 'gifts.delete', 'gifts.giftstock', 'gifts.giftdelete'];
 
     /** Product fields => the function that may change them (OwnerApp\ProductsController::EDITABLE). */
     public const PRODUCT_FIELDS = [

@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 |                     PUT/DELETE free-gifts/ranges/{id},
 |                     POST free-gifts/products, free-gifts/products/{id}/gift-only,
 |                     POST free-gifts/products/{id}/gift-stock (Lane GST)
+|                     DELETE free-gifts/products/{id} (Lane GSX, gift-only products only)
 |
 | Fails closed: a verb not listed is manage. Nothing here is on /api/*.
 | Shipped with 2027_11_22_100200_clear_caches_free_gifts.php; Lane FG2's two
@@ -51,4 +52,6 @@ Route::prefix('free-gifts')->group(function () {
     Route::post('/products/{id}/gift-only', [FreeGiftsController::class, 'giftOnly'])->whereNumber('id');
     // (Lane GST) a product's own gift stock, set inline on Gift products; shipped with ..._clear_caches_gift_stock.php
     Route::post('/products/{id}/gift-stock', [FreeGiftsController::class, 'giftStock'])->whereNumber('id');
+    // (Lane GSX) delete a gift-only product; shipped with ..._clear_caches_gift_delete.php
+    Route::delete('/products/{id}', [FreeGiftsController::class, 'deleteProduct'])->whereNumber('id');
 });

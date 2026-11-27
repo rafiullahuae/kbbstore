@@ -535,6 +535,36 @@ class FreeGiftsController extends Controller
     }
 
     /**
+     * DELETE /admin-api/free-gifts/products/{id} -- (Lane GSX) deletes a GIFT-ONLY product (the owner, 27 Nov 2026:
+     * "i need option to delete the gifts only product"). Refused for a product that is on sale: that one is
+     * deleted from the catalogue, never from here. The product is soft-deleted (orders that gave it keep its
+     * name and picture), it comes out of every range that gives it, and its gift stock row goes with it, so the
+     * shop stops offering it at once and no range is left pointing at a deleted product. One write, in a
+     * transaction; the answer is the screen's payload, so it repaints.
+     */
+    public function deleteProduct(int $id): JsonResponse
+    {
+        $product = Product::query()->find($id);
+
+        if ($product === null) {
+            return response()->json(['error' => 'not_found'], 404);
+        }
+        if (! $product->gift_only) {
+            return response()->json(['error' => 'not_gift_only', 'message' => 'Only a gift-only product can be deleted here. "'.$product->name.'" is on sale in the shop: delete it from Catalog → Products.'], 422);
+        }
+
+        DB::transaction(function () use ($product): void {
+            DB::table('free_gift_range_items')->where('product_id', $product->id)->delete();
+            DB::table('product_gift_stocks')->where('product_id', $product->id)->delete();
+            $product->delete();
+        });
+        // the shop reads the compiled ranges: rebuild them so it stops offering the gift now
+        $this->gifts->compile();
+
+        return response()->json($this->payload() + ['deleted' => ['id' => (int) $product->id, 'name' => (string) $product->name]]);
+    }
+
+    /**
      * POST /admin-api/free-gifts/products/{id}/gift-stock {stock: int|null} -- (Lane GST) the product's OWN gift
      * stock, set inline on Gift products (the owner, 25 Nov 2026: "edit instantly on the same page with one click
      * ... it should also count as separate quantity when we set on gifts page"). A number: gifts of this product

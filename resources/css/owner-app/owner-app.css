@@ -943,3 +943,5 @@ html.oa-nobulk :is([data-act="selall"], [data-act="selmode"], .bulk) { display: 
 html.oa-nobulk .sel { pointer-events: none; }
 
 
+/* (Lane GSX) delete a gift-only product: a red link beside "Use shop stock" / "Shared with the shop" */
+.g-gso.g-gdelp { color: #c0392b; padding: 10px 4px 10px 12px; margin: -8px 0; }

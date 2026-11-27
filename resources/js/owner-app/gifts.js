@@ -103,6 +103,8 @@ function giftProducts() {
     if (g.variant_id || !g.product || seen[g.product_id]) return;
     seen[g.product_id] = 1; out.push(g.product);
   }));
+  // (Lane GSX) gift-only products that no range gives yet: listed too, so they can be stocked or deleted
+  ((G.d && G.d.gift_only_products) || []).forEach((p) => { if (!seen[p.id]) { seen[p.id] = 1; out.push(p); } });
   return out.sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
 const productById = (id) => giftProducts().find((p) => p.id === id) || null;
@@ -110,7 +112,9 @@ function stockRow(p) {
   const has = hasGs(p), ro = !can() || G.busy, n = has ? p.gift_stock : 0, s = stockOf(p);
   return '<div class="row g-gs ' + s[0] + '" data-gsrow="' + p.id + '">' + th(p.thumb, 'sm')
     + '<div class="rm">' + (p.brand ? '<small>' + esc(p.brand) + '</small>' : '') + '<b class="cl2">' + esc(p.name) + '</b>'
-    + '<span class="g-meta">' + spill(s) + (has ? '<button type="button" class="g-gso" data-gso="' + p.id + '"' + (ro ? ' disabled' : '') + '>Use shop stock</button>' : '<small>Shared with the shop</small>') + '</span></div>'
+    + '<span class="g-meta">' + spill(s) + (has ? '<button type="button" class="g-gso" data-gso="' + p.id + '"' + (ro ? ' disabled' : '') + '>Use shop stock</button>' : '<small>Shared with the shop</small>')
+    // (Lane GSX) "i need option to delete the gifts only product": gift-only products only, asked first
+    + (p.gift_only && can() ? '<button type="button" class="g-gso g-gdelp" data-gdelp="' + p.id + '" aria-label="Delete ' + esc(p.name) + '"' + (ro ? ' disabled' : '') + '>Delete</button>' : '') + '</span></div>'
     + '<span class="g-step sm g-gsstep"><button type="button" data-gsd="' + p.id + '" data-d="-1" aria-label="One fewer in the gift stock of ' + esc(p.name) + '"' + (ro || !has || n <= 0 ? ' disabled' : '') + '>−</button>'
     + '<input type="number" inputmode="numeric" min="0" max="1000000" step="1" data-gsi="' + p.id + '" value="' + (has ? n : '') + '" placeholder="' + (p.stock === null ? 'Shop' : 'Shop ' + p.stock) + '" aria-label="Gift stock of ' + esc(p.name) + (has ? '' : ' (empty: shared with the shop)') + '"' + (ro ? ' disabled' : '') + '>'
     + '<button type="button" data-gsd="' + p.id + '" data-d="1" aria-label="One more in the gift stock of ' + esc(p.name) + '"' + (ro ? ' disabled' : '') + '>+</button></span></div>';
@@ -653,6 +657,21 @@ export async function giftsClick(e) {
   if (t.closest('[data-gadd]')) { addRange(null); return true; }
   const gsd = t.closest('[data-gsd]');
   if (gsd) { const id = +gsd.getAttribute('data-gsd'), p = productById(id); if (p) setGiftStock(id, Math.max(0, (hasGs(p) ? p.gift_stock : 0) + (+gsd.getAttribute('data-d')))); return true; }
+  const gdp = t.closest('[data-gdelp]');
+  if (gdp) {
+    const id = +gdp.getAttribute('data-gdelp'), p = productById(id);
+    if (!p || G.busy || !can()) return true;
+    const n = (G.d ? G.d.ranges : []).filter((r) => r.gifts.some((g) => g.product_id === id)).length;
+    confirmSheet('Delete this gift?', 'Delete the gift-only product "' + p.name + '"?' + (n ? ' It is taken out of ' + (n === 1 ? 'the range that gives it.' : 'the ' + n + ' ranges that give it.') : '') + ' Orders that already gave it keep it.', 'Delete', 'sec danger', async () => {
+      const res = await api('POST', 'gifts/products/' + id + '/delete', {});
+      if (!res.ok) { toast(res.data.message || 'Not deleted.', true); return; }
+      Object.keys(G.drafts).forEach((k) => { G.drafts[k].gifts = (G.drafts[k].gifts || []).filter((g) => g.product_id !== id); });
+      take(res.data);
+      redraw();
+      toast('Deleted ' + p.name + '.');
+    });
+    return true;
+  }
   const gso = t.closest('[data-gso]');
   if (gso) { setGiftStock(+gso.getAttribute('data-gso'), null); return true; }
   if (cur === 0 || !G.d) return false;

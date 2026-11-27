@@ -167,6 +167,20 @@ class GiftsController extends Controller
         return $this->answer($this->delegate(fn () => $this->desk()->giftStock($sub, $id)));
     }
 
+    /**
+     * POST /{app}/api/gifts/products/{id}/delete -- (Lane GSX) deletes a gift-only product from the phone. The
+     * console's FreeGiftsController::deleteProduct() decides (gift-only only, out of every range, gift stock gone);
+     * freegifts.manage, like a range delete.
+     */
+    public function deleteProduct(Request $request, int $id): JsonResponse
+    {
+        if ($r = $this->refuse($request, 'freegifts.manage')) {
+            return $r;
+        }
+
+        return $this->answer($this->delegate(fn () => $this->desk()->deleteProduct($id)));
+    }
+
     public function products(Request $request): JsonResponse
     {
         if ($r = $this->refuse($request, 'freegifts.view')) {
@@ -252,6 +266,8 @@ class GiftsController extends Controller
             'can_manage' => (bool) ($d['can_manage'] ?? false),
             'gaps' => array_map(static fn ($g) => ['from' => (int) $g['from'], 'to' => (int) $g['to']], (array) ($d['gaps'] ?? [])),
             'checklist' => array_map(static fn ($c) => ['level' => (string) $c['level'], 'text' => (string) $c['text'], 'range' => $c['range'] === null ? null : (int) $c['range']], (array) ($d['checklist'] ?? [])),
+            // (Lane GSX) the gift-only products, so the Gift stock list can show (and delete) one that is in no range
+            'gift_only_products' => array_values(array_map([self::class, 'product'], array_filter((array) ($d['gift_products'] ?? []), static fn ($p) => ! empty($p['gift_only'])))),
             'ranges' => array_map(fn ($r) => [
                 'id' => (int) $r['id'],
                 'min' => (int) $r['min'],

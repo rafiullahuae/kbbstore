@@ -304,7 +304,8 @@ select.fg-in{padding-inline-end:28px}
 /* Products */
 .fg-pt{display:grid;gap:0}
 .fg-pr{display:grid;grid-template-columns:40px minmax(0,2fr) minmax(0,1fr) minmax(0,1.5fr) 150px 130px 80px;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border-2,var(--border))}
-.fg-gs{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.fg-gi-gs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}.fg-gi-gs>small{font-size:12px;color:var(--ink-soft);font-weight:600}
+  .fg-gs{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .fg-gs-b{width:28px;height:30px;border:0;background:var(--bg-2,transparent);color:var(--ink);font-size:15px;cursor:pointer}
 .fg-gs-b:disabled{opacity:.35;cursor:default}
 .fg-gs-in{width:64px;height:30px;border:0;border-left:1px solid var(--border);border-right:1px solid var(--border);text-align:center;font:inherit;font-size:13px;background:transparent;color:var(--ink);-moz-appearance:textfield}
@@ -1763,7 +1764,10 @@ select.fg-in{padding-inline-end:28px}
     q.addEventListener('change', function () { set(q.value); });
     var row = el('div', { class: 'fg-gi' + (s.level === 'in' ? '' : ' ' + s.level) }, [
       thumb(g.product),
-      el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge, el('div', { class: 'fg-row', style: 'gap:6px;flex-wrap:wrap' }, [kindPicker(x, g, ro, name), kindOf(g.kind) ? roleSwitch(g, ro, name) : null])]),
+      el('div', { class: 'fg-gi-n' }, [g.product && g.product.brand ? el('small', { text: g.product.brand }) : null, el('b', { text: name }), badge, el('div', { class: 'fg-row', style: 'gap:6px;flex-wrap:wrap' }, [kindPicker(x, g, ro, name), kindOf(g.kind) ? roleSwitch(g, ro, name) : null]),
+        /* (Lane GSX) the owner, 27 Nov 2026, could not see where to put a skipped gift back: its gift stock is
+           set right here, on the row that says it is skipped (the same control as Gift products) */
+        g.product && !g.variant_id && (s.level !== 'in' || hasGs(g.product)) ? el('div', { class: 'fg-gi-gs' }, [el('small', { text: 'Gift stock' }), giftStockCell(g.product)]) : null]),
       bkRow ? el('span', { class: 'fg-bk-q', text: 'As needed' }) : el('div', { class: 'fg-step' }, [minus, q, plus]),
       ro ? null : el('button', { type: 'button', class: 'fg-btn-i danger', 'aria-label': 'Remove ' + name, title: 'Remove', html: ICONS.trash, onclick: function () {
         var key = Object.keys(st.drafts).filter(function (k) { return st.drafts[k] === x; })[0];
@@ -2025,7 +2029,12 @@ select.fg-in{padding-inline-end:28px}
           var to = !p.gift_only;
           run(function () { return api('POST', '/products/' + p.id + '/gift-only', { on: to }); }, 'Not changed.', function () { say('"' + p.name + '" is ' + (to ? 'gift only: hidden from the shop.' : 'back on sale.')); });
         }, !can() || st.busy)]),
-        el('div', { class: 'c-edit' }, [typeof window.peoEdit === 'function' ? el('button', { type: 'button', class: 'btn ghost sm', text: 'Edit', 'aria-label': 'Edit ' + p.name + ' in the product editor', onclick: function () { window.peoEdit(p.id); } }) : null])
+        el('div', { class: 'c-edit' }, [typeof window.peoEdit === 'function' ? el('button', { type: 'button', class: 'btn ghost sm', text: 'Edit', 'aria-label': 'Edit ' + p.name + ' in the product editor', onclick: function () { window.peoEdit(p.id); } }) : null,
+          /* (Lane GSX) "i need option to delete the gifts only product": a gift-only product only (one on sale is
+             deleted from the catalogue); it leaves every range that gives it, so it asks first and says which */
+          p.gift_only && can() ? el('button', { type: 'button', class: 'btn ghost sm', style: 'color:#b8362d', text: 'Delete', 'data-fk': 'gdel-' + p.id, disabled: st.busy, 'aria-label': 'Delete ' + p.name,
+            'data-kbb-sure': 'Delete the gift-only product "' + p.name + '"?' + (p.used_in.length ? ' It is taken out of ' + (p.used_in.length === 1 ? 'the range that gives it.' : 'the ' + p.used_in.length + ' ranges that give it.') : '') + ' Orders that already gave it keep it.',
+            onclick: function () { run(function () { return api('DELETE', '/products/' + p.id); }, 'Not deleted.', function () { Object.keys(st.drafts).forEach(function (k) { st.drafts[k].gifts = (st.drafts[k].gifts || []).filter(function (g) { return g.product_id !== p.id; }); }); say('Deleted "' + p.name + '".'); }); } }) : null])
       ]));
     });
     if (!d.gift_products.length) rows.push(el('div', { class: 'fg-empty', style: 'margin-top:8px', text: 'No gift products yet.' }));
@@ -2037,10 +2046,21 @@ select.fg-in{padding-inline-end:28px}
      on gifts page"). A number: gifts of this product give from it and orders take their units from it, never from
      the shop stock (and shop sales never touch it). Empty: the product gives from its shop stock, as before.
      − / + and Enter save at once; "Use shop stock" goes back. One request per change, the answer repaints. */
+  /* (Lane GSX) a range open with unsaved changes keeps its own copies of the gift rows: give them the new gift
+     stock too, so the row's badge turns green at once instead of after the range is saved */
+  function syncGiftStock(id) {
+    var fresh = null;
+    (st.data.gift_products || []).forEach(function (q) { if (q.id === id) fresh = q; });
+    if (!fresh) return;
+    Object.keys(st.drafts).forEach(function (k) {
+      (st.drafts[k].gifts || []).forEach(function (g) { if (g.product_id === id && !g.variant_id && g.product) { g.product.gift_stock = fresh.gift_stock; g.product.in_stock = fresh.in_stock; g.product.stock = fresh.stock; } });
+    });
+  }
   function giftStockCell(p) {
     var has = hasGs(p), ro = !can() || st.busy, cur = has ? p.gift_stock : 0;
     function save(v) {
       run(function () { return api('POST', '/products/' + p.id + '/gift-stock', { stock: v }); }, 'Gift stock not saved.', function () {
+        syncGiftStock(p.id);
         say(v === null ? '"' + p.name + '" gives from the shop stock again.' : '"' + p.name + '": gift stock ' + v + '. Gifts use this number; shop sales keep their own stock.');
       });
     }

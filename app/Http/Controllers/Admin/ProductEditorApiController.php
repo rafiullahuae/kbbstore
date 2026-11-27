@@ -1297,6 +1297,9 @@ class ProductEditorApiController extends Controller
             }
         }
 
+        // (Lane GSX) a changed count decides in stock / out of stock, whatever the dropdown still says
+        \App\Support\StockLevels::followStock($product);
+
         /* ------------------------------------------------- written content */
         // Sanitised without exception. The storefront prints all four of these
         // with {!! !!}; see App\Support\RichText.

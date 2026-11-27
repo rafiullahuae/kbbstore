@@ -116,6 +116,28 @@ final class StockLevels
             : ['stock_status' => $posted, 'backorders' => false];
     }
 
+    /**
+     * A tracked product's status FOLLOWS its count when the count is what changed (Lane GSX).
+     *
+     * The owner, 27 Nov 2026: he put one Maybelline mascara back in stock and the gift ranges still said
+     * "Out of stock -- skipped until restocked", and the shop never gave it. The product editor posts the
+     * stock dropdown with every save, so typing 1 into Stock while the dropdown still read "Out of stock"
+     * stored stock 1 / outofstock: counted, yet sold out everywhere. WooCommerce, where these products came
+     * from, recomputes the status from the count, and so does the owner app's stock sheet. Now the editors do
+     * too -- but ONLY when the count (or tracking) is what changed, so choosing "Out of stock" by hand with the
+     * count untouched is still respected, and a product allowing back orders keeps its own rule.
+     */
+    public static function followStock(\App\Models\Product $p): void
+    {
+        if (! ($p->isDirty('stock') || $p->isDirty('manage_stock'))) {
+            return;
+        }
+        if (! $p->manage_stock || $p->backorders || $p->stock === null || $p->type === 'variable') {
+            return;
+        }
+        $p->stock_status = (int) $p->stock > 0 ? 'instock' : 'outofstock';
+    }
+
     /** "−3" with a real minus sign, for the admin's red figure. */
     public static function figure(?int $stock): string
     {

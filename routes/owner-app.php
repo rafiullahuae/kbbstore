@@ -62,6 +62,7 @@ declare(strict_types=1);
 |     GET  /{app}/api/gifts, /api/gifts/products, /api/gifts/clicks  freegifts.view (Lane OAG; clicks 2.60.628)
 |     POST /{app}/api/gifts/mode, /api/gifts/ranges[/{id}[/delete]]  freegifts.manage
 |     POST /{app}/api/gifts/products/{id}/gift-stock  freegifts.manage (Lane GST)
+|     POST /{app}/api/gifts/products/{id}/delete      freegifts.manage (Lane GSX)
 |     GET  /{app}/api/changes                             (filtered per capability)
 |     GET  /{app}/api/notifications                       (filtered per capability)
 |     POST /{app}/api/push, /api/push/off, /api/push/test -
@@ -173,6 +174,8 @@ if ($ownerAppPath !== null) {
                 Route::post('/gifts/ranges/{id}/delete', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'delete'])->whereNumber('id')->name('gifts.delete');
                 // (Lane GST) a product's own gift stock; shipped with ..._clear_caches_owner_app_gift_stock.php
                 Route::post('/gifts/products/{id}/gift-stock', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'giftStock'])->whereNumber('id')->name('gifts.giftstock');
+                // (Lane GSX) delete a gift-only product; shipped with ..._clear_caches_gift_delete.php
+                Route::post('/gifts/products/{id}/delete', [\App\Http\Controllers\OwnerApp\GiftsController::class, 'deleteProduct'])->whereNumber('id')->name('gifts.giftdelete');
                 Route::post('/push', [LiveController::class, 'subscribe'])->name('push');
                 Route::post('/push/off', [LiveController::class, 'unsubscribe'])->name('push.off');
                 Route::post('/push/test', [LiveController::class, 'test'])->middleware('throttle:6,1,oa-push-test')->name('push.test');

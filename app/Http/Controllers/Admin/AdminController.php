@@ -806,7 +806,9 @@ class AdminController extends Controller
             // Only the columns assembled above. Product::$guarded is empty, so
             // fill() with anything wider than this would be mass assignment
             // over the whole table.
-            $product->fill($changes)->save();
+            $product->fill($changes);
+            \App\Support\StockLevels::followStock($product);   // (Lane GSX) a changed count decides in stock / out of stock
+            $product->save();
         }
 
         return response()->json(['ok' => true, 'id' => $product->id]);

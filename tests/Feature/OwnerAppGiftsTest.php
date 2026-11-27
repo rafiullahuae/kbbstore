@@ -117,9 +117,13 @@ it('reads the ranges for the owner, allowlisted: no Testing IPs, texts or my_ip 
     [$c] = OA::enrol($this);
     $d = OA::get($this, 'gifts', $c)->assertOk()->json();
 
-    expect(array_keys($d))->toBe(['ok', 'mode', 'testers', 'revision', 'low_stock', 'max_qty', 'max_need', 'can_manage', 'gaps', 'checklist', 'ranges'])
+    // (Lane GSX) + gift_only_products, each through the same product allowlist (PRODUCT_KEYS), for Gift stock's Delete
+    expect(array_keys($d))->toBe(['ok', 'mode', 'testers', 'revision', 'low_stock', 'max_qty', 'max_need', 'can_manage', 'gaps', 'checklist', 'gift_only_products', 'ranges'])
         ->and($d['mode'])->toBe('testing')->and($d['testers'])->toBe(1)->and($d['can_manage'])->toBeTrue()
         ->and(json_encode($d))->not->toContain('203.0.113.77')->not->toContain('my_ip')->not->toContain('"texts"');
+    foreach ($d['gift_only_products'] as $p) {
+        expect(array_diff(array_keys($p), \App\Http\Controllers\OwnerApp\GiftsController::PRODUCT_KEYS))->toBe([])->and($p['gift_only'])->toBeTrue();
+    }
     expect(OA::get($this, 'state', $c)->json('me.can'))->toMatchArray(['gifts' => true, 'gifts_edit' => true]);
 });
 

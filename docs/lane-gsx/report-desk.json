@@ -1,0 +1,46 @@
+[
+ {
+  "w": 1280,
+  "before": {
+   "badge": "Out of stock — skipped until restocked",
+   "cls": "fg-gi out",
+   "inlineGiftStock": true,
+   "plusClickable": true,
+   "scrollW": 1280
+  },
+  "editorSave": {
+   "id": 45,
+   "status": 200
+  },
+  "serverSays": {
+   "id": 45,
+   "name": "Maybelline New York - Lash Sensational Sky High Mascara Cosmic Black - 4.5ml",
+   "brand": "",
+   "image": "",
+   "thumb": "",
+   "type": "simple",
+   "status": "publish",
+   "in_stock": true,
+   "stock": 1,
+   "gift_only": true,
+   "gift_stock": null,
+   "gift_kind": null,
+   "price": "AED 25",
+   "used_in": [
+    1
+   ]
+  },
+  "after": {
+   "badge": "Low · 1 left",
+   "cls": "fg-gi low",
+   "inlineGiftStock": true,
+   "plusClickable": true,
+   "scrollW": 1280
+  },
+  "deleteClickable": true,
+  "question": "Delete the gift-only product \"Maybelline New York - Lash Sensational Sky High Mascara Cosmic Black - 4.5ml\"? It is taken out of the range that gives it. Orders that already gave it keep it.",
+  "deleteStatus": 200,
+  "stillListed": false,
+  "errors": []
+ }
+]

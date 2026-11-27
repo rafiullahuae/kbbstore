@@ -623,7 +623,9 @@ class CatalogProductsApiController extends Controller
         }
 
         if ($changes !== []) {
-            $product->fill($changes)->save();
+            $product->fill($changes);
+            StockLevels::followStock($product);   // (Lane GSX) a changed count decides in stock / out of stock
+            $product->save();
         }
 
         if (array_key_exists('category_ids', $data)) {
