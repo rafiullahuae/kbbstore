@@ -551,6 +551,8 @@ final class AdminCapabilities
         // an href there. Storefront appearance, so the same three roles as the
         // five above, and its own capability for the same reason. (Lane WA)
         'wabutton.manage' => ['owner', 'manager', 'editor'],
+        // Appearance -> Time deal strip (Lane TDS): the countdown strip above the header.
+        'timedeal.manage' => ['owner', 'manager', 'editor'],
 
         // Appearance -> Free gifts strip (Lane GST): the homepage bar's design,
         // words, link (an href on the homepage) and products, and the cut-out
@@ -1969,6 +1971,7 @@ final class AdminCapabilities
         ['*', 'admin-api/page-wash', 'pagewash.manage'],
         // One line and no '/**' sibling: no sub-endpoint here either. (Lane WA)
         ['*', 'admin-api/whatsapp-button', 'wabutton.manage'],
+        ['*', 'admin-api/time-deal-strip', 'timedeal.manage'],
         // Appearance -> Free gifts strip (Lane GST). Both lines: '/**' does not
         // match the bare path, and the screen's read IS the bare path.
         ['*', 'admin-api/gift-strip', 'giftstrip.manage'],

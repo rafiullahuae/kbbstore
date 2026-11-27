@@ -497,6 +497,7 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
  * strip off never reaches hasSection() and gets back exactly the bytes it had.
  */
 @endphp
+@if (app(\App\Services\TimeDealStrip::class)->visible())@include('partials.time-deal-strip')@endif
 @if (app(\App\Services\HeaderSettings::class)->flagBarOn() && ! \Illuminate\Support\Facades\View::hasSection('flagbar-placed'))@include('partials.flag-bar')@endif
         @include('partials.header')
 @endunless

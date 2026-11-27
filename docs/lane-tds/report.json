@@ -1,0 +1,58 @@
+[
+ {
+  "w": 390,
+  "pth": "/",
+  "h": 46,
+  "sw": 390,
+  "buttonClickable": true,
+  "clock": "08:08:01",
+  "headerTop": 46,
+  "errs": []
+ },
+ {
+  "w": 1280,
+  "pth": "/",
+  "h": 48,
+  "sw": 1280,
+  "buttonClickable": true,
+  "clock": "08:07:59",
+  "headerTop": 48,
+  "errs": []
+ },
+ {
+  "w": 390,
+  "pth": "/ar/",
+  "h": 46,
+  "sw": 390,
+  "buttonClickable": true,
+  "clock": "08:07:56",
+  "headerTop": 46,
+  "errs": []
+ },
+ {
+  "w": 1280,
+  "pth": "/ar/",
+  "h": 48,
+  "sw": 1280,
+  "buttonClickable": true,
+  "clock": "08:07:53",
+  "headerTop": 48,
+  "errs": []
+ },
+ {
+  "w": 320,
+  "pth": "/",
+  "h": 46,
+  "sw": 320,
+  "buttonClickable": true,
+  "clock": "08:07:51",
+  "headerTop": 46,
+  "errs": []
+ },
+ {
+  "admin": {
+   "nav": true,
+   "title": "Time deal strip"
+  }
+ }
+]

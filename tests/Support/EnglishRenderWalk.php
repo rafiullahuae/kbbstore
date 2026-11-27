@@ -2728,6 +2728,16 @@ KBB_BH_CSS;
     {
         return [
             /*
+             * THE TIME DEAL STRIP ABOVE THE HEADER. (Lane TDS) The owner, 27 Nov 2026: "i need strip on the top of the
+             * site, should not sticky ... count down from now till mid night 12", design K chosen, "give controls to
+             * manage and on / off". Appearance -> Time deal strip, ON as asked until its end; off or over prints nothing
+             * (TimeDealStripTest). Its style, the bar and its script sit directly above the header, once per page.
+             */
+            'the Time deal strip above the header (Lane TDS)' => [
+                'pattern' => '#<style>\.kds\{.*?</style>\n<div class="kds[^"]*" id="kbb-tds".*?</div>\n<script>\(function\(\)\{var s=document\.getElementById\(\'kbb-tds\'\).*?</script>\n#s',
+                'hits' => 34,
+            ],
+            /*
              * "SIGN IN" BESIDE "1 CONTACT", AND ITS WINDOW. (Lane CO) The owner:
              * "I need a Sign in text on the right side of the Contact block
              * title ... a nice on screen popup with the quick login form".

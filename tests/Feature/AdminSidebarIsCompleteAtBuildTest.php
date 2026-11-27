@@ -393,7 +393,7 @@ it('renders the sidebar the console settled on, group by group and row by row', 
         // 'occbanner' — Appearance → Occasion banner (Lane OHB), after Homepage content; then 'giftstrip' (Lane GST).
         'Appearance' => ['homepage', 'hpcontent', 'occbanner', 'giftstrip', 'spotted', 'banners', 'gridsections', 'prodstyles', 'mobilehdr',
             'dividers', 'pagewash', 'wabutton', 'cartpanel', 'cartpage', 'checkoutpage', 'slimfooter', 'acctpanel',
-            'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout', 'comingsoon'],
+            'header', 'mobilemenu', 'productpage', 'setap', 'bundles', 'layout', 'sitelayout', 'comingsoon', 'timedeal'],
         'Pages' => ['pages-store', 'pages-user', 'pagebanners', 'pageheader'],
         // 'merchantfeed' — Growth & Marketing → Google Shopping feed (Lane SEO), after Meta & Facebook.
         // 'mkt-health' — Growth & Marketing → Bounces & unsubscribes (Lane EB), under Marketing Emails.

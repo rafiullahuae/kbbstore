@@ -108,7 +108,7 @@ final class AdminRoles
             'marketing.view', 'marketing.manage', 'marketing.export',
             'marketing.email.view', 'marketing.email.manage', 'marketing.bounces.view', 'emails.view', 'emails.test',
             'banners.view', 'banners.manage', 'gridsections.view', 'gridsections.manage',
-            'spotted.manage', 'ugc.view', 'ugc.manage', 'wabutton.manage',
+            'spotted.manage', 'ugc.view', 'ugc.manage', 'wabutton.manage', 'timedeal.manage',
         ],
     ];
 
@@ -213,6 +213,7 @@ final class AdminRoles
             'sitelayout.manage' => 'Site width and columns',
             'pagewash.manage' => 'Page background',
             'wabutton.manage' => 'WhatsApp button',
+            'timedeal.manage' => 'Time deal strip (the countdown above the header)',
             'giftstrip.manage' => 'Homepage free gifts strip, and its product cut-outs',
             'comingsoon.manage' => 'Coming Soon page: hide the shop on an address, and its preview link (Full Admin by default)',
             'pagebanners.manage' => 'Page banners and the Super Sale products',
