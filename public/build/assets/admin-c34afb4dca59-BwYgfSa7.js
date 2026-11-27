@@ -30,20 +30,34 @@
     var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(values.ends_at || '');
     return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] - 4, +m[5]) : Date.now();
   }
+  function brands() { return String(values.brands || '').split(/[,\n]+/).map(function (b) { return b.trim(); }).filter(Boolean).slice(0, 20); }
+  function pick(k) { var ar = lang === 'ar'; return (ar && values[k + '_ar']) ? values[k + '_ar'] : values[k + '_en']; }
+  /* the shop's own markup (partials/time-deal-strip), class for class */
   function strip(width) {
     var ar = lang === 'ar', v = values;
-    var h = (ar && v.heading_ar) ? v.heading_ar : v.heading_en, s = (ar && v.sub_ar) ? v.sub_ar : v.sub_en, b = (ar && v.button_ar) ? v.button_ar : v.button_en;
     var hide = (width === 'phone' && !v.show_phone) || (width === 'desk' && !v.show_desktop);
     if (!v.on || hide) return '<div class="tds-msg err" style="margin:8px">Not shown ' + (v.on ? 'on ' + (width === 'phone' ? 'phones' : 'computers') : '— the strip is switched off') + '.</div>';
-    return '<div class="kds' + (v.motion ? '' : ' kds-still') + '" dir="' + (ar ? 'rtl' : 'ltr') + '" style="' + (width === 'phone' ? 'justify-content:space-between' : '') + '"><span class="kds-t"><span class="kds-h">' + esc(h) + '</span>' + (s ? '<span class="kds-s">' + esc(s) + '</span>' : '') + '</span>'
-      + '<span class="kds-c"><b data-tdu>00</b><i>:</i><b data-tdu>00</b><i>:</i><b data-tdu>00</b></span>' + (b ? '<span class="kds-b">' + esc(b) + '</span>' : '') + (v.closable ? '<span class="kds-x" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>' : '') + '</div>';
+    var u = ar ? [':', ':', ''] : ['h', 'm', 's'], br = brands(), b = pick('button');
+    return '<div class="kdt' + (v.motion ? '' : ' kdt-still') + '" dir="' + (ar ? 'rtl' : 'ltr') + '">'
+      + (pick('chip') ? '<span class="kdt-chip">' + esc(pick('chip')) + '</span>' : '') + (pick('offer') ? '<em class="kdt-off">' + esc(pick('offer')) + '</em>' : '')
+      + '<span class="kdt-clk"><b data-tdu>00</b><small>' + u[0] + '</small><b data-tdu>00</b><small>' + u[1] + '</small><b data-tdu>00</b><small>' + u[2] + '</small></span>'
+      + (pick('heading') ? '<span class="kdt-pill">' + esc(pick('heading')) + '</span>' : '')
+      + (br.length ? '<span class="kdt-txt">' + (pick('sub') ? '<span class="kdt-lead">' + esc(pick('sub')) + '</span>' : '') + '<span class="kdt-rot">' + br.map(function (x, i) { return '<span' + (i ? '' : ' class="on"') + '>' + esc(x) + '</span>'; }).join('') + '</span></span>' : '')
+      + (b ? '<span class="kdt-go">' + esc(b) + '</span>' : '')
+      + (v.closable ? '<span class="kdt-x" aria-hidden="true"><svg viewBox="0 0 12 12" width="11" height="11"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>' : '') + '</div>';
   }
+  var rotN = 0;
   function tick() {
     var l = Math.max(0, endMs() - Date.now()), x = Math.floor(l / 1000), p = function (n) { return (n < 10 ? '0' : '') + n; };
     var parts = [p(Math.floor(x / 3600)), p(Math.floor(x / 60) % 60), p(x % 60)];
     var bs = document.querySelectorAll('[data-tds] [data-tdu]');
     if (!bs.length) { clearInterval(timer); timer = null; return; }
     bs.forEach(function (b, i) { b.textContent = parts[i % 3]; });
+    if (++rotN % 2 === 0) document.querySelectorAll('[data-tds] .kdt-rot').forEach(function (r) {
+      var k = r.children, cur = 0; if (k.length < 2) return;
+      for (var i = 0; i < k.length; i++) { k[i].classList.remove('out'); if (k[i].classList.contains('on')) cur = i; }
+      k[cur].classList.remove('on'); k[cur].classList.add('out'); k[(cur + 1) % k.length].classList.add('on');
+    });
   }
   function paintPreview() {
     var pv = document.querySelector('[data-tds-pv]');
@@ -76,10 +90,11 @@
       + '<div class="tds-row"><label class="tds-chk"><input type="checkbox" data-tb="show_phone"' + (v.show_phone ? ' checked' : '') + '> Phones (900 px and narrower)</label><label class="tds-chk"><input type="checkbox" data-tb="show_desktop"' + (v.show_desktop ? ' checked' : '') + '> Computers</label><label class="tds-chk"><input type="checkbox" data-tb="motion"' + (v.motion ? ' checked' : '') + '> Motion (the moving holographic colours)</label><label class="tds-chk"><input type="checkbox" data-tb="closable"' + (v.closable ? ' checked' : '') + '> Close button (×): a shopper can hide it for the rest of their visit</label></div></div>'
       + '<div class="tds-card"><h3>Countdown</h3><div class="tds-2"><label class="tds-f"><span>Counts down</span><select data-tk="mode">' + Object.keys(data.modes).map(function (k) { return '<option value="' + k + '"' + (v.mode === k ? ' selected' : '') + '>' + esc(data.modes[k]) + '</option>'; }).join('') + '</select></label>'
       + (v.mode === 'until' ? '<label class="tds-f"><span>Ends at (UAE time)</span><input type="datetime-local" data-tk="ends_at" value="' + esc(v.ends_at) + '"><small>Midnight tonight is the next day at 00:00. When it reaches zero the strip disappears by itself.</small></label>' : '<div class="tds-f"><span>Ends</span><small>Counts to 12:00 midnight UAE time, then starts again for the next day.</small></div>') + '</div></div>'
-      + '<div class="tds-card"><h3>Words and button</h3><div class="tds-2"><div style="display:grid;gap:10px"><b style="font-size:12px">English</b>' + field('heading_en', 'Heading') + field('sub_en', 'Sub-line (under the heading)') + field('button_en', 'Button') + '</div>'
-      + '<div style="display:grid;gap:10px"><b style="font-size:12px">العربية</b>' + field('heading_ar', 'Heading', ' dir="rtl"') + field('sub_ar', 'Sub-line', ' dir="rtl"') + field('button_ar', 'Button', ' dir="rtl"') + '</div></div>'
+      + '<div class="tds-card"><h3>Words and button</h3><div class="tds-2"><div style="display:grid;gap:10px"><b style="font-size:12px">English</b>' + field('offer_en', '“Offer ends in” label') + field('heading_en', 'Pill (computers)') + field('sub_en', 'Words before the brand (computers)') + field('short_en', 'Short version (small computers)') + field('chip_en', 'Chip (phones)') + field('button_en', 'Button (computers)') + '</div>'
+      + '<div style="display:grid;gap:10px"><b style="font-size:12px">العربية</b>' + field('offer_ar', 'ينتهي العرض خلال', ' dir="rtl"') + field('heading_ar', 'Pill', ' dir="rtl"') + field('sub_ar', 'Words before the brand', ' dir="rtl"') + field('short_ar', 'Short version', ' dir="rtl"') + field('chip_ar', 'Chip (phones)', ' dir="rtl"') + field('button_ar', 'Button', ' dir="rtl"') + '</div></div>'
+      + '<label class="tds-f"><span>Brand names that keep changing</span><input type="text" data-tk="brands" dir="ltr" value="' + esc(v.brands) + '"><small>Separated by commas, up to 20. One changes to the next every 2 seconds, on computers and phones.</small></label>'
       + '<label class="tds-f"><span>Button link</span><input type="text" data-tk="link" dir="ltr" value="' + esc(v.link) + '"><small>A page on this shop such as /super-sale/, or a full https:// address. Arabic pages open the Arabic version of a shop page.</small></label>'
-      + '<p style="margin:0;font-size:12px;color:var(--ink-soft,#626c80)">Leave the sub-line or the button empty to hide it.</p></div>'
+      + '<p style="margin:0;font-size:12px;color:var(--ink-soft,#626c80)">Leave any of them empty to hide that part. The whole strip is a link to the button’s page.</p></div>'
       + '<div class="tds-row"><button type="button" class="btn" data-tds-save' + (busy ? ' disabled' : '') + '>' + (busy ? 'Saving…' : 'Save') + '</button></div>'
       + '</div><div class="tds-card tds-pv" data-tds-pv style="position:sticky;top:12px"></div></div></div>';
     paintPreview();

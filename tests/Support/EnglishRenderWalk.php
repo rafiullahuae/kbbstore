@@ -2734,7 +2734,7 @@ KBB_BH_CSS;
              * (TimeDealStripTest). Its style, the bar and its script sit directly above the header, once per page.
              */
             'the Time deal strip above the header (Lane TDS)' => [
-                'pattern' => '#<style>\.kds\{.*?</style>\n<div class="kds[^"]*" id="kbb-tds".*?</div>\n<script>\(function\(\)\{var s=document\.getElementById\(\'kbb-tds\'\).*?</script>\n#s',
+                'pattern' => '#<style>/\* the thin bar.*?</style>\n<div class="kdt[^"]*" id="kbb-tds".*?</div>\n<script>\(function\(\)\{var s=document\.getElementById\(\'kbb-tds\'\).*?</script>\n#s',
                 'hits' => 34,
             ],
             /*

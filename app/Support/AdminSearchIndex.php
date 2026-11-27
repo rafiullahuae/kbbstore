@@ -193,7 +193,7 @@ final class AdminSearchIndex
         'product-tabs' => [],
         // Catalog → Pagination (Lane PG): the switch and the two override lists.
         'timedeal' => [
-            '' => ['Time deal strip', 'Show the Time deal strip', 'Countdown', 'Ends at', 'Every day, until midnight', 'Heading', 'Sub-line', 'Button', 'Button link', 'Phones', 'Computers', 'Motion', 'Black Friday'],
+            '' => ['Time deal strip', 'Show the Time deal strip', 'Countdown', 'Ends at', 'Every day, until midnight', 'Pill (computers)', 'Words before the brand (computers)', 'Chip (phones)', 'Brand names that keep changing', 'Button link', 'Phones', 'Computers', 'Motion', 'Black Friday'],
         ],
         'pagination' => [
             '' => ['Pagination on the shop', 'Listing pages', 'Categories and brands'],

@@ -37,8 +37,25 @@ final class TimeDealStrip
 
     public const TEXT_MAX = 80;
 
+    /** At most this many turning brand names; each at most TEXT_MAX / 2 characters. */
+    public const BRANDS_MAX = 20;
+
+    /** "Medicube, Anua ,, Dr.Althea" -> ["Medicube", "Anua", "Dr.Althea"]: trimmed, empties and over-long names dropped. */
+    public static function brandList(string $raw): array
+    {
+        $out = [];
+        foreach (preg_split('/[,\n]+/u', $raw) ?: [] as $b) {
+            $b = trim(preg_replace('/\s+/u', ' ', $b) ?? '');
+            if ($b !== '' && mb_strlen($b) <= self::TEXT_MAX / 2) {
+                $out[] = $b;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
     /** The strip's whole stylesheet: a constant (rule 5), printed by the partial and sent to the admin preview, so both draw the same. */
-    public const CSS = '.kds{position:relative;overflow:hidden;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:clamp(8px,2.2vw,24px);min-height:46px;padding:5px max(10px,env(safe-area-inset-right,0px)) 5px max(10px,env(safe-area-inset-left,0px));background:linear-gradient(110deg,#ffd6e8,#d9c7ff,#c2f0ff,#fff1c7,#ffc7dc,#d9c7ff);background-size:300% 100%;color:#120c14;font-family:Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;animation:kds-holo 8s linear infinite}.kds::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.7) 50%,transparent 65%);transform:translateX(-120%);animation:kds-sweep 4s ease-in-out infinite}.kds-t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:0 1 auto}.kds-h{font-weight:800;font-size:clamp(12px,3.3vw,19px);line-height:1.12;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kds-s{font-weight:500;font-size:clamp(9.5px,2.6vw,12.5px);line-height:1.2;color:#3a2a3f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kds-c{display:flex;align-items:center;gap:2px;flex:none;font-variant-numeric:tabular-nums;direction:ltr}.kds-c b{min-width:1.9em;text-align:center;font-weight:800;font-size:clamp(11px,3vw,15px);line-height:1;padding:.36em .2em;border-radius:5px;background:#120c14;color:#fff}.kds-c i{font-style:normal;font-weight:800;font-size:clamp(10px,2.6vw,13px)}.kds-b{flex:none;font-weight:800;font-size:clamp(10px,2.7vw,12.5px);line-height:1;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:#120c14;border-radius:999px;padding:.75em 1.2em;text-decoration:none;white-space:nowrap}.kds-b:hover{background:#3a2a3f}.kds-b:focus-visible{outline:2px solid #120c14;outline-offset:2px}.kds[dir=rtl] .kds-h,.kds[dir=rtl] .kds-b{letter-spacing:0;text-transform:none}@keyframes kds-holo{to{background-position:300% 0}}@keyframes kds-sweep{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}@media (max-width:900px){.kds{justify-content:space-between}.kds.kds-np{display:none}}@media (min-width:901px){.kds.kds-nd{display:none}}.kds.kds-still,.kds.kds-still::before{animation:none}@media (prefers-reduced-motion:reduce){.kds,.kds::before{animation:none}}.kds-x{flex:none;display:grid;place-items:center;width:26px;height:26px;margin:0;padding:0;border:0;border-radius:50%;background:rgba(18,12,20,.08);color:#120c14;cursor:pointer;-webkit-tap-highlight-color:transparent}.kds-x svg{width:12px;height:12px}.kds-x:hover{background:rgba(18,12,20,.16)}.kds-x:focus-visible{outline:2px solid #120c14;outline-offset:2px}@media (min-width:901px){.kds{gap:36px;min-height:56px;padding-top:7px;padding-bottom:7px;padding-left:56px;padding-right:56px}.kds-t{gap:4px}.kds-c{gap:4px}.kds-x{position:absolute;top:50%;right:18px;margin-top:-13px}.kds[dir=rtl] .kds-x{right:auto;left:18px}}@media (max-width:900px){.kds-x{width:22px;height:22px}.kds-x svg{width:10px;height:10px}.kds:has(.kds-x){gap:clamp(6px,1.7vw,14px)}.kds:has(.kds-x) .kds-h{font-size:clamp(11px,2.95vw,19px);letter-spacing:.01em}.kds:has(.kds-x) .kds-s{font-size:clamp(9px,2.4vw,12.5px)}.kds:has(.kds-x) .kds-c b{font-size:clamp(10.5px,2.8vw,15px);min-width:1.8em}.kds:has(.kds-x) .kds-b{padding:.75em .95em;font-size:clamp(9.5px,2.5vw,12.5px)}}@media (max-width:359px){.kds-x{width:20px;height:20px}.kds:has(.kds-x){gap:5px;padding-left:7px;padding-right:7px}.kds:has(.kds-x) .kds-h{font-size:10px;letter-spacing:0}.kds:has(.kds-x) .kds-s{font-size:8.5px}.kds:has(.kds-x) .kds-c b{font-size:10px;min-width:1.65em}.kds:has(.kds-x) .kds-b{padding:.7em .65em;font-size:9px;letter-spacing:0}.kds{gap:6px;padding-left:8px;padding-right:8px}.kds-h{letter-spacing:0;font-size:11px}.kds-s{font-size:9px}.kds-c b{min-width:1.7em;font-size:10.5px}.kds-b{padding:.7em .75em;letter-spacing:.02em;font-size:9.5px}}';
+    public const CSS = '/* the thin bar (Lane TDS2): T2 on computers, M5 chips on phones */.kdt{position:relative;overflow:hidden;isolation:isolate;display:flex;align-items:center;justify-content:center;gap:14px;height:44px;padding:0 52px 0 16px;background:linear-gradient(110deg,#ffd6e8,#d9c7ff,#c2f0ff,#fff1c7,#ffc7dc,#d9c7ff);background-size:300% 100%;animation:kdt-holo 8s linear infinite;color:#120c14;font-family:Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap}.kdt[dir=rtl]{padding:0 16px 0 52px}.kdt-a{position:absolute;inset:0;z-index:1}.kdt>*{position:relative;z-index:2}.kdt>.kdt-a{position:absolute;z-index:1}.kdt>:not(.kdt-a):not(.kdt-go):not(.kdt-x){pointer-events:none}.kdt-off{font-weight:600;font-size:12px;line-height:1;font-style:normal;background:#120c14;color:#fff;padding:5px 8px;border-radius:6px}.kdt-clk{font-weight:800;font-size:14px;line-height:1;font-variant-numeric:tabular-nums;direction:ltr}.kdt-clk small{font-size:10px;font-weight:600;opacity:.7;margin:0 4px 0 1px}.kdt-clk small:last-child{margin-right:0}.kdt-pill{font-weight:800;font-size:13px;line-height:1;letter-spacing:.03em;color:#fff;background:#120c14;padding:6px 10px;border-radius:6px;overflow:hidden}.kdt-pill::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);animation:kdt-sw 3s ease-in-out infinite}.kdt-txt{font-weight:500;font-size:13.5px;line-height:1;color:#3a2a3f;display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden}.kdt-ls,.kdt-chip{display:none}.kdt-rot{display:inline-grid;justify-items:start;font-weight:800;color:#c13e63;overflow:hidden;padding:2px 0}.kdt-rot span{grid-area:1/1;opacity:0;transform:translateY(90%);transition:opacity .35s,transform .35s}.kdt-rot span.on{opacity:1;transform:none}.kdt-rot span.out{opacity:0;transform:translateY(-90%)}.kdt-go{font-weight:700;font-size:12.5px;line-height:1;padding:8px 14px;border-radius:8px;background:#120c14;color:#fff;text-decoration:none}.kdt-go:hover{background:#3a2a3f}.kdt-x{position:absolute;z-index:3;top:50%;right:12px;margin-top:-12px;width:24px;height:24px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:rgba(18,12,20,.08);color:#120c14;cursor:pointer}.kdt[dir=rtl] .kdt-x{right:auto;left:12px}.kdt-x svg{width:11px;height:11px}.kdt-x:hover{background:rgba(18,12,20,.16)}.kdt-go:focus-visible,.kdt-x:focus-visible,.kdt-a:focus-visible{outline:2px solid #120c14;outline-offset:-2px}.kdt[dir=rtl] .kdt-pill{letter-spacing:0}@keyframes kdt-holo{to{background-position:300% 0}}@keyframes kdt-sw{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}@media (min-width:901px) and (max-width:1120px){.kdt-lead{display:none}.kdt-ls{display:inline}}@media (min-width:901px){.kdt.kdt-nd{display:none}}@media (max-width:900px){.kdt{gap:6px;padding:0 38px 0 8px}.kdt[dir=rtl]{padding:0 8px 0 38px}.kdt-off,.kdt-pill,.kdt-go,.kdt-lead,.kdt-ls{display:none}.kdt-chip,.kdt-clk,.kdt-txt{display:inline-flex;align-items:center;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:700;line-height:1}.kdt-chip{background:#120c14;color:#fff}.kdt-clk,.kdt-txt{background:rgba(255,255,255,.7);border:1px solid rgba(18,12,20,.08)}.kdt-clk{font-size:11.5px}.kdt-clk small{font-size:8.5px;margin:0 2px 0 1px}.kdt-txt{flex:0 1 auto}.kdt-x{right:8px;width:22px;height:22px;margin-top:-11px}.kdt[dir=rtl] .kdt-x{left:8px}.kdt-x svg{width:10px;height:10px}.kdt-rot{display:inline-block;position:relative}.kdt-rot span{position:absolute;top:2px;inset-inline-start:0}.kdt-rot span.on{position:relative;top:0}.kdt.kdt-np{display:none}}@media (max-width:359px){.kdt{gap:4px;padding-left:6px}.kdt[dir=rtl]{padding-right:6px}.kdt-chip,.kdt-clk,.kdt-txt{padding:5px 7px;font-size:10px}}.kdt.kdt-still,.kdt.kdt-still .kdt-pill::after{animation:none}@media (prefers-reduced-motion:reduce){.kdt,.kdt-pill::after{animation:none}.kdt-rot span{transition:none}}';
 
     /** key => [type, default] -- the shipped state is the owner's own words, switched on. */
     public const SCHEMA = [
@@ -50,12 +67,22 @@ final class TimeDealStrip
         'closable' => ['bool', true],
         'mode' => ['select', 'until'],
         'ends_at' => ['datetime', '2026-11-28T00:00'],
+        /* (27 Nov, "make our top strip like this, thin and similar, and by changing brands names continuously";
+           T2 chosen for computers, M5 "Chips" for phones) -- the thin bar: "Offer ends in" + clock, the pill, the
+           line before the turning brand, the button; on phones the chip, the clock chip and the brand chip. */
+        'offer_en' => ['text', 'Offer ends in'],
         'heading_en' => ['text', 'BLACK FRIDAY TIME DEAL'],
-        'sub_en' => ['text', 'Last chance to get amazing deals'],
+        'sub_en' => ['text', 'Last chance to get amazing deals on'],
+        'short_en' => ['text', 'Deals on'],
+        'chip_en' => ['text', 'BLACK FRIDAY'],
         'button_en' => ['text', 'Shop Now'],
+        'offer_ar' => ['text', 'ينتهي العرض خلال'],
         'heading_ar' => ['text', 'الجمعة البيضاء · عرض لفترة محدودة'],
-        'sub_ar' => ['text', 'فرصتك الأخيرة للحصول على عروض مذهلة'],
+        'sub_ar' => ['text', 'فرصتك الأخيرة لعروض مذهلة على'],
+        'short_ar' => ['text', 'عروض على'],
+        'chip_ar' => ['text', 'الجمعة البيضاء'],
         'button_ar' => ['text', 'تسوّقي الآن'],
+        'brands' => ['list', 'Medicube, Anua, Dr.Althea, numbuzin, celimax, Beauty of Joseon, SKIN1004, COSRX, d\'Alba, AXIS-Y'],
         'link' => ['link', '/super-sale/'],
     ];
 
@@ -133,6 +160,13 @@ final class TimeDealStrip
                 $t = trim(preg_replace('/\s+/u', ' ', (string) $raw) ?? '');
 
                 return mb_strlen($t) <= self::TEXT_MAX ? $t : null;
+            case 'list':
+                if (! is_scalar($raw) || is_bool($raw)) {
+                    return null;
+                }
+                $items = self::brandList((string) $raw);
+
+                return count($items) <= self::BRANDS_MAX && mb_strlen((string) $raw) <= 600 ? implode(', ', $items) : null;
             case 'link':
                 return is_string($raw) && self::safeLink(trim($raw)) ? trim($raw) : null;
         }
@@ -178,7 +212,7 @@ final class TimeDealStrip
     /**
      * What the partial prints, in the language of the request. Every string is printed escaped by Blade.
      *
-     * @return array{heading:string, sub:string, button:string, href:string, end:int, daily:bool, left:int, rtl:bool, phone:bool, desktop:bool, motion:bool, closable:bool}
+     * @return array{offer:string, heading:string, sub:string, short:string, chip:string, brands:list<string>, units:list<string>, button:string, href:string, end:int, daily:bool, left:int, rtl:bool, phone:bool, desktop:bool, motion:bool, closable:bool}
      */
     public function view(?CarbonImmutable $now = null): array
     {
@@ -193,8 +227,13 @@ final class TimeDealStrip
         $pick = static fn (string $k) => trim((string) ($ar && trim((string) $v[$k.'_ar']) !== '' ? $v[$k.'_ar'] : $v[$k.'_en']));
 
         return [
+            'offer' => $pick('offer'),
             'heading' => $pick('heading'),
             'sub' => $pick('sub'),
+            'short' => $pick('short'),
+            'chip' => $pick('chip'),
+            'brands' => array_slice(self::brandList((string) $v['brands']), 0, self::BRANDS_MAX),
+            'units' => $ar ? [':', ':', ''] : ['h', 'm', 's'],   // Arabic: 06:24:52 (Arabic unit letters read in a confusing order inside a left-to-right clock)
             'button' => $pick('button'),
             'href' => $link,
             'end' => (int) ($end->getTimestamp() * 1000),

@@ -52,13 +52,17 @@ it('shows the strip above the header while its time runs, with his words, and no
         ->and($html)->toContain('Last chance to get amazing deals')
         ->and($html)->toContain('>Shop Now</a>')
         ->and(strpos($html, 'id="kbb-tds"'))->toBeLessThan(strpos($html, '<header'));
-    // the sub-line is INSIDE the heading block, under it (a column), never beside the clock
-    expect($html)->toMatch('#<span class="kds-t"><span class="kds-h">[^<]+</span><span class="kds-s">#');
+    // (Lane TDS2) the thin bar: "Offer ends in" + clock, the pill, the words before the brand, the brands that
+    // turn (the first one showing), the button; the phone chip is in the same markup
+    expect($html)->toContain('<em class="kdt-off">Offer ends in</em>')
+        ->and($html)->toContain('<span class="kdt-pill">BLACK FRIDAY TIME DEAL</span>')
+        ->and($html)->toContain('<span class="kdt-chip">BLACK FRIDAY</span>')
+        ->and($html)->toMatch('#<span class="kdt-rot"><span class="on">Medicube</span><span>Anua</span>#');
 
     // off: not one byte of it (mutation: drop the visible() guard in the layout and this is red)
     tdsSet(['on' => false]);
     $off = $this->get('/')->assertOk()->getContent();
-    expect($off)->not->toContain('kbb-tds')->not->toContain('.kds{');
+    expect($off)->not->toContain('kbb-tds')->not->toContain('.kdt{');
 
     // over: past its end it is gone too
     tdsSet(['on' => true, 'ends_at' => '2020-01-01T00:00']);
@@ -160,12 +164,25 @@ it('saves from Appearance -> Time deal strip for timedeal.manage only, and the s
 it('carries a close cross that hides it for the visit, and the switch that takes the cross away', function () {
     tdsSet(['mode' => 'daily', 'closable' => true]);
     $html = $this->get('/')->getContent();
-    expect($html)->toContain('<button type="button" class="kds-x" data-kds-x aria-label="Close">')
+    expect($html)->toContain('<button type="button" class="kdt-x" data-kds-x aria-label="Close">')
         ->and($html)->toContain("sessionStorage.setItem(k,'1')")
         ->and($html)->toContain("var k='kbbTds'+s.dataset.end");
-    // more air on computers only; phones keep their spacing
-    expect(TimeDealStrip::CSS)->toContain('@media (min-width:901px){.kds{gap:36px;min-height:56px');
+    // phones get the M5 chips, computers the T2 row (Lane TDS2)
+    expect(TimeDealStrip::CSS)->toContain('@media (max-width:900px){.kdt{gap:6px;')->and(TimeDealStrip::CSS)->toContain('.kdt-off,.kdt-pill,.kdt-go,.kdt-lead,.kdt-ls{display:none}');
 
     tdsSet(['closable' => false]);
     expect($this->get('/')->getContent())->toContain('id="kbb-tds"')->not->toContain('data-kds-x aria-label');
+});
+
+/*
+ * (Lane TDS2) "by changing brands names continuously": the owner's list, trimmed and capped, printed escaped, the first
+ * one showing; an empty list hides the brand part only. Mutation: print the list unescaped and the <b> case is red.
+ */
+it('turns his own brand list, escaped, and an empty list hides only the brand part', function () {
+    tdsSet(['mode' => 'daily', 'brands' => " Anua ,, <b>Bad</b>\nCOSRX "]);
+    $html = $this->get('/')->getContent();
+    expect($html)->toContain('<span class="kdt-rot"><span class="on">Anua</span><span>&lt;b&gt;Bad&lt;/b&gt;</span><span>COSRX</span></span>');
+    expect(app(TimeDealStrip::class)->save(['brands' => implode(',', range(1, 21))])['ok'])->toBeFalse();
+    tdsSet(['brands' => '']);
+    expect($this->get('/')->getContent())->toContain('id="kbb-tds"')->not->toContain('<span class="kdt-rot">');
 });
