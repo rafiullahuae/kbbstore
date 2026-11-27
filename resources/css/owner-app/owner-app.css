@@ -808,6 +808,8 @@ details summary::-webkit-details-marker { display: none; }
 .g-gsstep input::placeholder { font: 500 11px/1 var(--font); color: var(--ink-3, #999); }
 .g-gso { font: 600 12px/1 var(--font); color: var(--acc); text-decoration: underline; padding: 2px 0; }
 .g-gso[disabled] { opacity: .4; }
+/* (Lane GSX) delete a gift-only product: a red link beside "Use shop stock" / "Shared with the shop" */
+.g-gso.g-gdelp { color: #c0392b; padding: 10px 4px 10px 12px; margin: -8px 0; }
 .g-step.sm button { width: 34px; }
 .g-msgs { margin: 0 0 12px; padding: 12px 14px 12px 30px; font-size: 13px; line-height: 1.4; }
 .card.g-msgs { box-shadow: none; background: #FFF7ED; }
@@ -943,5 +945,3 @@ html.oa-nobulk :is([data-act="selall"], [data-act="selmode"], .bulk) { display: 
 html.oa-nobulk .sel { pointer-events: none; }
 
 
-/* (Lane GSX) delete a gift-only product: a red link beside "Use shop stock" / "Shared with the shop" */
-.g-gso.g-gdelp { color: #c0392b; padding: 10px 4px 10px 12px; margin: -8px 0; }

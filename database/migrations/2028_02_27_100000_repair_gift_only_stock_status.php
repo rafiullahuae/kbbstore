@@ -33,6 +33,8 @@ return new class extends Migration
             ->where('type', '!=', 'variable')
             ->whereNull('deleted_at')
             ->update(['stock_status' => 'instock', 'updated_at' => now()]);
+        // a raw write to products: the variant price memo must not keep a snapshot from before it
+        \App\Services\VariantPricing::invalidate();
 
         if (app()->runningInConsole()) {
             echo "Gift-only products back in stock from their count: {$fixed}.\n";
