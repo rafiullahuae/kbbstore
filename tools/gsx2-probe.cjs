@@ -1,0 +1,20 @@
+const { chromium } = require('playwright');
+const BASE = process.env.BASE;
+(async () => {
+  const b = await chromium.launch(); const page = await b.newPage({ viewport: { width: 1280, height: 900 } });
+  const errs = []; page.on('pageerror', (e) => errs.push(String(e)));
+  await page.goto(BASE + '/admin/login'); await page.fill('#email', 'owner@example.com'); await page.fill('#password', 'preview-password');
+  await Promise.all([page.waitForNavigation(), page.click('button[type=submit]')]);
+  await page.evaluate(() => window.go('freegifts')); await page.waitForTimeout(1500);
+  const tab = page.locator('button', { hasText: /AED 100\b/ }).first(); if (await tab.count()) await tab.click(); await page.waitForTimeout(800);
+  const pv = () => page.evaluate(() => [...document.querySelectorAll('.fg-pvcol')].map((h) => h.innerText.replace(/\s+/g, ' ').slice(0, 600)));
+  console.log('BEFORE', await pv());
+  const plus = page.locator('.fg-gi', { hasText: 'Maybelline' }).locator('.fg-gs-b').last();
+  await Promise.all([page.waitForResponse((x) => x.url().includes('/gift-stock')), plus.click()]); await page.waitForTimeout(800);
+  console.log('AFTER +', await pv());
+  await page.reload(); await page.waitForTimeout(800); await page.evaluate(() => window.go('freegifts')); await page.waitForTimeout(1500);
+  if (await tab.count()) await tab.click(); await page.waitForTimeout(800);
+  console.log('RELOAD', await pv()); const pvEl = page.locator('.fg-pvcol').first(); await pvEl.scrollIntoViewIfNeeded(); await pvEl.screenshot({ path: 'docs/lane-gsx/admin-preview-shows-maybelline.png' });
+  const shop = await page.evaluate(async () => { const r = await fetch('/'); return r.status; });
+  console.log(errs); await b.close();
+})();

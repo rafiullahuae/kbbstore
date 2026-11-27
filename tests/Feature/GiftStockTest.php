@@ -344,3 +344,27 @@ it('deletes a gift-only product from the Gifts page and the phone, takes it out 
     expect(substr_count(file_get_contents(base_path('routes/free-gifts-admin.php')), "Route::delete('/products/{id}', [FreeGiftsController::class, 'deleteProduct'])"))->toBe(1)
         ->and(substr_count(file_get_contents(base_path('routes/owner-app.php')), "->name('gifts.giftdelete')"))->toBe(1);
 });
+
+/*
+ * (Lane GSX) THE OWNER, 27 Nov 2026, second screenshot: the shop GAVE the Maybelline (gift stock 1, shop stock 0), but
+ * Free gifts -> "What the shopper sees" left it out -- the preview's shopRows() capped every line at the SHOP stock --
+ * and the checklist above the ranges still called it out of stock. Both now judge a gift-stock product by its gift
+ * stock, as the shop's own walk (linesFor) does. Mutation: put `g.product.stock` back as the cap in shopRows, or drop
+ * the gift-stock branch from FreeGifts::checklist(), and this is red.
+ */
+it('judges a gift-stock product by its gift stock in the checklist and the shopper preview, as the shop does', function () {
+    $mascara = gstkProduct('Maybelline Sky High Mini', ['manage_stock' => true, 'stock' => 0, 'stock_status' => 'outofstock', 'gift_only' => true]);
+    gstkRange([[$mascara, 1]]);
+    gstkGiftStock($mascara, 1);
+
+    $texts = collect(app(FreeGifts::class)->checklist())->pluck('text')->implode(' | ');
+    expect($texts)->not->toContain('Maybelline Sky High Mini" is out of stock');
+
+    gstkGiftStock($mascara, 0);
+    expect(collect(app(FreeGifts::class)->checklist())->pluck('text')->implode(' | '))->toContain('has 0 in its gift stock');
+
+    // the console preview caps a line at the gift stock when the product has one, never at the shop's 0
+    $screen = file_get_contents(resource_path('views/admin/partials/free-gifts-screen.blade.php'));
+    expect($screen)->toContain("cap = hasGs(g.product) ? g.product.gift_stock : g.product.stock; if (cap !== null) q = Math.min(q, cap);")
+        ->not->toContain('if (g.product.stock !== null) q = Math.min(q, g.product.stock);');
+});

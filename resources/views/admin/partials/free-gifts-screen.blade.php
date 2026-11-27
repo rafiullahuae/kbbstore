@@ -865,7 +865,8 @@ select.fg-in{padding-inline-end:28px}
     x.gifts.forEach(function (g) {
       var s = stockOf(g.product, g.quantity);
       if (s.level === 'out') out.push({ level: 'warn', text: (g.product ? g.product.name : 'A gift') + ': ' + s.text.toLowerCase() + ' — skipped until restocked. The rest of this range is still given.' });
-      else if (g.product && g.product.stock !== null && g.product.stock < g.quantity) out.push({ level: 'warn', text: g.product.name + ': only ' + g.product.stock + ' left for ' + g.quantity + ' per order; the shop gives what there is.' });
+      // (Lane GSX) a gift-stock product counts its gift stock, not the shop's
+      else if (g.product) { var cap = hasGs(g.product) ? g.product.gift_stock : g.product.stock; if (cap !== null && cap < g.quantity) out.push({ level: 'warn', text: g.product.name + ': only ' + cap + ' left' + (hasGs(g.product) ? ' in its gift stock' : '') + ' for ' + g.quantity + ' per order; the shop gives what there is.' }); }
     });
     return out;
   }
@@ -910,7 +911,9 @@ select.fg-in{padding-inline-end:28px}
   }
   function shopRows(gifts) {
     return gifts.filter(function (g) { return stockOf(g.product).level !== 'out'; }).map(function (g) {
-      var q = g.quantity; if (g.product.stock !== null) q = Math.min(q, g.product.stock);
+      /* (Lane GSX) a product on its own gift stock gives from THAT number: capping it at the shop stock (0 for the
+         owner's Maybelline, 27 Nov 2026) dropped it from this preview while the shop gave it */
+      var q = g.quantity, cap = hasGs(g.product) ? g.product.gift_stock : g.product.stock; if (cap !== null) q = Math.min(q, cap);
       return { p: g.product, q: q };
     }).filter(function (r) { return r.q > 0; });
   }

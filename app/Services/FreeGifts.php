@@ -1711,6 +1711,8 @@ final class FreeGifts
             ->get(['id', 'name', 'status', 'type', 'stock_status', 'manage_stock', 'stock', 'deleted_at'])->keyBy('id');
         // (Lane FGV) The chosen variations, one query, none when there are none.
         $variants = self::variants($items->flatten(1)->pluck('variant_id')->filter()->all());
+        // (Lane GSX) each product's own gift stock, one query: a product on it is judged by that number, as the shop does
+        $giftStocks = $productIds === [] ? collect() : DB::table('product_gift_stocks')->whereIn('product_id', $productIds)->pluck('stock', 'product_id');
 
         $out = [];
 
@@ -1751,6 +1753,13 @@ final class FreeGifts
                     }
                 } elseif ($p->type === 'variable') {
                     $out[] = ['level' => 'alert', 'text' => $label . ': "' . $p->name . '" has options (shades/sizes) and no variation is picked, so it is skipped; add it again and choose the variation.', 'range' => (int) $r->id];
+                } elseif (isset($giftStocks[$p->id])) {
+                    $have = (int) $giftStocks[$p->id];
+                    if ($have < 1) {
+                        $out[] = ['level' => 'warn', 'text' => $label . ': "' . $p->name . '" has 0 in its gift stock — skipped until restocked; the rest of the range is still given.', 'range' => (int) $r->id];
+                    } elseif ($have < (int) $g->quantity) {
+                        $out[] = ['level' => 'warn', 'text' => $label . ': only ' . $have . ' of "' . $p->name . '" left in its gift stock for ' . (int) $g->quantity . ' per order.', 'range' => (int) $r->id];
+                    }
                 } elseif ($p->stock_status !== 'instock' || ($p->manage_stock && (int) $p->stock < 1)) {
                     $out[] = ['level' => 'warn', 'text' => $label . ': "' . $p->name . '" is out of stock — skipped until restocked; the rest of the range is still given.', 'range' => (int) $r->id];
                 } elseif ($p->manage_stock && (int) $p->stock < (int) $g->quantity) {
