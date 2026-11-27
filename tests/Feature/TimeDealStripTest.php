@@ -150,3 +150,22 @@ it('saves from Appearance -> Time deal strip for timedeal.manage only, and the s
     expect(substr_count(file_get_contents(base_path('routes/web.php')), "require __DIR__.'/time-deal-admin.php';"))->toBe(1)
         ->and(substr_count(file_get_contents(resource_path('views/admin/app.blade.php')), "@include('admin.partials.time-deal-screen')"))->toBe(1);
 });
+
+/*
+ * (27 Nov) "the corner cross icon to hide / close this strip if user want, also in mobile the cross" and "in the desktop
+ * i want little spacings". The cross ships on, closes the strip for the rest of that shopper's visit (sessionStorage,
+ * keyed to this deal's end, so the next deal shows again), and Appearance -> Time deal strip -> Close button turns it
+ * off. Mutation: drop the closable branch from the partial and the first expectation is red.
+ */
+it('carries a close cross that hides it for the visit, and the switch that takes the cross away', function () {
+    tdsSet(['mode' => 'daily', 'closable' => true]);
+    $html = $this->get('/')->getContent();
+    expect($html)->toContain('<button type="button" class="kds-x" data-kds-x aria-label="Close">')
+        ->and($html)->toContain("sessionStorage.setItem(k,'1')")
+        ->and($html)->toContain("var k='kbbTds'+s.dataset.end");
+    // more air on computers only; phones keep their spacing
+    expect(TimeDealStrip::CSS)->toContain('@media (min-width:901px){.kds{gap:36px;min-height:56px');
+
+    tdsSet(['closable' => false]);
+    expect($this->get('/')->getContent())->toContain('id="kbb-tds"')->not->toContain('data-kds-x aria-label');
+});
