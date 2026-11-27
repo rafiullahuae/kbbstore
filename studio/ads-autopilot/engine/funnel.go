@@ -53,6 +53,7 @@ type AudienceView struct {
 type funnelObjs struct {
 	prosp, catalog  *model.Campaign
 	extra           []*model.Campaign // Prospecting #2 / #3 (volume.go), only when the budget feeds their learning
+	runs            []*model.Campaign // one campaign per run (runcampaign.go): never the funnel's main campaign
 	newSets         []model.AdSet
 	existing        *model.AdSet
 	lookalike       *model.AdSet
@@ -73,6 +74,16 @@ func findFunnel(tree []model.Campaign, aus []model.Audience) funnelObjs {
 		case c.Objective == "PRODUCT_CATALOG_SALES" && f.catalog == nil:
 			f.catalog = c
 			f.catSets = c.AdSets
+		case c.Objective == "OUTCOME_SALES" && isRunCampaign(c.Name):
+			f.runs = append(f.runs, c)
+			for j := range c.AdSets { // a funnel audience job built in its own campaign is still that audience
+				switch s := c.AdSets[j]; {
+				case strings.Contains(s.Name, "existing customers") && f.existing == nil && s.Status != "ARCHIVED" && s.Status != "DELETED":
+					f.existing = &c.AdSets[j]
+				case strings.Contains(s.Name, "lookalike") && f.lookalike == nil && s.Status != "ARCHIVED" && s.Status != "DELETED":
+					f.lookalike = &c.AdSets[j]
+				}
+			}
 		case c.Objective == "OUTCOME_SALES" && extraN(c.Name) > 0:
 			f.extra = append(f.extra, c)
 		case c.Objective == "OUTCOME_SALES" && f.prosp == nil && !strings.Contains(c.Name, "Click-to"):

@@ -5,7 +5,8 @@ package main
 //
 // Until 0.6.4 "Run it" only marked the creatives approved, and the next cycle's planner was TOLD to prefer them:
 // nothing made it happen and nothing showed whether it did. Now "Run it" makes a job, "Run your ads made with
-// Claude", which puts exactly those ads live in the prospecting ad set (upload, ad, switched on), inside his limits
+// Claude", which puts exactly those ads live (upload, ad, switched on) — since 0.6.23 in a campaign of their own
+// (runcampaign.go), before that in the prospecting ad set — inside his limits
 // (room by rotating the weakest ad out when Max active ads is reached, slotsFor), and shows on Plan → Upcoming
 // jobs with every step. It starts at once in Auto and in Practice (he approved it by pressing Run it); Off waits.
 // Creatives approved before this version and not live yet get the same job at the next cycle (ownerBacklog).
@@ -20,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"kaa/executor"
 	"kaa/model"
 )
 
@@ -69,14 +71,26 @@ func (ac *Acct) queueOwnerRun(ids []string, why string) string {
 	j := Job{ID: id, Kind: "owner_run", Title: fmt.Sprintf("Run your %d ad(s) made with Claude", len(ids)), TitleAR: fmt.Sprintf("تشغيل %d إعلان صنعتِه مع Claude", len(ids)),
 		Why: why, When: now.Add(-time.Minute), Status: "approved", // due in the cycle that queues it (its clock was read first)
 		Creatives: ids, Source: "owner", Format: "image", UpdatedAt: now.UTC()}
-	j.logf(now, "queued: %d ad(s) you pressed Run it on go into the prospecting ad set, inside your limits", len(ids))
+	j.logf(now, "queued: %d ad(s) you pressed Run it on go into a new campaign of their own, inside your limits", len(ids))
 	js.Jobs = append(js.Jobs, j)
 	ac.saveJobs(js)
 	return id
 }
 
 // ownerRunProposals: upload + ad for each of the job's creatives that is not on Meta yet.
-func (ac *Acct) ownerRunProposals(in model.CycleInput, j Job, pid func(string) string) ([]model.Proposal, string) {
+// Since 0.6.23 they go into a new campaign of their own (runcampaign.go), unless he chose the old way.
+func (ac *Acct) ownerRunProposals(in model.CycleInput, j Job, env executor.Env, pid func(string) string) ([]model.Proposal, string) {
+	own := ownCampaign(in.Playbook, j.Kind)
+	var budget float64
+	if own {
+		b, why := ac.runBudget(in, j, env)
+		if why != "" {
+			return nil, why
+		}
+		budget = b
+	}
+	var langs []string
+	setOf := map[string]string{} // language → ad set; in its own campaign the tmp ids are filled in below
 	live := liveMeta(in.Tree)
 	rej := map[string]bool{}
 	for _, r := range j.Rejected {
@@ -96,9 +110,18 @@ func (ac *Acct) ownerRunProposals(in model.CycleInput, j Job, pid func(string) s
 		if err != nil || (c.MetaID != "" && live[c.MetaID]) {
 			continue
 		}
-		set := ac.prospectingSet(in, c.Lang)
-		if set == "" {
-			return nil, "needs the prospecting campaign first (the first launch: Approvals → First launch)"
+		l := strings.ToLower(c.Lang)
+		if l != "en" {
+			l = "ar"
+		}
+		set := "{set:" + l + "}"
+		if !own {
+			if set = ac.prospectingSet(in, c.Lang); set == "" {
+				return nil, "needs the prospecting campaign first (the first launch: Approvals → First launch)"
+			}
+		} else if _, ok := setOf[l]; !ok {
+			setOf[l] = ""
+			langs = append(langs, l)
 		}
 		up := model.Proposal{ID: pid(fmt.Sprintf("cr%d", i)), Kind: model.KindUploadCreative, Target: cid,
 			Params: map[string]any{"creative_id": cid, "format": "image", "headline": c.Headline, "primary_text": c.PrimaryText}, Why: j.Title, Confidence: 0.7}
@@ -120,6 +143,15 @@ func (ac *Acct) ownerRunProposals(in model.CycleInput, j Job, pid func(string) s
 	}
 	if len(ps) == 0 {
 		return nil, msgOwnerRunDone
+	}
+	if own {
+		camp, sets := ac.runCampaign(in, j, env, pid, langs, budget, nil)
+		for i := range ps {
+			if s, ok := ps[i].Params["adset_id"].(string); ok && strings.HasPrefix(s, "{set:") {
+				ps[i].Params["adset_id"] = sets[strings.TrimSuffix(strings.TrimPrefix(s, "{set:"), "}")]
+			}
+		}
+		ps = append(camp, ps...)
 	}
 	return ps, ""
 }

@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"kaa/executor"
 	"kaa/model"
 )
 
@@ -137,7 +138,7 @@ func (ac *Acct) refreshOccasions(ctx context.Context, in model.CycleInput, js *J
 		}
 		j := Job{ID: id, Kind: "occasion", Title: title, TitleAR: titleAR,
 			Why: brief, When: when, Status: "planned", ProductIDs: pids, Lang: strings.Join(pb.Languages, "+"), Format: "image", CopyDirection: o.Angle,
-			Audience: "the prospecting campaign (Advantage+ audience), budget one step up from 3 days before", Source: "occasion", Target: inst.ID, Creatives: crs, Occasion: &inst, Slots: pb.Slots(), UpdatedAt: now.UTC()}
+			Audience: map[bool]string{true: "its own new campaign with its own budget (Advantage+ audience, no bid cap)", false: "the prospecting campaign (Advantage+ audience), budget one step up from 3 days before"}[ownCampaign(&pb, "occasion")], Source: "occasion", Target: inst.ID, Creatives: crs, Occasion: &inst, Slots: pb.Slots(), UpdatedAt: now.UTC()}
 		j.logf(now, "prepared %d ads for %s (%s → %s%s); waiting for your approval", len(crs), inst.Name, inst.Start, inst.End, map[bool]string{true: ", estimated date", false: ""}[inst.Estimated])
 		js.Jobs = append(js.Jobs, j)
 		ac.notifyOwnerRef(j.ID, j.Title, fmt.Sprintf("%s starts %s. Open Approvals → Occasions.", inst.Name, inst.Start), fmt.Sprintf("%s يبدأ %s. افتحي الموافقات ← المناسبات.", inst.NameAR, inst.Start))
@@ -235,12 +236,25 @@ func (ac *Acct) occasionSettled(j Job) int {
 	return k
 }
 
-// occasionProposals: the approved package → ads into the prospecting ad set (rejected ads left out) + the ramp.
-func (ac *Acct) occasionProposals(in model.CycleInput, j Job, stepPct float64, pid func(string) string) ([]model.Proposal, string) {
+// occasionProposals: the approved package → ads (rejected ads left out) in its own campaign, or (the old way) into
+// the prospecting ad set + the ramp.
+// Since 0.6.23 the package is a campaign of its own with its own budget (runcampaign.go), unless he chose the old way.
+func (ac *Acct) occasionProposals(in model.CycleInput, j Job, env executor.Env, pid func(string) string) ([]model.Proposal, string) {
+	stepPct := env.Limits.MaxBudgetStepPct
 	f := findFunnel(in.Tree, in.Audiences)
-	if f.prosp == nil {
+	own := ownCampaign(in.Playbook, j.Kind)
+	var budget float64
+	if own {
+		b, why := ac.runBudget(in, j, env)
+		if why != "" {
+			return nil, why
+		}
+		budget = b
+	} else if f.prosp == nil {
 		return nil, "needs the prospecting campaign first (the first launch)"
 	}
+	var langs []string
+	seenL := map[string]bool{}
 	rej := map[string]bool{}
 	for _, r := range j.Rejected {
 		rej[r] = true
@@ -254,9 +268,18 @@ func (ac *Acct) occasionProposals(in model.CycleInput, j Job, stepPct float64, p
 		if err != nil {
 			continue
 		}
-		set := ac.prospectingSet(in, c.Lang)
-		if set == "" {
-			return nil, "needs the prospecting ad set first"
+		l := strings.ToLower(c.Lang)
+		if l != "en" {
+			l = "ar"
+		}
+		set := "{set:" + l + "}"
+		if !own {
+			if set = ac.prospectingSet(in, c.Lang); set == "" {
+				return nil, "needs the prospecting ad set first"
+			}
+		} else if !seenL[l] {
+			seenL[l] = true
+			langs = append(langs, l)
 		}
 		ps = append(ps, model.Proposal{ID: pid(fmt.Sprintf("cr%d", i)), Kind: model.KindUploadCreative, Target: cid,
 			Params: map[string]any{"creative_id": cid, "format": "image", "headline": c.Headline, "primary_text": c.PrimaryText}, Why: j.Title, Confidence: 0.65},
@@ -265,6 +288,15 @@ func (ac *Acct) occasionProposals(in model.CycleInput, j Job, stepPct float64, p
 	}
 	if len(ps) == 0 {
 		return nil, "every ad of the package was rejected"
+	}
+	if own { // its own campaign carries its own budget: no ramp of an earlier campaign
+		camp, sets := ac.runCampaign(in, j, env, pid, langs, budget, nil)
+		for i := range ps {
+			if s, ok := ps[i].Params["adset_id"].(string); ok && strings.HasPrefix(s, "{set:") {
+				ps[i].Params["adset_id"] = sets[strings.TrimSuffix(strings.TrimPrefix(s, "{set:"), "}")]
+			}
+		}
+		return append(camp, ps...), ""
 	}
 	if stepPct <= 0 {
 		stepPct = 20

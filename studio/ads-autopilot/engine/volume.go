@@ -681,7 +681,9 @@ const rotateAfter = 96 * time.Hour
 // have been judged (4+ days, not a winner); without one the job waits and says why. pending: new ads already taken
 // by earlier jobs in this pass; paused: ads already chosen to make room.
 func (ac *Acct) roomFor(in model.CycleInput, env executor.Env, j Job, n, pending int, paused map[string]bool, pid func(string) string) ([]model.Proposal, string) {
-	if (!volKind(j.Kind) && j.Kind != "test") || n == 0 { // the planner's tests are new ads in the same campaign too
+	// the planner's tests are new ads in the same campaign too — unless they build their own (runcampaign.go):
+	// then they bring their own budget and do not count against the main campaign's ad target
+	if (!volKind(j.Kind) && (j.Kind != "test" || ownCampaign(in.Playbook, j.Kind))) || n == 0 {
 		return nil, ""
 	}
 	v := volumeFor(*in.Playbook, env.Limits, ac.targetCPA(in), env.Tree)

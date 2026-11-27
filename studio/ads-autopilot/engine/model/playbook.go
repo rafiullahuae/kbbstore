@@ -154,6 +154,13 @@ type Playbook struct {
 	OccasionSlots  int                 `json:"occasion_slots"`
 	ProductSeasons map[string][]string `json:"product_seasons,omitempty"`
 	Knobs          Knobs               `json:"knobs"`
+	// Each run its own campaign (the owner, 26 Nov: "if new campaigns / routine run, it should be as seperate
+	// compaign, not inside the previous campaign ... each set should have it's own main campaign"). Off (the
+	// default, what he asked for): every Run it / routine batch / occasion builds a NEW campaign of its own, named
+	// "Run · <what> · <date time>", and its ads go only there. ShareCampaign on = the old way (new ads into the main
+	// prospecting campaign). RunCampaignAED: that new campaign's daily budget (0 = automatic, inside his limits).
+	ShareCampaign  bool    `json:"share_campaign"`
+	RunCampaignAED float64 `json:"run_campaign_aed"`
 	// "Let it tune its own rules": off | bounds (default: it changes a threshold itself, only inside TuneBounds) | ask
 	SelfTune   string     `json:"self_tune"`
 	TuneBounds TuneBounds `json:"tune_bounds"`
@@ -220,6 +227,7 @@ func (p Playbook) Normalize() Playbook {
 	p.Instructions = cleanText(p.Instructions, 4000)
 	p.Focus, p.Avoid = cleanRules(p.Focus), cleanRules(p.Avoid)
 	p.FreshnessPct = clampF(p.FreshnessPct, 0, 100)
+	p.RunCampaignAED = math.Round(clampF(p.RunCampaignAED, 0, 100000)*100) / 100
 	if p.MinStock < 0 || p.MinStock > 1000 {
 		p.MinStock = 0
 	}

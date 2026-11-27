@@ -223,7 +223,7 @@ func (ac *Acct) refreshJobs(ctx context.Context, in model.CycleInput, plan model
 			}
 			upsert(&js, Job{ID: id, Kind: "test", Title: s.Title, TitleAR: "اختبار إعلان جديد", Why: firstNonEmpty(s.Why, s.Detail), When: at, Status: "planned",
 				ProductIDs: allowedOnly(s.ProductIDs, in.Shop), Lang: firstNonEmpty(s.Lang, "ar"), Format: f, CopyDirection: s.Angle,
-				Audience: "inside the prospecting ad set (Advantage+ audience)", Source: "planner", UpdatedAt: now.UTC()}, now)
+				Audience: map[bool]string{true: "its own new campaign (Advantage+ audience, no bid cap)", false: "inside the prospecting ad set (Advantage+ audience)"}[ownCampaign(&pb, "test")], Source: "planner", UpdatedAt: now.UTC()}, now)
 		case "refresh":
 			upsert(&js, Job{ID: "refresh-" + s.Target, Kind: "refresh", Title: "Refresh a tiring ad", TitleAR: "تجديد إعلان مُرهَق", Why: s.Why, When: at, Status: "planned",
 				Target: s.Target, Lang: "ar", Format: "image", Source: "planner", ProductIDs: []string{}, UpdatedAt: now.UTC()}, now)
@@ -468,8 +468,16 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 	f := findFunnel(in.Tree, in.Audiences)
 	switch j.Kind {
 	case "test", "refresh", "seasonal", "batch", "reword": // batch / reword: volume.go, watch.go
-		set := ac.prospectingSet(in, lang)
-		if set == "" {
+		own := ownCampaign(in.Playbook, j.Kind) // its own new campaign (runcampaign.go), unless he chose the old way
+		set := ""
+		var budget float64
+		if own {
+			b, why := ac.runBudget(in, j, env)
+			if why != "" {
+				return nil, why
+			}
+			budget = b
+		} else if set = ac.prospectingSet(in, lang); set == "" {
 			return nil, "needs the prospecting campaign first (the first launch)"
 		}
 		n := 1
@@ -480,14 +488,21 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 		if len(prods) == 0 {
 			return nil, "no in-stock product your playbook allows"
 		}
+		var camp []model.Proposal
+		if own {
+			var sets map[string]string
+			camp, sets = ac.runCampaign(in, j, env, pid, []string{lang}, budget, nil)
+			set = sets[lang]
+		}
 		ps, why := adsInto(set, prods)
 		if why != "" {
 			return nil, why
 		}
+		ps = append(camp, ps...)
 		if (j.Kind == "refresh" || j.Kind == "reword") && j.Target != "" {
 			ps = append(ps, model.Proposal{ID: pid("pause"), Kind: model.KindPause, Target: j.Target, Params: map[string]any{}, Why: "Replaced by a fresh concept (it was tiring).", Confidence: 0.7})
 		}
-		if j.Kind == "seasonal" && f.prosp != nil {
+		if j.Kind == "seasonal" && f.prosp != nil && !own { // in its own campaign the push has its own budget
 			step := env.Limits.MaxBudgetStepPct
 			if step <= 0 {
 				step = 20
@@ -503,9 +518,9 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 	case "funnel_campaign": // a 2nd / 3rd prospecting campaign, only when its budget feeds its learning (volume.go)
 		return ac.extraCampaignProposals(in, j, env, pid, tag, adsInto)
 	case "occasion":
-		return ac.occasionProposals(in, j, env.Limits.MaxBudgetStepPct, pid)
+		return ac.occasionProposals(in, j, env, pid)
 	case "owner_run": // the ads he pressed Run it on (ownerrun.go)
-		return ac.ownerRunProposals(in, j, pid)
+		return ac.ownerRunProposals(in, j, env, pid)
 	case "reprice": // the same creative with the corrected price replaces a live ad (reprice.go)
 		ps, why, gone := ac.repriceProposals(in, j, pid)
 		if gone {
@@ -553,11 +568,24 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 			return nil, "no in-stock product your playbook allows"
 		}
 		ps := []model.Proposal{
-			{ID: pid("aud"), Kind: model.KindCreateAudience, Target: "tmp:" + tag + "-past", Params: map[string]any{"name": "Past buyers 30–180d", "source": "website", "event": "Purchase", "retention_days": 180.0, "exclude_event": "Purchase", "exclude_days": 30.0}, Why: j.Why, Confidence: 0.7},
-			{ID: pid("set"), Kind: model.KindCreateAdSet, Target: "tmp:" + tag + "-set", Params: map[string]any{"name": "Prospecting · existing customers (capped)", "campaign_id": f.prosp.ID, "countries": countries, "destination": "website",
-				"advantage_audience": 0.0, "custom_audiences": []any{"tmp:" + tag + "-past"}, "strict_audiences": 1.0, "spend_cap": math.Round(capAED*100) / 100}, Why: j.Why, Confidence: 0.65},
+			{ID: pid("aud"), Kind: model.KindCreateAudience, Target: "tmp:" + tag + "-past", Params: map[string]any{"name": "Past buyers 30–180d", "source": "website", "event": "Purchase", "retention_days": 180.0, "exclude_event": "Purchase", "exclude_days": 30.0}, Why: j.Why, Confidence: 0.7}}
+		setPr := map[string]any{"name": "Prospecting · existing customers (capped)", "campaign_id": f.prosp.ID, "countries": countries, "destination": "website",
+			"advantage_audience": 0.0, "custom_audiences": []any{"tmp:" + tag + "-past"}, "strict_audiences": 1.0, "spend_cap": math.Round(capAED*100) / 100}
+		set := "tmp:" + tag + "-set"
+		if ownCampaign(in.Playbook, j.Kind) { // its own campaign, budget = the cap (runcampaign.go)
+			free := math.Max(0, env.Limits.DailyAED-executor.CommittedDaily(env.Tree)-env.CommitDelta)
+			b := math.Floor(math.Min(capAED, free)*100) / 100
+			if b < minRunAED {
+				return nil, fmt.Sprintf("a new campaign needs at least AED %.0f/day and your daily limit has AED %.0f free (Settings → Limits → Daily, or pause a campaign)", minRunAED, free)
+			}
+			delete(setPr, "campaign_id") // the run's own campaign; the rest stays exactly the existing-customers ad set
+			setPr["age_range"], setPr["genders"], setPr["excluded_custom_audiences"] = nil, nil, nil
+			camp, sets := ac.runCampaign(in, j, env, pid, []string{lang}, b, setPr)
+			ps, set = append(ps, camp...), sets[lang]
+		} else {
+			ps = append(ps, model.Proposal{ID: pid("set"), Kind: model.KindCreateAdSet, Target: set, Params: setPr, Why: j.Why, Confidence: 0.65})
 		}
-		more, why := adsInto("tmp:"+tag+"-set", prods)
+		more, why := adsInto(set, prods)
 		if why != "" {
 			return nil, why
 		}
@@ -584,9 +612,23 @@ func (ac *Acct) materialise(ctx context.Context, in model.CycleInput, j Job, env
 		ps := []model.Proposal{
 			{ID: pid("lal1"), Kind: model.KindCreateLookalike, Target: "tmp:" + tag + "-lal1", Params: map[string]any{"name": "Lookalike 1% of buyers", "origin_audience_id": f.buyers.ID, "ratio": 0.01}, Why: j.Why, Confidence: 0.7},
 			{ID: pid("lal3"), Kind: model.KindCreateLookalike, Target: "tmp:" + tag + "-lal3", Params: map[string]any{"name": "Lookalike 3% of buyers", "origin_audience_id": f.buyers.ID, "ratio": 0.03}, Why: j.Why, Confidence: 0.7},
-			{ID: pid("set"), Kind: model.KindCreateAdSet, Target: "tmp:" + tag + "-set", Params: pr, Why: j.Why, Confidence: 0.65},
 		}
-		more, why := adsInto("tmp:"+tag+"-set", prods)
+		set := "tmp:" + tag + "-set"
+		if ownCampaign(in.Playbook, j.Kind) { // its own campaign (runcampaign.go)
+			b, why := ac.runBudget(in, j, env)
+			if why != "" {
+				return nil, why
+			}
+			delete(pr, "campaign_id")
+			if _, ok := pr["excluded_custom_audiences"]; !ok {
+				pr["excluded_custom_audiences"] = nil
+			}
+			camp, sets := ac.runCampaign(in, j, env, pid, []string{lang}, b, pr)
+			ps, set = append(ps, camp...), sets[lang]
+		} else {
+			ps = append(ps, model.Proposal{ID: pid("set"), Kind: model.KindCreateAdSet, Target: set, Params: pr, Why: j.Why, Confidence: 0.65})
+		}
+		more, why := adsInto(set, prods)
 		if why != "" {
 			return nil, why
 		}
@@ -610,6 +652,7 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 	js := ac.jobSet()
 	now := env.Now
 	pending, paused := 0, map[string]bool{} // new ads and room-making pauses already taken by earlier jobs in this pass (volume.go)
+	reserved := 0.0                         // daily budget of the new campaigns earlier jobs in this pass build (runcampaign.go)
 	for i := range js.Jobs {
 		j := &js.Jobs[i]
 		if j.ID == jobFirstLaunch || (j.Status != "planned" && j.Status != "approved") || j.When.After(now) {
@@ -619,7 +662,9 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 			j.Waiting = "waits for your approval (Approvals → Occasions)"
 			continue
 		}
-		ps, why := ac.materialise(ctx, in, *j, env)
+		jenv := env
+		jenv.CommitDelta += reserved
+		ps, why := ac.materialise(ctx, in, *j, jenv)
 		n := countKind(ps, model.KindCreateAd)
 		if (j.Kind == "reprice" && why == msgRepriceGone) || (j.Kind == "owner_run" && why == msgOwnerRunDone) {
 			j.Status, j.Result, j.Waiting = "done", why, ""
@@ -647,6 +692,7 @@ func (ac *Acct) dueJobs(ctx context.Context, in model.CycleInput, env executor.E
 		if j.Kind != "reprice" { // its new ad takes the slot of the ad it pauses
 			pending += n
 		}
+		reserved += budgetOf(ps)
 		j.ProposalIDs = nil
 		for _, p := range ps {
 			j.ProposalIDs = append(j.ProposalIDs, p.ID)

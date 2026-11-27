@@ -2,6 +2,12 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.23
+- Each run now gets its OWN new campaign on Meta, named "Run · <what> · <date time>" (for example "KAA: Run · Run your 4 ad(s) made with Claude · 26 Nov 2026 14:05"). That applies to Run it, planned tests, occasion packages and new audiences. Nothing is added to an earlier campaign any more. Lowest cost bidding, no bid cap, as before.
+- Its daily budget: Strategy → Audience → New campaigns → "Budget of each new campaign" (0 = automatic: AED 30, never above what is free under your daily limit). If your daily limit has no room left, the run waits and says so.
+- To go back to the old way (new ads inside the main campaign), tick "Put new ads into the main campaign instead" in the same place.
+- The autopilot's own one-ad refreshes (replacing a tiring ad) stay in the campaign they feed.
+
 ## 0.6.22
 - Run now (in "What will run now") closes the window at once; the run goes on in the background with a bar at the very top of every page (what it is doing, how many steps done — click it for every step). When it ends, a result bar stays at the top until you close it: what was made on Meta, what was not, and buttons to Every step and Launched on Meta.
 - Plan has tabs: Upcoming (every job still to run, by day, with its time) · Launched on Meta (every campaign, ad set and ad the app really made, by day, newest first, with time, the run it came from, its Meta id and its status on Meta now) · Weekly plan.
