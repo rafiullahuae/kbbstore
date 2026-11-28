@@ -126,7 +126,23 @@ type Client struct {
 
 	mu    sync.Mutex
 	usage Usage
-	spent []scored // pacing: the score of the calls made in the last 300 s
+	spent map[string][]scored // pacing: the score of the calls made in the last 300 s, per ad account (paceKey)
+}
+
+// paceKey: Meta scores requests PER AD ACCOUNT (META-FACTS §5), so a call on act_X/... is paced against act_X's own
+// score and every other call (me/..., businesses, object ids) shares one. The owner, 28 Nov 2026: KBB24 read
+// "NOT VISIBLE TO YOUR META TOKEN (Meta says: context deadline exceeded)" -- the portfolio walk over his businesses
+// had filled the ONE shared budget, so the direct read of act_1120714123764221 sat in the pacing queue past its 20 s
+// and never reached Meta, although his token reads it at once in Graph API Explorer.
+func paceKey(path string) string {
+	path = strings.TrimLeft(path, "/")
+	if !strings.HasPrefix(path, "act_") {
+		return ""
+	}
+	if i := strings.IndexByte(path, '/'); i >= 0 {
+		return path[:i]
+	}
+	return path
 }
 
 type scored struct {
@@ -144,30 +160,34 @@ const (
 	fullScore    = 9000
 )
 
-func (c *Client) pace(ctx context.Context, cost int) error {
+func (c *Client) pace(ctx context.Context, key string, cost int) error {
 	for i := 0; i < 40; i++ {
 		c.mu.Lock()
 		now := time.Now()
-		keep := c.spent[:0]
+		if c.spent == nil {
+			c.spent = map[string][]scored{}
+		}
+		spent := c.spent[key]
+		keep := spent[:0]
 		sum := 0
-		for _, s := range c.spent {
+		for _, s := range spent {
 			if now.Sub(s.at) < scoreWindow {
 				keep = append(keep, s)
 				sum += s.pts
 			}
 		}
-		c.spent = keep
+		c.spent[key] = keep
 		max := limitedScore
 		if c.usage.Tier == "standard_access" || c.usage.Tier == "full_access" {
 			max = fullScore
 		}
 		budget := max * 8 / 10
-		if sum+cost <= budget || len(c.spent) == 0 {
-			c.spent = append(c.spent, scored{now, cost})
+		if sum+cost <= budget || len(keep) == 0 {
+			c.spent[key] = append(keep, scored{now, cost})
 			c.mu.Unlock()
 			return nil
 		}
-		wait := scoreWindow - now.Sub(c.spent[0].at) + 100*time.Millisecond
+		wait := scoreWindow - now.Sub(keep[0].at) + 100*time.Millisecond
 		tier := c.usage.Tier
 		c.mu.Unlock()
 		if c.OnWait != nil {
@@ -178,8 +198,8 @@ func (c *Client) pace(ctx context.Context, cost int) error {
 		}
 		if c.Sleep != nil { // tests: a fake sleep moves no clock, so age the window by hand
 			c.mu.Lock()
-			if len(c.spent) > 0 {
-				c.spent = c.spent[1:]
+			if len(c.spent[key]) > 0 {
+				c.spent[key] = c.spent[key][1:]
 			}
 			c.Paced++
 			c.mu.Unlock()
@@ -269,7 +289,7 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 	}
 	var last *Error
 	for attempt := 0; attempt <= c.MaxRetries; attempt++ {
-		if err := c.pace(ctx, cost); err != nil {
+		if err := c.pace(ctx, paceKey(path), cost); err != nil {
 			return err
 		}
 		if attempt > 0 {
@@ -517,7 +537,7 @@ type TokenInfo struct {
 
 // rawGet: a GET that carries its own credentials (the token endpoints).
 func (c *Client) rawGet(ctx context.Context, path string, q url.Values, out any) error {
-	if err := c.pace(ctx, 1); err != nil {
+	if err := c.pace(ctx, "", 1); err != nil {
 		return err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.url(path)+"?"+q.Encode(), nil)

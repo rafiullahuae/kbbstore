@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.27
+- Fixed: KBB24 could still show "context deadline exceeded". The app was making it wait behind its checks of your other businesses; each ad account now has its own request allowance, as Meta counts it, so KBB24 is read at once.
+
 ## 0.6.26
 - Fixed: an ad account Meta's lists leave out (KBB24) could fail with "context canceled". It now gets its own time to be read, so it turns green.
 
