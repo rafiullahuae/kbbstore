@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.25
+- When Meta will not let the app read an ad account, its row now shows Meta's own reason, so you know exactly what to fix.
+
 ## 0.6.24
 - An ad account Meta's lists leave out (KBB24) is now read directly: it shows green with AED when your token can use it, instead of a red "DISABLED".
 - A red account now says why: "not visible to your Meta token", "disabled by Meta", "unpaid balance" and so on.

@@ -11,7 +11,7 @@ const langOf = (name) => (/[؀-ۿ]|(^|[\s·|:])AR([\s·|:]|$)|arabic/i.test(name
 /* Meta's account_status, in words (the owner, 28 Nov: KBB24 read "DISABLED" while it was active -- the app could not
    see it, which is a different problem with a different fix). */
 function statusName(a) {
-  if (/^not visible/.test(a.relation || '') || !a.account_status) return 'NOT VISIBLE TO YOUR META TOKEN: Settings → Connections → Test';
+  if (/^not visible/.test(a.relation || '') || !a.account_status) { var m = /^not visible to the token: (.+)$/.exec(a.relation || ''); return 'NOT VISIBLE TO YOUR META TOKEN' + (m ? ' (Meta says: ' + m[1] + ')' : ': Settings → Connections → Test'); }
   return ({ 2: 'DISABLED BY META', 3: 'UNPAID BALANCE', 7: 'UNDER META REVIEW', 8: 'PENDING SETTLEMENT', 9: 'IN GRACE PERIOD', 100: 'CLOSING', 101: 'CLOSED' })[a.account_status] || 'NOT ACTIVE (' + a.account_status + ')';
 }
 
@@ -19,7 +19,7 @@ export function normAccounts(r) {
   const list = Array.isArray(r) ? r : (r.accounts || []);
   return {
     selected: r.selected || (list.find((a) => a.selected) || {}).id || '',
-    rows: list.map((a) => ({ id: a.id, name: a.name, currency: a.currency, status: a.account_status === 1 || a.status === 'ACTIVE' ? 'ACTIVE' : statusName(a),
+    rows: list.map((a) => ({ id: a.id, name: a.name, relation: a.relation || '', currency: a.currency, status: a.account_status === 1 || a.status === 'ACTIVE' ? 'ACTIVE' : statusName(a),
       automate: !!(a.automated ?? a.automate), mode: a.autopilot || a.mode || 'off', limits_set: !!a.limits_set, backfill: a.backfill || null, links: a.links || {}, link_checks: a.link_checks || {} })),
   };
 }

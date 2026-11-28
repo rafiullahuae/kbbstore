@@ -624,6 +624,15 @@ func (a *App) addDirectAccounts(ctx context.Context, mc *meta.Client, p *model.P
 	for _, id := range want {
 		acc, err := mc.Account(ctx, id)
 		if err != nil || acc.ID == "" {
+			// keep Meta's own words for the account row, so the owner sees WHY (0.6.25)
+			why := "no answer"
+			if err != nil {
+				why = err.Error()
+				if len(why) > 160 {
+					why = why[:160] + "…"
+				}
+			}
+			p.AdAccounts = append(p.AdAccounts, model.AdAccountRef{ID: id, Relation: "not visible to the token: " + why})
 			continue
 		}
 		p.AdAccounts = append(p.AdAccounts, model.AdAccountRef{ID: acc.ID, Name: acc.Name, Currency: acc.Currency, Status: acc.Status, Relation: "direct"})
