@@ -622,7 +622,11 @@ func (a *App) addDirectAccounts(ctx context.Context, mc *meta.Client, p *model.P
 	a.mu.RUnlock()
 	sort.Strings(want)
 	for _, id := range want {
-		acc, err := mc.Account(ctx, id)
+		// its OWN time, not what is left of the caller's: the owner, 28 Nov, "Meta says: context canceled" -- the
+		// portfolio walk over many businesses had used up the request's time before this read began (0.6.26)
+		rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 20*time.Second)
+		acc, err := mc.Account(rctx, id)
+		cancel()
 		if err != nil || acc.ID == "" {
 			// keep Meta's own words for the account row, so the owner sees WHY (0.6.25)
 			why := "no answer"

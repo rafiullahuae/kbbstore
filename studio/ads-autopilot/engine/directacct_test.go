@@ -37,3 +37,25 @@ func TestAnAccountTheListsMissIsReadDirectly(t *testing.T) {
 		}
 	}
 }
+
+// The owner, 28 Nov 2026, after 0.6.25: "Meta says: context canceled" -- the portfolio walk had used up the request's
+// time before the direct read began. The read now has its own time. Mutation: pass ctx straight to mc.Account and
+// this is red.
+func TestTheDirectReadSurvivesASpentRequest(t *testing.T) {
+	ac, m := testApp(t)
+	a := ac.app
+	m.HideAccounts = true
+	p, err := a.meta.Portfolio(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	spent, cancel := context.WithCancel(context.Background())
+	cancel()
+	a.addDirectAccounts(spent, a.meta, &p)
+	for _, r := range p.AdAccounts {
+		if r.ID == m.Account && r.Status == 1 && r.Currency != "" {
+			return
+		}
+	}
+	t.Fatalf("not read with a spent context: %+v", p.AdAccounts)
+}

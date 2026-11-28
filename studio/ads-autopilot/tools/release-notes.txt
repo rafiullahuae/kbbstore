@@ -2,6 +2,9 @@
 # "notes"), and Settings → Updates shows them before he installs. One short line per change, his words, no jargon.
 # A package is not built without a block for its version. Newest first.
 
+## 0.6.26
+- Fixed: an ad account Meta's lists leave out (KBB24) could fail with "context canceled". It now gets its own time to be read, so it turns green.
+
 ## 0.6.25
 - When Meta will not let the app read an ad account, its row now shows Meta's own reason, so you know exactly what to fix.
 
