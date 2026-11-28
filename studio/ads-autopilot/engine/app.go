@@ -431,6 +431,9 @@ func (a *App) testMeta(ctx context.Context) connMeta {
 	}
 	c.DaysLeft, c.Warning = a.tokenStatus(a.now())
 	p, err := mc.Portfolio(ctx)
+	if err == nil {
+		a.addDirectAccounts(ctx, mc, &p)
+	}
 	if err != nil {
 		c.Error = err.Error()
 		if me, ok := meta.AsError(err); ok && me.TokenInvalid() {
@@ -592,5 +595,37 @@ func (a *App) redact(v string) {
 	a.st.AddSecret(v)
 	for _, ac := range a.Accounts() {
 		ac.st.AddSecret(v)
+	}
+}
+
+// addDirectAccounts: an account the app already knows (it has data for it, or it is the selected one) that the
+// portfolio's lists did not return is read DIRECTLY (GET act_…). The owner, 28 Nov 2026: KBB24 was active, assigned
+// to him and readable with his token in Graph API Explorer ("account_status": 1, AED), yet the app listed it red as
+// "DISABLED" with no currency -- Meta's me/adaccounts and the business edges did not include it, so the app only had
+// its old name. A direct read that works puts the account in the portfolio with its real status and currency; one
+// that fails leaves it out, and the list says the token cannot see it.
+func (a *App) addDirectAccounts(ctx context.Context, mc *meta.Client, p *model.Portfolio) {
+	listed := map[string]bool{}
+	for _, r := range p.AdAccounts {
+		listed[r.ID] = true
+	}
+	a.mu.RLock()
+	want := []string{}
+	for id := range a.accounts {
+		if !listed[id] {
+			want = append(want, id)
+		}
+	}
+	if sel := a.cfg.Selected; sel != "" && !listed[sel] && a.accounts[sel] == nil {
+		want = append(want, sel)
+	}
+	a.mu.RUnlock()
+	sort.Strings(want)
+	for _, id := range want {
+		acc, err := mc.Account(ctx, id)
+		if err != nil || acc.ID == "" {
+			continue
+		}
+		p.AdAccounts = append(p.AdAccounts, model.AdAccountRef{ID: acc.ID, Name: acc.Name, Currency: acc.Currency, Status: acc.Status, Relation: "direct"})
 	}
 }

@@ -57,6 +57,8 @@ type Write struct {
 }
 
 type Server struct {
+	// HideAccounts: me/adaccounts and the business edges list no ad account, while GET act_… still answers.
+	HideAccounts bool
 	Token   string
 	Account string // act_123
 	Version string
@@ -1085,6 +1087,9 @@ func (s *Server) portfolio(w http.ResponseWriter, r *http.Request, segs []string
 	}
 	accs := func() []obj {
 		var o []obj
+		if s.HideAccounts { // an account Meta's lists leave out though the token can read it (KBB24, 28 Nov)
+			return o
+		}
 		ids := make([]string, 0, len(s.accounts))
 		for id := range s.accounts {
 			ids = append(ids, id)
